@@ -11,4 +11,5 @@ repositories {
 dependencies {
    compile files("$javaHome" + "/lib/jfxrt.jar")
    compile 'com.google.inject:guice:3.0'
+   testCompile 'junit:junit:4.11'
 }
