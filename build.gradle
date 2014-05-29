@@ -2,6 +2,7 @@ apply plugin: 'java';
 apply plugin: 'eclipse';
 
 def javaHome = System.properties['java.home']
+def powermockVersion = '1.5.4'
 
 repositories {
    mavenCentral()
@@ -9,8 +10,11 @@ repositories {
 
 
 dependencies {
-   compile files("$javaHome" + "/lib/jfxrt.jar")
+   compile files("$javaHome/lib/jfxrt.jar")
    compile 'com.google.inject:guice:3.0'
    compile 'junit:junit:4.4'
    compile 'org.mockito:mockito-all:1.9.5'
+   compile "org.powermock:powermock-module-junit4:$powermockVersion"
+   compile "org.powermock:powermock-api-mockito:$powermockVersion"
+
 }
