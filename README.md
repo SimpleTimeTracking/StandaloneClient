@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Bytekeeper/SimpleTimeTrack.svg)](https://travis-ci.org/Bytekeeper/SimpleTimeTrack)
+
 # Mission statement 
 
 The goal of SimpleTimeTrack is to make time tracking as simple and quick as possible.
