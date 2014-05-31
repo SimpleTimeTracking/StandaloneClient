@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<BorderPane prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <FlowPane BorderPane.alignment="CENTER">
+         <children>
+            <Button mnemonicParsing="false" text="%show_report" />
+         </children>
+      </FlowPane>
+   </top>
+   <center>
+      <ListView prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets top="10.0" />
+         </BorderPane.margin></ListView>
+   </center>
+   <bottom>
+      <VBox prefWidth="100.0" BorderPane.alignment="CENTER">
+         <children>
+            <TextArea>
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin></TextArea>
+            <FlowPane alignment="CENTER">
+               <children>
+                  <Button mnemonicParsing="false" text="%done">
+                     <FlowPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </FlowPane.margin>
+                  </Button>
+               </children>
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin>
+            </FlowPane>
+         </children>
+      </VBox>
+   </bottom>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+</BorderPane>

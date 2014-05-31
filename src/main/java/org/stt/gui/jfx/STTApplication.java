@@ -1,21 +1,20 @@
 package org.stt.gui.jfx;
 
+import java.util.ResourceBundle;
+
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 public class STTApplication extends Application {
-	private String windowTitle;
-
 	private Stage stage;
-
-	@Inject
-	public void setWindowTitle(@Named("window.title") String windowTitle) {
-		this.windowTitle = windowTitle;
-	}
 
 	@Inject
 	public void setStage(Stage stage) {
@@ -24,7 +23,21 @@ public class STTApplication extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		stage.setTitle(windowTitle);
+		ResourceBundle localization = ResourceBundle
+				.getBundle("org.stt.gui.Application");
+		BorderPane pane = FXMLLoader.load(
+				getClass().getResource("/org/stt/gui/jfx/MainWindow.fxml"),
+				localization);
+		Scene scene = new Scene(pane);
+		stage.setScene(scene);
+		stage.setTitle(localization.getString("window.title"));
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+
+			@Override
+			public void handle(WindowEvent arg0) {
+				System.exit(0);
+			}
+		});
 		stage.show();
 	}
 

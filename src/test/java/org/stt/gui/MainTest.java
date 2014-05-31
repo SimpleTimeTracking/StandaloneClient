@@ -8,9 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
 
-import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 
 import org.junit.Test;
@@ -21,6 +19,7 @@ import com.google.inject.Injector;
 
 public class MainTest<V> {
 	private final Main sut = new Main();
+	private final JFXTestHelper helper = new JFXTestHelper();
 
 	@Test
 	public void shouldBindSTTApplication() throws InterruptedException,
@@ -30,17 +29,16 @@ public class MainTest<V> {
 		new JFXPanel();
 
 		// WHEN
-		FutureTask<STTApplication> task = new FutureTask<STTApplication>(
-				new Callable<STTApplication>() {
+		STTApplication result = helper
+				.invokeAndWait(new Callable<STTApplication>() {
 					@Override
 					public STTApplication call() throws Exception {
 						return injector.getInstance(STTApplication.class);
 					}
 				});
-		Platform.runLater(task);
 
 		// THEN
-		assertThat(task.get(), notNullValue());
+		assertThat(result, notNullValue());
 	}
 
 	@Test
