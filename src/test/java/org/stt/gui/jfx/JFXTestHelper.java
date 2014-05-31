@@ -1,4 +1,4 @@
-package org.stt.gui;
+package org.stt.gui.jfx;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;

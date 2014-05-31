@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import javafx.embed.swing.JFXPanel;
 
 import org.junit.Test;
+import org.stt.gui.jfx.JFXTestHelper;
 import org.stt.gui.jfx.STTApplication;
 
 import com.google.inject.Guice;

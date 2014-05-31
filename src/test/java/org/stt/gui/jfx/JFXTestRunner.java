@@ -1,4 +1,4 @@
-package org.stt.gui;
+package org.stt.gui.jfx;
 
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
