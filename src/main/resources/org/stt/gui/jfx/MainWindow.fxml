@@ -23,7 +23,7 @@
    <bottom>
       <VBox prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <TextArea fx:id="commandText" onKeyReleased="#onKeyReleased">
+            <TextArea fx:id="commandText" onKeyPressed="#onKeyPressed">
                <VBox.margin>
                   <Insets top="10.0" />
                </VBox.margin></TextArea>

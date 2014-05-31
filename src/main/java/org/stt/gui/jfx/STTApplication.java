@@ -67,7 +67,7 @@ public class STTApplication {
 	}
 
 	@FXML
-	void onKeyReleased(KeyEvent event) {
+	void onKeyPressed(KeyEvent event) {
 		if (KeyCode.ENTER.equals(event.getCode()) && event.isControlDown()) {
 			executeCommand();
 		}
