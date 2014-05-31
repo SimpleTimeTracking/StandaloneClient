@@ -2,7 +2,6 @@ apply plugin: 'java';
 apply plugin: 'eclipse';
 
 def javaHome = System.properties['java.home']
-def powermockVersion = '1.5.4'
 
 repositories {
    mavenCentral()
@@ -16,6 +15,4 @@ dependencies {
 
    testCompile 'junit:junit:4.11'
    testCompile 'org.mockito:mockito-all:1.9.5'
-   testCompile "org.powermock:powermock-module-junit4:$powermockVersion"
-   testCompile "org.powermock:powermock-api-mockito:$powermockVersion"
 }
