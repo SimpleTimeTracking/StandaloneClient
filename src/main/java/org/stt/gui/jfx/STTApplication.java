@@ -1,5 +1,7 @@
 package org.stt.gui.jfx;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ResourceBundle;
 
 import javafx.application.Application;
@@ -23,6 +25,8 @@ public class STTApplication extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
+		checkNotNull(stage);
+
 		ResourceBundle localization = ResourceBundle
 				.getBundle("org.stt.gui.Application");
 		BorderPane pane = FXMLLoader.load(
