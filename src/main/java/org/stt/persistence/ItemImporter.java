@@ -1,5 +1,6 @@
 package org.stt.persistence;
 
+import java.io.IOException;
 import java.util.Collection;
 
 import org.stt.model.TimeTrackingItem;
@@ -9,5 +10,9 @@ import org.stt.model.TimeTrackingItem;
  */
 public interface ItemImporter
 {
-   Collection<TimeTrackingItem> read();
+   /**
+    * @return all items in the order of the source, e.g. 
+    * @throws IOException if something goes wrong while reading 
+    */
+   Collection<TimeTrackingItem> read() throws IOException;
 }
