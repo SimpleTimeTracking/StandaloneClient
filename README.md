@@ -13,3 +13,4 @@ To remedy this, there already are some great projects (like http://ti.sharats.me
 
 - modular design to allow easy extension
 - simple setup: no complicated installation, just download and start tracking times
+- information privacy: the data is located on your machine
