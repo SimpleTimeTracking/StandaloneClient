@@ -2,6 +2,7 @@ package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Calendar;
 import java.util.ResourceBundle;
 
 import javafx.application.Platform;
@@ -65,8 +66,9 @@ public class STTApplication {
 			}
 		});
 		ObservableList<TimeTrackingItem> items = history.getItems();
-		items.addAll(new TimeTrackingItem("Test1"), new TimeTrackingItem(
-				"Test2"), new TimeTrackingItem("Test3"));
+		items.addAll(new TimeTrackingItem("Test1", Calendar.getInstance()),
+				new TimeTrackingItem("Test2", Calendar.getInstance()),
+				new TimeTrackingItem("Test3", Calendar.getInstance()));
 
 		Scene scene = new Scene(pane);
 		stage.setScene(scene);

@@ -1,14 +1,15 @@
 package org.stt.importer;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.io.Reader;
+import java.util.Calendar;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemImporter;
+
+import com.google.common.base.Optional;
 
 /**
  * Imports all time tracking records of an existing (modified) ti installation.
@@ -17,44 +18,37 @@ import org.stt.persistence.ItemImporter;
  */
 public class TiImporter implements ItemImporter {
 
-	private File inputFile;
+	private final LineIterator lineIter;
 
-	public TiImporter(File inputFile) {
-		this.inputFile = inputFile;
+	public TiImporter(Reader input) {
+		lineIter = IOUtils.lineIterator(input);
 	}
 
 	@Override
-	public Collection<TimeTrackingItem> read() throws IOException {
-
-		Collection<TimeTrackingItem> result = new LinkedList<>();
-
-		LineIterator lineIter = FileUtils.lineIterator(inputFile);
-		try {
-
-			while (lineIter.hasNext()) {
-				String nextLine = lineIter.nextLine();
-				// ignore empty lines or ones just containing whitespace
-				if (!nextLine.trim().isEmpty()) {
-					result.add(constructFrom(nextLine));
-				}
+	public Optional<TimeTrackingItem> read() throws IOException {
+		while (lineIter.hasNext()) {
+			String nextLine = lineIter.nextLine();
+			// ignore empty lines or ones just containing whitespace
+			if (!nextLine.trim().isEmpty()) {
+				return Optional.of(constructFrom(nextLine));
 			}
-
-		} finally {
-			LineIterator.closeQuietly(lineIter);
 		}
-
-		return result;
+		lineIter.close();
+		return Optional.absent();
 	}
 
 	private TimeTrackingItem constructFrom(String string) {
-		TimeTrackingItem resultItem = new TimeTrackingItem();
-
 		String[] split = string.split("\\s");
-		resultItem.setComment(split[0]);
+		String comment = split[0];
 		// start time is in [1]
 		// end time is in [3]
 
-		return resultItem;
+		return new TimeTrackingItem(comment, Calendar.getInstance());
+	}
+
+	@Override
+	public void close() {
+		lineIter.close();
 	}
 
 }

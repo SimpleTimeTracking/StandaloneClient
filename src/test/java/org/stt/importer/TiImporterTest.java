@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -15,10 +16,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemImporter;
 
-public class TiImporterTest {
+import com.google.common.base.Optional;
 
+public class TiImporterTest {
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -28,7 +31,7 @@ public class TiImporterTest {
 		File importFile = new File("this/file/does/not/exist");
 
 		// WHEN
-		ItemImporter importer = new TiImporter(importFile);
+		ItemImporter importer = new TiImporter(new FileReader(importFile));
 		importer.read();
 
 		// THEN
@@ -42,8 +45,8 @@ public class TiImporterTest {
 		FileUtils.write(tempFile, "line1\nline2\nline3\n\n\n");
 
 		// WHEN
-		ItemImporter importer = new TiImporter(tempFile);
-		Collection<TimeTrackingItem> readItems = importer.read();
+		ItemImporter importer = new TiImporter(new FileReader(tempFile));
+		Collection<TimeTrackingItem> readItems = IOUtil.readAll(importer);
 
 		// THEN
 		Assert.assertEquals(3, readItems.size());
@@ -59,13 +62,16 @@ public class TiImporterTest {
 								+ "the_long_comment2 2014-10-13_13:24:35 to 2014-10-13_14:24:35\n");
 
 		// WHEN
-		ItemImporter importer = new TiImporter(tempFile);
-		Collection<TimeTrackingItem> readItems = importer.read();
+		ItemImporter importer = new TiImporter(new FileReader(tempFile));
+		Collection<TimeTrackingItem> readItems = IOUtil.readAll(importer);
 
 		// THEN
 		Assert.assertThat(
 				readItems,
-				contains(hasProperty("comment", is("the_long_comment")),
-						hasProperty("comment", is("the_long_comment2"))));
+				contains(
+						hasProperty("comment",
+								is(Optional.of("the_long_comment"))),
+						hasProperty("comment",
+								is(Optional.of("the_long_comment2")))));
 	}
 }
