@@ -19,3 +19,8 @@ dependencies {
    testCompile 'org.hamcrest:hamcrest-library:1.3'
    testCompile 'org.mockito:mockito-all:1.9.5'
 }
+
+jar {
+   from { configurations.compile.findAll { !it.name.contains("jfxrt.jar") } collect { it.isDirectory() ? it : zipTree(it) } }
+   manifest.attributes("Main-Class":"org.stt.gui.Main")
+}
