@@ -13,13 +13,27 @@ public final class TimeTrackingItem {
 	private final Calendar start;
 	private final Optional<Calendar> end;
 
+	/**
+	 * @param comment
+	 *            comment string describing this item. May be null
+	 * @param start
+	 *            start time of the item
+	 * @param end
+	 *            end time of the item. May be null
+	 */
 	public TimeTrackingItem(String comment, Calendar start, Calendar end) {
 		this.comment = Optional.fromNullable(comment);
 		this.start = checkNotNull(start);
 		this.end = Optional.of(end);
-		checkState(!end.before(start), "end must not be before start");
+		checkState(start.before(end), "start must be before end");
 	}
 
+	/**
+	 * @param comment
+	 *            comment string describing this item. May be null
+	 * @param start
+	 *            start time of the item
+	 */
 	public TimeTrackingItem(String comment, Calendar start) {
 		this.comment = Optional.fromNullable(comment);
 		this.start = start;
@@ -40,7 +54,9 @@ public final class TimeTrackingItem {
 
 	@Override
 	public String toString() {
-		return start + " - " + end + " : " + comment;
+		return start.getTime() + " - "
+				+ (end.isPresent() ? end.get().getTime() : "null") + " : "
+				+ comment;
 	}
 
 	@Override
@@ -55,28 +71,37 @@ public final class TimeTrackingItem {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		TimeTrackingItem other = (TimeTrackingItem) obj;
 		if (comment == null) {
-			if (other.comment != null)
+			if (other.comment != null) {
 				return false;
-		} else if (!comment.equals(other.comment))
+			}
+		} else if (!comment.equals(other.comment)) {
 			return false;
+		}
 		if (end == null) {
-			if (other.end != null)
+			if (other.end != null) {
 				return false;
-		} else if (!end.equals(other.end))
+			}
+		} else if (!end.equals(other.end)) {
 			return false;
+		}
 		if (start == null) {
-			if (other.start != null)
+			if (other.start != null) {
 				return false;
-		} else if (!start.equals(other.start))
+			}
+		} else if (!start.equals(other.start)) {
 			return false;
+		}
 		return true;
 	}
 }
