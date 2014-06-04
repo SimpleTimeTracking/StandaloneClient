@@ -1,6 +1,5 @@
 package org.stt.persistence;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -10,8 +9,7 @@ import com.google.common.base.Optional;
 
 public class IOUtil {
 
-	public static Collection<TimeTrackingItem> readAll(ItemReader reader)
-			throws IOException {
+	public static Collection<TimeTrackingItem> readAll(ItemReader reader) {
 		Collection<TimeTrackingItem> result = new ArrayList<>();
 		Optional<TimeTrackingItem> item;
 		while ((item = reader.read()).isPresent()) {

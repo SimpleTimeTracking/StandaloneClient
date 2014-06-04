@@ -16,7 +16,7 @@ public interface ItemReader {
 	 *         none is available
 	 * @throws IOException
 	 */
-	Optional<TimeTrackingItem> read() throws IOException;
+	Optional<TimeTrackingItem> read();
 
 	void close();
 }

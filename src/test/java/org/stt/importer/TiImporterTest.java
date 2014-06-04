@@ -4,17 +4,11 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collection;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemImporter;
@@ -22,47 +16,45 @@ import org.stt.persistence.ItemImporter;
 import com.google.common.base.Optional;
 
 public class TiImporterTest {
-	@Rule
-	public TemporaryFolder tempFolder = new TemporaryFolder();
 
-	@Test(expected = FileNotFoundException.class)
-	public void readingOfNonExitentFileFails() throws IOException {
+	@Test(expected = IllegalStateException.class)
+	public void readingInvalidLineThrowsException() {
+
 		// GIVEN
-		File importFile = new File("this/file/does/not/exist");
+		String inputString = "2010-10-20";
 
 		// WHEN
-		ItemImporter importer = new TiImporter(new FileReader(importFile));
-		importer.read();
+		TiImporter tiImporter = new TiImporter(new StringReader(inputString));
+		tiImporter.read();
 
 		// THEN
-		// FileNotFoundException expected
+		// IllegalStateException
 	}
 
 	@Test
-	public void readingValidFileReturnsOneItemPerLine() throws IOException {
+	public void readingValidFileReturnsOneItemPerLine() {
 		// GIVEN
-		File tempFile = tempFolder.newFile();
-		FileUtils.write(tempFile, "line1\nline2\nline3\n\n\n");
+		String inputString = "line1 2010-10-10_20:20:20 to 2010-10-10_20:20:30\n\r\n"
+				+ "line2 2010-10-10_20:20:20 to 2010-10-10_20:20:30\n\n"
+				+ "line3 2010-10-10_20:20:20 to 2010-10-10_20:20:30\n\n\n\n";
 
 		// WHEN
-		ItemImporter importer = new TiImporter(new FileReader(tempFile));
+		ItemImporter importer = new TiImporter(new StringReader(inputString));
 		Collection<TimeTrackingItem> readItems = IOUtil.readAll(importer);
 
 		// THEN
 		Assert.assertEquals(3, readItems.size());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
-	public void commentIsParsedCorrectly() throws IOException {
+	public void commentIsParsedCorrectly() {
 		// GIVEN
-		File tempFile = tempFolder.newFile();
-		FileUtils
-				.write(tempFile,
-						"the_long_comment 2014-10-12_13:24:35 to 2014-10-12_14:24:35\n"
-								+ "the_long_comment2 2014-10-13_13:24:35 to 2014-10-13_14:24:35\n");
+		String inputString = "the_long_comment 2014-10-12_13:24:35 to 2014-10-12_14:24:35\n"
+				+ "the_long_comment2 2014-10-13_13:24:35 to 2014-10-13_14:24:35\n";
 
 		// WHEN
-		ItemImporter importer = new TiImporter(new FileReader(tempFile));
+		ItemImporter importer = new TiImporter(new StringReader(inputString));
 		Collection<TimeTrackingItem> readItems = IOUtil.readAll(importer);
 
 		// THEN
