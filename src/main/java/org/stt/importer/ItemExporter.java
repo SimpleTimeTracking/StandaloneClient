@@ -1,4 +1,4 @@
-package org.stt.persistence;
+package org.stt.importer;
 
 import java.util.Collection;
 

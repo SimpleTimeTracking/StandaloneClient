@@ -1,4 +1,6 @@
-package org.stt.persistence;
+package org.stt.importer;
+
+import org.stt.persistence.ItemReader;
 
 
 /**

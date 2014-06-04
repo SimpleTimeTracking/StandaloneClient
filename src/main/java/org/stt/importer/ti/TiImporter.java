@@ -1,4 +1,4 @@
-package org.stt.importer;
+package org.stt.importer.ti;
 
 import java.io.Reader;
 import java.text.ParseException;
@@ -7,8 +7,8 @@ import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
+import org.stt.importer.ItemImporter;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemImporter;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
