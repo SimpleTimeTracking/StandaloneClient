@@ -22,5 +22,5 @@ dependencies {
 
 jar {
    from { configurations.compile.findAll { !it.name.contains("jfxrt.jar") } collect { it.isDirectory() ? it : zipTree(it) } }
-   manifest.attributes("Main-Class":"org.stt.gui.Main")
+   manifest.attributes("Main-Class":"org.stt.StartWithJFX")
 }
