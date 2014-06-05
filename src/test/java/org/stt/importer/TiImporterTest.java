@@ -47,6 +47,7 @@ public class TiImporterTest {
 		Assert.assertEquals(3, readItems.size());
 	}
 
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void commentIsParsedCorrectly() {

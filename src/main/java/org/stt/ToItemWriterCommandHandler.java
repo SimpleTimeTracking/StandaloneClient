@@ -2,6 +2,7 @@ package org.stt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.util.Calendar;
 
 import org.stt.model.TimeTrackingItem;
@@ -21,6 +22,11 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	@Override
 	public void executeCommand(String command) {
 		checkNotNull(command);
-		itemWriter.write(new TimeTrackingItem(command, Calendar.getInstance()));
+		try {
+			itemWriter.write(new TimeTrackingItem(command, Calendar
+					.getInstance()));
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 }
