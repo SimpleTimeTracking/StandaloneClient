@@ -1,4 +1,4 @@
-package org.stt.importer.ti;
+package org.stt.importer;
 
 import java.io.IOException;
 import java.io.Writer;
