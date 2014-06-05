@@ -6,7 +6,6 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
-import org.stt.importer.ti.DefaultItemImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 

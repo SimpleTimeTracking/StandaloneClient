@@ -10,7 +10,6 @@ import java.io.Writer;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
-import org.stt.importer.ti.DefaultItemExporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 
