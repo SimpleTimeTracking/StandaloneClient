@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collection;
 
@@ -33,7 +34,7 @@ public class TiImporterTest {
 	}
 
 	@Test
-	public void readingValidFileReturnsOneItemPerLine() {
+	public void readingValidFileReturnsOneItemPerLine() throws IOException {
 		// GIVEN
 		String inputString = "line1 2010-10-10_20:20:20 to 2010-10-10_20:20:30\n\r\n"
 				+ "line2 2010-10-10_20:20:20 to 2010-10-10_20:20:30\n\n"
@@ -47,10 +48,9 @@ public class TiImporterTest {
 		Assert.assertEquals(3, readItems.size());
 	}
 
-	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void commentIsParsedCorrectly() {
+	public void commentIsParsedCorrectly() throws IOException {
 		// GIVEN
 		String inputString = "the_long_comment 2014-10-12_13:24:35 to 2014-10-12_14:24:35\n"
 				+ "the_long_comment2 2014-10-13_13:24:35 to 2014-10-13_14:24:35\n";

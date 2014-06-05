@@ -3,15 +3,30 @@ package org.stt.gui.jfx;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
+import org.stt.gui.jfx.JFXTestRunner.NotOnPlatformThread;
+import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.ItemReader;
+
+import com.google.common.base.Optional;
 
 @RunWith(JFXTestRunner.class)
 public class STTApplicationTest {
@@ -22,10 +37,15 @@ public class STTApplicationTest {
 
 	@Before
 	public void setup() {
-		stage = helper.createStageForTest();
-		sut.setStage(stage);
-		commandHandler = mock(CommandHandler.class);
-		sut.setCommandHandler(commandHandler);
+		helper.invokeAndWait(new Runnable() {
+			@Override
+			public void run() {
+				stage = helper.createStageForTest();
+				sut.setStage(stage);
+				commandHandler = mock(CommandHandler.class);
+				sut.setCommandHandler(commandHandler);
+			}
+		});
 	}
 
 	@Test
@@ -69,6 +89,55 @@ public class STTApplicationTest {
 
 		// THEN
 		verify(commandHandler).executeCommand(testCommand);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	@NotOnPlatformThread
+	public void shouldReadHistoryItemsFromReader() throws Exception {
+		// GIVEN
+		final ExecutorService service = mock(ExecutorService.class);
+		willAnswer(new Answer<Void>() {
+
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				((Runnable) invocation.getArguments()[0]).run();
+				return null;
+			}
+		}).given(service).execute(any(Runnable.class));
+		sut.setExecutorService(service);
+
+		final TimeTrackingItem item = new TimeTrackingItem("comment",
+				DateTime.now());
+		ItemReader reader = mock(ItemReader.class);
+		given(reader.read()).willReturn(Optional.of(item),
+				Optional.<TimeTrackingItem> absent());
+
+		helper.invokeAndWait(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					sut.setupStage();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		});
+
+		// WHEN
+		sut.readHistoryFrom(reader);
+
+		// THEN
+		helper.invokeAndWait(new Runnable() {
+
+			@Override
+			public void run() {
+				verify(service).execute(any(Runnable.class));
+				assertThat(sut.history.getItems(),
+						is(Arrays.asList(new TimeTrackingItem[] { item })));
+			}
+		});
 	}
 
 	private void givenCommand(String command) {
