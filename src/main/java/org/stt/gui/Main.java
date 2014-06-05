@@ -17,8 +17,8 @@ import javafx.embed.swing.JFXPanel;
 import org.stt.CommandHandler;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.STTApplication;
-import org.stt.importer.ti.DefaultItemExporter;
-import org.stt.importer.ti.DefaultItemImporter;
+import org.stt.importer.DefaultItemExporter;
+import org.stt.importer.DefaultItemImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
