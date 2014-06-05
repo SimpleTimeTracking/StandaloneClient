@@ -1,4 +1,4 @@
-package org.stt.importer;
+package org.stt.importer.ti;
 
 import java.io.Reader;
 import java.text.ParseException;
@@ -8,7 +8,7 @@ import java.util.Calendar;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemImporter;
+import org.stt.persistence.ItemReader;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -19,7 +19,7 @@ import com.google.common.base.Preconditions;
  * "$comment $start to $end" where $comment, $start, and $end do not contain
  * white space
  */
-public class TiImporter implements ItemImporter {
+public class TiImporter implements ItemReader {
 
 	private final LineIterator lineIter;
 	// not thread safe but this should not matter here as it does not seem

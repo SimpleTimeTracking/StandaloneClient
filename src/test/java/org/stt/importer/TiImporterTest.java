@@ -9,9 +9,10 @@ import java.util.Collection;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.stt.importer.ti.TiImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
-import org.stt.persistence.ItemImporter;
+import org.stt.persistence.ItemReader;
 
 import com.google.common.base.Optional;
 
@@ -39,13 +40,14 @@ public class TiImporterTest {
 				+ "line3 2010-10-10_20:20:20 to 2010-10-10_20:20:30\n\n\n\n";
 
 		// WHEN
-		ItemImporter importer = new TiImporter(new StringReader(inputString));
+		ItemReader importer = new TiImporter(new StringReader(inputString));
 		Collection<TimeTrackingItem> readItems = IOUtil.readAll(importer);
 
 		// THEN
 		Assert.assertEquals(3, readItems.size());
 	}
 
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void commentIsParsedCorrectly() {
@@ -54,7 +56,7 @@ public class TiImporterTest {
 				+ "the_long_comment2 2014-10-13_13:24:35 to 2014-10-13_14:24:35\n";
 
 		// WHEN
-		ItemImporter importer = new TiImporter(new StringReader(inputString));
+		ItemReader importer = new TiImporter(new StringReader(inputString));
 		Collection<TimeTrackingItem> readItems = IOUtil.readAll(importer);
 
 		// THEN

@@ -19,7 +19,7 @@ public final class TimeTrackingItem {
 	 * @param start
 	 *            start time of the item
 	 * @param end
-	 *            end time of the item. May be null
+	 *            end time of the item.
 	 */
 	public TimeTrackingItem(String comment, Calendar start, Calendar end) {
 		this.comment = Optional.fromNullable(comment);
