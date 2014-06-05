@@ -22,7 +22,6 @@ import com.google.common.base.Optional;
 
 @RunWith(Theories.class)
 public class IOUtilTest {
-	private final IOUtil sut = new IOUtil();
 
 	@Theory
 	public void readAllShouldReadAll(
@@ -43,7 +42,7 @@ public class IOUtilTest {
 		stubbing.willReturn(Optional.<TimeTrackingItem> absent());
 
 		// WHEN
-		Collection<TimeTrackingItem> result = sut.readAll(itemReader);
+		Collection<TimeTrackingItem> result = IOUtil.readAll(itemReader);
 
 		// THEN
 		assertThat(result, equalTo(expectedItems));
