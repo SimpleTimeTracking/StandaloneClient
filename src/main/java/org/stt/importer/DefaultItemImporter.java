@@ -2,6 +2,9 @@ package org.stt.importer;
 
 import java.io.Reader;
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -49,30 +52,42 @@ public class DefaultItemImporter implements ItemReader {
 	private TimeTrackingItem constructFrom(String singleLine)
 			throws ParseException {
 
-		String[] splitLine = singleLine.split(" ");
+		List<String> splitLine = new LinkedList<>(Arrays.asList(singleLine
+				.split(" ")));
 
-		DateTime start = dateFormat.parseDateTime(splitLine[0]);
+		DateTime start = dateFormat.parseDateTime(splitLine.remove(0));
 
 		DateTime end = null;
-		if (splitLine.length > 1) {
-			end = dateFormat.parseDateTime(splitLine[1]);
+		if (splitLine.size() > 0) {
+			try {
+				end = dateFormat.parseDateTime(splitLine.get(0));
+				splitLine.remove(0);
+			} catch (IllegalArgumentException i) {
+				// NOOP, if the string cannot be parsed, it is no date
+				// this is a bit ugly but currently no idea how to do it
+				// "correctly"
+			}
 		}
+		String comment = null;
+		if (splitLine.size() > 0) {
+			StringBuilder commentBuilder = new StringBuilder(
+					singleLine.length());
+			for (String current : splitLine) {
+				current = current.replaceAll("\\\\r", "\r");
+				current = current.replaceAll("\\\\n", "\n");
+				commentBuilder.append(current);
 
-		StringBuilder commentBuilder = new StringBuilder(singleLine.length());
-		for (int i = 2; i < splitLine.length; i++) {
-			String current = splitLine[i];
-			current = current.replaceAll("\\\\r", "\r");
-			current = current.replaceAll("\\\\n", "\n");
-			commentBuilder.append(current);
-			if (i < splitLine.length - 1) {
 				commentBuilder.append(" ");
 			}
+			commentBuilder.deleteCharAt(commentBuilder.length() - 1);
+
+			comment = commentBuilder.toString();
 		}
 
 		if (end != null) {
-			return new TimeTrackingItem(commentBuilder.toString(), start, end);
+			return new TimeTrackingItem(comment, start, end);
 		} else {
-			return new TimeTrackingItem(commentBuilder.toString(), start);
+			return new TimeTrackingItem(comment, start);
 		}
 	}
 

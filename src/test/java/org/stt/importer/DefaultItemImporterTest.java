@@ -44,4 +44,22 @@ public class DefaultItemImporterTest {
 		DateTime time = new DateTime(2012, 10, 10, 22, 00, 00);
 		Assert.assertThat(time, Matchers.equalTo(readItem.get().getStart()));
 	}
+
+	@Test
+	public void startTimeAndCommentGiven() {
+
+		// GIVEN
+		StringReader stringReader = new StringReader(
+				"2012-10-10_22:00:00 the long comment");
+		ItemReader theReader = new DefaultItemImporter(stringReader);
+
+		// WHEN
+		Optional<TimeTrackingItem> readItem = theReader.read();
+
+		// THEN
+		DateTime time = new DateTime(2012, 10, 10, 22, 00, 00);
+		Assert.assertThat(time, Matchers.equalTo(readItem.get().getStart()));
+		Assert.assertThat("the long comment",
+				Matchers.equalTo(readItem.get().getComment().get()));
+	}
 }
