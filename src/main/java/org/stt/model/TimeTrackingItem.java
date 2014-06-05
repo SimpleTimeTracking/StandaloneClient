@@ -3,15 +3,15 @@ package org.stt.model;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.Calendar;
+import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 
 public final class TimeTrackingItem {
 
 	private final Optional<String> comment;
-	private final Calendar start;
-	private final Optional<Calendar> end;
+	private final DateTime start;
+	private final Optional<DateTime> end;
 
 	/**
 	 * @param comment
@@ -21,11 +21,11 @@ public final class TimeTrackingItem {
 	 * @param end
 	 *            end time of the item.
 	 */
-	public TimeTrackingItem(String comment, Calendar start, Calendar end) {
+	public TimeTrackingItem(String comment, DateTime start, DateTime end) {
 		this.comment = Optional.fromNullable(comment);
 		this.start = checkNotNull(start);
 		this.end = Optional.of(end);
-		checkState(start.before(end), "start must be before end");
+		checkState(start.isBefore(end), "start must be before end");
 	}
 
 	/**
@@ -34,7 +34,7 @@ public final class TimeTrackingItem {
 	 * @param start
 	 *            start time of the item
 	 */
-	public TimeTrackingItem(String comment, Calendar start) {
+	public TimeTrackingItem(String comment, DateTime start) {
 		this.comment = Optional.fromNullable(comment);
 		this.start = start;
 		this.end = Optional.absent();
@@ -44,18 +44,18 @@ public final class TimeTrackingItem {
 		return comment;
 	}
 
-	public Calendar getStart() {
+	public DateTime getStart() {
 		return start;
 	}
 
-	public Optional<Calendar> getEnd() {
+	public Optional<DateTime> getEnd() {
 		return end;
 	}
 
 	@Override
 	public String toString() {
-		return start.getTime() + " - "
-				+ (end.isPresent() ? end.get().getTime() : "null") + " : "
+		return start.toString() + " - "
+				+ (end.isPresent() ? end.get().toString() : "null") + " : "
 				+ comment;
 	}
 

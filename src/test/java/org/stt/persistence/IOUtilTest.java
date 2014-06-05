@@ -8,9 +8,9 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 
+import org.joda.time.DateTime;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.experimental.theories.suppliers.TestedOn;
@@ -35,7 +35,7 @@ public class IOUtilTest {
 				.read());
 		for (int i = 0; i < numberOfItems; i++) {
 			Optional<TimeTrackingItem> item = Optional.of(new TimeTrackingItem(
-					Integer.toString(i), Calendar.getInstance()));
+					Integer.toString(i), DateTime.now()));
 			expectedItems.add(item.get());
 			stubbing = stubbing.willReturn(item);
 		}

@@ -2,11 +2,12 @@ package org.stt.importer.ti;
 
 import java.io.Reader;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
@@ -22,10 +23,8 @@ import com.google.common.base.Preconditions;
 public class TiImporter implements ItemReader {
 
 	private final LineIterator lineIter;
-	// not thread safe but this should not matter here as it does not seem
-	// reasonable to read with multiple threads here
-	private final SimpleDateFormat df = new SimpleDateFormat(
-			"yyyy-MM-dd_HH:mm:ss");
+	private final DateTimeFormatter dateFormat = DateTimeFormat
+			.forPattern("yyyy-MM-dd_HH:mm:ss");
 
 	public TiImporter(Reader input) {
 		lineIter = IOUtils.lineIterator(input);
@@ -60,11 +59,9 @@ public class TiImporter implements ItemReader {
 
 		String comment = splitLine[0];
 
-		Calendar start = Calendar.getInstance();
-		start.setTime(df.parse(splitLine[1]));
+		DateTime start = dateFormat.parseDateTime(splitLine[1]);
 
-		Calendar end = Calendar.getInstance();
-		end.setTime(df.parse(splitLine[3]));
+		DateTime end = dateFormat.parseDateTime(splitLine[3]);
 
 		return new TimeTrackingItem(comment, start, end);
 	}

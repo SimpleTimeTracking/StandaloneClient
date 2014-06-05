@@ -2,11 +2,12 @@ package org.stt.importer.ti;
 
 import java.io.Reader;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
@@ -18,9 +19,9 @@ import com.google.common.base.Optional;
 public class DefaultItemImporter implements ItemReader {
 
 	private final LineIterator lineIter;
-	// not thread safe but this should not matter here as it does not seem
-	// reasonable to read with multiple threads here
-	private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+
+	private final DateTimeFormatter dateFormat = DateTimeFormat
+			.forPattern("yyyy-MM-dd_HH:mm:ss");
 
 	public DefaultItemImporter(Reader input) {
 		lineIter = IOUtils.lineIterator(input);
@@ -50,30 +51,27 @@ public class DefaultItemImporter implements ItemReader {
 
 		String[] splitLine = singleLine.split(" ");
 
-		Calendar start = Calendar.getInstance();
-		start.setTime(df.parse(splitLine[0]));
+		DateTime start = dateFormat.parseDateTime(splitLine[0]);
 
-		Calendar end = null;
-		if( splitLine.length > 1) {
-			end = Calendar.getInstance();
-			end.setTime(df.parse(splitLine[1]));
+		DateTime end = null;
+		if (splitLine.length > 1) {
+			end = dateFormat.parseDateTime(splitLine[1]);
 		}
-		
+
 		StringBuilder commentBuilder = new StringBuilder(singleLine.length());
 		for (int i = 2; i < splitLine.length; i++) {
 			String current = splitLine[i];
 			current = current.replaceAll("\\\\r", "\r");
 			current = current.replaceAll("\\\\n", "\n");
 			commentBuilder.append(current);
-			if(i < splitLine.length - 1) {
+			if (i < splitLine.length - 1) {
 				commentBuilder.append(" ");
 			}
 		}
 
-		if(end != null) {
+		if (end != null) {
 			return new TimeTrackingItem(commentBuilder.toString(), start, end);
-		}
-		else {
+		} else {
 			return new TimeTrackingItem(commentBuilder.toString(), start);
 		}
 	}
