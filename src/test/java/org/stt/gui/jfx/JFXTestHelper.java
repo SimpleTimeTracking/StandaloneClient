@@ -27,12 +27,16 @@ public class JFXTestHelper {
 	}
 
 	public void invokeAndWait(Runnable runnable) {
-		FutureTask<?> task = new FutureTask<>(runnable, null);
-		Platform.runLater(task);
-		try {
-			task.get();
-		} catch (InterruptedException | ExecutionException e) {
-			throw new RuntimeException(e);
+		if (Platform.isFxApplicationThread()) {
+			runnable.run();
+		} else {
+			FutureTask<?> task = new FutureTask<>(runnable, null);
+			Platform.runLater(task);
+			try {
+				task.get();
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
