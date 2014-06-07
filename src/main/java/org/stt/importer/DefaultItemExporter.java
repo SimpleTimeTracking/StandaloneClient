@@ -1,5 +1,7 @@
 package org.stt.importer;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 
@@ -53,8 +55,15 @@ public class DefaultItemExporter implements ItemWriter {
 	}
 
 	@Override
-	public void delete(TimeTrackingItem item) {
-		// FIXME: implement ;-)
+	public void delete(TimeTrackingItem item) throws IOException {
+		File tempFile = File.createTempFile("stt", "tmp");
+
+		// the idea is: 
+                // while (read line): if (not line equals item) then write to temp file
+                // mv temp file to ~/.stt
+
+		// FIXME: currently not possible to read... 
+		//BufferedReader reader = new BufferedReader(new FileReader)
 		throw new NotImplementedException();
 	}
 

@@ -2,6 +2,8 @@ package org.stt.importer.ti;
 
 import java.io.Reader;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -22,6 +24,9 @@ import com.google.common.base.Preconditions;
  */
 public class TiImporter implements ItemReader {
 
+	private static final Logger LOG = Logger.getLogger(TiImporter.class
+			.getName());
+
 	private final LineIterator lineIter;
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
@@ -39,9 +44,8 @@ public class TiImporter implements ItemReader {
 				try {
 					return Optional.of(constructFrom(nextLine));
 				} catch (ParseException e) {
-					// FIXME: we need logging and the possibility of generating
-					// warning messages
-					e.printStackTrace();
+					LOG.log(Level.SEVERE, "cannot parse line \"" + nextLine
+							+ "\"", e);
 				}
 			}
 		}
