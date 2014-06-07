@@ -1,5 +1,8 @@
 language: java
 
+env:
+   - secure: "Nyb7rKKSkUQRZfk84UvAG1XxqA6Ze3iHZ3BQ5FVI4K92tRMXzjwPBVG7hPzkHWFgXkRqhlW6XkSXmGHQBJ+8bKJ9X9dNcviuEx65oDDzv7SoEm+mMP4sTVwQyv62lkv2zKQ9rG/xRX2ElElPrT6keS3ssVwuldhLpKwyXw8cJ0U="
+   - 
 before_install:
    - "export DISPLAY=:99.0"
    - "sh -e /etc/init.d/xvfb start"
@@ -7,3 +10,6 @@ before_install:
 script:
    - gradle assemble
    - gradle check --stacktrace
+
+after_success:
+   - curl -T build/libs/SimpleTimeTrack.jar -ubytekeeper:$API_KEY https://api.bintray.com/content/bytekeeper/generic/SimpleTimeTrack/1-SNAPSHOT/SimpleTimeTrack.jar
