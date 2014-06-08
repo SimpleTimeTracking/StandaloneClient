@@ -14,11 +14,14 @@ public class StartWithJFX {
 			IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, ClassNotFoundException,
 			NoSuchMethodException, SecurityException {
-		File jfxrt = retrieveJFXRTFile();
-		URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader
-				.getSystemClassLoader();
-		addUrlToURLClassLoader(jfxrt, systemClassLoader);
-
+		try {
+			Class.forName("javafx.embed.swing.JFXPanel");
+		} catch (ClassNotFoundException e) {
+			File jfxrt = retrieveJFXRTFile();
+			URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader
+					.getSystemClassLoader();
+			addUrlToURLClassLoader(jfxrt, systemClassLoader);
+		}
 		Main.main(args);
 	}
 

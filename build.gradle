@@ -3,6 +3,8 @@ apply plugin: 'eclipse';
 
 def javaHome = System.properties['java.home']
 
+sourceCompatibility = 1.7
+
 repositories {
    mavenCentral()
 }
