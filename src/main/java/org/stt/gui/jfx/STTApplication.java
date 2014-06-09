@@ -2,9 +2,11 @@ package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -121,6 +123,14 @@ public class STTApplication {
 	@FXML
 	protected void done() {
 		stage.close();
+		Platform.exit();
+		service.shutdown();
+		try {
+			service.awaitTermination(1, TimeUnit.SECONDS);
+			commandHandler.close();
+		} catch (InterruptedException | IOException e) {
+			throw new RuntimeException(e);
+		}
 		System.exit(0);
 	}
 

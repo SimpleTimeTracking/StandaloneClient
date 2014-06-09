@@ -41,7 +41,9 @@ public class Main extends AbstractModule {
 		bind(ExecutorService.class).toProvider(new Provider<ExecutorService>() {
 			@Override
 			public ExecutorService get() {
-				return Executors.newSingleThreadExecutor();
+				ExecutorService executorService = Executors
+						.newSingleThreadExecutor();
+				return executorService;
 			}
 		});
 		File file = getSTTFile();

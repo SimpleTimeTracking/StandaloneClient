@@ -28,4 +28,9 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			throw new IllegalStateException(e);
 		}
 	}
+
+	@Override
+	public void close() throws IOException {
+		itemWriter.close();
+	}
 }
