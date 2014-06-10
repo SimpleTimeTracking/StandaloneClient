@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -17,6 +19,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -82,7 +85,31 @@ public class STTApplication {
 
 		BorderPane pane = (BorderPane) loader.load();
 
-		history.setSelectionModel(new NoSelectionModel<TimeTrackingItem>());
+		history.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		history.getSelectionModel().selectedItemProperty()
+				.addListener(new ChangeListener<TimeTrackingItem>() {
+
+					@Override
+					public void changed(
+							ObservableValue<? extends TimeTrackingItem> observable,
+							TimeTrackingItem oldItem, TimeTrackingItem newItem) {
+						if (newItem != null) {
+							history.getSelectionModel().clearSelection();
+							if (newItem.getComment().isPresent()) {
+								commandText.setText(newItem.getComment().get());
+								commandText.positionCaret(commandText
+										.getLength());
+								Platform.runLater(new Runnable() {
+									@Override
+									public void run() {
+										commandText.requestFocus();
+									}
+								});
+							}
+						}
+
+					}
+				});
 		history.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
 
 			@Override

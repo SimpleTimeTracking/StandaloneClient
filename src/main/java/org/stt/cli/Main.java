@@ -1,6 +1,9 @@
 package org.stt.cli;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,7 +14,10 @@ import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
+import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
+import org.stt.searching.DefaultItemSearcher;
 
 import com.google.common.base.Optional;
 
@@ -23,12 +29,14 @@ public class Main {
 	private static final File timeFile = new File(
 			System.getProperty("user.home"), ".stt");
 
-	private ItemWriter writeTo;
-	private ItemReader readFrom;
+	private final ItemWriter writeTo;
+	private final ItemReader readFrom;
+	private final ItemSearcher searchIn;
 
-	public Main(ItemWriter writeTo, ItemReader readFrom) {
-		this.writeTo = writeTo;
-		this.readFrom = readFrom;
+	public Main(ItemWriter writeTo, ItemReader readFrom, ItemSearcher searchIn) {
+		this.writeTo = checkNotNull(writeTo);
+		this.readFrom = checkNotNull(readFrom);
+		this.searchIn = checkNotNull(searchIn);
 	}
 
 	void on(String[] args) {
@@ -37,7 +45,8 @@ public class Main {
 			comment.append(args[i]);
 		}
 
-		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(writeTo);
+		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
+				writeTo, searchIn);
 		tiw.executeCommand(comment.toString());
 	}
 
@@ -91,10 +100,21 @@ public class Main {
 
 		DefaultItemExporter exporter = new DefaultItemExporter(new FileWriter(
 				timeFile, true));
-		DefaultItemImporter importer = new DefaultItemImporter(new FileReader(
-				timeFile));
+		DefaultItemImporter importer = createNewReader();
+		DefaultItemSearcher searcher = new DefaultItemSearcher(
+				new ItemReaderProvider() {
 
-		Main m = new Main(exporter, importer);
+					@Override
+					public ItemReader provideReader() {
+						try {
+							return createNewReader();
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+		Main m = new Main(exporter, importer, searcher);
 
 		String mainOperator = args[0];
 		if (mainOperator.startsWith("o")) {
@@ -110,5 +130,10 @@ public class Main {
 
 		exporter.close();
 		importer.close();
+	}
+
+	private static DefaultItemImporter createNewReader()
+			throws FileNotFoundException {
+		return new DefaultItemImporter(new FileReader(timeFile));
 	}
 }

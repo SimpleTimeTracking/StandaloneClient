@@ -22,7 +22,10 @@ import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
+import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
+import org.stt.searching.DefaultItemSearcher;
 
 import com.google.common.base.Optional;
 
@@ -49,7 +52,16 @@ public class Main {
 				}
 			};
 		}
+	}
 
+	private ItemSearcher createItemSearcher() {
+		return new DefaultItemSearcher(new ItemReaderProvider() {
+
+			@Override
+			public ItemReader provideReader() {
+				return createPersistenceReader();
+			}
+		});
 	}
 
 	private ItemWriter createPersistenceWriter() throws IOException {
@@ -96,7 +108,7 @@ public class Main {
 		CommandHandler commandHandler;
 		try {
 			commandHandler = new ToItemWriterCommandHandler(
-					createPersistenceWriter());
+					createPersistenceWriter(), createItemSearcher());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
