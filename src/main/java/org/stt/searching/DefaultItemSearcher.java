@@ -1,5 +1,8 @@
 package org.stt.searching;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -7,20 +10,21 @@ import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
 import org.stt.persistence.ItemSearcher;
 
 import com.google.common.base.Optional;
 
 public class DefaultItemSearcher implements ItemSearcher {
 
-	private ItemReader reader;
+	private final ItemReaderProvider provider;
 
 	/**
 	 * @param reader
 	 *            where to search for items
 	 */
-	public DefaultItemSearcher(ItemReader reader) {
-		this.reader = reader;
+	public DefaultItemSearcher(ItemReaderProvider provider) {
+		this.provider = checkNotNull(provider);
 	}
 
 	@Override
@@ -29,12 +33,16 @@ public class DefaultItemSearcher implements ItemSearcher {
 
 		Collection<TimeTrackingItem> foundElements = new LinkedList<>();
 		Optional<TimeTrackingItem> item;
-		while ((item = reader.read()).isPresent()) {
-			TimeTrackingItem currentItem = item.get();
-			if (!currentItem.getStart().isBefore(from)
-					&& !currentItem.getStart().isAfter(to)) {
-				foundElements.add(currentItem);
+		try (ItemReader reader = provider.provideReader()) {
+			while ((item = reader.read()).isPresent()) {
+				TimeTrackingItem currentItem = item.get();
+				if (!currentItem.getStart().isBefore(from)
+						&& !currentItem.getStart().isAfter(to)) {
+					foundElements.add(currentItem);
+				}
 			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		return foundElements;
 	}
@@ -46,21 +54,25 @@ public class DefaultItemSearcher implements ItemSearcher {
 
 		Collection<TimeTrackingItem> foundElements = new LinkedList<>();
 		Optional<TimeTrackingItem> item;
-		while ((item = reader.read()).isPresent()) {
-			TimeTrackingItem currentItem = item.get();
-			DateTime currentEnd = currentItem.getEnd().orNull();
+		try (ItemReader reader = provider.provideReader()) {
+			while ((item = reader.read()).isPresent()) {
+				TimeTrackingItem currentItem = item.get();
+				DateTime currentEnd = currentItem.getEnd().orNull();
 
-			if (from == null && to == null && currentEnd == null) {
-				foundElements.add(currentItem);
+				if (from == null && to == null && currentEnd == null) {
+					foundElements.add(currentItem);
 
-			} else if (from == null && currentEnd != null) {
+				} else if (from == null && currentEnd != null) {
 
-			} else if (to == null) {
+				} else if (to == null) {
 
-			} else if (!currentItem.getEnd().get().isBefore(from)
-					&& !currentItem.getEnd().get().isAfter(to)) {
-				foundElements.add(currentItem);
+				} else if (!currentItem.getEnd().get().isBefore(from)
+						&& !currentItem.getEnd().get().isAfter(to)) {
+					foundElements.add(currentItem);
+				}
 			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		return foundElements;
 	}
@@ -71,4 +83,18 @@ public class DefaultItemSearcher implements ItemSearcher {
 		return null;
 	}
 
+	@Override
+	public Optional<TimeTrackingItem> getCurrentTimeTrackingitem() {
+		try (ItemReader reader = provider.provideReader()) {
+			Optional<TimeTrackingItem> item;
+			TimeTrackingItem currentItem = null;
+			while ((item = reader.read()).isPresent()) {
+				currentItem = item.get();
+			}
+			return currentItem == null || currentItem.getEnd().isPresent() ? Optional
+					.<TimeTrackingItem> absent() : Optional.of(currentItem);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

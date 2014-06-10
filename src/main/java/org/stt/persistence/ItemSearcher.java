@@ -5,6 +5,8 @@ import java.util.Collection;
 import org.joda.time.ReadableInstant;
 import org.stt.model.TimeTrackingItem;
 
+import com.google.common.base.Optional;
+
 public interface ItemSearcher {
 
 	/**
@@ -37,4 +39,10 @@ public interface ItemSearcher {
 	 * @return
 	 */
 	Collection<TimeTrackingItem> searchByComment(String search);
+
+	/**
+	 * Returns the current item that is being tracked or <i>absent</i> if none
+	 * is active or available.
+	 */
+	Optional<TimeTrackingItem> getCurrentTimeTrackingitem();
 }

@@ -104,4 +104,9 @@ public final class TimeTrackingItem {
 		}
 		return true;
 	}
+
+	public TimeTrackingItem withEnd(DateTime newEnd) {
+		checkNotNull(newEnd);
+		return new TimeTrackingItem(comment.orNull(), start, newEnd);
+	}
 }

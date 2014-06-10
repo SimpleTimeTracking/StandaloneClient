@@ -1,6 +1,5 @@
 package org.stt.importer;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -23,7 +22,7 @@ import com.google.common.base.Preconditions;
  */
 public class DefaultItemExporter implements ItemWriter {
 
-	private Writer outputWriter;
+	private final Writer outputWriter;
 
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
@@ -55,15 +54,22 @@ public class DefaultItemExporter implements ItemWriter {
 	}
 
 	@Override
+	public void replace(TimeTrackingItem item, TimeTrackingItem with)
+			throws IOException {
+		delete(item);
+		write(with);
+	}
+
+	@Override
 	public void delete(TimeTrackingItem item) throws IOException {
 		File tempFile = File.createTempFile("stt", "tmp");
 
-		// the idea is: 
-                // while (read line): if (not line equals item) then write to temp file
-                // mv temp file to ~/.stt
+		// the idea is:
+		// while (read line): if (not line equals item) then write to temp file
+		// mv temp file to ~/.stt
 
-		// FIXME: currently not possible to read... 
-		//BufferedReader reader = new BufferedReader(new FileReader)
+		// FIXME: currently not possible to read...
+		// BufferedReader reader = new BufferedReader(new FileReader)
 		throw new NotImplementedException();
 	}
 
