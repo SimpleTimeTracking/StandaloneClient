@@ -8,13 +8,10 @@ import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 
-import com.google.inject.Inject;
-
 public class ToItemWriterCommandHandler implements CommandHandler {
 
 	private final ItemWriter itemWriter;
 
-	@Inject
 	public ToItemWriterCommandHandler(ItemWriter itemWriter) {
 		this.itemWriter = checkNotNull(itemWriter);
 	}

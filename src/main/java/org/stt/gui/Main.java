@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.stage.Stage;
 
 import org.stt.CommandHandler;
 import org.stt.ToItemWriterCommandHandler;
@@ -21,69 +22,38 @@ import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemWriter;
 
 import com.google.common.base.Optional;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Provider;
-import com.google.inject.name.Names;
 
-public class Main extends AbstractModule {
+public class Main {
 	private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
-	@Override
-	protected void configure() {
-		ConsoleHandler handler = new ConsoleHandler();
-		handler.setLevel(Level.FINEST);
-		LOG.setLevel(Level.FINEST);
-		LOG.addHandler(handler);
-		bind(ExecutorService.class).toProvider(new Provider<ExecutorService>() {
-			@Override
-			public ExecutorService get() {
-				ExecutorService executorService = Executors
-						.newSingleThreadExecutor();
-				return executorService;
-			}
-		});
+	private ItemReader createPersistenceReader() {
 		File file = getSTTFile();
-		try {
-			DefaultItemExporter itemWriter = new DefaultItemExporter(
-					new FileWriter(file));
-			bind(CommandHandler.class).toInstance(
-					new ToItemWriterCommandHandler(itemWriter));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		if (file.exists()) {
+			try {
+				return new DefaultItemImporter(new FileReader(file));
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			return new ItemReader() {
+				@Override
+				public void close() throws IOException {
+				}
+
+				@Override
+				public Optional<TimeTrackingItem> read() {
+					return Optional.<TimeTrackingItem> absent();
+				}
+			};
 		}
 
-		bind(ItemReader.class).annotatedWith(Names.named("dataSource"))
-				.toProvider(new Provider<ItemReader>() {
+	}
 
-					@Override
-					public ItemReader get() {
-						File file = getSTTFile();
-						if (file.exists()) {
-							try {
-								return new DefaultItemImporter(new FileReader(
-										file));
-							} catch (FileNotFoundException e) {
-								throw new RuntimeException(e);
-							}
-						} else {
-							return new ItemReader() {
-								@Override
-								public void close() throws IOException {
-								}
-
-								@Override
-								public Optional<TimeTrackingItem> read() {
-									return Optional.<TimeTrackingItem> absent();
-								}
-							};
-						}
-					}
-
-				});
+	private ItemWriter createPersistenceWriter() throws IOException {
+		return new DefaultItemExporter(new FileWriter(getSTTFile(), true));
 	}
 
 	private File getSTTFile() {
@@ -97,7 +67,7 @@ public class Main extends AbstractModule {
 			@Override
 			public void run() {
 				Main main = new Main();
-				main.start(Guice.createInjector(new Main()));
+				main.start();
 			}
 		});
 	}
@@ -107,8 +77,32 @@ public class Main extends AbstractModule {
 		new JFXPanel();
 	}
 
-	void start(Injector injector) {
-		STTApplication instance = injector.getInstance(STTApplication.class);
-		instance.start();
+	void start() {
+		setupLogging();
+
+		STTApplication application = createSTTApplication();
+		application.start();
+	}
+
+	private void setupLogging() {
+		ConsoleHandler handler = new ConsoleHandler();
+		handler.setLevel(Level.FINEST);
+		LOG.setLevel(Level.FINEST);
+		LOG.addHandler(handler);
+	}
+
+	STTApplication createSTTApplication() {
+		Stage stage = new Stage();
+		CommandHandler commandHandler;
+		try {
+			commandHandler = new ToItemWriterCommandHandler(
+					createPersistenceWriter());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		ItemReader historyReader = createPersistenceReader();
+		ExecutorService executorService = Executors.newSingleThreadExecutor();
+		return new STTApplication(stage, commandHandler, historyReader,
+				executorService);
 	}
 }

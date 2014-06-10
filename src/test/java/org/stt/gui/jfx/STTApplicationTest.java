@@ -19,6 +19,8 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
@@ -30,20 +32,27 @@ import com.google.common.base.Optional;
 
 @RunWith(JFXTestRunner.class)
 public class STTApplicationTest {
-	private final STTApplication sut = new STTApplication();
+	private STTApplication sut;
 	private final JFXTestHelper helper = new JFXTestHelper();
 	private Stage stage;
+
+	@Mock
 	private CommandHandler commandHandler;
+
+	@Mock
+	private ExecutorService executorService;
 
 	@Before
 	public void setup() {
+		MockitoAnnotations.initMocks(this);
+
 		helper.invokeAndWait(new Runnable() {
 			@Override
 			public void run() {
 				stage = helper.createStageForTest();
-				sut.setStage(stage);
-				commandHandler = mock(CommandHandler.class);
-				sut.setCommandHandler(commandHandler);
+				ItemReader historySource = mock(ItemReader.class);
+				sut = new STTApplication(stage, commandHandler, historySource,
+						executorService);
 			}
 		});
 	}
@@ -95,17 +104,13 @@ public class STTApplicationTest {
 	@Test
 	@NotOnPlatformThread
 	public void shouldReadHistoryItemsFromReader() throws Exception {
-		// GIVEN
-		final ExecutorService service = mock(ExecutorService.class);
 		willAnswer(new Answer<Void>() {
-
 			@Override
 			public Void answer(InvocationOnMock invocation) throws Throwable {
 				((Runnable) invocation.getArguments()[0]).run();
 				return null;
 			}
-		}).given(service).execute(any(Runnable.class));
-		sut.setExecutorService(service);
+		}).given(executorService).execute(any(Runnable.class));
 
 		final TimeTrackingItem item = new TimeTrackingItem("comment",
 				DateTime.now());
@@ -133,7 +138,7 @@ public class STTApplicationTest {
 
 			@Override
 			public void run() {
-				verify(service).execute(any(Runnable.class));
+				verify(executorService).execute(any(Runnable.class));
 				assertThat(sut.history.getItems(),
 						is(Arrays.asList(new TimeTrackingItem[] { item })));
 			}

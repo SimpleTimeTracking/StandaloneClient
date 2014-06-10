@@ -30,43 +30,28 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
 public class STTApplication {
-	private Stage stage;
+	private final Stage stage;
 	@FXML
 	TextArea commandText;
 	@FXML
 	ListView<TimeTrackingItem> history;
 
-	private ExecutorService service;
+	private final ExecutorService executorService;
 
-	private CommandHandler commandHandler;
-	private ItemReader historySource;
+	private final CommandHandler commandHandler;
+	private final ItemReader historySource;
 
-	@Inject
-	public void setStage(Stage stage) {
-		this.stage = stage;
-	}
-
-	@Inject
-	public void setCommandHandler(CommandHandler commandHandler) {
+	public STTApplication(Stage stage, CommandHandler commandHandler,
+			ItemReader historySource, ExecutorService executorService) {
+		this.stage = checkNotNull(stage);
 		this.commandHandler = checkNotNull(commandHandler);
-	}
-
-	@Inject(optional = true)
-	public void setHistorySource(@Named("dataSource") ItemReader reader) {
-		this.historySource = reader;
-	}
-
-	@Inject
-	public void setExecutorService(ExecutorService service) {
-		this.service = checkNotNull(service);
+		this.historySource = checkNotNull(historySource);
+		this.executorService = checkNotNull(executorService);
 	}
 
 	public void readHistoryFrom(final ItemReader reader) {
-		service.execute(new Task<Collection<TimeTrackingItem>>() {
+		executorService.execute(new Task<Collection<TimeTrackingItem>>() {
 			@Override
 			protected Collection<TimeTrackingItem> call() throws Exception {
 				return IOUtil.readAll(reader);
@@ -124,9 +109,9 @@ public class STTApplication {
 	protected void done() {
 		stage.close();
 		Platform.exit();
-		service.shutdown();
+		executorService.shutdown();
 		try {
-			service.awaitTermination(1, TimeUnit.SECONDS);
+			executorService.awaitTermination(1, TimeUnit.SECONDS);
 			commandHandler.close();
 		} catch (InterruptedException | IOException e) {
 			throw new RuntimeException(e);
