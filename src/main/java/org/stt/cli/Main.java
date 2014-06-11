@@ -11,6 +11,8 @@ import java.io.Reader;
 import java.io.Writer;
 
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
@@ -36,6 +38,9 @@ public class Main {
 	private final ItemReader readFrom;
 	private final ItemSearcher searchIn;
 
+	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
+			.forPattern("HH:mm:ss");
+
 	public Main(ItemWriter writeTo, ItemReader readFrom, ItemSearcher searchIn) {
 		this.writeTo = checkNotNull(writeTo);
 		this.readFrom = checkNotNull(readFrom);
@@ -46,6 +51,9 @@ public class Main {
 		StringBuilder comment = new StringBuilder();
 		for (int i = 1; i < args.length; i++) {
 			comment.append(args[i]);
+			if (i < args.length - 1) {
+				comment.append(' ');
+			}
 		}
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
@@ -55,28 +63,42 @@ public class Main {
 	}
 
 	private void report(String[] args) {
-		Optional<TimeTrackingItem> item;
-		while ((item = readFrom.read()).isPresent()) {
-			System.out.println(item);
+		String searchString = null;
+		if (args.length > 1) {
+			// there is a parameter! Let's parse it ;-)
+			searchString = args[1];
+		}
+		Optional<TimeTrackingItem> optionalItem;
+		while ((optionalItem = readFrom.read()).isPresent()) {
+			TimeTrackingItem item = optionalItem.get();
+			DateTime start = item.getStart();
+			DateTime end = item.getEnd().orNull();
+			String comment = item.getComment().orNull();
+
+			StringBuilder builder = new StringBuilder();
+			builder.append(hmsDateFormat.print(start));
+			builder.append(" - ");
+			if (end == null) {
+				builder.append("        ");
+			} else {
+				builder.append(hmsDateFormat.print(end));
+			}
+			builder.append(" => ");
+			builder.append(comment);
+
+			if (searchString == null
+					|| builder.toString().contains(searchString)) {
+				System.out.println(builder.toString());
+			}
 		}
 	}
 
 	private void fin() throws IOException {
 
-		Optional<TimeTrackingItem> item = null;
-		Optional<TimeTrackingItem> newitem;
-		// get the last item
-		while ((newitem = readFrom.read()).isPresent()) {
-			item = newitem;
-		}
-
-		TimeTrackingItem last = item.orNull();
-		if (last != null) {
-			TimeTrackingItem newLast = new TimeTrackingItem(last.getComment()
-					.orNull(), last.getStart(), DateTime.now());
-
-			writeTo.delete(last);
-			writeTo.write(newLast);
+		TimeTrackingItem current = searchIn.getCurrentTimeTrackingitem()
+				.orNull();
+		if (current != null) {
+			writeTo.replace(current, current.withEnd(DateTime.now()));
 		}
 	}
 
@@ -105,18 +127,7 @@ public class Main {
 		DefaultItemExporter exporter = new DefaultItemExporter(
 				createPersistenceStreamSupport());
 		DefaultItemImporter importer = createNewReader();
-		DefaultItemSearcher searcher = new DefaultItemSearcher(
-				new ItemReaderProvider() {
-
-					@Override
-					public ItemReader provideReader() {
-						try {
-							return createNewReader();
-						} catch (FileNotFoundException e) {
-							throw new RuntimeException(e);
-						}
-					}
-				});
+		DefaultItemSearcher searcher = createNewSearcher();
 
 		Main m = new Main(exporter, importer, searcher);
 
@@ -134,6 +145,20 @@ public class Main {
 
 		exporter.close();
 		importer.close();
+	}
+
+	private static DefaultItemSearcher createNewSearcher() {
+		return new DefaultItemSearcher(new ItemReaderProvider() {
+
+			@Override
+			public ItemReader provideReader() {
+				try {
+					return createNewReader();
+				} catch (FileNotFoundException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		});
 	}
 
 	private static DefaultItemImporter createNewReader()

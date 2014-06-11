@@ -56,7 +56,7 @@ public final class TimeTrackingItem {
 	public String toString() {
 		return start.toString() + " - "
 				+ (end.isPresent() ? end.get().toString() : "null") + " : "
-				+ comment;
+				+ comment.orNull();
 	}
 
 	@Override
