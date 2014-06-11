@@ -8,14 +8,21 @@ import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
-	private final Label label = new Label();
-
 	public TimeTrackingItemCell() {
 	}
 
 	@Override
 	protected void updateItem(TimeTrackingItem item, boolean empty) {
 		super.updateItem(item, empty);
+		Label label = createLabel();
+		setGraphic(label);
+	}
+
+	private Label createLabel() {
+		TimeTrackingItem item = getItem();
+		boolean empty = isEmpty();
+		Label label = new Label();
+
 		if (!empty) {
 			StringBuilder itemText = new StringBuilder();
 			DateTimeFormatter dateTimeFormatter = DateTimeFormat.shortDate();
@@ -34,6 +41,6 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		} else {
 			label.setText("");
 		}
-		setGraphic(label);
+		return label;
 	}
 }

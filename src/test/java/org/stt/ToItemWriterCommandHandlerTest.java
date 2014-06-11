@@ -1,6 +1,5 @@
 package org.stt;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
@@ -10,9 +9,17 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
+import org.joda.time.ReadableInstant;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.theories.DataPoints;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.experimental.theories.suppliers.TestedOn;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -22,6 +29,7 @@ import org.stt.persistence.ItemWriter;
 
 import com.google.common.base.Optional;
 
+@RunWith(Theories.class)
 public class ToItemWriterCommandHandlerTest {
 	@Mock
 	ItemWriter itemWriter;
@@ -30,6 +38,21 @@ public class ToItemWriterCommandHandlerTest {
 	ItemSearcher itemSearcher;
 
 	private ToItemWriterCommandHandler sut;
+
+	@DataPoints
+	public static Command[] minuteFormats = { min("test %smins ago"),
+			min("test %s mins ago"), min("test %smin ago"),
+			min("test %s minutes ago") };
+
+	@DataPoints
+	public static Command[] secondFormats = { secs("test %ss ago"),
+			secs("test %s sec ago"), secs("test %ssecs ago"),
+			secs("test %s second ago"), secs("test %sseconds ago") };
+
+	@DataPoints
+	public static Command[] hourFormats = { hours("test %sh ago"),
+			hours("test %shr ago"), hours("test %s hrs ago"),
+			hours("test %shour ago"), hours("test %s hours ago") };
 
 	@Before
 	public void setup() {
@@ -40,18 +63,12 @@ public class ToItemWriterCommandHandlerTest {
 	@Test
 	public void shouldWriteCommandsAsNewItems() throws IOException {
 		// GIVEN
-		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
-				Optional.<TimeTrackingItem> absent());
+		givenNoCurrentItemIsAvailable();
 
 		// WHEN
 		sut.executeCommand("test");
 
-		// THEN
-		ArgumentCaptor<TimeTrackingItem> captor = ArgumentCaptor
-				.forClass(TimeTrackingItem.class);
-		verify(itemWriter).write(captor.capture());
-		TimeTrackingItem timeTrackingItem = captor.getValue();
-		assertThat(timeTrackingItem.getComment().get(), equalTo("test"));
+		assertThatNewItemWasWritten("test");
 	}
 
 	@Test
@@ -75,11 +92,7 @@ public class ToItemWriterCommandHandlerTest {
 
 	private void assertThatNewItemWasWritten(String testComment)
 			throws IOException {
-		ArgumentCaptor<TimeTrackingItem> newTimeTrackingItemCaptor = ArgumentCaptor
-				.forClass(TimeTrackingItem.class);
-		verify(itemWriter).write(newTimeTrackingItemCaptor.capture());
-		TimeTrackingItem newTimeTrackingItem = newTimeTrackingItemCaptor
-				.getValue();
+		TimeTrackingItem newTimeTrackingItem = retrieveWrittenTimeTrackingItem();
 		assertThat(newTimeTrackingItem.getComment(),
 				is(Optional.of(testComment)));
 	}
@@ -92,5 +105,112 @@ public class ToItemWriterCommandHandlerTest {
 				newFinishedItemCaptor.capture());
 		TimeTrackingItem nowFinishedItem = newFinishedItemCaptor.getValue();
 		assertThat(nowFinishedItem.getEnd(), not(Optional.<DateTime> absent()));
+	}
+
+	@Theory
+	public void shouldParseMinutesAgoFormats(
+			@TestedOn(ints = { 0, 1, 10, 61 }) int minutesAgo, Command format) {
+		Assume.assumeTrue(format.isCategory("mins"));
+		// GIVEN
+		String command = format.supplyCommandFor(minutesAgo);
+
+		// WHEN
+		TimeTrackingItem item = retrieveItemWhenCommandIsExecuted(command);
+
+		// THEN
+		assertThat("Parameters: '" + minutesAgo + "' '" + command + "'",
+				item.getStart(),
+				is(Matchers.<ReadableInstant> lessThanOrEqualTo(DateTime.now()
+						.minusMinutes(minutesAgo))));
+	}
+
+	@Theory
+	public void shouldParseSecondsAgoFormats(
+			@TestedOn(ints = { 0, 1, 10, 61 }) int secondsAgo, Command format) {
+		Assume.assumeTrue(format.isCategory("secs"));
+		// GIVEN
+		String command = format.supplyCommandFor(secondsAgo);
+
+		// WHEN
+		TimeTrackingItem item = retrieveItemWhenCommandIsExecuted(command);
+
+		// THEN
+		assertThat("Parameters: '" + secondsAgo + "' '" + command + "'",
+				item.getStart(),
+				is(Matchers.<ReadableInstant> lessThanOrEqualTo(DateTime.now()
+						.minusSeconds(secondsAgo))));
+	}
+
+	@Theory
+	public void shouldParseHourAgoFormats(
+			@TestedOn(ints = { 0, 1, 10, 61 }) int hoursAgo, Command format) {
+		Assume.assumeTrue(format.isCategory("hours"));
+		// GIVEN
+		String command = format.supplyCommandFor(hoursAgo);
+
+		// WHEN
+		TimeTrackingItem item = retrieveItemWhenCommandIsExecuted(command);
+
+		// THEN
+		assertThat("Parameters: '" + hoursAgo + "' '" + command + "'",
+				item.getStart(),
+				is(Matchers.<ReadableInstant> lessThanOrEqualTo(DateTime.now()
+						.minusHours(hoursAgo))));
+	}
+
+	private TimeTrackingItem retrieveItemWhenCommandIsExecuted(String command) {
+		givenNoCurrentItemIsAvailable();
+		sut.executeCommand(command);
+		return retrieveWrittenTimeTrackingItem();
+	}
+
+	private TimeTrackingItem retrieveWrittenTimeTrackingItem() {
+		ArgumentCaptor<TimeTrackingItem> newTimeTrackingItemCaptor = ArgumentCaptor
+				.forClass(TimeTrackingItem.class);
+		try {
+			verify(itemWriter).write(newTimeTrackingItemCaptor.capture());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		TimeTrackingItem newTimeTrackingItem = newTimeTrackingItemCaptor
+				.getValue();
+		return newTimeTrackingItem;
+	}
+
+	private void givenNoCurrentItemIsAvailable() {
+		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
+				Optional.<TimeTrackingItem> absent());
+	}
+
+	public static Command min(String command) {
+		return new Command(command, "mins");
+	}
+
+	public static Command secs(String command) {
+		return new Command(command, "secs");
+	}
+
+	public static Command hours(String command) {
+		return new Command(command, "hours");
+	}
+
+	private static class Command {
+		private final String commandString;
+		private final String category;
+
+		public Command(String commandString, String category) {
+			assert commandString != null;
+			assert category != null;
+			this.commandString = commandString;
+			this.category = category;
+		}
+
+		public boolean isCategory(String category) {
+			return this.category.equals(category);
+		}
+
+		public String supplyCommandFor(int amount) {
+			return commandString.replace("%s", Integer.toString(amount));
+		}
 	}
 }
