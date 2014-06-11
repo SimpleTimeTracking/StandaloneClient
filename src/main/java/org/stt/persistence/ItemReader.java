@@ -8,6 +8,14 @@ import org.stt.model.TimeTrackingItem;
 import com.google.common.base.Optional;
 
 /**
+ * <p>
+ * Unless otherwised specified, the items returned <b>must</b> be ordered by
+ * start time.
+ * </p>
+ * <p>
+ * Note that only the last item returned should have no "end" time, all others
+ * should be "closed"
+ * </p>
  */
 public interface ItemReader extends Closeable {
 	/**

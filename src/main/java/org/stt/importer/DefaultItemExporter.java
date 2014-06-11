@@ -1,7 +1,8 @@
 package org.stt.importer;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 
 import org.apache.commons.io.IOUtils;
@@ -9,8 +10,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.google.common.base.Preconditions;
 
@@ -22,35 +21,43 @@ import com.google.common.base.Preconditions;
  */
 public class DefaultItemExporter implements ItemWriter {
 
-	private final Writer outputWriter;
-
+	private final StreamResourceProvider support;
+	
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
 
 	private static final String EOL = System.getProperty("line.separator");
 
-	public DefaultItemExporter(Writer output) {
-		outputWriter = output;
+	public DefaultItemExporter(StreamResourceProvider support) {
+		this.support = support;
 	}
 
 	@Override
 	public void write(TimeTrackingItem item) throws IOException {
 		Preconditions.checkNotNull(item);
+		Writer writer = support.provideAppendingWriter();
+		writer.write(EOL);
+		writer.write(getWritableString(item));
+	}
 
-		outputWriter.write(EOL);
-		outputWriter.write(item.getStart().toString(dateFormat));
-		outputWriter.write(' ');
+	private String getWritableString(TimeTrackingItem item)
+			throws IOException {
+		StringBuilder builder = new StringBuilder();
+		builder.append(item.getStart().toString(dateFormat));
+		builder.append(' ');
 		if (item.getEnd().isPresent()) {
-			outputWriter.write(item.getEnd().get().toString(dateFormat));
-			outputWriter.write(' ');
+			builder.append(item.getEnd().get().toString(dateFormat));
+			builder.append(' ');
 		}
 
 		if (item.getComment().isPresent()) {
 			String oneLineComment = item.getComment().get();
 			oneLineComment = oneLineComment.replaceAll("\r", "\\\\r");
 			oneLineComment = oneLineComment.replaceAll("\n", "\\\\n");
-			outputWriter.write(oneLineComment);
+			builder.append(oneLineComment);
 		}
+		
+		return builder.toString();
 	}
 
 	@Override
@@ -62,20 +69,30 @@ public class DefaultItemExporter implements ItemWriter {
 
 	@Override
 	public void delete(TimeTrackingItem item) throws IOException {
-		File tempFile = File.createTempFile("stt", "tmp");
-
-		// the idea is:
-		// while (read line): if (not line equals item) then write to temp file
-		// mv temp file to ~/.stt
-
-		// FIXME: currently not possible to read...
-		// BufferedReader reader = new BufferedReader(new FileReader)
-		throw new NotImplementedException();
+		
+		
+		BufferedReader reader = new BufferedReader(support.provideReader());
+		
+		StringWriter stringWriter = new StringWriter();
+		String currentLine = null;
+		while((currentLine = reader.readLine()) != null) {
+			if(currentLine.equals(getWritableString(item))) {
+				//NOOP, do not write
+			} else {
+				stringWriter.write(EOL);
+				stringWriter.write(currentLine);
+			}
+		}
+		
+		reader.close();
+		Writer truncatingWriter = support.provideTruncatingWriter();
+		truncatingWriter.write(stringWriter.toString());
+		truncatingWriter.close();
 	}
 
 	@Override
 	public void close() {
-		IOUtils.closeQuietly(outputWriter);
+		IOUtils.closeQuietly(support);
 	}
 
 }

@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
@@ -20,9 +22,13 @@ import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
+import org.stt.importer.StreamResourceProvider;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
+import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
+import org.stt.searching.DefaultItemSearcher;
 
 import com.google.common.base.Optional;
 
@@ -49,11 +55,50 @@ public class Main {
 				}
 			};
 		}
+	}
 
+	private ItemSearcher createItemSearcher() {
+		return new DefaultItemSearcher(createItemReaderProvider());
+	}
+
+	private ItemReaderProvider createItemReaderProvider() {
+		return new ItemReaderProvider() {
+
+			@Override
+			public ItemReader provideReader() {
+				return createPersistenceReader();
+			}
+		};
 	}
 
 	private ItemWriter createPersistenceWriter() throws IOException {
-		return new DefaultItemExporter(new FileWriter(getSTTFile(), true));
+		return new DefaultItemExporter(createPersistenceStreamSupport());
+	}
+	
+	private StreamResourceProvider createPersistenceStreamSupport() throws IOException {
+		StreamResourceProvider srp = new StreamResourceProvider() {
+			
+			@Override
+			public Writer provideTruncatingWriter() throws IOException {
+				return new FileWriter(getSTTFile(), false);
+			}
+			
+			@Override
+			public Reader provideReader() throws FileNotFoundException {
+				return new FileReader(getSTTFile());
+			}
+			
+			@Override
+			public Writer provideAppendingWriter() throws IOException {
+				return new FileWriter(getSTTFile(), true);
+			}
+			
+			@Override
+		    public void close() {
+				
+			}
+		};
+		return srp;
 	}
 
 	private File getSTTFile() {
@@ -96,7 +141,7 @@ public class Main {
 		CommandHandler commandHandler;
 		try {
 			commandHandler = new ToItemWriterCommandHandler(
-					createPersistenceWriter());
+					createPersistenceWriter(), createItemSearcher());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
