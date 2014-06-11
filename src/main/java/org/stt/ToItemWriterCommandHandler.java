@@ -14,12 +14,12 @@ import org.stt.persistence.ItemWriter;
 import com.google.common.base.Optional;
 
 public class ToItemWriterCommandHandler implements CommandHandler {
-	private static final Pattern P_MINS_AGO = Pattern
-			.compile("(.+) (\\d+) ?min(ute)?s? ago$");
-	private static final Pattern P_SECS_AGO = Pattern
-			.compile("(.+) (\\d+) ?s(ec(ond)?s?)? ago$");
-	private static final Pattern P_HOURS_AGO = Pattern
-			.compile("(.+) (\\d+) ?h(rs?|ours?)? ago$");
+	private static final Pattern P_MINS_AGO = Pattern.compile(
+			"(.+)\\s+(\\d+)\\s?min(ute)?s? ago$", Pattern.MULTILINE);
+	private static final Pattern P_SECS_AGO = Pattern.compile(
+			"(.+)\\s+(\\d+)\\s?s(ec(ond)?s?)? ago$", Pattern.MULTILINE);
+	private static final Pattern P_HOURS_AGO = Pattern.compile(
+			"(.+)\\s+(\\d+)\\s?h(rs?|ours?)? ago$", Pattern.MULTILINE);
 
 	private final ItemWriter itemWriter;
 	private final ItemSearcher itemSearcher;
