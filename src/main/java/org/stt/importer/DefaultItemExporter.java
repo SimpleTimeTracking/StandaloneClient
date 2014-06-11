@@ -69,18 +69,19 @@ public class DefaultItemExporter implements ItemWriter {
 	public void delete(TimeTrackingItem item) throws IOException {
 
 		BufferedReader reader = new BufferedReader(support.provideReader());
-
-		PrintWriter stringWriter = new PrintWriter(new StringWriter());
+		StringWriter stringWriter = new StringWriter();
+		PrintWriter printWriter = new PrintWriter(stringWriter);
 		String currentLine = null;
 		while ((currentLine = reader.readLine()) != null) {
 			if (currentLine.equals(getWritableString(item))) {
 				// NOOP, do not write
 			} else {
-				stringWriter.println(currentLine);
+				printWriter.println(currentLine);
 			}
 		}
 
 		reader.close();
+		printWriter.flush();
 		Writer truncatingWriter = support.provideTruncatingWriter();
 		truncatingWriter.write(stringWriter.toString());
 		truncatingWriter.close();

@@ -1,10 +1,13 @@
 package org.stt.importer;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.is;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 
@@ -18,22 +21,23 @@ import org.stt.persistence.ItemWriter;
 public class DefaultItemExporterTest {
 
 	private StringWriter stringWriter;
-	private StreamResourceProvider provider;
+	private ItemWriter theWriter;
 
 	@Before
 	public void setUp() {
 		stringWriter = new StringWriter();
 
-		provider = new StreamResourceProvider() {
+		StreamResourceProvider provider = new StreamResourceProvider() {
 
 			@Override
 			public Writer provideTruncatingWriter() throws IOException {
+				stringWriter = new StringWriter();
 				return stringWriter;
 			}
 
 			@Override
 			public Reader provideReader() throws FileNotFoundException {
-				throw new RuntimeException("not implemented");
+				return new StringReader(stringWriter.toString());
 			}
 
 			@Override
@@ -45,13 +49,12 @@ public class DefaultItemExporterTest {
 			public void close() {
 			}
 		};
+
+		theWriter = new DefaultItemExporter(provider);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void writeNullObjectFails() throws IOException {
-
-		// GIVEN
-		ItemWriter theWriter = new DefaultItemExporter(provider);
 
 		// WHEN
 		theWriter.write(null);
@@ -64,7 +67,6 @@ public class DefaultItemExporterTest {
 	public void writeCommentSucceeds() throws IOException {
 
 		// GIVEN
-		ItemWriter theWriter = new DefaultItemExporter(provider);
 		TimeTrackingItem theItem = new TimeTrackingItem("the comment",
 				DateTime.now());
 
@@ -80,7 +82,6 @@ public class DefaultItemExporterTest {
 	public void writeStartSucceeds() throws IOException {
 
 		// GIVEN
-		ItemWriter theWriter = new DefaultItemExporter(provider);
 		DateTime theTime = new DateTime(2011, 10, 12, 13, 14, 15);
 		TimeTrackingItem theItem = new TimeTrackingItem(null, theTime);
 
@@ -96,7 +97,6 @@ public class DefaultItemExporterTest {
 	public void writeEndSucceeds() throws IOException {
 
 		// GIVEN
-		ItemWriter theWriter = new DefaultItemExporter(provider);
 		DateTime start = new DateTime(2011, 10, 12, 13, 14, 15);
 		DateTime end = new DateTime(2012, 10, 12, 13, 14, 15);
 
@@ -114,7 +114,6 @@ public class DefaultItemExporterTest {
 	public void writeCompleteEntrySucceeds() throws IOException {
 
 		// GIVEN
-		ItemWriter theWriter = new DefaultItemExporter(provider);
 		DateTime start = new DateTime(2011, 10, 12, 13, 14, 15);
 
 		DateTime end = new DateTime(2012, 10, 12, 13, 14, 15);
@@ -134,7 +133,6 @@ public class DefaultItemExporterTest {
 	public void writeMultiLineEntrySucceeds() throws IOException {
 
 		// GIVEN
-		ItemWriter theWriter = new DefaultItemExporter(provider);
 		TimeTrackingItem theItem = new TimeTrackingItem(
 				"this is\n a multiline\r string\r\n with different separators",
 				DateTime.now());
@@ -145,8 +143,50 @@ public class DefaultItemExporterTest {
 		// THEN
 		Assert.assertThat(
 				stringWriter.toString(),
-				containsString("this is\\n a multiline\\r string\\r\\n with different separators"));
+				endsWith("this is\\n a multiline\\r string\\r\\n with different separators"
+						+ System.getProperty("line.separator")));
 
+	}
+
+	@Test
+	public void itemsCanBeDeleted() throws IOException {
+
+		// GIVEN
+		TimeTrackingItem theItem = new TimeTrackingItem("testitem",
+				new DateTime(2011, 10, 10, 11, 12, 13));
+		TimeTrackingItem theItem2 = new TimeTrackingItem("testitem",
+				DateTime.now());
+		theWriter.write(theItem);
+		theWriter.write(theItem2);
+
+		// when
+		theWriter.delete(theItem2);
+
+		// then
+		Assert.assertThat(
+				stringWriter.toString(),
+				is("2011-10-10_11:12:13 testitem"
+						+ System.getProperty("line.separator")));
+	}
+
+	@Test
+	public void itemCanBeReplaced() throws IOException {
+
+		// GIVEN
+		TimeTrackingItem theItem = new TimeTrackingItem("testitem",
+				new DateTime(2011, 10, 10, 11, 12, 13));
+		TimeTrackingItem theItem2 = new TimeTrackingItem("testitem",
+				DateTime.now());
+		theWriter.write(theItem2);
+
+		// when
+		theWriter.replace(theItem2, theItem);
+
+		// then
+		Assert.assertThat(
+				stringWriter.toString(),
+				is("2011-10-10_11:12:13 testitem"
+						+ System.getProperty("line.separator")));
 	}
 
 }
