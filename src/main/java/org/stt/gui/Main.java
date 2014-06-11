@@ -103,6 +103,7 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
+		Platform.setImplicitExit(false);
 		initializeJFXToolkit();
 		Platform.runLater(new Runnable() {
 

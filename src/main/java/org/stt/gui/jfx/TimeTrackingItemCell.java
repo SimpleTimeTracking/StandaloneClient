@@ -25,7 +25,8 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 		if (!empty) {
 			StringBuilder itemText = new StringBuilder();
-			DateTimeFormatter dateTimeFormatter = DateTimeFormat.shortDate();
+			DateTimeFormatter dateTimeFormatter = DateTimeFormat
+					.shortDateTime();
 			itemText.append(item.getStart().toString(dateTimeFormatter));
 			if (item.getEnd().isPresent()) {
 				itemText.append(" - ");

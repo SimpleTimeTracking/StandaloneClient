@@ -33,6 +33,8 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 
+import com.sun.javafx.application.PlatformImpl;
+
 public class STTApplication {
 	private final Stage stage;
 	@FXML
@@ -74,7 +76,7 @@ public class STTApplication {
 		});
 	}
 
-	public void setupStage() throws Exception {
+	public void setupStage() {
 		checkNotNull(stage);
 
 		ResourceBundle localization = ResourceBundle
@@ -83,7 +85,12 @@ public class STTApplication {
 				"/org/stt/gui/jfx/MainWindow.fxml"), localization);
 		loader.setController(this);
 
-		BorderPane pane = (BorderPane) loader.load();
+		BorderPane pane;
+		try {
+			pane = (BorderPane) loader.load();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		history.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		history.getSelectionModel().selectedItemProperty()
@@ -126,37 +133,53 @@ public class STTApplication {
 
 			@Override
 			public void handle(WindowEvent arg0) {
-				System.exit(0);
+				clearCommand();
+				done();
 			}
 		});
 		stage.show();
+		commandText.requestFocus();
 	}
 
 	@FXML
 	protected void done() {
+		executeCommand();
 		stage.close();
-		Platform.exit();
 		executorService.shutdown();
+		Platform.runLater(new Runnable() {
+
+			@Override
+			public void run() {
+				Platform.exit();
+				// Required because txExit() above is just swallowed...
+				PlatformImpl.tkExit();
+			}
+		});
 		try {
 			executorService.awaitTermination(1, TimeUnit.SECONDS);
 			commandHandler.close();
 		} catch (InterruptedException | IOException e) {
 			throw new RuntimeException(e);
 		}
-		System.exit(0);
+		// System.exit(0);
 	}
 
 	@FXML
 	void onKeyPressed(KeyEvent event) {
 		if (KeyCode.ENTER.equals(event.getCode()) && event.isControlDown()) {
-			executeCommand();
+			done();
 		}
 	}
 
 	void executeCommand() {
-		commandHandler.executeCommand(commandText.getText());
-		commandText.clear();
+		if (!commandText.getText().trim().isEmpty()) {
+			commandHandler.executeCommand(commandText.getText());
+			clearCommand();
+		}
+	}
 
+	private void clearCommand() {
+		commandText.clear();
 	}
 
 	public void start() {
