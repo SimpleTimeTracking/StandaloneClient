@@ -2,6 +2,7 @@ package org.stt.importer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
@@ -26,8 +27,6 @@ public class DefaultItemExporter implements ItemWriter {
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
 
-	private static final String EOL = System.getProperty("line.separator");
-
 	public DefaultItemExporter(StreamResourceProvider support) {
 		this.support = support;
 	}
@@ -35,9 +34,9 @@ public class DefaultItemExporter implements ItemWriter {
 	@Override
 	public void write(TimeTrackingItem item) throws IOException {
 		Preconditions.checkNotNull(item);
-		Writer writer = support.provideAppendingWriter();
-		writer.write(EOL);
-		writer.write(getWritableString(item));
+		PrintWriter writer = new PrintWriter(support.provideAppendingWriter());
+		writer.println(getWritableString(item));
+		writer.close();
 	}
 
 	private String getWritableString(TimeTrackingItem item) throws IOException {
@@ -71,14 +70,13 @@ public class DefaultItemExporter implements ItemWriter {
 
 		BufferedReader reader = new BufferedReader(support.provideReader());
 
-		StringWriter stringWriter = new StringWriter();
+		PrintWriter stringWriter = new PrintWriter(new StringWriter());
 		String currentLine = null;
 		while ((currentLine = reader.readLine()) != null) {
 			if (currentLine.equals(getWritableString(item))) {
 				// NOOP, do not write
 			} else {
-				stringWriter.write(EOL);
-				stringWriter.write(currentLine);
+				stringWriter.println(currentLine);
 			}
 		}
 

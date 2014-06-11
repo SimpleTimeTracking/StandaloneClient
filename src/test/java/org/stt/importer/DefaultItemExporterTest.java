@@ -1,7 +1,6 @@
 package org.stt.importer;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.endsWith;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -146,7 +145,7 @@ public class DefaultItemExporterTest {
 		// THEN
 		Assert.assertThat(
 				stringWriter.toString(),
-				endsWith("this is\\n a multiline\\r string\\r\\n with different separators"));
+				containsString("this is\\n a multiline\\r string\\r\\n with different separators"));
 
 	}
 
