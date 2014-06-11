@@ -3,24 +3,56 @@ package org.stt.importer;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 
 import org.joda.time.DateTime;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 
 public class DefaultItemExporterTest {
 
+	private StringWriter stringWriter;
+	private StreamResourceProvider provider;
+
+	@Before
+	public void setUp() {
+		stringWriter = new StringWriter();
+
+		provider = new StreamResourceProvider() {
+
+			@Override
+			public Writer provideTruncatingWriter() throws IOException {
+				return stringWriter;
+			}
+
+			@Override
+			public Reader provideReader() throws FileNotFoundException {
+				throw new RuntimeException("not implemented");
+			}
+
+			@Override
+			public Writer provideAppendingWriter() throws IOException {
+				return stringWriter;
+			}
+
+			@Override
+			public void close() {
+			}
+		};
+	}
+
 	@Test(expected = NullPointerException.class)
 	public void writeNullObjectFails() throws IOException {
 
 		// GIVEN
-		Writer stringWriter = new StringWriter();
-		ItemWriter theWriter = new DefaultItemExporter(stringWriter);
+		ItemWriter theWriter = new DefaultItemExporter(provider);
 
 		// WHEN
 		theWriter.write(null);
@@ -33,8 +65,7 @@ public class DefaultItemExporterTest {
 	public void writeCommentSucceeds() throws IOException {
 
 		// GIVEN
-		StringWriter stringWriter = new StringWriter();
-		ItemWriter theWriter = new DefaultItemExporter(stringWriter);
+		ItemWriter theWriter = new DefaultItemExporter(provider);
 		TimeTrackingItem theItem = new TimeTrackingItem("the comment",
 				DateTime.now());
 
@@ -50,8 +81,7 @@ public class DefaultItemExporterTest {
 	public void writeStartSucceeds() throws IOException {
 
 		// GIVEN
-		StringWriter stringWriter = new StringWriter();
-		ItemWriter theWriter = new DefaultItemExporter(stringWriter);
+		ItemWriter theWriter = new DefaultItemExporter(provider);
 		DateTime theTime = new DateTime(2011, 10, 12, 13, 14, 15);
 		TimeTrackingItem theItem = new TimeTrackingItem(null, theTime);
 
@@ -67,8 +97,7 @@ public class DefaultItemExporterTest {
 	public void writeEndSucceeds() throws IOException {
 
 		// GIVEN
-		StringWriter stringWriter = new StringWriter();
-		ItemWriter theWriter = new DefaultItemExporter(stringWriter);
+		ItemWriter theWriter = new DefaultItemExporter(provider);
 		DateTime start = new DateTime(2011, 10, 12, 13, 14, 15);
 		DateTime end = new DateTime(2012, 10, 12, 13, 14, 15);
 
@@ -86,8 +115,7 @@ public class DefaultItemExporterTest {
 	public void writeCompleteEntrySucceeds() throws IOException {
 
 		// GIVEN
-		StringWriter stringWriter = new StringWriter();
-		ItemWriter theWriter = new DefaultItemExporter(stringWriter);
+		ItemWriter theWriter = new DefaultItemExporter(provider);
 		DateTime start = new DateTime(2011, 10, 12, 13, 14, 15);
 
 		DateTime end = new DateTime(2012, 10, 12, 13, 14, 15);
@@ -107,8 +135,7 @@ public class DefaultItemExporterTest {
 	public void writeMultiLineEntrySucceeds() throws IOException {
 
 		// GIVEN
-		StringWriter stringWriter = new StringWriter();
-		ItemWriter theWriter = new DefaultItemExporter(stringWriter);
+		ItemWriter theWriter = new DefaultItemExporter(provider);
 		TimeTrackingItem theItem = new TimeTrackingItem(
 				"this is\n a multiline\r string\r\n with different separators",
 				DateTime.now());

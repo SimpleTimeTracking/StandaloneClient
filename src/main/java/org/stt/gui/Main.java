@@ -58,44 +58,41 @@ public class Main {
 	}
 
 	private ItemSearcher createItemSearcher() {
-		return new DefaultItemSearcher(createItemReaderProvider());
-	}
-
-	private ItemReaderProvider createItemReaderProvider() {
-		return new ItemReaderProvider() {
+		return new DefaultItemSearcher(new ItemReaderProvider() {
 
 			@Override
 			public ItemReader provideReader() {
 				return createPersistenceReader();
 			}
-		};
+		});
 	}
 
 	private ItemWriter createPersistenceWriter() throws IOException {
 		return new DefaultItemExporter(createPersistenceStreamSupport());
 	}
-	
-	private StreamResourceProvider createPersistenceStreamSupport() throws IOException {
+
+	private StreamResourceProvider createPersistenceStreamSupport()
+			throws IOException {
 		StreamResourceProvider srp = new StreamResourceProvider() {
-			
+
 			@Override
 			public Writer provideTruncatingWriter() throws IOException {
 				return new FileWriter(getSTTFile(), false);
 			}
-			
+
 			@Override
 			public Reader provideReader() throws FileNotFoundException {
 				return new FileReader(getSTTFile());
 			}
-			
+
 			@Override
 			public Writer provideAppendingWriter() throws IOException {
 				return new FileWriter(getSTTFile(), true);
 			}
-			
+
 			@Override
-		    public void close() {
-				
+			public void close() {
+
 			}
 		};
 		return srp;

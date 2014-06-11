@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 public class DefaultItemExporter implements ItemWriter {
 
 	private final StreamResourceProvider support;
-	
+
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
 
@@ -40,8 +40,7 @@ public class DefaultItemExporter implements ItemWriter {
 		writer.write(getWritableString(item));
 	}
 
-	private String getWritableString(TimeTrackingItem item)
-			throws IOException {
+	private String getWritableString(TimeTrackingItem item) throws IOException {
 		StringBuilder builder = new StringBuilder();
 		builder.append(item.getStart().toString(dateFormat));
 		builder.append(' ');
@@ -56,7 +55,7 @@ public class DefaultItemExporter implements ItemWriter {
 			oneLineComment = oneLineComment.replaceAll("\n", "\\\\n");
 			builder.append(oneLineComment);
 		}
-		
+
 		return builder.toString();
 	}
 
@@ -69,21 +68,20 @@ public class DefaultItemExporter implements ItemWriter {
 
 	@Override
 	public void delete(TimeTrackingItem item) throws IOException {
-		
-		
+
 		BufferedReader reader = new BufferedReader(support.provideReader());
-		
+
 		StringWriter stringWriter = new StringWriter();
 		String currentLine = null;
-		while((currentLine = reader.readLine()) != null) {
-			if(currentLine.equals(getWritableString(item))) {
-				//NOOP, do not write
+		while ((currentLine = reader.readLine()) != null) {
+			if (currentLine.equals(getWritableString(item))) {
+				// NOOP, do not write
 			} else {
 				stringWriter.write(EOL);
 				stringWriter.write(currentLine);
 			}
 		}
-		
+
 		reader.close();
 		Writer truncatingWriter = support.provideTruncatingWriter();
 		truncatingWriter.write(stringWriter.toString());

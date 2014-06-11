@@ -42,7 +42,7 @@ public class Main {
 		this.searchIn = checkNotNull(searchIn);
 	}
 
-	void on(String[] args) {
+	void on(String[] args) throws IOException {
 		StringBuilder comment = new StringBuilder();
 		for (int i = 1; i < args.length; i++) {
 			comment.append(args[i]);
@@ -51,6 +51,7 @@ public class Main {
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn);
 		tiw.executeCommand(comment.toString());
+		tiw.close();
 	}
 
 	private void report(String[] args) {
@@ -101,43 +102,21 @@ public class Main {
 			System.exit(2);
 		}
 
-		ItemReaderProvider itemReaderProvider = new ItemReaderProvider() {
-
-			@Override
-			public ItemReader provideReader() {
-				try {
-					return createNewReader();
-				} catch (FileNotFoundException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		};
-		
-
-		DefaultItemExporter exporter = new DefaultItemExporter(new StreamResourceProvider() {
-			
-			@Override
-			public Writer provideTruncatingWriter() throws IOException {
-				return new FileWriter(timeFile, false);
-			}
-			
-			@Override
-			public Reader provideReader() throws FileNotFoundException {
-				return new FileReader(timeFile);
-			}
-			
-			@Override
-			public Writer provideAppendingWriter() throws IOException {
-				return new FileWriter(timeFile, true);
-			}
-			
-			@Override
-			public void close() {
-				
-			}
-		});
+		DefaultItemExporter exporter = new DefaultItemExporter(
+				createPersistenceStreamSupport());
 		DefaultItemImporter importer = createNewReader();
-		DefaultItemSearcher searcher = new DefaultItemSearcher(itemReaderProvider);
+		DefaultItemSearcher searcher = new DefaultItemSearcher(
+				new ItemReaderProvider() {
+
+					@Override
+					public ItemReader provideReader() {
+						try {
+							return createNewReader();
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException(e);
+						}
+					}
+				});
 
 		Main m = new Main(exporter, importer, searcher);
 
@@ -160,5 +139,32 @@ public class Main {
 	private static DefaultItemImporter createNewReader()
 			throws FileNotFoundException {
 		return new DefaultItemImporter(new FileReader(timeFile));
+	}
+
+	private static StreamResourceProvider createPersistenceStreamSupport()
+			throws IOException {
+		StreamResourceProvider srp = new StreamResourceProvider() {
+
+			@Override
+			public Writer provideTruncatingWriter() throws IOException {
+				return new FileWriter(timeFile, false);
+			}
+
+			@Override
+			public Reader provideReader() throws FileNotFoundException {
+				return new FileReader(timeFile);
+			}
+
+			@Override
+			public Writer provideAppendingWriter() throws IOException {
+				return new FileWriter(timeFile, true);
+			}
+
+			@Override
+			public void close() {
+
+			}
+		};
+		return srp;
 	}
 }
