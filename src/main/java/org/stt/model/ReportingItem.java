@@ -34,6 +34,8 @@ public class ReportingItem {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((comment == null) ? 0 : comment.hashCode());
+		result = prime * result
+				+ ((duration == null) ? 0 : duration.hashCode());
 		return result;
 	}
 
@@ -56,7 +58,13 @@ public class ReportingItem {
 		} else if (!comment.equals(other.comment)) {
 			return false;
 		}
+		if (duration == null) {
+			if (other.duration != null) {
+				return false;
+			}
+		} else if (!duration.equals(other.duration)) {
+			return false;
+		}
 		return true;
 	}
-
 }
