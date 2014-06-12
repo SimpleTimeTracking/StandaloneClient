@@ -1,10 +1,11 @@
 package org.stt.gui;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.concurrent.ExecutorService;
@@ -39,8 +40,8 @@ public class Main {
 		File file = getSTTFile();
 		if (file.exists()) {
 			try {
-				return new DefaultItemImporter(new FileReader(file));
-			} catch (FileNotFoundException e) {
+				return new DefaultItemImporter(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		} else {
@@ -77,17 +78,17 @@ public class Main {
 
 			@Override
 			public Writer provideTruncatingWriter() throws IOException {
-				return new FileWriter(getSTTFile(), false);
+				return new OutputStreamWriter(new FileOutputStream(getSTTFile(), false), "UTF-8");
 			}
 
 			@Override
-			public Reader provideReader() throws FileNotFoundException {
-				return new FileReader(getSTTFile());
+			public Reader provideReader() throws IOException {
+				return new InputStreamReader(new FileInputStream(getSTTFile()), "UTF-8");
 			}
 
 			@Override
 			public Writer provideAppendingWriter() throws IOException {
-				return new FileWriter(getSTTFile(), true);
+				return new OutputStreamWriter(new FileOutputStream(getSTTFile(), true), "UTF-8");
 			}
 
 			@Override
