@@ -1,7 +1,6 @@
 package org.stt.importer;
 
 import java.io.Closeable;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -15,7 +14,7 @@ public interface StreamResourceProvider extends Closeable {
 	 */
 	Writer provideTruncatingWriter() throws IOException;
 	
-	Reader provideReader() throws FileNotFoundException;
+	Reader provideReader() throws IOException;
 	
 	/**
 	 * Should close all provided writers and the reader if they are not yet closed.
