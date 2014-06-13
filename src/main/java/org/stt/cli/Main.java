@@ -12,6 +12,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,6 +23,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
+import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.StartDateReaderFilter;
 import org.stt.importer.AggregatingImporter;
@@ -46,9 +48,11 @@ import com.google.common.base.Optional;
  */
 public class Main {
 
-	private static final File timeFile = new File(
-			System.getProperty("user.home"), ".stt");
-	private static final File tiFile = new File(".ti-sheet");
+	private static final File timeFile = Configuration.getInstance()
+			.getSttFile();
+	private static final File tiFile = Configuration.getInstance().getTiFile();
+	private static final File currentTiFile = Configuration.getInstance()
+			.getTiCurrentFile();
 
 	private final ItemWriter writeTo;
 	private final ItemReader readFrom;
@@ -56,6 +60,8 @@ public class Main {
 
 	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
 			.forPattern("HH:mm:ss");
+	private final DateTimeFormatter mdhmsDateFormat = DateTimeFormat
+			.forPattern("MM-dd HH:mm:ss");
 
 	private final PeriodFormatter hmsPeriodFormatter = new PeriodFormatterBuilder()
 			.printZeroAlways().minimumPrintedDigits(2).appendHours()
@@ -69,7 +75,7 @@ public class Main {
 		this.searchIn = checkNotNull(searchIn);
 	}
 
-	void on(String[] args) throws IOException {
+	private void on(String[] args) throws IOException {
 		StringBuilder comment = new StringBuilder();
 
 		for (int i = 1; i < args.length; i++) {
@@ -81,7 +87,11 @@ public class Main {
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn);
-		tiw.executeCommand(comment.toString());
+		TimeTrackingItem createdItem = tiw.executeCommand(comment.toString());
+
+		// FIXME: sysout("stopped working on $old_item")
+		System.out.println("start working on "
+				+ createdItem.getComment().orNull());
 		tiw.close();
 	}
 
@@ -131,16 +141,24 @@ public class Main {
 			String comment = item.getComment().orNull();
 
 			StringBuilder builder = new StringBuilder();
-			builder.append(hmsDateFormat.print(start));
+			if (start.getYear() == DateTime.now().getYear()
+					&& start.getDayOfYear() == DateTime.now().getDayOfYear()) {
+				builder.append(hmsDateFormat.print(start));
+			} else {
+				builder.append(mdhmsDateFormat.print(start));
+			}
 			builder.append(" - ");
 			if (end == null) {
 				builder.append("now     ");
 			} else {
 				builder.append(hmsDateFormat.print(end));
 			}
+			builder.append(" ( ");
+			builder.append(hmsPeriodFormatter.print(new Duration(start,
+					(end == null ? DateTime.now() : end)).toPeriod()));
+			builder.append(" ) ");
 			builder.append(" => ");
 			builder.append(comment);
-
 			if (searchString == null
 					|| builder.toString().contains(searchString)) {
 				System.out.println(builder.toString());
@@ -149,7 +167,12 @@ public class Main {
 		filteredReader.close();
 
 		// create a new reader and output the summed up report
-		System.out.println("====== sums of the last " + days + " days ======");
+		if (days > 0) {
+			System.out.println("====== sums of the last " + days
+					+ " days ======");
+		} else {
+			System.out.println("====== sums of today ======");
+		}
 		ItemReader reportReader = createNewReader();
 		ReportGenerator reporter = new SummingReportGenerator(
 				new StartDateReaderFilter(reportReader, DateTime.now()
@@ -180,6 +203,8 @@ public class Main {
 		if (current != null) {
 			writeTo.replace(current, current.withEnd(DateTime.now()));
 		}
+
+		System.out.println("stopped working on " + current.toString());
 	}
 
 	/*
@@ -250,13 +275,32 @@ public class Main {
 		});
 	}
 
+	/**
+	 * For each existing file create a reader and return an AggregatingImporter
+	 * of all readers where the corresponding file exists
+	 */
 	private static ItemReader createNewReader() throws IOException {
+		List<ItemReader> availableReaders = new LinkedList<>();
 
+		if (timeFile.canRead()) {
+			DefaultItemImporter timeImporter = new DefaultItemImporter(
+					new InputStreamReader(new FileInputStream(timeFile),
+							"UTF-8"));
+			availableReaders.add(timeImporter);
+		}
+		if (tiFile.canRead()) {
+			TiImporter tiImporter = new TiImporter(new InputStreamReader(
+					new FileInputStream(tiFile), "UTF-8"));
+			availableReaders.add(tiImporter);
+		}
+		if (currentTiFile.canRead()) {
+			TiImporter currentTiImporter = new TiImporter(
+					new InputStreamReader(new FileInputStream(currentTiFile),
+							"UTF-8"));
+			availableReaders.add(currentTiImporter);
+		}
 		AggregatingImporter importer = new AggregatingImporter(
-				new DefaultItemImporter(new InputStreamReader(
-						new FileInputStream(timeFile), "UTF-8")),
-				new TiImporter(new InputStreamReader(
-						new FileInputStream(tiFile), "UTF-8")));
+				availableReaders.toArray(new ItemReader[availableReaders.size()]));
 
 		return importer;
 	}
