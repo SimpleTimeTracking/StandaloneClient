@@ -57,6 +57,11 @@ public class Configuration {
 		return new File(tiFile);
 	}
 
+	public String getSystemOutEncoding() {
+		String encoding = getPropertiesReplaced("sysoutEncoding", "UTF-8");
+		return encoding;
+	}
+
 	private String getPropertiesReplaced(String propName, String fallback) {
 		String theProperty = loadedProps.getProperty(propName, fallback);
 		Matcher envMatcher = ENV_PATTERN.matcher(theProperty);
@@ -68,6 +73,5 @@ public class Configuration {
 			}
 		}
 		return theProperty;
-
 	}
 }

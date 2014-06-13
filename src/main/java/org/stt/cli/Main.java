@@ -220,21 +220,14 @@ public class Main {
 	 * ti fin // sets end time of previous item
 	 */
 	public static void main(String[] args) throws IOException {
-		// FIXME: switch these two based on something... Maybe set environment
-		// properties?
-		// Windows console workaround for nice umlauts:
-		// System.setOut(new PrintStream(new
-		// FileOutputStream(FileDescriptor.out),true,"CP850"));
-		// Cygwin UTF-8 console workaround:
+		// apply the desired encoding for all System.out calls
+		// this is necessary if one wants to output non ASCII
+		// characters on a Windows console
 		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
-				true, "UTF-8"));
+				true, Configuration.getInstance().getSystemOutEncoding()));
 
 		if (args.length == 0) {
-			String help = "Usage:\non $comment\tto start working on something\n"
-					+ "report\t\tto display a report\n"
-					+ "fin\t\tto stop working";
-
-			System.out.println(help);
+			usage();
 			System.exit(2);
 		}
 
@@ -255,10 +248,23 @@ public class Main {
 		} else if (mainOperator.startsWith("f")) {
 			// fin
 			m.fin();
+		} else {
+			usage();
 		}
 
 		exporter.close();
 		importer.close();
+	}
+
+	/**
+	 * Prints usage information to stdout
+	 */
+	private static void usage() {
+		String usage = "Usage:\n"
+				+ "on $comment\tto start working on something\n"
+				+ "report\t\tto display a report\n" + "fin\t\tto stop working";
+
+		System.out.println(usage);
 	}
 
 	private static DefaultItemSearcher createNewSearcher() {
