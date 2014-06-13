@@ -1,0 +1,23 @@
+# This is an example properties file
+# Lines starting with the hash sign and empty lines are ignored
+
+# Put this file to $HOME/.sttrc and it will be used automatically
+
+# You can use environment variables anywhere you like if they are enclosed by dollar signs ($). 
+# Example:
+# tiFile=$HOME$
+
+# all values below show their default
+
+# If you want to read existing ti files, set this to the absolute or relative path of the file
+#tiFile=$HOME$/.ti-sheet
+
+# The same goes for an existing ti-current file:
+#tiCurrentFile=$HOME$/.ti-sheet-current
+
+# The file where time tracking is persisted to
+#sttFile=$HOME$/.stt
+
+# if you get funny output with umlauts or other non ASCII characters on the Windows CMD,
+# set sysoutEncoding=CP850
+#sysoutEncoding=UTF-8
