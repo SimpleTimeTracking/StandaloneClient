@@ -31,7 +31,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	}
 
 	@Override
-	public void executeCommand(String command) {
+	public TimeTrackingItem executeCommand(String command) {
 		checkNotNull(command);
 		TimeTrackingItem parsedItem = parse(command);
 		try {
@@ -47,6 +47,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
+		
+		return parsedItem;
 	}
 
 	private TimeTrackingItem parse(String command) {

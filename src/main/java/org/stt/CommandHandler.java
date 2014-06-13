@@ -13,6 +13,7 @@ public interface CommandHandler extends Closeable {
 	 * Executes a command, ie. add a {@link TimeTrackingItem}.
 	 * 
 	 * @param command
+	 * @return the created item or null if no item has been created
 	 */
-	void executeCommand(String command);
+	TimeTrackingItem executeCommand(String command);
 }
