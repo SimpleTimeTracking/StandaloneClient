@@ -64,8 +64,8 @@ public class TiImporterTest {
 				readItems,
 				contains(
 						hasProperty("comment",
-								is(Optional.of("the_long_comment"))),
+								is(Optional.of("the long comment"))),
 						hasProperty("comment",
-								is(Optional.of("the_long_comment2")))));
+								is(Optional.of("the long comment2")))));
 	}
 }

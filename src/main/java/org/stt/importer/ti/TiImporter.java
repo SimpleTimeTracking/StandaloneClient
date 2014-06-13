@@ -57,17 +57,21 @@ public class TiImporter implements ItemReader {
 			throws ParseException {
 
 		String[] splitLine = singleLine.split("\\s");
-		Preconditions.checkState(splitLine.length == 4, "The given line \""
+		Preconditions.checkState(splitLine.length == 4 || splitLine.length == 2, "The given line \""
 				+ singleLine
-				+ "\" must contain exactly 4 white space separated elements.");
+				+ "\" must contain exactly 2 or 4 white space separated elements.");
 
 		String comment = splitLine[0];
+		comment = comment.replaceAll("_", " ");
 
 		DateTime start = dateFormat.parseDateTime(splitLine[1]);
-
-		DateTime end = dateFormat.parseDateTime(splitLine[3]);
-
-		return new TimeTrackingItem(comment, start, end);
+		if(splitLine.length > 2) {
+			DateTime end = dateFormat.parseDateTime(splitLine[3]);
+	
+			return new TimeTrackingItem(comment, start, end);
+		}
+		
+		return new TimeTrackingItem(comment, start);
 	}
 
 	@Override
