@@ -19,6 +19,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
 
 import org.stt.CommandHandler;
+import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.importer.DefaultItemExporter;
@@ -40,7 +41,8 @@ public class Main {
 		File file = getSTTFile();
 		if (file.exists()) {
 			try {
-				return new DefaultItemImporter(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+				return new DefaultItemImporter(new InputStreamReader(
+						new FileInputStream(file), "UTF-8"));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -78,17 +80,20 @@ public class Main {
 
 			@Override
 			public Writer provideTruncatingWriter() throws IOException {
-				return new OutputStreamWriter(new FileOutputStream(getSTTFile(), false), "UTF-8");
+				return new OutputStreamWriter(new FileOutputStream(
+						getSTTFile(), false), "UTF-8");
 			}
 
 			@Override
 			public Reader provideReader() throws IOException {
-				return new InputStreamReader(new FileInputStream(getSTTFile()), "UTF-8");
+				return new InputStreamReader(new FileInputStream(getSTTFile()),
+						"UTF-8");
 			}
 
 			@Override
 			public Writer provideAppendingWriter() throws IOException {
-				return new OutputStreamWriter(new FileOutputStream(getSTTFile(), true), "UTF-8");
+				return new OutputStreamWriter(new FileOutputStream(
+						getSTTFile(), true), "UTF-8");
 			}
 
 			@Override
@@ -100,7 +105,7 @@ public class Main {
 	}
 
 	private File getSTTFile() {
-		return new File(System.getProperty("user.home"), ".stt");
+		return Configuration.getInstance().getSttFile();
 	}
 
 	public static void main(String[] args) {
