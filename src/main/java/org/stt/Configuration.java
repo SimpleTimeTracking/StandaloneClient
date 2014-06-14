@@ -1,11 +1,15 @@
 package org.stt;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * Simple configuration mechanism with fallback values.
@@ -27,10 +31,26 @@ public class Configuration {
 
 	private Configuration() {
 		loadedProps = new Properties();
+		if (propertiesFile.exists()) {
+			try {
+				loadedProps.load(new FileReader(propertiesFile));
+			} catch (IOException e) {
+				// NOOP if the config file cannot be read, use the given
+				// defaults
+			}
+		} else {
+			// create the file from example
+			createSttrc();
+		}
+	}
+
+	private void createSttrc() {
+		InputStream rcStream = this.getClass().getResourceAsStream(
+				"/org/stt/sttrc.example");
 		try {
-			loadedProps.load(new FileReader(propertiesFile));
+			IOUtils.copy(rcStream, new FileOutputStream(propertiesFile));
 		} catch (IOException e) {
-			// NOOP if the config file is not present, use the given defaults
+			// NOOP if the file cannot be created, the defaults will be used
 		}
 	}
 

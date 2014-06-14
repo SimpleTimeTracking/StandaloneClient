@@ -5,7 +5,7 @@
 
 # You can use environment variables anywhere you like if they are enclosed by dollar signs ($). 
 # Example:
-# tiFile=$HOME$
+# tiFile=$HOME$/.ti-sheet
 
 # all values below show their default
 
