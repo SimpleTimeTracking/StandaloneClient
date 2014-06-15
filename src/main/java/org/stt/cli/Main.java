@@ -12,8 +12,13 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +39,7 @@ import org.stt.importer.StreamResourceProvider;
 import org.stt.importer.ti.TiImporter;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.persistence.ItemSearcher;
@@ -77,23 +83,32 @@ public class Main {
 	}
 
 	private void on(String[] args) throws IOException {
-		StringBuilder comment = new StringBuilder();
-
-		for (int i = 1; i < args.length; i++) {
-			comment.append(args[i]);
-			if (i < args.length - 1) {
-				comment.append(' ');
-			}
-		}
+		String comment = join(1, args);
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn);
-		TimeTrackingItem createdItem = tiw.executeCommand(comment.toString());
+		TimeTrackingItem createdItem = tiw.executeCommand(comment);
 
 		// FIXME: sysout("stopped working on $old_item")
 		System.out.println("start working on "
 				+ createdItem.getComment().orNull());
 		tiw.close();
+	}
+
+	/**
+	 * @param args
+	 * @param comment
+	 */
+	private String join(int start, String[] args) {
+
+		StringBuilder builder = new StringBuilder();
+		for (int i = start; i < args.length; i++) {
+			builder.append(args[i]);
+			if (i < args.length - 1) {
+				builder.append(' ');
+			}
+		}
+		return builder.toString();
 	}
 
 	private void report(String[] args) throws IOException {
@@ -103,13 +118,7 @@ public class Main {
 			// there is a parameter! Let's parse it ;-)
 
 			// first collapse all following strings
-			String argsString = "";
-			for (int i = 1; i < args.length; i++) {
-				argsString += args[i];
-				if (i < args.length - 1) {
-					argsString += " ";
-				}
-			}
+			String argsString = join(1, args);
 
 			Pattern daysPattern = Pattern.compile("(\\d+) days");
 			Matcher daysMatcher = daysPattern.matcher(argsString);
@@ -201,6 +210,39 @@ public class Main {
 		reportReader.close();
 	}
 
+	/**
+	 * output all items where the comment contains (ignoring case) the given
+	 * args.
+	 * 
+	 * Only unique comments are printed.
+	 * 
+	 * The ordering of the output is from newest to oldest
+	 */
+	private void search(String[] args) throws IOException {
+
+		SortedSet<TimeTrackingItem> sortedItems = new TreeSet<TimeTrackingItem>(
+				new Comparator<TimeTrackingItem>() {
+
+					@Override
+					public int compare(TimeTrackingItem o1, TimeTrackingItem o2) {
+						return o2.getStart().compareTo(o1.getStart());
+					}
+				});
+
+		ItemReader reader = new SubstringReaderFilter(readFrom, join(1, args));
+		sortedItems.addAll(IOUtil.readAll(reader));
+
+		Set<String> sortedUniqueComments = new HashSet<>(sortedItems.size());
+
+		for (TimeTrackingItem i : sortedItems) {
+			String comment = i.getComment().orNull();
+			if (comment != null && !sortedUniqueComments.contains(comment)) {
+				sortedUniqueComments.add(comment);
+				System.out.println(comment);
+			}
+		}
+	}
+
 	private void fin() throws IOException {
 
 		TimeTrackingItem current = searchIn.getCurrentTimeTrackingitem()
@@ -267,6 +309,9 @@ public class Main {
 		} else if (mainOperator.startsWith("f")) {
 			// fin
 			m.fin();
+		} else if (mainOperator.startsWith("s")) {
+			// search
+			m.search(args);
 		} else {
 			usage();
 		}
@@ -280,8 +325,10 @@ public class Main {
 	 */
 	private static void usage() {
 		String usage = "Usage:\n"
-				+ "on $comment\tto start working on something\n"
-				+ "report\t\tto display a report\n" + "fin\t\tto stop working";
+				+ "on comment\tto start working on something\n"
+				+ "report [X days] [searchstring]\tto display a report\n"
+				+ "fin\t\tto stop working\n"
+				+ "search [searchstring]\tto get a list of all comments of items matching the given search string";
 
 		System.out.println(usage);
 	}
