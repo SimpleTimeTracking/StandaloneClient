@@ -58,4 +58,27 @@ public class SubstringReaderFilterTest {
 		// THEN
 		Assert.assertEquals(Optional.absent(), read);
 	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void nullSearchStringReturnsAllItems() throws IOException {
+
+		// GIVEN
+		ItemReader readerMock = Mockito.mock(ItemReader.class);
+		Mockito.when(readerMock.read())
+				.thenReturn(
+						Optional.of(new TimeTrackingItem("the comment",
+								DateTime.now())),
+						Optional.<TimeTrackingItem> absent());
+
+		SubstringReaderFilter filter = new SubstringReaderFilter(readerMock,
+				null);
+
+		// WHEN
+		Optional<TimeTrackingItem> read = filter.read();
+		filter.close();
+
+		// THEN
+		Assert.assertEquals("the comment", read.get().getComment().get());
+	}
 }
