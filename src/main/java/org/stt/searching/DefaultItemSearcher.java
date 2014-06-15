@@ -74,13 +74,28 @@ public class DefaultItemSearcher implements ItemSearcher {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		return foundElements;
+
+		throw new RuntimeException("not correctly implemented");
+		// return foundElements;
 	}
 
 	@Override
-	public Collection<TimeTrackingItem> searchByComment(String search) {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<String> searchByComment(String search) {
+
+		Collection<String> foundComments = new LinkedList<>();
+		Optional<TimeTrackingItem> item;
+		try (ItemReader reader = provider.provideReader()) {
+			while ((item = reader.read()).isPresent()) {
+				String comment = item.get().getComment().orNull();
+				if (comment != null
+						&& comment.toLowerCase().contains(search.toLowerCase())) {
+					foundComments.add(comment);
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return foundComments;
 	}
 
 	@Override
