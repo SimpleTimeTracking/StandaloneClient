@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,6 +56,8 @@ import com.google.common.base.Optional;
  * The starting point for the CLI
  */
 public class Main {
+
+	private static Logger LOG = Logger.getLogger(Main.class.getName());
 
 	private static final File timeFile = Configuration.getInstance()
 			.getSttFile();
@@ -341,6 +345,7 @@ public class Main {
 				try {
 					return createNewReader();
 				} catch (IOException e) {
+					LOG.log(Level.SEVERE, "Error creating reader", e);
 					throw new RuntimeException(e);
 				}
 			}

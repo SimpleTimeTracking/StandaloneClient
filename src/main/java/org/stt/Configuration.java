@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +22,8 @@ import org.apache.commons.io.IOUtils;
  * $HOME$/.stt
  */
 public class Configuration {
+	private static final Logger LOG = Logger.getLogger(Configuration.class
+			.getName());
 
 	private final File propertiesFile = new File(
 			System.getProperty("user.home"), ".sttrc");
@@ -37,9 +41,10 @@ public class Configuration {
 			try (Reader propsReader = new InputStreamReader(
 					new FileInputStream(propertiesFile), "UTF-8")) {
 				loadedProps.load(propsReader);
-			} catch (IOException e) { // NOPMD
-				// NOOP if the config file cannot be read, use the given
-				// defaults
+			} catch (IOException e) {
+				// if the config file cannot be read, defaults are used
+				LOG.log(Level.WARNING, "cannot read config file "
+						+ propertiesFile.getAbsolutePath(), e);
 			}
 		} else {
 			// create the file from example
@@ -52,8 +57,9 @@ public class Configuration {
 		try (InputStream rcStream = this.getClass().getResourceAsStream(
 				"/org/stt/sttrc.example")) {
 			IOUtils.copy(rcStream, new FileOutputStream(propertiesFile));
-		} catch (IOException e) { // NOPMD
-			// NOOP if the file cannot be created, the defaults will be used
+		} catch (IOException e) {
+			LOG.log(Level.WARNING, "cannot write example config file "
+					+ propertiesFile.getAbsolutePath(), e);
 		}
 	}
 

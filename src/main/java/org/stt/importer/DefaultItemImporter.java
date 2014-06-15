@@ -1,7 +1,6 @@
 package org.stt.importer;
 
 import java.io.Reader;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,21 +35,14 @@ public class DefaultItemImporter implements ItemReader {
 			String nextLine = lineIter.nextLine();
 			// ignore empty lines or ones just containing whitespace
 			if (!nextLine.trim().isEmpty()) {
-				try {
-					return Optional.of(constructFrom(nextLine));
-				} catch (ParseException e) {
-					// FIXME: we need logging and the possibility of generating
-					// warning messages
-					e.printStackTrace();
-				}
+				return Optional.of(constructFrom(nextLine));
 			}
 		}
 		lineIter.close();
 		return Optional.absent();
 	}
 
-	private TimeTrackingItem constructFrom(String singleLine)
-			throws ParseException {
+	private TimeTrackingItem constructFrom(String singleLine) {
 
 		List<String> splitLine = new LinkedList<>(Arrays.asList(singleLine
 				.split(" ")));
@@ -95,5 +87,4 @@ public class DefaultItemImporter implements ItemReader {
 	public void close() {
 		lineIter.close();
 	}
-
 }
