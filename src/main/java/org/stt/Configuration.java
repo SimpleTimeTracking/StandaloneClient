@@ -1,10 +1,12 @@
 package org.stt;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,9 +34,10 @@ public class Configuration {
 	private Configuration() {
 		loadedProps = new Properties();
 		if (propertiesFile.exists()) {
-			try {
-				loadedProps.load(new FileReader(propertiesFile));
-			} catch (IOException e) {
+			try (Reader propsReader = new InputStreamReader(
+					new FileInputStream(propertiesFile), "UTF-8")) {
+				loadedProps.load(propsReader);
+			} catch (IOException e) { // NOPMD
 				// NOOP if the config file cannot be read, use the given
 				// defaults
 			}
@@ -45,11 +48,11 @@ public class Configuration {
 	}
 
 	private void createSttrc() {
-		InputStream rcStream = this.getClass().getResourceAsStream(
-				"/org/stt/sttrc.example");
-		try {
+
+		try (InputStream rcStream = this.getClass().getResourceAsStream(
+				"/org/stt/sttrc.example")) {
 			IOUtils.copy(rcStream, new FileOutputStream(propertiesFile));
-		} catch (IOException e) {
+		} catch (IOException e) { // NOPMD
 			// NOOP if the file cannot be created, the defaults will be used
 		}
 	}

@@ -249,9 +249,9 @@ public class Main {
 				.orNull();
 		if (current != null) {
 			writeTo.replace(current, current.withEnd(DateTime.now()));
+			System.out.println("stopped working on " + current.toString());
 		}
 
-		System.out.println("stopped working on " + current.toString());
 	}
 
 	private void printTruncatedString(StringBuilder toPrint) {

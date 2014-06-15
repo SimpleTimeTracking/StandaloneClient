@@ -1,5 +1,7 @@
 apply plugin: 'java';
 apply plugin: 'eclipse';
+apply plugin: 'findbugs';
+apply plugin: 'pmd';
 
 def javaHome = System.properties['java.home']
 
@@ -26,3 +28,10 @@ jar {
    from { configurations.compile.findAll { !it.name.contains("jfxrt.jar") } collect { it.isDirectory() ? it : zipTree(it) } }
    manifest.attributes("Main-Class":"org.stt.StartWithJFX")
 }
+
+tasks.withType(FindBugs) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+ }

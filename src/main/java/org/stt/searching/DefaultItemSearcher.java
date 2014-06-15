@@ -62,9 +62,11 @@ public class DefaultItemSearcher implements ItemSearcher {
 				if (from == null && to == null && currentEnd == null) {
 					foundElements.add(currentItem);
 
-				} else if (from == null && currentEnd != null) {
+				} else if (from == null && currentEnd != null) { // NOPMD - not
+																	// implemented
+																	// yet
 
-				} else if (to == null) {
+				} else if (to == null) { // NOPMD - not implemented yet
 
 				} else if (!currentItem.getEnd().get().isBefore(from)
 						&& !currentItem.getEnd().get().isAfter(to)) {

@@ -73,9 +73,8 @@ public class DefaultItemExporter implements ItemWriter {
 		PrintWriter printWriter = new PrintWriter(stringWriter);
 		String currentLine = null;
 		while ((currentLine = reader.readLine()) != null) {
-			if (currentLine.equals(getWritableString(item))) {
-				// NOOP, do not write
-			} else {
+			// only write lines which should not be deleted
+			if (!currentLine.equals(getWritableString(item))) {
 				printWriter.println(currentLine);
 			}
 		}

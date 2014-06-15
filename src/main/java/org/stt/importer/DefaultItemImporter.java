@@ -62,7 +62,7 @@ public class DefaultItemImporter implements ItemReader {
 			try {
 				end = dateFormat.parseDateTime(splitLine.get(0));
 				splitLine.remove(0);
-			} catch (IllegalArgumentException i) {
+			} catch (IllegalArgumentException i) { // NOPMD
 				// NOOP, if the string cannot be parsed, it is no date
 				// this is a bit ugly but currently no idea how to do it
 				// "correctly"
