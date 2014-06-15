@@ -26,6 +26,7 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.StartDateReaderFilter;
+import org.stt.filter.SubstringReaderFilter;
 import org.stt.importer.AggregatingImporter;
 import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
@@ -104,7 +105,10 @@ public class Main {
 			// first collapse all following strings
 			String argsString = "";
 			for (int i = 1; i < args.length; i++) {
-				argsString += args[i] + " ";
+				argsString += args[i];
+				if (i < args.length - 1) {
+					argsString += " ";
+				}
 			}
 
 			Pattern daysPattern = Pattern.compile("(\\d+) days");
@@ -161,7 +165,7 @@ public class Main {
 			builder.append(comment);
 			if (searchString == null
 					|| builder.toString().contains(searchString)) {
-				System.out.println(builder.toString());
+				printTruncatedString(builder);
 			}
 		}
 		filteredReader.close();
@@ -175,7 +179,8 @@ public class Main {
 		}
 		ItemReader reportReader = createNewReader();
 		ReportGenerator reporter = new SummingReportGenerator(
-				new StartDateReaderFilter(reportReader, DateTime.now()
+				new StartDateReaderFilter(new SubstringReaderFilter(
+						reportReader, searchString), DateTime.now()
 						.withTimeAtStartOfDay().minusDays(days).toDateTime(),
 						DateTime.now().withTimeAtStartOfDay().plusDays(1)
 								.toDateTime()));
@@ -186,11 +191,11 @@ public class Main {
 			Duration duration = i.getDuration();
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
-			System.out.println(hmsPeriodFormatter.print(duration.toPeriod())
-					+ "\t\t" + comment);
+			printTruncatedString(hmsPeriodFormatter.print(duration.toPeriod())
+					+ "   " + comment);
 		}
 
-		System.out.println("====== overall sum:\n"
+		System.out.println("====== overall sum: ======\n"
 				+ hmsPeriodFormatter.print(overallDuration.toPeriod()));
 
 		reportReader.close();
@@ -205,6 +210,20 @@ public class Main {
 		}
 
 		System.out.println("stopped working on " + current.toString());
+	}
+
+	private void printTruncatedString(StringBuilder toPrint) {
+		printTruncatedString(toPrint.toString());
+	}
+
+	private void printTruncatedString(String toPrint) {
+		int desiredWidth = Configuration.getInstance().getCliReportingWidth() - 3;
+		if (desiredWidth < toPrint.length()) {
+			String substr = toPrint.substring(0, desiredWidth);
+			System.out.println(substr + "...");
+		} else {
+			System.out.println(toPrint);
+		}
 	}
 
 	/*
