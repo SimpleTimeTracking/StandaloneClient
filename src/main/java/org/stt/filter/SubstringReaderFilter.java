@@ -9,7 +9,9 @@ import com.google.common.base.Optional;
 
 /**
  * Reads from the given reader but only returns items where the comment contains
- * the given substring
+ * the given substring.
+ * 
+ * If the given substring is null, all items are returned.
  */
 public class SubstringReaderFilter implements ItemReader {
 
@@ -27,7 +29,8 @@ public class SubstringReaderFilter implements ItemReader {
 		Optional<TimeTrackingItem> item;
 		while ((item = reader.read()).isPresent()) {
 			String comment = item.get().getComment().orNull();
-			if (comment != null && comment.contains(substring)) {
+			if (substring == null
+					|| (comment != null && comment.contains(substring))) {
 				return item;
 			}
 		}
