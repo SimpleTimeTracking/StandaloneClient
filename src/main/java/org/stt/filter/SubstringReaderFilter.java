@@ -18,19 +18,37 @@ public class SubstringReaderFilter implements ItemReader {
 	private ItemReader reader;
 	private String substring;
 
+	private boolean ignoreCase = true;
+
 	public SubstringReaderFilter(ItemReader reader, String substring) {
 		this.reader = reader;
 		this.substring = substring;
 	}
 
+	public SubstringReaderFilter(ItemReader reader, String substring,
+			boolean ignoreCase) {
+		this.reader = reader;
+		this.substring = substring;
+		this.ignoreCase = ignoreCase;
+	}
+
 	@Override
 	public Optional<TimeTrackingItem> read() {
+		String searchString = null;
+		if (substring != null) {
+			searchString = ignoreCase ? substring.toLowerCase() : substring;
+		}
 
 		Optional<TimeTrackingItem> item;
 		while ((item = reader.read()).isPresent()) {
 			String comment = item.get().getComment().orNull();
-			if (substring == null
-					|| (comment != null && comment.contains(substring))) {
+			
+			if (ignoreCase && comment != null) {
+				comment = comment.toLowerCase();
+			}
+
+			if (searchString == null
+					|| (comment != null && comment.contains(searchString))) {
 				return item;
 			}
 		}
