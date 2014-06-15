@@ -18,6 +18,9 @@
 # The file where time tracking is persisted to
 #sttFile=$HOME$/.stt
 
+# the width of output on the CLI: Comments will be truncated, so everything fits into to this width
+# cliReportingWidth=80
+
 # if you get funny output with umlauts or other non ASCII characters on the Windows CMD,
 # set sysoutEncoding=CP850
 #sysoutEncoding=UTF-8

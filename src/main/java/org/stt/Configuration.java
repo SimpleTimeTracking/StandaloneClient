@@ -82,6 +82,12 @@ public class Configuration {
 		return encoding;
 	}
 
+	public int getCliReportingWidth() {
+		int encoding = Integer.parseInt(getPropertiesReplaced(
+				"cliReportingWidth", "80"));
+		return encoding;
+	}
+
 	private String getPropertiesReplaced(String propName, String fallback) {
 		String theProperty = loadedProps.getProperty(propName, fallback);
 		Matcher envMatcher = ENV_PATTERN.matcher(theProperty);
