@@ -14,3 +14,49 @@ To remedy this, there already are some great projects (like http://ti.sharats.me
 - modular design to allow easy extension
 - simple setup: no complicated installation, just download and start tracking times
 - information privacy: the data is located on your machine
+
+# Usage
+
+## Graphical UI
+
+To start SimpleTimeTrack UI, double click SimpleTimeTrack.jar or (if this does not work) start it by command line 
+```bash
+java -jar path/to/SimpleTimeTrack.jar
+```
+
+When starting work on a task, just enter a comment about what you are working on in the text field. Comments can span multiple lines. Then either press CTRL+ENTER or click on "Done". The window closes and the task is stored with the current time as start.
+
+## CLI
+
+To avoid typing a long command every time you want to use SimpleTimeTrack, create a little script and put it in your $PATH
+```bash
+#!/bin/bash
+java -cp path/to/SimpleTimeTrack.jar org.stt.cli.Main $*
+```
+
+Autocompletion for Bash (commands and comments) can be achieved by 
+FIXME: describe auto completion here
+
+Autocompletion for ZSH (commands and comments):
+FIXME: describe auto completion here
+```zsh
+```
+
+# Configuration
+
+When SimpleTimeTrack is started the first time, a configuration file will be created in your home directory automatically. See the comments for information about what the options do.
+The file is $HOME/.sttrc (Linux) resp. %HOME%\.sttrc (Windows)
+
+# Start hacking
+
+to start hacking on SimpleTimeTrack:
+- install gradle from http://www.gradle.org/
+- make sure you have an Oracle JDK >= 1.7
+- clone this repository 
+- build it
+```bash
+git clone https://github.com/Bytekeeper/SimpleTimeTrack.git
+cd SimpleTimeTrack
+gralde build
+```
+The created fat jar can be found in build/libs
