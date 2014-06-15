@@ -57,6 +57,6 @@ to start hacking on SimpleTimeTrack:
 ```bash
 git clone https://github.com/Bytekeeper/SimpleTimeTrack.git
 cd SimpleTimeTrack
-gralde build
+gradle build
 ```
 The created fat jar can be found in build/libs
