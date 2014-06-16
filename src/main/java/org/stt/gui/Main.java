@@ -18,6 +18,7 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
 
+import org.apache.commons.io.IOUtils;
 import org.stt.CommandHandler;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
@@ -77,28 +78,36 @@ public class Main {
 	private StreamResourceProvider createPersistenceStreamSupport()
 			throws IOException {
 		StreamResourceProvider srp = new StreamResourceProvider() {
+			private OutputStreamWriter outputStreamWriter;
+			private InputStreamReader inReader;
+			private OutputStreamWriter appendingOutWriter;
 
 			@Override
 			public Writer provideTruncatingWriter() throws IOException {
-				return new OutputStreamWriter(new FileOutputStream(
-						getSTTFile(), false), "UTF-8");
+				outputStreamWriter = new OutputStreamWriter(
+						new FileOutputStream(getSTTFile(), false), "UTF-8");
+				return outputStreamWriter;
 			}
 
 			@Override
 			public Reader provideReader() throws IOException {
-				return new InputStreamReader(new FileInputStream(getSTTFile()),
-						"UTF-8");
+				inReader = new InputStreamReader(new FileInputStream(
+						getSTTFile()), "UTF-8");
+				return inReader;
 			}
 
 			@Override
 			public Writer provideAppendingWriter() throws IOException {
-				return new OutputStreamWriter(new FileOutputStream(
-						getSTTFile(), true), "UTF-8");
+				appendingOutWriter = new OutputStreamWriter(
+						new FileOutputStream(getSTTFile(), true), "UTF-8");
+				return appendingOutWriter;
 			}
 
 			@Override
 			public void close() {
-
+				IOUtils.closeQuietly(outputStreamWriter);
+				IOUtils.closeQuietly(inReader);
+				IOUtils.closeQuietly(appendingOutWriter);
 			}
 		};
 		return srp;

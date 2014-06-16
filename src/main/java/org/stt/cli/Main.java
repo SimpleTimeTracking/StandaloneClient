@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
@@ -385,28 +386,36 @@ public class Main {
 	private static StreamResourceProvider createPersistenceStreamSupport()
 			throws IOException {
 		StreamResourceProvider srp = new StreamResourceProvider() {
+			private OutputStreamWriter outputStreamWriter;
+			private InputStreamReader inReader;
+			private OutputStreamWriter appendingOutWriter;
 
 			@Override
 			public Writer provideTruncatingWriter() throws IOException {
-				return new OutputStreamWriter(new FileOutputStream(timeFile,
-						false), "UTF-8");
+				outputStreamWriter = new OutputStreamWriter(
+						new FileOutputStream(timeFile, false), "UTF-8");
+				return outputStreamWriter;
 			}
 
 			@Override
 			public Reader provideReader() throws IOException {
-				return new InputStreamReader(new FileInputStream(timeFile),
+				inReader = new InputStreamReader(new FileInputStream(timeFile),
 						"UTF-8");
+				return inReader;
 			}
 
 			@Override
 			public Writer provideAppendingWriter() throws IOException {
-				return new OutputStreamWriter(new FileOutputStream(timeFile,
-						true), "UTF-8");
+				appendingOutWriter = new OutputStreamWriter(
+						new FileOutputStream(timeFile, true), "UTF-8");
+				return appendingOutWriter;
 			}
 
 			@Override
 			public void close() {
-
+				IOUtils.closeQuietly(outputStreamWriter);
+				IOUtils.closeQuietly(inReader);
+				IOUtils.closeQuietly(appendingOutWriter);
 			}
 		};
 		return srp;
