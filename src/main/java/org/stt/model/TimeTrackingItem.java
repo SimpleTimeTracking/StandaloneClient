@@ -25,7 +25,8 @@ public final class TimeTrackingItem {
 		this.comment = Optional.fromNullable(comment);
 		this.start = checkNotNull(start);
 		this.end = Optional.of(end);
-		checkState(start.isBefore(end), "start must be before end");
+		checkState(!end.isBefore(start),
+				"end must not be before start for item " + this.toString());
 	}
 
 	/**
