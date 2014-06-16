@@ -25,8 +25,8 @@ public class Configuration {
 	private static final Logger LOG = Logger.getLogger(Configuration.class
 			.getName());
 
-	private final File propertiesFile = new File(
-			System.getProperty("user.home"), ".sttrc");
+	private final File propertiesFile = new File(System.getenv("HOME"),
+			".sttrc");
 
 	private static Configuration instance = null;
 
