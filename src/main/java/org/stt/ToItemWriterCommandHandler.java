@@ -41,23 +41,16 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		checkNotNull(command);
 
 		if (COMMAND_FIN.equals(command)) {
-			Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
-					.getCurrentTimeTrackingitem();
 			try {
-				return endCurrentItemIfPresent(currentTimeTrackingitem,
-						DateTime.now());
+				return endCurrentItemIfPresent(DateTime.now());
 			} catch (IOException e) {
 				throw new IllegalStateException(e);
 			}
 		} else {
-
 			TimeTrackingItem parsedItem = parse(command);
-			Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
-					.getCurrentTimeTrackingitem();
 			try {
 				DateTime startTimeOfNewItem = parsedItem.getStart();
-				endCurrentItemIfPresent(currentTimeTrackingitem,
-						startTimeOfNewItem);
+				endCurrentItemIfPresent(startTimeOfNewItem);
 				itemWriter.write(parsedItem);
 			} catch (IOException e) {
 				throw new IllegalStateException(e);
@@ -67,8 +60,9 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	}
 
 	private Optional<TimeTrackingItem> endCurrentItemIfPresent(
-			Optional<TimeTrackingItem> currentTimeTrackingitem,
 			DateTime startTimeOfNewItem) throws IOException {
+		Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
+				.getCurrentTimeTrackingitem();
 		if (currentTimeTrackingitem.isPresent()) {
 			TimeTrackingItem unfinisheditem = currentTimeTrackingitem.get();
 			TimeTrackingItem nowFinishedItem = unfinisheditem
@@ -124,7 +118,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		return parseTimeWithFormatterOrReturnNull(time, formatter);
 	}
 
-	private DateTime parseTimeWithFormatterOrReturnNull(String time, DateTimeFormatter formatter) {
+	private DateTime parseTimeWithFormatterOrReturnNull(String time,
+			DateTimeFormatter formatter) {
 		try {
 			return formatter.parseDateTime(time);
 		} catch (IllegalArgumentException e) {
