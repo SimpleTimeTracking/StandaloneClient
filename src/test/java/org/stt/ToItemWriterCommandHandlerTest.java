@@ -62,6 +62,58 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void shouldParseSince7_00() {
+		// GIVEN
+		givenNoCurrentItemIsAvailable();
+
+		// WHEN
+		sut.executeCommand("test since 7:00");
+
+		// THEN
+		TimeTrackingItem item = retrieveWrittenTimeTrackingItem();
+		DateTime start = item.getStart();
+		assertThatTimeIsTodayWith(start, 7, 0, 0);
+	}
+
+	@Test
+	public void shouldParseSince03_12_11() {
+		// GIVEN
+		givenNoCurrentItemIsAvailable();
+
+		// WHEN
+		sut.executeCommand("test since 03:12:11");
+
+		// THEN
+		TimeTrackingItem item = retrieveWrittenTimeTrackingItem();
+		DateTime start = item.getStart();
+		assertThatTimeIsTodayWith(start, 3, 12, 11);
+	}
+
+	@Test
+	public void shouldParseSince13_37() {
+		// GIVEN
+		givenNoCurrentItemIsAvailable();
+
+		// WHEN
+		sut.executeCommand("test since 13:37");
+
+		// THEN
+		TimeTrackingItem item = retrieveWrittenTimeTrackingItem();
+		DateTime start = item.getStart();
+		assertThatTimeIsTodayWith(start, 13, 37, 0);
+	}
+
+	private void assertThatTimeIsTodayWith(DateTime time, int hourOfDay,
+			int minuteOfHour, int secondOfMinute) {
+		assertThat(time.getHourOfDay(), is(hourOfDay));
+		assertThat(time.getMinuteOfHour(), is(minuteOfHour));
+		assertThat(time.getSecondOfMinute(), is(secondOfMinute));
+		assertThat(time.getMillisOfSecond(), is(0));
+		assertThat(time.withTimeAtStartOfDay(), is(DateTime.now()
+				.withTimeAtStartOfDay()));
+	}
+
+	@Test
 	public void shouldEndCurrentItemOnFIN() throws IOException {
 		// GIVEN
 		TimeTrackingItem unfinished = new TimeTrackingItem(null, DateTime.now()

@@ -7,6 +7,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
@@ -22,6 +24,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			"(.+)\\s+(\\d+)\\s?s(ec(ond)?s?)? ago$", Pattern.MULTILINE);
 	private static final Pattern P_HOURS_AGO = Pattern.compile(
 			"(.+)\\s+(\\d+)\\s?h(rs?|ours?)? ago$", Pattern.MULTILINE);
+	private static final Pattern P_SINCE = Pattern.compile(
+			"(.+)\\s+since\\s+(.+)$", Pattern.MULTILINE);
 
 	private final ItemWriter itemWriter;
 	private final ItemSearcher itemSearcher;
@@ -84,9 +88,48 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			result = tryToParseHours(command);
 		}
 		if (result == null) {
+			result = tryToParseSince(command);
+		}
+		if (result == null) {
 			result = new TimeTrackingItem(command, DateTime.now());
 		}
 		return result;
+	}
+
+	private TimeTrackingItem tryToParseSince(String command) {
+		Matcher matcher = P_SINCE.matcher(command);
+		if (matcher.matches()) {
+			DateTime time = parseWithHoursMinutesAndSeconds(matcher.group(2));
+			if (time == null) {
+				time = parseWithHoursAndMinutes(matcher.group(2));
+			}
+			DateTime today = DateTime.now().withTimeAtStartOfDay();
+			DateTime todayWithTime = today.withMillisOfDay(time
+					.getMillisOfDay());
+			return new TimeTrackingItem(matcher.group(1), todayWithTime);
+		}
+		return null;
+	}
+
+	private DateTime parseWithHoursAndMinutes(String time) {
+		return parseTimeWithPattern(time, "kk:mm");
+	}
+
+	private DateTime parseWithHoursMinutesAndSeconds(String time) {
+		return parseTimeWithPattern(time, "kk:mm:ss");
+	}
+
+	private DateTime parseTimeWithPattern(String time, String pattern) {
+		DateTimeFormatter formatter = DateTimeFormat.forPattern(pattern);
+		return parseTimeWithFormatterOrReturnNull(time, formatter);
+	}
+
+	private DateTime parseTimeWithFormatterOrReturnNull(String time, DateTimeFormatter formatter) {
+		try {
+			return formatter.parseDateTime(time);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 	}
 
 	private TimeTrackingItem tryToParseSeconds(String command) {
