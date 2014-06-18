@@ -4,6 +4,8 @@ import java.io.Closeable;
 
 import org.stt.model.TimeTrackingItem;
 
+import com.google.common.base.Optional;
+
 /**
  * @author bytekeeper
  * 
@@ -13,7 +15,7 @@ public interface CommandHandler extends Closeable {
 	 * Executes a command, ie. add a {@link TimeTrackingItem}.
 	 * 
 	 * @param command
-	 * @return the created item or null if no item has been created
+	 * @return the created/updated item or {@link Optional#absent()}
 	 */
-	TimeTrackingItem executeCommand(String command);
+	Optional<TimeTrackingItem> executeCommand(String command);
 }

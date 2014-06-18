@@ -60,15 +60,15 @@ public class Main {
 
 	private static Logger LOG = Logger.getLogger(Main.class.getName());
 
-	private static final File timeFile = Configuration.getInstance()
-			.getSttFile();
-	private static final File tiFile = Configuration.getInstance().getTiFile();
-	private static final File currentTiFile = Configuration.getInstance()
-			.getTiCurrentFile();
+	private final Configuration configuration;
 
-	private final ItemWriter writeTo;
-	private final ItemReader readFrom;
-	private final ItemSearcher searchIn;
+	private final File timeFile;
+	private final File tiFile;
+	private final File currentTiFile;
+
+	private ItemWriter writeTo;
+	private ItemReader readFrom;
+	private ItemSearcher searchIn;
 
 	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
 			.forPattern("HH:mm:ss");
@@ -81,10 +81,12 @@ public class Main {
 			.appendSuffix("m").appendSeparator(":").appendSeconds()
 			.appendSuffix("s").toFormatter();
 
-	public Main(ItemWriter writeTo, ItemReader readFrom, ItemSearcher searchIn) {
-		this.writeTo = checkNotNull(writeTo);
-		this.readFrom = checkNotNull(readFrom);
-		this.searchIn = checkNotNull(searchIn);
+	public Main(Configuration configuration) {
+		this.configuration = checkNotNull(configuration);
+
+		timeFile = configuration.getSttFile();
+		tiFile = configuration.getTiFile();
+		currentTiFile = configuration.getTiCurrentFile();
 	}
 
 	private void on(String[] args) throws IOException {
@@ -92,11 +94,11 @@ public class Main {
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn);
-		TimeTrackingItem createdItem = tiw.executeCommand(comment);
+		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
 		// FIXME: sysout("stopped working on $old_item")
 		System.out.println("start working on "
-				+ createdItem.getComment().orNull());
+				+ createdItem.get().getComment().orNull());
 		tiw.close();
 	}
 
@@ -249,14 +251,15 @@ public class Main {
 	}
 
 	private void fin() throws IOException {
-
-		TimeTrackingItem current = searchIn.getCurrentTimeTrackingitem()
-				.orNull();
-		if (current != null) {
-			writeTo.replace(current, current.withEnd(DateTime.now()));
-			System.out.println("stopped working on " + current.toString());
+		try (ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
+				writeTo, searchIn)) {
+			Optional<TimeTrackingItem> updatedItem = tiw
+					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN);
+			if (updatedItem.isPresent()) {
+				System.out.println("stopped working on "
+						+ updatedItem.get().toString());
+			}
 		}
-
 	}
 
 	private void printTruncatedString(StringBuilder toPrint) {
@@ -264,7 +267,7 @@ public class Main {
 	}
 
 	private void printTruncatedString(String toPrint) {
-		int desiredWidth = Configuration.getInstance().getCliReportingWidth() - 3;
+		int desiredWidth = configuration.getCliReportingWidth() - 3;
 		if (desiredWidth < toPrint.length()) {
 			String substr = toPrint.substring(0, desiredWidth);
 			System.out.println(substr + "...");
@@ -289,40 +292,49 @@ public class Main {
 		// apply the desired encoding for all System.out calls
 		// this is necessary if one wants to output non ASCII
 		// characters on a Windows console
+		Configuration configuration = new Configuration();
 		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
-				true, Configuration.getInstance().getSystemOutEncoding()));
+				true, configuration.getSystemOutEncoding()));
 
+		Main m = new Main(configuration);
+
+		m.executeCommand(args);
+	}
+
+	private void executeCommand(String... args) {
 		if (args.length == 0) {
 			usage();
-			System.exit(2);
+			return;
 		}
 
-		DefaultItemExporter exporter = new DefaultItemExporter(
+		try (DefaultItemExporter exporter = new DefaultItemExporter(
 				createPersistenceStreamSupport());
-		ItemReader importer = createNewReader();
-		DefaultItemSearcher searcher = createNewSearcher();
+				ItemReader importer = createNewReader()) {
+			DefaultItemSearcher searcher = createNewSearcher();
 
-		Main m = new Main(exporter, importer, searcher);
+			writeTo = exporter;
+			readFrom = importer;
+			searchIn = searcher;
 
-		String mainOperator = args[0];
-		if (mainOperator.startsWith("o")) {
-			// on
-			m.on(args);
-		} else if (mainOperator.startsWith("r")) {
-			// report
-			m.report(args);
-		} else if (mainOperator.startsWith("f")) {
-			// fin
-			m.fin();
-		} else if (mainOperator.startsWith("s")) {
-			// search
-			m.search(args);
-		} else {
-			usage();
+			String mainOperator = args[0];
+			if (mainOperator.startsWith("o")) {
+				// on
+				on(args);
+			} else if (mainOperator.startsWith("r")) {
+				// report
+				report(args);
+			} else if (mainOperator.startsWith("f")) {
+				// fin
+				fin();
+			} else if (mainOperator.startsWith("s")) {
+				// search
+				search(args);
+			} else {
+				usage();
+			}
+		} catch (IOException e) {
+			LOG.throwing(Main.class.getName(), "executeCommand", e);
 		}
-
-		exporter.close();
-		importer.close();
 	}
 
 	/**
@@ -338,7 +350,7 @@ public class Main {
 		System.out.println(usage);
 	}
 
-	private static DefaultItemSearcher createNewSearcher() {
+	private DefaultItemSearcher createNewSearcher() {
 		return new DefaultItemSearcher(new ItemReaderProvider() {
 
 			@Override
@@ -357,7 +369,7 @@ public class Main {
 	 * For each existing file create a reader and return an AggregatingImporter
 	 * of all readers where the corresponding file exists
 	 */
-	private static ItemReader createNewReader() throws IOException {
+	private ItemReader createNewReader() throws IOException {
 		List<ItemReader> availableReaders = new LinkedList<>();
 
 		if (timeFile.canRead()) {
@@ -383,7 +395,7 @@ public class Main {
 		return importer;
 	}
 
-	private static StreamResourceProvider createPersistenceStreamSupport()
+	private StreamResourceProvider createPersistenceStreamSupport()
 			throws IOException {
 		StreamResourceProvider srp = new StreamResourceProvider() {
 			private OutputStreamWriter outputStreamWriter;

@@ -14,6 +14,8 @@ import org.stt.persistence.ItemWriter;
 import com.google.common.base.Optional;
 
 public class ToItemWriterCommandHandler implements CommandHandler {
+	public static final String COMMAND_FIN = "fin";
+
 	private static final Pattern P_MINS_AGO = Pattern.compile(
 			"(.+)\\s+(\\d+)\\s?min(ute)?s? ago$", Pattern.MULTILINE);
 	private static final Pattern P_SECS_AGO = Pattern.compile(
@@ -31,24 +33,46 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	}
 
 	@Override
-	public TimeTrackingItem executeCommand(String command) {
+	public Optional<TimeTrackingItem> executeCommand(String command) {
 		checkNotNull(command);
-		TimeTrackingItem parsedItem = parse(command);
-		try {
+
+		if (COMMAND_FIN.equals(command)) {
 			Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
 					.getCurrentTimeTrackingitem();
-			if (currentTimeTrackingitem.isPresent()) {
-				TimeTrackingItem unfinisheditem = currentTimeTrackingitem.get();
-				TimeTrackingItem nowFinishedItem = unfinisheditem
-						.withEnd(parsedItem.getStart());
-				itemWriter.replace(unfinisheditem, nowFinishedItem);
+			try {
+				return endCurrentItemIfPresent(currentTimeTrackingitem,
+						DateTime.now());
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
 			}
-			itemWriter.write(parsedItem);
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
+		} else {
+
+			TimeTrackingItem parsedItem = parse(command);
+			Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
+					.getCurrentTimeTrackingitem();
+			try {
+				DateTime startTimeOfNewItem = parsedItem.getStart();
+				endCurrentItemIfPresent(currentTimeTrackingitem,
+						startTimeOfNewItem);
+				itemWriter.write(parsedItem);
+			} catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
+			return Optional.of(parsedItem);
 		}
-		
-		return parsedItem;
+	}
+
+	private Optional<TimeTrackingItem> endCurrentItemIfPresent(
+			Optional<TimeTrackingItem> currentTimeTrackingitem,
+			DateTime startTimeOfNewItem) throws IOException {
+		if (currentTimeTrackingitem.isPresent()) {
+			TimeTrackingItem unfinisheditem = currentTimeTrackingitem.get();
+			TimeTrackingItem nowFinishedItem = unfinisheditem
+					.withEnd(startTimeOfNewItem);
+			itemWriter.replace(unfinisheditem, nowFinishedItem);
+			return Optional.of(nowFinishedItem);
+		}
+		return Optional.<TimeTrackingItem> absent();
 	}
 
 	private TimeTrackingItem parse(String command) {

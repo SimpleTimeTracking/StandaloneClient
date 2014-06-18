@@ -25,18 +25,18 @@ public class Configuration {
 	private static final Logger LOG = Logger.getLogger(Configuration.class
 			.getName());
 
-	private final File propertiesFile = new File(System.getenv("HOME"),
-			".sttrc");
+	private final Properties loadedProps;
 
-	private static Configuration instance = null;
-
-	private Properties loadedProps;
+	private final File baseDir;
 
 	private static final Pattern ENV_PATTERN = Pattern
 			.compile(".*\\$(.*)\\$.*");
 
-	private Configuration() {
+	public Configuration() {
+		baseDir = determineBaseDir();
+
 		loadedProps = new Properties();
+		File propertiesFile = getPropertiesFile();
 		if (propertiesFile.exists()) {
 			try (Reader propsReader = new InputStreamReader(
 					new FileInputStream(propertiesFile), "UTF-8")) {
@@ -52,8 +52,20 @@ public class Configuration {
 		}
 	}
 
+	private File determineBaseDir() {
+		String envHOMEVariable = System.getenv("HOME");
+		if (envHOMEVariable != null) {
+			File homeDirectory = new File(envHOMEVariable);
+			if (homeDirectory.exists()) {
+				return homeDirectory;
+			}
+		}
+		return new File(System.getProperty("user.home"));
+	}
+
 	private void createSttrc() {
 
+		File propertiesFile = getPropertiesFile();
 		try (InputStream rcStream = this.getClass().getResourceAsStream(
 				"/org/stt/sttrc.example")) {
 			IOUtils.copy(rcStream, new FileOutputStream(propertiesFile));
@@ -63,11 +75,8 @@ public class Configuration {
 		}
 	}
 
-	public static Configuration getInstance() {
-		if (instance == null) {
-			instance = new Configuration();
-		}
-		return instance;
+	private File getPropertiesFile() {
+		return new File(baseDir, ".sttrc");
 	}
 
 	public File getSttFile() {
@@ -102,9 +111,9 @@ public class Configuration {
 		Matcher envMatcher = ENV_PATTERN.matcher(theProperty);
 		if (envMatcher.find()) {
 			String group = envMatcher.group(1);
-			String getenv = System.getenv(group);
-			if (getenv != null) {
-				theProperty = theProperty.replace("$" + group + "$", getenv);
+			if ("HOME".equals(group)) {
+				theProperty = theProperty.replace("$" + group + "$",
+						baseDir.getAbsolutePath());
 			}
 		}
 		return theProperty;

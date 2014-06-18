@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.IOException;
 
@@ -61,6 +62,21 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void shouldEndCurrentItemOnFIN() throws IOException {
+		// GIVEN
+		TimeTrackingItem unfinished = new TimeTrackingItem(null, DateTime.now()
+				.minusMillis(1));
+		givenCurrentTimeTrackingItem(unfinished);
+
+		// WHEN
+		sut.executeCommand("fin");
+
+		// THEN
+		assertThatUnfinishedItemWasReplacedByFinished(unfinished);
+		verifyNoMoreInteractions(itemWriter);
+	}
+
+	@Test
 	public void shouldWriteCommandsAsNewItems() throws IOException {
 		// GIVEN
 		givenNoCurrentItemIsAvailable();
@@ -76,9 +92,7 @@ public class ToItemWriterCommandHandlerTest {
 		// GIVEN
 		TimeTrackingItem unfinished = new TimeTrackingItem(null, DateTime.now()
 				.minusMillis(1));
-		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
-				Optional.of(unfinished)).willReturn(
-				Optional.<TimeTrackingItem> absent());
+		givenCurrentTimeTrackingItem(unfinished);
 		String testComment = "test";
 
 		// WHEN
@@ -180,6 +194,11 @@ public class ToItemWriterCommandHandlerTest {
 	private void givenNoCurrentItemIsAvailable() {
 		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
 				Optional.<TimeTrackingItem> absent());
+	}
+
+	private void givenCurrentTimeTrackingItem(TimeTrackingItem item) {
+		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
+				Optional.of(item));
 	}
 
 	public static Command min(String command) {

@@ -37,6 +37,7 @@ import com.google.common.base.Optional;
 
 public class Main {
 	private static final Logger LOG = Logger.getLogger(Main.class.getName());
+	private Configuration configuration;
 
 	private ItemReader createPersistenceReader() {
 		File file = getSTTFile();
@@ -114,7 +115,7 @@ public class Main {
 	}
 
 	private File getSTTFile() {
-		return Configuration.getInstance().getSttFile();
+		return configuration.getSttFile();
 	}
 
 	public static void main(String[] args) {
@@ -150,6 +151,7 @@ public class Main {
 	}
 
 	STTApplication createSTTApplication() {
+		configuration = new Configuration();
 		Stage stage = new Stage();
 		CommandHandler commandHandler;
 		try {

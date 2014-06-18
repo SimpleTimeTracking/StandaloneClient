@@ -1,10 +1,11 @@
 package org.stt.persistence;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.stt.model.TimeTrackingItem;
 
-public interface ItemWriter {
+public interface ItemWriter extends Closeable {
 
 	/**
 	 * @param item
@@ -24,10 +25,4 @@ public interface ItemWriter {
 	 * @throws IOException
 	 */
 	void delete(TimeTrackingItem item) throws IOException;
-
-	/**
-	 * Closes the Writer and all underlying streams if any exist. Exceptions are
-	 * not passed on but caught and handled internally.
-	 */
-	void close();
 }
