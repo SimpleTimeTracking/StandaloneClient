@@ -3,6 +3,7 @@ package org.stt.searching;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -113,5 +114,25 @@ public class DefaultItemSearcher implements ItemSearcher {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public Collection<DateTime> getAllTrackedDays() {
+		Collection<DateTime> result = new ArrayList<>();
+		try (ItemReader reader = provider.provideReader()) {
+			Optional<TimeTrackingItem> item;
+			DateTime lastDay = null;
+			while ((item = reader.read()).isPresent()) {
+				DateTime currentDay = item.get().getStart()
+						.withTimeAtStartOfDay();
+				if (lastDay == null || !lastDay.equals(currentDay)) {
+					result.add(currentDay);
+					lastDay = currentDay;
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return result;
 	}
 }

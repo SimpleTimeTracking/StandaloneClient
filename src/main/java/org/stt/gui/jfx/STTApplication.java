@@ -77,8 +77,6 @@ public class STTApplication {
 	}
 
 	public void setupStage() {
-		checkNotNull(stage);
-
 		ResourceBundle localization = ResourceBundle
 				.getBundle("org.stt.gui.Application");
 		FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -129,8 +127,8 @@ public class STTApplication {
 		Scene scene = new Scene(pane);
 		stage.setScene(scene);
 		stage.setTitle(localization.getString("window.title"));
-		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent arg0) {
 				clearCommand();

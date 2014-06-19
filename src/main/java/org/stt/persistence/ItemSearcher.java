@@ -2,6 +2,7 @@ package org.stt.persistence;
 
 import java.util.Collection;
 
+import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
@@ -48,4 +49,9 @@ public interface ItemSearcher {
 	 * is active or available.
 	 */
 	Optional<TimeTrackingItem> getCurrentTimeTrackingitem();
+
+	/**
+	 * Returns a list with all days that have tracking items.
+	 */
+	Collection<DateTime> getAllTrackedDays();
 }
