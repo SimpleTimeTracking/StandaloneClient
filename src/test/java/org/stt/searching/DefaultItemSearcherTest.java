@@ -1,7 +1,6 @@
 package org.stt.searching;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 
@@ -124,30 +123,4 @@ public class DefaultItemSearcherTest {
 		assertThat(result.get(), is(unfinishedItem));
 	}
 
-	@Test
-	public void shouldFindCommentIgnoringCase() {
-		// GIVEN
-		TimeTrackingItem lowercase = new TimeTrackingItem(
-				"containing findme ...", DateTime.now());
-		TimeTrackingItem camelcase = new TimeTrackingItem(
-				"containing findMe abc", DateTime.now());
-		TimeTrackingItem uppercase = new TimeTrackingItem(
-				"containing FINDME abc", DateTime.now());
-		TimeTrackingItem notContaining = new TimeTrackingItem(
-				"containing find abc", DateTime.now());
-		given(reader.read()).willReturn(Optional.of(lowercase))
-				.willReturn(Optional.of(camelcase))
-				.willReturn(Optional.of(uppercase))
-				.willReturn(Optional.of(notContaining))
-				.willReturn(Optional.<TimeTrackingItem> absent());
-
-		// WHEN
-		Collection<String> result = sut.searchByComment("findme");
-
-		// THEN
-		assertThat(
-				result,
-				containsInAnyOrder(lowercase.getComment().get(), camelcase
-						.getComment().get(), uppercase.getComment().get()));
-	}
 }
