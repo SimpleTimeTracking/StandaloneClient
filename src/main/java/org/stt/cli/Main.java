@@ -12,6 +12,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -89,43 +92,44 @@ public class Main {
 		currentTiFile = configuration.getTiCurrentFile();
 	}
 
-	private void on(String[] args) throws IOException {
-		String comment = join(1, args);
+	private void on(Collection<String> args, PrintStream printTo)
+			throws IOException {
+		String comment = join(args);
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn);
 		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
 		// FIXME: sysout("stopped working on $old_item")
-		System.out.println("start working on "
+		printTo.println("start working on "
 				+ createdItem.get().getComment().orNull());
 		tiw.close();
 	}
 
 	/**
 	 * @param args
-	 * @param comment
 	 */
-	private String join(int start, String[] args) {
+	private String join(Collection<String> args) {
 
 		StringBuilder builder = new StringBuilder();
-		for (int i = start; i < args.length; i++) {
-			builder.append(args[i]);
-			if (i < args.length - 1) {
-				builder.append(' ');
-			}
+		String separator = "";
+		for (String s : args) {
+			builder.append(separator);
+			builder.append(s);
+			separator = " ";
 		}
 		return builder.toString();
 	}
 
-	private void report(String[] args) throws IOException {
+	private void report(Collection<String> args, PrintStream printTo)
+			throws IOException {
 		String searchString = null;
 		int days = 0;
-		if (args.length > 1) {
+		if (args.size() > 1) {
 			// there is a parameter! Let's parse it ;-)
 
 			// first collapse all following strings
-			String argsString = join(1, args);
+			String argsString = join(args);
 
 			Pattern daysPattern = Pattern.compile("(\\d+) days");
 			Matcher daysMatcher = daysPattern.matcher(argsString);
@@ -181,17 +185,16 @@ public class Main {
 			builder.append(comment);
 			if (searchString == null
 					|| builder.toString().contains(searchString)) {
-				printTruncatedString(builder);
+				printTruncatedString(builder, printTo);
 			}
 		}
 		filteredReader.close();
 
 		// create a new reader and output the summed up report
 		if (days > 0) {
-			System.out.println("====== sums of the last " + days
-					+ " days ======");
+			printTo.println("====== sums of the last " + days + " days ======");
 		} else {
-			System.out.println("====== sums of today ======");
+			printTo.println("====== sums of today ======");
 		}
 		ItemReader reportReader = createNewReader();
 		ReportGenerator reporter = new SummingReportGenerator(
@@ -208,10 +211,10 @@ public class Main {
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
 			printTruncatedString(hmsPeriodFormatter.print(duration.toPeriod())
-					+ "   " + comment);
+					+ "   " + comment, printTo);
 		}
 
-		System.out.println("====== overall sum: ======\n"
+		printTo.println("====== overall sum: ======\n"
 				+ hmsPeriodFormatter.print(overallDuration.toPeriod()));
 
 		reportReader.close();
@@ -223,9 +226,12 @@ public class Main {
 	 * 
 	 * Only unique comments are printed.
 	 * 
-	 * The ordering of the output is from newest to oldest
+	 * The ordering of the output is from newest to oldest.
+	 * 
+	 * Useful for completion.
 	 */
-	private void search(String[] args) throws IOException {
+	private void search(Collection<String> args, PrintStream printTo)
+			throws IOException {
 
 		SortedSet<TimeTrackingItem> sortedItems = new TreeSet<TimeTrackingItem>(
 				new Comparator<TimeTrackingItem>() {
@@ -236,7 +242,7 @@ public class Main {
 					}
 				});
 
-		ItemReader reader = new SubstringReaderFilter(readFrom, join(1, args));
+		ItemReader reader = new SubstringReaderFilter(readFrom, join(args));
 		sortedItems.addAll(IOUtil.readAll(reader));
 
 		Set<String> sortedUniqueComments = new HashSet<>(sortedItems.size());
@@ -245,34 +251,34 @@ public class Main {
 			String comment = i.getComment().orNull();
 			if (comment != null && !sortedUniqueComments.contains(comment)) {
 				sortedUniqueComments.add(comment);
-				System.out.println(comment);
+				printTo.println(comment);
 			}
 		}
 	}
 
-	private void fin() throws IOException {
+	private void fin(PrintStream printTo) throws IOException {
 		try (ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn)) {
 			Optional<TimeTrackingItem> updatedItem = tiw
 					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN);
 			if (updatedItem.isPresent()) {
-				System.out.println("stopped working on "
+				printTo.println("stopped working on "
 						+ updatedItem.get().toString());
 			}
 		}
 	}
 
-	private void printTruncatedString(StringBuilder toPrint) {
-		printTruncatedString(toPrint.toString());
+	private void printTruncatedString(StringBuilder toPrint, PrintStream printTo) {
+		printTruncatedString(toPrint.toString(), printTo);
 	}
 
-	private void printTruncatedString(String toPrint) {
+	private void printTruncatedString(String toPrint, PrintStream printTo) {
 		int desiredWidth = configuration.getCliReportingWidth() - 3;
 		if (desiredWidth < toPrint.length()) {
 			String substr = toPrint.substring(0, desiredWidth);
-			System.out.println(substr + "...");
+			printTo.println(substr + "...");
 		} else {
-			System.out.println(toPrint);
+			printTo.println(toPrint);
 		}
 	}
 
@@ -297,13 +303,13 @@ public class Main {
 				true, configuration.getSystemOutEncoding()));
 
 		Main m = new Main(configuration);
-
-		m.executeCommand(args);
+		List<String> argsList = new ArrayList<>(Arrays.asList(args));
+		m.executeCommand(argsList, System.out);
 	}
 
-	private void executeCommand(String... args) {
-		if (args.length == 0) {
-			usage();
+	void executeCommand(List<String> args, PrintStream printTo) {
+		if (args.size() == 0) {
+			usage(printTo);
 			return;
 		}
 
@@ -316,21 +322,21 @@ public class Main {
 			readFrom = importer;
 			searchIn = searcher;
 
-			String mainOperator = args[0];
+			String mainOperator = args.remove(0);
 			if (mainOperator.startsWith("o")) {
 				// on
-				on(args);
+				on(args, printTo);
 			} else if (mainOperator.startsWith("r")) {
 				// report
-				report(args);
+				report(args, printTo);
 			} else if (mainOperator.startsWith("f")) {
 				// fin
-				fin();
+				fin(printTo);
 			} else if (mainOperator.startsWith("s")) {
 				// search
-				search(args);
+				search(args, printTo);
 			} else {
-				usage();
+				usage(printTo);
 			}
 		} catch (IOException e) {
 			LOG.throwing(Main.class.getName(), "executeCommand", e);
@@ -340,14 +346,14 @@ public class Main {
 	/**
 	 * Prints usage information to stdout
 	 */
-	private static void usage() {
+	private static void usage(PrintStream printTo) {
 		String usage = "Usage:\n"
 				+ "on comment\tto start working on something\n"
 				+ "report [X days] [searchstring]\tto display a report\n"
 				+ "fin\t\tto stop working\n"
 				+ "search [searchstring]\tto get a list of all comments of items matching the given search string";
 
-		System.out.println(usage);
+		printTo.println(usage);
 	}
 
 	private DefaultItemSearcher createNewSearcher() {

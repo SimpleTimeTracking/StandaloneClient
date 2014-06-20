@@ -136,28 +136,6 @@ public class DefaultItemSearcherTest {
 		assertThat(result.get(), is(unfinishedItem));
 	}
 
-	@Test
-	public void shouldFindCommentIgnoringCase() {
-		// GIVEN
-		TimeTrackingItem lowercase = new TimeTrackingItem(
-				"containing findme ...", DateTime.now());
-		TimeTrackingItem camelcase = new TimeTrackingItem(
-				"containing findMe abc", DateTime.now());
-		TimeTrackingItem uppercase = new TimeTrackingItem(
-				"containing FINDME abc", DateTime.now());
-		TimeTrackingItem notContaining = new TimeTrackingItem(
-				"containing find abc", DateTime.now());
-		givenReaderReads(lowercase, camelcase, uppercase, notContaining);
-
-		// WHEN
-		Collection<String> result = sut.searchByComment("findme");
-
-		// THEN
-		assertThat(
-				result,
-				containsInAnyOrder(lowercase.getComment().get(), camelcase
-						.getComment().get(), uppercase.getComment().get()));
-	}
 
 	@Test
 	public void allTrackedDaysShouldNotReturnSameDateTimeTwice() {

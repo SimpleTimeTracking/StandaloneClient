@@ -83,25 +83,6 @@ public class DefaultItemSearcher implements ItemSearcher {
 	}
 
 	@Override
-	public Collection<String> searchByComment(String search) {
-
-		Collection<String> foundComments = new LinkedList<>();
-		Optional<TimeTrackingItem> item;
-		try (ItemReader reader = provider.provideReader()) {
-			while ((item = reader.read()).isPresent()) {
-				String comment = item.get().getComment().orNull();
-				if (comment != null
-						&& comment.toLowerCase().contains(search.toLowerCase())) {
-					foundComments.add(comment);
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return foundComments;
-	}
-
-	@Override
 	public Optional<TimeTrackingItem> getCurrentTimeTrackingitem() {
 		try (ItemReader reader = provider.provideReader()) {
 			Optional<TimeTrackingItem> item;

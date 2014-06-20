@@ -10,8 +10,10 @@ import java.util.ResourceBundle;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -23,11 +25,14 @@ import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
@@ -86,6 +91,15 @@ public class ReportWindow {
 			comboBox.getItems().add(0, shortDate.print(day));
 		}
 		pane.setTop(comboBox);
+		comboBox.getSelectionModel().selectedItemProperty()
+				.addListener(new ChangeListener<String>() {
+
+					@Override
+					public void changed(ObservableValue<? extends String> arg0,
+							String oldValue, String newValue) {
+
+					}
+				});
 
 		List<ReportingItem> report = reportGenerator.report();
 		tableForReport.getItems().setAll(report);
@@ -110,9 +124,39 @@ public class ReportWindow {
 					@Override
 					public void onChanged(
 							javafx.collections.ListChangeListener.Change<? extends TablePosition> change) {
+						ObservableList<? extends TablePosition> selectedPositions = change
+								.getList();
+						if (selectedPositions.size() == 1) {
+							TablePosition position = selectedPositions.get(0);
+							ReportingItem reportingItem = tableForReport
+									.getItems().get(position.getRow());
+							if (position.getTableColumn() == columnForDuration) {
+								setClipBoard(reportingItem.getDuration());
+							} else {
+								setClipBoard(reportingItem.getComment());
+							}
+						}
 					}
-				});
 
+					private void setClipBoard(String comment) {
+						Clipboard clipboard = Clipboard.getSystemClipboard();
+						ClipboardContent content = new ClipboardContent();
+						content.putString(comment);
+						clipboard.setContent(content);
+					}
+
+					private void setClipBoard(Duration duration) {
+						Clipboard clipboard = Clipboard.getSystemClipboard();
+						ClipboardContent content = new ClipboardContent();
+						PeriodFormatter formatter = new PeriodFormatterBuilder()
+								.printZeroIfSupported().appendHours()
+								.appendSeparator(":").appendMinutes()
+								.toFormatter();
+						content.putString(formatter.print(duration.toPeriod()));
+						clipboard.setContent(content);
+					}
+
+				});
 		Scene scene = new Scene(pane);
 		stage.setScene(scene);
 		stage.show();
@@ -123,6 +167,12 @@ public class ReportWindow {
 				exitPlatform();
 			}
 		});
+	}
+
+	@FXML
+	public void closeWindow() {
+		stage.close();
+		exitPlatform();
 	}
 
 	private static void exitPlatform() {

@@ -60,3 +60,7 @@ cd SimpleTimeTrack
 gradle build
 ```
 The created fat jar can be found in build/libs
+
+# License
+
+SimpleTimeTrack is licensed under the GPLv2. See LICENSE.txt for the license itself.
