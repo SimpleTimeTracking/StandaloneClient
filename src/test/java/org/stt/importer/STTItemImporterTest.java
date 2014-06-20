@@ -11,7 +11,7 @@ import org.stt.persistence.ItemReader;
 
 import com.google.common.base.Optional;
 
-public class DefaultItemImporterTest {
+public class STTItemImporterTest {
 
 	@Test
 	public void multiLineCommentGetsImportedCorrectly() {
@@ -19,7 +19,7 @@ public class DefaultItemImporterTest {
 		// GIVEN
 		StringReader stringReader = new StringReader(
 				"2012-10-10_22:00:00 2012-11-10_22:00:01 this is\\n a multiline\\r string\\r\\n with different separators");
-		ItemReader theReader = new DefaultItemImporter(stringReader);
+		ItemReader theReader = new STTItemImporter(stringReader);
 
 		// WHEN
 		Optional<TimeTrackingItem> readItem = theReader.read();
@@ -35,7 +35,7 @@ public class DefaultItemImporterTest {
 
 		// GIVEN
 		StringReader stringReader = new StringReader("2012-10-10_22:00:00");
-		ItemReader theReader = new DefaultItemImporter(stringReader);
+		ItemReader theReader = new STTItemImporter(stringReader);
 
 		// WHEN
 		Optional<TimeTrackingItem> readItem = theReader.read();
@@ -51,7 +51,7 @@ public class DefaultItemImporterTest {
 		// GIVEN
 		StringReader stringReader = new StringReader(
 				"2012-10-10_22:00:00 the long comment");
-		ItemReader theReader = new DefaultItemImporter(stringReader);
+		ItemReader theReader = new STTItemImporter(stringReader);
 
 		// WHEN
 		Optional<TimeTrackingItem> readItem = theReader.read();

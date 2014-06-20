@@ -1,6 +1,7 @@
 package org.stt.model;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -53,7 +54,23 @@ public class TimeTrackingItemTest {
 		TimeTrackingItem newItem = sut.withEnd(newEndTime);
 
 		// THEN
+		assertThat(newItem, not(is(sut)));
 		assertThat(sut.getEnd().isPresent(), is(false));
 		assertThat(newItem.getEnd().get(), is(newEndTime));
+	}
+
+	@Test
+	public void withStartShouldCreateNewItem() {
+		// GIVEN
+		TimeTrackingItem sut = new TimeTrackingItem(null, DateTime.now());
+
+		// WHEN
+		DateTime newStartTime = DateTime.now().plusMinutes(2);
+		TimeTrackingItem newItem = sut.withStart(newStartTime);
+
+		// THEN
+		assertThat(newItem, not(is(sut)));
+		assertThat(newItem.getStart(), is(newStartTime));
+
 	}
 }

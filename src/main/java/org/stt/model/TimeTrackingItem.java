@@ -110,4 +110,12 @@ public final class TimeTrackingItem {
 		checkNotNull(newEnd);
 		return new TimeTrackingItem(comment.orNull(), start, newEnd);
 	}
+
+	public TimeTrackingItem withStart(DateTime newStart) {
+		checkNotNull(newStart);
+		if (end.isPresent()) {
+			return new TimeTrackingItem(comment.orNull(), newStart, end.get());
+		}
+		return new TimeTrackingItem(comment.orNull(), newStart);
+	}
 }

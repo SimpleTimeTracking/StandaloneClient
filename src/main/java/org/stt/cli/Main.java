@@ -39,8 +39,8 @@ import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.StartDateReaderFilter;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.importer.AggregatingImporter;
-import org.stt.importer.DefaultItemExporter;
-import org.stt.importer.DefaultItemImporter;
+import org.stt.importer.STTItemExporter;
+import org.stt.importer.STTItemImporter;
 import org.stt.importer.StreamResourceProvider;
 import org.stt.importer.ti.TiImporter;
 import org.stt.model.ReportingItem;
@@ -313,7 +313,7 @@ public class Main {
 			return;
 		}
 
-		try (DefaultItemExporter exporter = new DefaultItemExporter(
+		try (STTItemExporter exporter = new STTItemExporter(
 				createPersistenceStreamSupport());
 				ItemReader importer = createNewReader()) {
 			DefaultItemSearcher searcher = createNewSearcher();
@@ -379,7 +379,7 @@ public class Main {
 		List<ItemReader> availableReaders = new LinkedList<>();
 
 		if (timeFile.canRead()) {
-			DefaultItemImporter timeImporter = new DefaultItemImporter(
+			STTItemImporter timeImporter = new STTItemImporter(
 					new InputStreamReader(new FileInputStream(timeFile),
 							"UTF-8"));
 			availableReaders.add(timeImporter);

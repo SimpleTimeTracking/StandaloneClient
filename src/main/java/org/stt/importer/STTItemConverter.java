@@ -1,48 +1,20 @@
 package org.stt.importer;
 
-import java.io.Reader;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
-
-/**
- * Imports all time tracking records written by {@link DefaultItemExporter}
- */
-public class DefaultItemImporter implements ItemReader {
-
-	private final LineIterator lineIter;
-
+public class STTItemConverter {
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
 
-	public DefaultItemImporter(Reader input) {
-		lineIter = IOUtils.lineIterator(input);
-	}
-
-	@Override
-	public Optional<TimeTrackingItem> read() {
-		while (lineIter.hasNext()) {
-			String nextLine = lineIter.nextLine();
-			// ignore empty lines or ones just containing whitespace
-			if (!nextLine.trim().isEmpty()) {
-				return Optional.of(constructFrom(nextLine));
-			}
-		}
-		lineIter.close();
-		return Optional.absent();
-	}
-
-	private TimeTrackingItem constructFrom(String singleLine) {
+	public TimeTrackingItem lineToTimeTrackingItem(String singleLine) {
 
 		List<String> splitLine = new LinkedList<>(Arrays.asList(singleLine
 				.split(" ")));
@@ -83,8 +55,22 @@ public class DefaultItemImporter implements ItemReader {
 		}
 	}
 
-	@Override
-	public void close() {
-		lineIter.close();
+	public String timeTrackingItemToLine(TimeTrackingItem item) throws IOException {
+		StringBuilder builder = new StringBuilder();
+		builder.append(item.getStart().toString(dateFormat));
+		builder.append(' ');
+		if (item.getEnd().isPresent()) {
+			builder.append(item.getEnd().get().toString(dateFormat));
+			builder.append(' ');
+		}
+
+		if (item.getComment().isPresent()) {
+			String oneLineComment = item.getComment().get();
+			oneLineComment = oneLineComment.replaceAll("\r", "\\\\r");
+			oneLineComment = oneLineComment.replaceAll("\n", "\\\\n");
+			builder.append(oneLineComment);
+		}
+
+		return builder.toString();
 	}
 }

@@ -49,8 +49,6 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		} else {
 			TimeTrackingItem parsedItem = parse(command);
 			try {
-				DateTime startTimeOfNewItem = parsedItem.getStart();
-				endCurrentItemIfPresent(startTimeOfNewItem);
 				itemWriter.write(parsedItem);
 			} catch (IOException e) {
 				throw new IllegalStateException(e);

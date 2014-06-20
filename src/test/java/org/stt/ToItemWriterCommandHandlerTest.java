@@ -139,23 +139,6 @@ public class ToItemWriterCommandHandlerTest {
 		assertThatNewItemWasWritten("test");
 	}
 
-	@Test
-	public void shouldCloseCurrentlyUnfinishedItem() throws IOException {
-		// GIVEN
-		TimeTrackingItem unfinished = new TimeTrackingItem(null, DateTime.now()
-				.minusMillis(1));
-		givenCurrentTimeTrackingItem(unfinished);
-		String testComment = "test";
-
-		// WHEN
-		sut.executeCommand(testComment);
-
-		// THEN
-		assertThatUnfinishedItemWasReplacedByFinished(unfinished);
-
-		assertThatNewItemWasWritten(testComment);
-	}
-
 	private void assertThatNewItemWasWritten(String testComment)
 			throws IOException {
 		TimeTrackingItem newTimeTrackingItem = retrieveWrittenTimeTrackingItem();

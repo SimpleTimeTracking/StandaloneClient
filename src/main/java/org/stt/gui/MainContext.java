@@ -25,8 +25,8 @@ import org.stt.Factory;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
-import org.stt.importer.DefaultItemExporter;
-import org.stt.importer.DefaultItemImporter;
+import org.stt.importer.STTItemExporter;
+import org.stt.importer.STTItemImporter;
 import org.stt.importer.StreamResourceProvider;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -67,7 +67,7 @@ public class MainContext {
 		File file = getSTTFile();
 		if (file.exists()) {
 			try {
-				return new DefaultItemImporter(new InputStreamReader(
+				return new STTItemImporter(new InputStreamReader(
 						new FileInputStream(file), "UTF-8"));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -97,7 +97,7 @@ public class MainContext {
 	}
 
 	private ItemWriter createPersistenceWriter() throws IOException {
-		return new DefaultItemExporter(createPersistenceStreamSupport());
+		return new STTItemExporter(createPersistenceStreamSupport());
 	}
 
 	private StreamResourceProvider createPersistenceStreamSupport()
