@@ -36,46 +36,7 @@ public class STTItemExporter implements ItemWriter {
 		StringWriter stringWriter = new StringWriter();
 		try (BufferedReader in = new BufferedReader(support.provideReader());
 				PrintWriter out = new PrintWriter(stringWriter)) {
-			String line;
-			boolean newItemHasBeenWritten = false;
-			while ((line = in.readLine()) != null) {
-				TimeTrackingItem readItem = converter
-						.lineToTimeTrackingItem(line);
-				boolean readItemStartedBeforeNewItem = readItem.getStart()
-						.isBefore(item.getStart());
-				boolean readItemEndsWithinNewItemsInterval = readItem.getEnd()
-						.isPresent()
-						&& (!item.getEnd().isPresent() || isWithin(readItem
-								.getEnd().get(), item.getStart(), item.getEnd()
-								.get()));
-				boolean readItemEndsAfterNewItemsEnd = item.getEnd()
-						.isPresent()
-						&& (!readItem.getEnd().isPresent() || readItem.getEnd()
-								.get().isAfter(item.getEnd().get()));
-
-				if (readItemStartedBeforeNewItem) {
-					if (!readItem.getEnd().isPresent()
-							|| readItemEndsWithinNewItemsInterval) {
-						TimeTrackingItem readItemWithEnd = readItem
-								.withEnd(item.getStart());
-						out.println(converter
-								.timeTrackingItemToLine(readItemWithEnd));
-					} else {
-						out.println(line);
-					}
-				} else if (!newItemHasBeenWritten) {
-					out.println(converter.timeTrackingItemToLine(item));
-					newItemHasBeenWritten = true;
-				}
-				if (readItemEndsAfterNewItemsEnd) {
-					TimeTrackingItem readItemWithNewStart = readItem
-							.withStart(item.getEnd().get());
-					out.println(converter
-							.timeTrackingItemToLine(readItemWithNewStart));
-				}
-			}
-			if (!newItemHasBeenWritten)
-				out.println(converter.timeTrackingItemToLine(item));
+			new InsertItemTask(in, out, item).insert();
 		}
 		rewriteFileWith(stringWriter.toString());
 	}
@@ -122,4 +83,88 @@ public class STTItemExporter implements ItemWriter {
 		IOUtils.closeQuietly(support);
 	}
 
+	public class InsertItemTask {
+		private final BufferedReader in;
+		private final PrintWriter out;
+		private final TimeTrackingItem item;
+		private boolean newItemHasBeenWritten = false;
+
+		public InsertItemTask(BufferedReader in, PrintWriter out,
+				TimeTrackingItem item) {
+			this.in = in;
+			this.out = out;
+			this.item = item;
+		}
+
+		public void insert() throws IOException {
+			String line;
+			while ((line = in.readLine()) != null) {
+				TimeTrackingItem readItem = converter
+						.lineToTimeTrackingItem(line);
+				insertOrSplitExistingItemAndInsertNewItemIfRequired(line,
+						readItem);
+			}
+			insertItemIfNotYetDone();
+		}
+
+		private void insertOrSplitExistingItemAndInsertNewItemIfRequired(
+				String line, TimeTrackingItem readItem) throws IOException {
+			boolean readItemStartedBeforeNewItem = readItem.getStart()
+					.isBefore(item.getStart());
+			if (readItemStartedBeforeNewItem) {
+				writeExistingItemWithChangedEndIfRequired(line, readItem);
+			} else {
+				insertItemIfNotYetDone();
+				writeExistingItemIfItEndsAfterNewItem(line, readItem);
+			}
+		}
+
+		private void writeExistingItemIfItEndsAfterNewItem(String line,
+				TimeTrackingItem readItem) throws IOException {
+			boolean readItemEndsAfterNewItemsEnd = item.getEnd().isPresent()
+					&& (!readItem.getEnd().isPresent() || readItem.getEnd()
+							.get().isAfter(item.getEnd().get()));
+			if (readItemEndsAfterNewItemsEnd) {
+				boolean readItemStartsAfterNewItemEnds = item.getEnd()
+						.isPresent()
+						&& !readItem.getStart().isBefore(item.getEnd().get());
+				if (readItemStartsAfterNewItemEnds) {
+					out.println(line);
+				} else {
+					writeExistingItemWithChangedStart(readItem);
+				}
+			}
+		}
+
+		private void writeExistingItemWithChangedStart(TimeTrackingItem readItem)
+				throws IOException {
+			TimeTrackingItem readItemWithNewStart = readItem.withStart(item
+					.getEnd().get());
+			out.println(converter.timeTrackingItemToLine(readItemWithNewStart));
+		}
+
+		private void writeExistingItemWithChangedEndIfRequired(String line,
+				TimeTrackingItem readItem) throws IOException {
+			boolean readItemHasEnd = readItem.getEnd().isPresent();
+			boolean readItemEndsWithinNewItemsInterval = readItemHasEnd
+					&& (!item.getEnd().isPresent() || isWithin(readItem
+							.getEnd().get(), item.getStart(), item.getEnd()
+							.get()));
+
+			if (!readItemHasEnd || readItemEndsWithinNewItemsInterval) {
+				TimeTrackingItem readItemWithEnd = readItem.withEnd(item
+						.getStart());
+				out.println(converter.timeTrackingItemToLine(readItemWithEnd));
+			} else {
+				out.println(line);
+			}
+		}
+
+		private void insertItemIfNotYetDone() throws IOException {
+			if (!newItemHasBeenWritten) {
+				out.println(converter.timeTrackingItemToLine(item));
+				newItemHasBeenWritten = true;
+			}
+		}
+	}
 }

@@ -349,6 +349,10 @@ public class STTItemExporterTest {
 				new DateTime(2020, 10, 10, 11, 15, 13), new DateTime(2020, 10,
 						10, 11, 17, 13));
 		sut.write(itemAfter);
+		TimeTrackingItem itemAfterAfter = new TimeTrackingItem(
+				"Item even after", new DateTime(2020, 10, 10, 11, 17, 13),
+				new DateTime(2020, 10, 10, 11, 19, 13));
+		sut.write(itemAfterAfter);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("new item",
 				new DateTime(2020, 10, 10, 11, 13, 13), new DateTime(2020, 10,
@@ -359,12 +363,15 @@ public class STTItemExporterTest {
 
 		// THEN
 
-		Assert.assertThat(stringWriter.toString(),
+		Assert.assertThat(
+				stringWriter.toString(),
 				is("2020-10-10_11:12:13 2020-10-10_11:13:13 Item before"
 						+ LINE_SEPERATOR
 						+ "2020-10-10_11:13:13 2020-10-10_11:16:13 new item"
 						+ LINE_SEPERATOR
 						+ "2020-10-10_11:16:13 2020-10-10_11:17:13 Item after"
+						+ LINE_SEPERATOR
+						+ "2020-10-10_11:17:13 2020-10-10_11:19:13 Item even after"
 						+ LINE_SEPERATOR));
 	}
 }
