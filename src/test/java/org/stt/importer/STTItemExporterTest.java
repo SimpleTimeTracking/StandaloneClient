@@ -25,6 +25,8 @@ import org.stt.model.TimeTrackingItem;
 @RunWith(Theories.class)
 public class STTItemExporterTest {
 
+	private static final String LINE_SEPERATOR = System
+			.getProperty("line.separator");
 	private StringWriter stringWriter;
 	private STTItemExporter sut;
 
@@ -155,7 +157,7 @@ public class STTItemExporterTest {
 		Assert.assertThat(
 				stringWriter.toString(),
 				endsWith("this is\\n a multiline\\r string\\r\\n with different separators"
-						+ System.getProperty("line.separator")));
+						+ LINE_SEPERATOR));
 
 	}
 
@@ -174,10 +176,9 @@ public class STTItemExporterTest {
 		sut.delete(theItem2);
 
 		// then
-		Assert.assertThat(
-				stringWriter.toString(),
+		Assert.assertThat(stringWriter.toString(),
 				is("2011-10-10_11:12:13 2014-10-10_11:12:13 testitem"
-						+ System.getProperty("line.separator")));
+						+ LINE_SEPERATOR));
 	}
 
 	@Test
@@ -194,10 +195,8 @@ public class STTItemExporterTest {
 		sut.replace(theItem2, theItem);
 
 		// then
-		Assert.assertThat(
-				stringWriter.toString(),
-				is("2011-10-10_11:12:13 testitem"
-						+ System.getProperty("line.separator")));
+		Assert.assertThat(stringWriter.toString(),
+				is("2011-10-10_11:12:13 testitem" + LINE_SEPERATOR));
 	}
 
 	@Test
@@ -210,10 +209,8 @@ public class STTItemExporterTest {
 		sut.write(theItem);
 
 		// then
-		Assert.assertThat(
-				stringWriter.toString(),
-				is("2011-10-10_11:12:13 item with 2  spaces"
-						+ System.getProperty("line.separator")));
+		Assert.assertThat(stringWriter.toString(),
+				is("2011-10-10_11:12:13 item with 2  spaces" + LINE_SEPERATOR));
 	}
 
 	@Theory
@@ -234,10 +231,8 @@ public class STTItemExporterTest {
 		sut.write(newItem);
 
 		// THEN
-		Assert.assertThat(
-				stringWriter.toString(),
-				is("2011-10-10_11:12:13 testitem2"
-						+ System.getProperty("line.separator")));
+		Assert.assertThat(stringWriter.toString(),
+				is("2011-10-10_11:12:13 testitem2" + LINE_SEPERATOR));
 	}
 
 	@Test
@@ -254,12 +249,10 @@ public class STTItemExporterTest {
 		sut.write(newItem);
 
 		// THEN
-		Assert.assertThat(
-				stringWriter.toString(),
+		Assert.assertThat(stringWriter.toString(),
 				is("2011-10-10_11:12:13 2011-10-10_11:12:14 testitem"
-						+ System.getProperty("line.separator")
-						+ "2011-10-10_11:12:14 testitem2"
-						+ System.getProperty("line.separator")));
+						+ LINE_SEPERATOR + "2011-10-10_11:12:14 testitem2"
+						+ LINE_SEPERATOR));
 
 	}
 
@@ -282,10 +275,9 @@ public class STTItemExporterTest {
 		sut.write(newItem);
 
 		// THEN
-		Assert.assertThat(
-				stringWriter.toString(),
+		Assert.assertThat(stringWriter.toString(),
 				is("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
-						+ System.getProperty("line.separator")));
+						+ LINE_SEPERATOR));
 	}
 
 	@Theory
@@ -311,9 +303,9 @@ public class STTItemExporterTest {
 		Assert.assertThat(
 				stringWriter.toString(),
 				is("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
-						+ System.getProperty("line.separator")
+						+ LINE_SEPERATOR
 						+ "2020-10-10_11:12:13 2020-10-10_11:13:13 existing item"
-						+ System.getProperty("line.separator")));
+						+ LINE_SEPERATOR));
 	}
 
 	@Theory
@@ -335,11 +327,44 @@ public class STTItemExporterTest {
 		sut.write(newItem);
 
 		// THEN
-		Assert.assertThat(
-				stringWriter.toString(),
+		Assert.assertThat(stringWriter.toString(),
 				is("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
-						+ System.getProperty("line.separator")
-						+ "2020-10-10_11:12:13 existing item"
-						+ System.getProperty("line.separator")));
+						+ LINE_SEPERATOR + "2020-10-10_11:12:13 existing item"
+						+ LINE_SEPERATOR));
+	}
+
+	@Test
+	public void shouldChangeEndOfIntervalBeforeRemoveOverlappingIntervalAndChangeStartOfIntervalAfter()
+			throws IOException {
+		// GIVEN
+		TimeTrackingItem itemBefore = new TimeTrackingItem("Item before",
+				new DateTime(2020, 10, 10, 11, 12, 13), new DateTime(2020, 10,
+						10, 11, 14, 13));
+		sut.write(itemBefore);
+		TimeTrackingItem overlappedItem = new TimeTrackingItem(
+				"Overlapped item", new DateTime(2020, 10, 10, 11, 14, 13),
+				new DateTime(2020, 10, 10, 11, 15, 13));
+		sut.write(overlappedItem);
+		TimeTrackingItem itemAfter = new TimeTrackingItem("Item after",
+				new DateTime(2020, 10, 10, 11, 15, 13), new DateTime(2020, 10,
+						10, 11, 17, 13));
+		sut.write(itemAfter);
+
+		TimeTrackingItem newItem = new TimeTrackingItem("new item",
+				new DateTime(2020, 10, 10, 11, 13, 13), new DateTime(2020, 10,
+						10, 11, 16, 13));
+
+		// WHEN
+		sut.write(newItem);
+
+		// THEN
+
+		Assert.assertThat(stringWriter.toString(),
+				is("2020-10-10_11:12:13 2020-10-10_11:13:13 Item before"
+						+ LINE_SEPERATOR
+						+ "2020-10-10_11:13:13 2020-10-10_11:16:13 new item"
+						+ LINE_SEPERATOR
+						+ "2020-10-10_11:16:13 2020-10-10_11:17:13 Item after"
+						+ LINE_SEPERATOR));
 	}
 }
