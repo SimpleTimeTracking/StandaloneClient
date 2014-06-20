@@ -7,7 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import org.stt.gui.Main;
+import org.stt.gui.MainContext;
 
 public class StartWithJFX {
 	public static void main(String[] args) throws MalformedURLException,
@@ -22,7 +22,7 @@ public class StartWithJFX {
 					.getSystemClassLoader();
 			addUrlToURLClassLoader(jfxrt, systemClassLoader);
 		}
-		Main.main(args);
+		MainContext.main(args);
 	}
 
 	private static void addUrlToURLClassLoader(File jfxrt,

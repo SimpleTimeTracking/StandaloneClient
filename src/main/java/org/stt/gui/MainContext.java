@@ -21,7 +21,9 @@ import javafx.stage.Stage;
 import org.apache.commons.io.IOUtils;
 import org.stt.CommandHandler;
 import org.stt.Configuration;
+import org.stt.Factory;
 import org.stt.ToItemWriterCommandHandler;
+import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.importer.DefaultItemExporter;
 import org.stt.importer.DefaultItemImporter;
@@ -35,9 +37,31 @@ import org.stt.searching.DefaultItemSearcher;
 
 import com.google.common.base.Optional;
 
-public class Main {
-	private static final Logger LOG = Logger.getLogger(Main.class.getName());
-	private Configuration configuration;
+public class MainContext {
+	private static final Logger LOG = Logger.getLogger(MainContext.class
+			.getName());
+	private final Configuration configuration;
+	private final ItemReaderProvider itemReaderProvider;
+	private final ItemSearcher itemSearcher;
+	private Factory<Stage> stageFactory;
+
+	public MainContext() {
+		configuration = new Configuration();
+		itemReaderProvider = new ItemReaderProvider() {
+			@Override
+			public ItemReader provideReader() {
+				return createPersistenceReader();
+			}
+		};
+		itemSearcher = createItemSearcher();
+		stageFactory = new Factory<Stage>() {
+
+			@Override
+			public Stage create() {
+				return new Stage();
+			}
+		};
+	}
 
 	private ItemReader createPersistenceReader() {
 		File file = getSTTFile();
@@ -125,7 +149,7 @@ public class Main {
 
 			@Override
 			public void run() {
-				Main main = new Main();
+				MainContext main = new MainContext();
 				main.start();
 			}
 		});
@@ -151,18 +175,19 @@ public class Main {
 	}
 
 	STTApplication createSTTApplication() {
-		configuration = new Configuration();
-		Stage stage = new Stage();
+		Stage stage = stageFactory.create();
 		CommandHandler commandHandler;
 		try {
 			commandHandler = new ToItemWriterCommandHandler(
-					createPersistenceWriter(), createItemSearcher());
+					createPersistenceWriter(), itemSearcher);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 		ItemReader historyReader = createPersistenceReader();
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
+		ReportWindowBuilder reportWindow = new ReportWindowBuilder(
+				stageFactory, itemReaderProvider, itemSearcher);
 		return new STTApplication(stage, commandHandler, historyReader,
-				executorService);
+				executorService, reportWindow);
 	}
 }

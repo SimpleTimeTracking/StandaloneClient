@@ -9,6 +9,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
@@ -42,6 +43,9 @@ public class STTApplicationTest {
 	@Mock
 	private ExecutorService executorService;
 
+	@Mock
+	private ReportWindowBuilder reportWindow;
+
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
@@ -52,9 +56,20 @@ public class STTApplicationTest {
 				stage = helper.createStageForTest();
 				ItemReader historySource = mock(ItemReader.class);
 				sut = new STTApplication(stage, commandHandler, historySource,
-						executorService);
+						executorService, reportWindow);
 			}
 		});
+	}
+
+	@Test
+	public void shouldShowReportWindow() throws IOException {
+		// GIVEN
+
+		// WHEN
+		sut.showReportWindow();
+
+		// THEN
+		verify(reportWindow).setupStage();
 	}
 
 	@Test

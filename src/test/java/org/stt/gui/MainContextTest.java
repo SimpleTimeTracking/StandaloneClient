@@ -9,8 +9,8 @@ import org.stt.gui.jfx.JFXTestRunner;
 import org.stt.gui.jfx.STTApplication;
 
 @RunWith(JFXTestRunner.class)
-public class MainTest extends Main {
-	private final Main sut = new Main();
+public class MainContextTest {
+	private final MainContext sut = new MainContext();
 
 	@Test
 	public void shouldCreateSTTApplication() {

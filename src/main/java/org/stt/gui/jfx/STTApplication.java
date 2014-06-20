@@ -46,9 +46,12 @@ public class STTApplication {
 
 	private final CommandHandler commandHandler;
 	private final ItemReader historySource;
+	private final ReportWindowBuilder reportWindowBuilder;
 
 	public STTApplication(Stage stage, CommandHandler commandHandler,
-			ItemReader historySource, ExecutorService executorService) {
+			ItemReader historySource, ExecutorService executorService,
+			ReportWindowBuilder reportWindow) {
+		this.reportWindowBuilder = checkNotNull(reportWindow);
 		this.stage = checkNotNull(stage);
 		this.commandHandler = checkNotNull(commandHandler);
 		this.historySource = checkNotNull(historySource);
@@ -137,6 +140,15 @@ public class STTApplication {
 		});
 		stage.show();
 		commandText.requestFocus();
+	}
+
+	@FXML
+	protected void showReportWindow() {
+		try {
+			reportWindowBuilder.setupStage();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@FXML

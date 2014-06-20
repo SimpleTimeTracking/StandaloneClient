@@ -10,7 +10,7 @@
    <top>
       <FlowPane BorderPane.alignment="CENTER">
          <children>
-            <Button mnemonicParsing="false" text="%show_report" />
+            <Button mnemonicParsing="false" onAction="#showReportWindow" text="%show_report" />
          </children>
       </FlowPane>
    </top>

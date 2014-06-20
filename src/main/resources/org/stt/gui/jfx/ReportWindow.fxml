@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <center>
       <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0" BorderPane.alignment="CENTER">
          <columns>
@@ -25,4 +25,11 @@
          </BorderPane.margin>
       </Button>
    </bottom>
+   <top>
+      <FlowPane fx:id="reportControlsPane" hgap="5.0" vgap="5.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </FlowPane>
+   </top>
 </BorderPane>
