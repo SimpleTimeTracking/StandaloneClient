@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.model.ReportingItem;
@@ -55,6 +56,8 @@ public class SummingReportGenerator implements ReportGenerator {
 				collectingMap.put(comment, duration);
 			}
 		}
+
+		IOUtils.closeQuietly(reader);
 
 		for (Map.Entry<String, Duration> e : collectingMap.entrySet()) {
 			reportList.add(new ReportingItem(e.getValue(), e.getKey()));
