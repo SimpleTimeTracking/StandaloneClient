@@ -57,6 +57,26 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		}
 	}
 
+	@Override
+	public void endCurrentItem() {
+		try {
+			endCurrentItemIfPresent(DateTime.now());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public void resumeGivenItem(TimeTrackingItem item) {
+		TimeTrackingItem newItem = new TimeTrackingItem(
+				item.getComment().get(), DateTime.now());
+		try {
+			itemWriter.write(newItem);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private Optional<TimeTrackingItem> endCurrentItemIfPresent(
 			DateTime startTimeOfNewItem) throws IOException {
 		Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher

@@ -2,6 +2,7 @@ package org.stt;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.eq;
@@ -62,6 +63,37 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void resumeShouldCreateNewItemWithOldComment() {
+		// GIVEN
+		givenNoCurrentItemIsAvailable();
+		DateTime now = DateTime.now();
+		TimeTrackingItem item = new TimeTrackingItem("for test",
+				now.minusMinutes(20), now.minusMinutes(10));
+
+		// WHEN
+		sut.resumeGivenItem(item);
+
+		// THEN
+		TimeTrackingItem trackingItem = retrieveWrittenTimeTrackingItem();
+		assertThat(trackingItem.getComment().get(), is("for test"));
+		assertThat(trackingItem.getStart(),
+				is(greaterThan((ReadableInstant) now.minusMinutes(5))));
+	}
+
+	@Test
+	public void finShouldEndCurrentItem() throws IOException {
+		// GIVEN
+		TimeTrackingItem unfinished = createUnfinishedItem();
+		givenCurrentTimeTrackingItem(unfinished);
+
+		// WHEN
+		sut.endCurrentItem();
+
+		// THEN
+		assertThatUnfinishedItemWasReplacedByFinished(unfinished);
+	}
+
+	@Test
 	public void shouldParseSince7_00() {
 		// GIVEN
 		givenNoCurrentItemIsAvailable();
@@ -114,10 +146,9 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
-	public void shouldEndCurrentItemOnFIN() throws IOException {
+	public void shouldEndCurrentItemOnFINCommand() throws IOException {
 		// GIVEN
-		TimeTrackingItem unfinished = new TimeTrackingItem(null, DateTime.now()
-				.minusMillis(1));
+		TimeTrackingItem unfinished = createUnfinishedItem();
 		givenCurrentTimeTrackingItem(unfinished);
 
 		// WHEN
@@ -126,6 +157,10 @@ public class ToItemWriterCommandHandlerTest {
 		// THEN
 		assertThatUnfinishedItemWasReplacedByFinished(unfinished);
 		verifyNoMoreInteractions(itemWriter);
+	}
+
+	private TimeTrackingItem createUnfinishedItem() {
+		return new TimeTrackingItem(null, DateTime.now().minusMillis(1));
 	}
 
 	@Test

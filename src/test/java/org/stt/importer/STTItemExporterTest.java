@@ -3,6 +3,7 @@ package org.stt.importer;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -337,6 +338,10 @@ public class STTItemExporterTest {
 	public void shouldChangeEndOfIntervalBeforeRemoveOverlappingIntervalAndChangeStartOfIntervalAfter()
 			throws IOException {
 		// GIVEN
+		TimeTrackingItem itemBeforeBefore = new TimeTrackingItem(
+				"Item before before", new DateTime(2010, 10, 10, 11, 12, 13),
+				new DateTime(2010, 10, 10, 11, 14, 13));
+		sut.write(itemBeforeBefore);
 		TimeTrackingItem itemBefore = new TimeTrackingItem("Item before",
 				new DateTime(2020, 10, 10, 11, 12, 13), new DateTime(2020, 10,
 						10, 11, 14, 13));
@@ -365,7 +370,9 @@ public class STTItemExporterTest {
 
 		Assert.assertThat(
 				stringWriter.toString(),
-				is("2020-10-10_11:12:13 2020-10-10_11:13:13 Item before"
+				is("2010-10-10_11:12:13 2010-10-10_11:14:13 Item before before"
+						+ LINE_SEPERATOR
+						+ "2020-10-10_11:12:13 2020-10-10_11:13:13 Item before"
 						+ LINE_SEPERATOR
 						+ "2020-10-10_11:13:13 2020-10-10_11:16:13 new item"
 						+ LINE_SEPERATOR
@@ -373,5 +380,33 @@ public class STTItemExporterTest {
 						+ LINE_SEPERATOR
 						+ "2020-10-10_11:17:13 2020-10-10_11:19:13 Item even after"
 						+ LINE_SEPERATOR));
+	}
+
+	@Test
+	public void shouldNotChangeOldNonOverlappingItem() throws IOException {
+		// GIVEN
+		TimeTrackingItem oldItem = new TimeTrackingItem("old item",
+				new DateTime(2010, 10, 10, 11, 12, 13), new DateTime(2010, 10,
+						10, 11, 14, 13));
+		sut.write(oldItem);
+
+		TimeTrackingItem newItem = new TimeTrackingItem("old item",
+				new DateTime(2011, 10, 10, 11, 12, 13));
+
+		// WHEN
+		sut.write(newItem);
+
+		// THEN
+		assertThatFileMatches(
+				"2010-10-10_11:12:13 2010-10-10_11:14:13 old item",
+				"2011-10-10_11:12:13 old item");
+	}
+
+	private void assertThatFileMatches(String... lines) {
+		StringBuilder expectedText = new StringBuilder();
+		for (String line : lines) {
+			expectedText.append(line).append(LINE_SEPERATOR);
+		}
+		assertThat(stringWriter.toString(), is(expectedText.toString()));
 	}
 }

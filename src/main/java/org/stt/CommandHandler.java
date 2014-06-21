@@ -18,4 +18,8 @@ public interface CommandHandler extends Closeable {
 	 * @return the created/updated item or {@link Optional#absent()}
 	 */
 	Optional<TimeTrackingItem> executeCommand(String command);
+
+	void endCurrentItem();
+
+	void resumeGivenItem(TimeTrackingItem item);
 }

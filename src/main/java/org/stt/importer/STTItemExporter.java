@@ -1,8 +1,11 @@
 package org.stt.importer;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 
@@ -12,6 +15,7 @@ import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 
 /**
@@ -34,16 +38,26 @@ public class STTItemExporter implements ItemWriter {
 	public void write(TimeTrackingItem item) throws IOException {
 		Preconditions.checkNotNull(item);
 		StringWriter stringWriter = new StringWriter();
-		try (BufferedReader in = new BufferedReader(support.provideReader());
+		Reader providedReader;
+		try {
+			providedReader = support.provideReader();
+		} catch (FileNotFoundException e) {
+			providedReader = new StringReader("");
+		}
+		try (BufferedReader in = new BufferedReader(providedReader);
 				PrintWriter out = new PrintWriter(stringWriter)) {
 			new InsertItemTask(in, out, item).insert();
 		}
 		rewriteFileWith(stringWriter.toString());
 	}
 
-	private boolean isWithin(DateTime dateTime, DateTime start, DateTime end) {
-		Interval interval = new Interval(start, end);
-		return interval.contains(dateTime);
+	private boolean isWithin(DateTime dateTime, DateTime start,
+			Optional<DateTime> end) {
+		if (end.isPresent()) {
+			Interval interval = new Interval(start, end.get());
+			return interval.contains(dateTime);
+		}
+		return !dateTime.isBefore(start);
 	}
 
 	@Override
@@ -147,9 +161,8 @@ public class STTItemExporter implements ItemWriter {
 				TimeTrackingItem readItem) throws IOException {
 			boolean readItemHasEnd = readItem.getEnd().isPresent();
 			boolean readItemEndsWithinNewItemsInterval = readItemHasEnd
-					&& (!item.getEnd().isPresent() || isWithin(readItem
-							.getEnd().get(), item.getStart(), item.getEnd()
-							.get()));
+					&& (isWithin(readItem.getEnd().get(), item.getStart(),
+							item.getEnd()));
 
 			if (!readItemHasEnd || readItemEndsWithinNewItemsInterval) {
 				TimeTrackingItem readItemWithEnd = readItem.withEnd(item

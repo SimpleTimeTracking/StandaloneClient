@@ -70,6 +70,7 @@ public class STTApplication {
 				ObservableList<TimeTrackingItem> items = history.getItems();
 				items.clear();
 				items.addAll(getValue());
+				history.scrollTo(items.size() - 1);
 			}
 
 			@Override
@@ -123,7 +124,7 @@ public class STTApplication {
 			@Override
 			public ListCell<TimeTrackingItem> call(
 					ListView<TimeTrackingItem> arg0) {
-				return new TimeTrackingItemCell();
+				return new TimeTrackingItemCell(STTApplication.this);
 			}
 		});
 
@@ -134,8 +135,7 @@ public class STTApplication {
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent arg0) {
-				clearCommand();
-				done();
+				shutdown();
 			}
 		});
 		stage.show();
@@ -154,17 +154,15 @@ public class STTApplication {
 	@FXML
 	protected void done() {
 		executeCommand();
+		shutdown();
+	}
+
+	private void shutdown() {
 		stage.close();
 		executorService.shutdown();
-		Platform.runLater(new Runnable() {
-
-			@Override
-			public void run() {
-				Platform.exit();
-				// Required because txExit() above is just swallowed...
-				PlatformImpl.tkExit();
-			}
-		});
+		Platform.exit();
+		// Required because txExit() above is just swallowed...
+		PlatformImpl.tkExit();
 		try {
 			executorService.awaitTermination(1, TimeUnit.SECONDS);
 			commandHandler.close();
@@ -175,7 +173,13 @@ public class STTApplication {
 	}
 
 	@FXML
-	void onKeyPressed(KeyEvent event) {
+	protected void fin() {
+		commandHandler.endCurrentItem();
+		shutdown();
+	}
+
+	@FXML
+	protected void onKeyPressed(KeyEvent event) {
 		if (KeyCode.ENTER.equals(event.getCode()) && event.isControlDown()) {
 			done();
 		}
@@ -204,6 +208,11 @@ public class STTApplication {
 				}
 			}
 		});
+	}
+
+	public void continueItem(TimeTrackingItem item) {
+		commandHandler.resumeGivenItem(item);
+		shutdown();
 	}
 
 }
