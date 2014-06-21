@@ -1,4 +1,4 @@
-package org.stt.importer;
+package org.stt.stt.importer;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

@@ -22,6 +22,8 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 import org.stt.model.TimeTrackingItem;
+import org.stt.stt.importer.STTItemExporter;
+import org.stt.stt.importer.StreamResourceProvider;
 
 @RunWith(Theories.class)
 public class STTItemExporterTest {

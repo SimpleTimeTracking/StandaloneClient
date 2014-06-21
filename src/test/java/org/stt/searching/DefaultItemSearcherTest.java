@@ -3,7 +3,6 @@ package org.stt.searching;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -28,7 +27,6 @@ import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemSearcher;
 
 import com.google.common.base.Optional;
 
@@ -135,7 +133,6 @@ public class DefaultItemSearcherTest {
 		// THEN
 		assertThat(result.get(), is(unfinishedItem));
 	}
-
 
 	@Test
 	public void allTrackedDaysShouldNotReturnSameDateTimeTwice() {

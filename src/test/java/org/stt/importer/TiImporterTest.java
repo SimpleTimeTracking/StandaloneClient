@@ -10,10 +10,10 @@ import java.util.Collection;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.stt.importer.ti.TiImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
+import org.stt.ti.importer.TiImporter;
 
 import com.google.common.base.Optional;
 

@@ -1,4 +1,4 @@
-package org.stt.importer.ti;
+package org.stt.ti.importer;
 
 import java.io.Reader;
 import java.text.ParseException;

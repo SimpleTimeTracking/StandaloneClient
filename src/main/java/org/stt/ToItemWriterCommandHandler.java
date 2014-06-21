@@ -10,8 +10,8 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
+import org.stt.searching.ItemSearcher;
 
 import com.google.common.base.Optional;
 

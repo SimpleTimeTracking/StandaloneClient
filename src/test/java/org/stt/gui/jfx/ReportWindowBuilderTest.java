@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.Factory;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemSearcher;
+import org.stt.searching.ItemSearcher;
 
 @RunWith(JFXTestRunner.class)
 public class ReportWindowBuilderTest {

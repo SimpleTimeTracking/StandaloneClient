@@ -26,8 +26,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
+import org.stt.searching.ItemSearcher;
 
 import com.google.common.base.Optional;
 

@@ -12,7 +12,6 @@ import org.joda.time.ReadableInstant;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemSearcher;
 
 import com.google.common.base.Optional;
 

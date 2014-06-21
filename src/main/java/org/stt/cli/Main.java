@@ -38,21 +38,21 @@ import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.StartDateReaderFilter;
 import org.stt.filter.SubstringReaderFilter;
-import org.stt.importer.AggregatingImporter;
-import org.stt.importer.STTItemExporter;
-import org.stt.importer.STTItemImporter;
-import org.stt.importer.StreamResourceProvider;
-import org.stt.importer.ti.TiImporter;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
 import org.stt.reporting.ReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.searching.DefaultItemSearcher;
+import org.stt.searching.ItemSearcher;
+import org.stt.stt.importer.AggregatingImporter;
+import org.stt.stt.importer.STTItemExporter;
+import org.stt.stt.importer.STTItemImporter;
+import org.stt.stt.importer.StreamResourceProvider;
+import org.stt.ti.importer.TiImporter;
 
 import com.google.common.base.Optional;
 

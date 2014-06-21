@@ -42,8 +42,8 @@ import org.stt.filter.StartDateReaderFilter;
 import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemSearcher;
 import org.stt.reporting.SummingReportGenerator;
+import org.stt.searching.ItemSearcher;
 
 public class ReportWindowBuilder {
 	private final ItemReaderProvider readerProvider;

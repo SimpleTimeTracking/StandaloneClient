@@ -25,15 +25,15 @@ import org.stt.Factory;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
-import org.stt.importer.STTItemExporter;
-import org.stt.importer.STTItemImporter;
-import org.stt.importer.StreamResourceProvider;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemSearcher;
 import org.stt.persistence.ItemWriter;
 import org.stt.searching.DefaultItemSearcher;
+import org.stt.searching.ItemSearcher;
+import org.stt.stt.importer.STTItemExporter;
+import org.stt.stt.importer.STTItemImporter;
+import org.stt.stt.importer.StreamResourceProvider;
 
 import com.google.common.base.Optional;
 

@@ -1,4 +1,4 @@
-package org.stt.persistence;
+package org.stt.searching;
 
 import java.util.Collection;
 
