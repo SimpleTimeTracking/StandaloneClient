@@ -29,8 +29,10 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.persistence.ItemWriter;
+import org.stt.searching.CommentSearcher;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
+import org.stt.searching.TimeTrackingItemScanningSearcher;
 import org.stt.stt.importer.STTItemExporter;
 import org.stt.stt.importer.STTItemImporter;
 import org.stt.stt.importer.StreamResourceProvider;
@@ -43,7 +45,8 @@ public class MainContext {
 	private final Configuration configuration;
 	private final ItemReaderProvider itemReaderProvider;
 	private final ItemSearcher itemSearcher;
-	private Factory<Stage> stageFactory;
+	private final Factory<Stage> stageFactory;
+	private final CommentSearcher commentSearcher;
 
 	public MainContext() {
 		configuration = new Configuration();
@@ -61,6 +64,8 @@ public class MainContext {
 				return new Stage();
 			}
 		};
+		commentSearcher = new TimeTrackingItemScanningSearcher(
+				itemReaderProvider);
 	}
 
 	private ItemReader createPersistenceReader() {
@@ -188,6 +193,6 @@ public class MainContext {
 		ReportWindowBuilder reportWindow = new ReportWindowBuilder(
 				stageFactory, itemReaderProvider, itemSearcher);
 		return new STTApplication(stage, commandHandler, historyReader,
-				executorService, reportWindow);
+				executorService, reportWindow, commentSearcher);
 	}
 }

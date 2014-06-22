@@ -3,14 +3,17 @@ package org.stt.gui.jfx;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javafx.application.Platform;
+import javafx.beans.binding.ListBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -32,6 +35,7 @@ import org.stt.CommandHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
+import org.stt.searching.CommentSearcher;
 
 import com.sun.javafx.application.PlatformImpl;
 
@@ -41,16 +45,20 @@ public class STTApplication {
 	TextArea commandText;
 	@FXML
 	ListView<TimeTrackingItem> history;
+	@FXML
+	ListView<String> searchView;
 
 	private final ExecutorService executorService;
 
 	private final CommandHandler commandHandler;
 	private final ItemReader historySource;
 	private final ReportWindowBuilder reportWindowBuilder;
+	private final CommentSearcher searcher;
 
 	public STTApplication(Stage stage, CommandHandler commandHandler,
 			ItemReader historySource, ExecutorService executorService,
-			ReportWindowBuilder reportWindow) {
+			ReportWindowBuilder reportWindow, CommentSearcher searcher) {
+		this.searcher = checkNotNull(searcher);
 		this.reportWindowBuilder = checkNotNull(reportWindow);
 		this.stage = checkNotNull(stage);
 		this.commandHandler = checkNotNull(commandHandler);
@@ -105,9 +113,8 @@ public class STTApplication {
 						if (newItem != null) {
 							history.getSelectionModel().clearSelection();
 							if (newItem.getComment().isPresent()) {
-								commandText.setText(newItem.getComment().get());
-								commandText.positionCaret(commandText
-										.getLength());
+								String textToSet = newItem.getComment().get();
+								setCommandText(textToSet);
 								Platform.runLater(new Runnable() {
 									@Override
 									public void run() {
@@ -118,6 +125,7 @@ public class STTApplication {
 						}
 
 					}
+
 				});
 		history.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
 
@@ -127,6 +135,8 @@ public class STTApplication {
 				return new TimeTrackingItemCell(STTApplication.this);
 			}
 		});
+
+		setupSearchView();
 
 		Scene scene = new Scene(pane);
 		stage.setScene(scene);
@@ -146,6 +156,54 @@ public class STTApplication {
 		});
 		stage.show();
 		commandText.requestFocus();
+	}
+
+	private void setCommandText(String textToSet) {
+		commandText.setText(textToSet);
+		commandText.positionCaret(commandText.getLength());
+	}
+
+	private void setupSearchView() {
+		ListBinding<String> searchListBinding = new ListBinding<String>() {
+			{
+				bind(commandText.textProperty());
+			}
+
+			@Override
+			protected ObservableList<String> computeValue() {
+				if (commandText.getText().isEmpty()) {
+					return FXCollections.emptyObservableList();
+				}
+				Collection<String> results = searcher
+						.searchForComments(commandText.getText());
+				ArrayList<String> resultsToUse = new ArrayList<>();
+				for (String string : results) {
+					resultsToUse.add(string);
+					if (resultsToUse.size() == 5) {
+						break;
+					}
+				}
+				return FXCollections.observableList(resultsToUse);
+			}
+		};
+		searchView.setItems(searchListBinding);
+		searchView.prefHeightProperty().bind(
+				searchListBinding.sizeProperty().multiply(26));
+		searchView.minHeightProperty().bind(searchView.prefHeightProperty());
+		searchView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		searchView.getSelectionModel().selectedItemProperty()
+				.addListener(new ChangeListener<String>() {
+
+					@Override
+					public void changed(
+							ObservableValue<? extends String> observable,
+							String oldValue, String newValue) {
+						if (newValue != null) {
+							setCommandText(newValue);
+							searchView.getSelectionModel().clearSelection();
+						}
+					}
+				});
 	}
 
 	@FXML
@@ -187,11 +245,18 @@ public class STTApplication {
 	@FXML
 	protected void onKeyPressed(KeyEvent event) {
 		if (KeyCode.ENTER.equals(event.getCode()) && event.isControlDown()) {
+			event.consume();
 			done();
+		}
+		if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
+			if (searchView.getItems().size() > 0) {
+				setCommandText(searchView.getItems().get(0));
+			}
+			event.consume();
 		}
 	}
 
-	void executeCommand() {
+	protected void executeCommand() {
 		if (!commandText.getText().trim().isEmpty()) {
 			commandHandler.executeCommand(commandText.getText());
 			clearCommand();
