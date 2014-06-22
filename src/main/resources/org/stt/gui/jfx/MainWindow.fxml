@@ -14,36 +14,33 @@
          </children>
       </FlowPane>
    </top>
-   <center>
-      <ListView fx:id="history" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-         <BorderPane.margin>
-            <Insets top="10.0" />
-         </BorderPane.margin></ListView>
-   </center>
-   <bottom>
-      <VBox prefWidth="100.0" BorderPane.alignment="CENTER">
-         <children>
-            <TextArea fx:id="commandText" onKeyPressed="#onKeyPressed">
-               <VBox.margin>
-                  <Insets top="10.0" />
-               </VBox.margin></TextArea>
-            <FlowPane alignment="CENTER" hgap="10.0" vgap="10.0">
-               <children>
-                  <Button mnemonicParsing="false" onAction="#done" text="%done">
-                     <FlowPane.margin>
-                        <Insets />
-                     </FlowPane.margin>
-                  </Button>
-                  <Button mnemonicParsing="false" onAction="#fin" text="%fin" />
-               </children>
-               <VBox.margin>
-                  <Insets top="10.0" />
-               </VBox.margin>
-            </FlowPane>
-         </children>
-      </VBox>
-   </bottom>
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
    </padding>
+   <center>
+      <SplitPane dividerPositions="0.7" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" BorderPane.alignment="CENTER">
+        <items>
+            <ListView fx:id="history" prefHeight="200.0" prefWidth="200.0" />
+            <TextArea fx:id="commandText" onKeyPressed="#onKeyPressed" />
+        </items>
+         <BorderPane.margin>
+            <Insets top="10.0" />
+         </BorderPane.margin>
+      </SplitPane>
+   </center>
+   <bottom>
+      <FlowPane alignment="CENTER" hgap="10.0" vgap="10.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button mnemonicParsing="false" onAction="#done" text="%done">
+               <FlowPane.margin>
+                  <Insets />
+               </FlowPane.margin>
+            </Button>
+            <Button mnemonicParsing="false" onAction="#fin" text="%fin" />
+         </children>
+         <BorderPane.margin>
+            <Insets top="10.0" />
+         </BorderPane.margin>
+      </FlowPane>
+   </bottom>
 </BorderPane>

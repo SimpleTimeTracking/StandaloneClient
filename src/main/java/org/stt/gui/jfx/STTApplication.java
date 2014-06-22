@@ -135,7 +135,13 @@ public class STTApplication {
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent arg0) {
-				shutdown();
+				Platform.runLater(new Runnable() {
+
+					@Override
+					public void run() {
+						shutdown();
+					}
+				});
 			}
 		});
 		stage.show();
