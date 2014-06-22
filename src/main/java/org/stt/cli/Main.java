@@ -125,11 +125,16 @@ public class Main {
 			throws IOException {
 		String searchString = null;
 		int days = 0;
-		if (args.size() > 1) {
+		boolean truncateLongLines = true;
+		if (args.size() > 0) {
 			// there is a parameter! Let's parse it ;-)
 
 			// first collapse all following strings
 			String argsString = join(args);
+			if (argsString.endsWith("long")) {
+				argsString = argsString.replaceAll("long$", "");
+				truncateLongLines = false;
+			}
 
 			Pattern daysPattern = Pattern.compile("(\\d+) days");
 			Matcher daysMatcher = daysPattern.matcher(argsString);
@@ -185,7 +190,7 @@ public class Main {
 			builder.append(comment);
 			if (searchString == null
 					|| builder.toString().contains(searchString)) {
-				printTruncatedString(builder, printTo);
+				printTruncatedString(builder, printTo, truncateLongLines);
 			}
 		}
 		filteredReader.close();
@@ -211,7 +216,7 @@ public class Main {
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
 			printTruncatedString(hmsPeriodFormatter.print(duration.toPeriod())
-					+ "   " + comment, printTo);
+					+ "   " + comment, printTo, truncateLongLines);
 		}
 
 		printTo.println("====== overall sum: ======\n"
@@ -268,13 +273,16 @@ public class Main {
 		}
 	}
 
-	private void printTruncatedString(StringBuilder toPrint, PrintStream printTo) {
-		printTruncatedString(toPrint.toString(), printTo);
+	private void printTruncatedString(StringBuilder toPrint,
+			PrintStream printTo, boolean doTruncate) {
+		printTruncatedString(toPrint.toString(), printTo, doTruncate);
 	}
 
-	private void printTruncatedString(String toPrint, PrintStream printTo) {
+	private void printTruncatedString(String toPrint, PrintStream printTo,
+			boolean doTruncate) {
+
 		int desiredWidth = configuration.getCliReportingWidth() - 3;
-		if (desiredWidth < toPrint.length()) {
+		if (doTruncate && desiredWidth < toPrint.length()) {
 			String substr = toPrint.substring(0, desiredWidth);
 			printTo.println(substr + "...");
 		} else {
