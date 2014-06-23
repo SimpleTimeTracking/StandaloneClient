@@ -94,6 +94,22 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void finWithEndTimeShouldEndCurrentItem() {
+
+		// GIVEN
+		TimeTrackingItem unfinished = createUnfinishedItem();
+		givenCurrentTimeTrackingItem(unfinished);
+		DateTime expectedEndTime = DateTime.now().plus(30000);
+
+		// WHEN
+		Optional<TimeTrackingItem> endCurrentItem = sut
+				.endCurrentItem(expectedEndTime);
+
+		// THEN
+		assertThat(endCurrentItem.get().getEnd().get(), is(expectedEndTime));
+	}
+
+	@Test
 	public void shouldParseSince7_00() {
 		// GIVEN
 		givenNoCurrentItemIsAvailable();
