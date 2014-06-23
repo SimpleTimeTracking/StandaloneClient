@@ -25,6 +25,9 @@ import org.stt.reporting.SummingReportGenerator;
 
 import com.google.common.base.Optional;
 
+/**
+ * Prints a nicely formatted report of {@link TimeTrackingItem}s
+ */
 public class ReportPrinter {
 
 	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
@@ -52,11 +55,13 @@ public class ReportPrinter {
 		String searchString = null;
 		int days = 0;
 		boolean truncateLongLines = true;
+
 		if (args.size() > 0) {
 			// there is a parameter! Let's parse it ;-)
 
 			// first collapse all following strings
 			String argsString = StringHelper.join(args);
+
 			if (argsString.endsWith("long")) {
 				argsString = argsString.replaceAll("long$", "");
 				truncateLongLines = false;
@@ -72,9 +77,7 @@ public class ReportPrinter {
 			}
 		}
 
-		// FIXME: implement
-		// - "11 days": all items from 11 days ago, grouped by comment and
-		// summed by durations
+		// TODO: implement
 		// - "yesterday": all items of yesterday, grouped by comment and summed
 		// by durations
 		// - "week": all items of this week, grouped by comment and summed by
@@ -83,6 +86,51 @@ public class ReportPrinter {
 		// by durations
 		// - "year": all items of this year, grouped by comment and summed by
 		// durations
+		printDetails(printTo, searchString, days, truncateLongLines);
+
+		// create a new reader and output the summed up report
+		printSums(printTo, searchString, days, truncateLongLines);
+	}
+
+	/**
+	 * Prints a nice summed and grouped (by comment) report
+	 */
+	private void printSums(PrintStream printTo, String searchString, int days,
+			boolean truncateLongLines) throws IOException {
+		if (days > 0) {
+			printTo.println("====== sums of the last " + days + " days ======");
+		} else {
+			printTo.println("====== sums of today ======");
+		}
+		ItemReader reportReader = readFrom.provideReader();
+		ReportGenerator reporter = new SummingReportGenerator(
+				new StartDateReaderFilter(new SubstringReaderFilter(
+						reportReader, searchString), DateTime.now()
+						.withTimeAtStartOfDay().minusDays(days).toDateTime(),
+						DateTime.now().withTimeAtStartOfDay().plusDays(1)
+								.toDateTime()));
+		List<ReportingItem> report = reporter.report();
+
+		Duration overallDuration = new Duration(0);
+		for (ReportingItem i : report) {
+			Duration duration = i.getDuration();
+			overallDuration = overallDuration.plus(duration);
+			String comment = i.getComment();
+			printTruncatedString(hmsPeriodFormatter.print(duration.toPeriod())
+					+ "   " + comment, printTo, truncateLongLines);
+		}
+
+		printTo.println("====== overall sum: ======\n"
+				+ hmsPeriodFormatter.print(overallDuration.toPeriod()));
+
+		reportReader.close();
+	}
+
+	/**
+	 * Prints all items nicely formatted
+	 */
+	private void printDetails(PrintStream printTo, String searchString,
+			int days, boolean truncateLongLines) throws IOException {
 		ItemReader detailsReader = readFrom.provideReader();
 		ItemReader filteredReader = new StartDateReaderFilter(detailsReader,
 				DateTime.now().withTimeAtStartOfDay().minusDays(days)
@@ -120,35 +168,6 @@ public class ReportPrinter {
 			}
 		}
 		filteredReader.close();
-
-		// create a new reader and output the summed up report
-		if (days > 0) {
-			printTo.println("====== sums of the last " + days + " days ======");
-		} else {
-			printTo.println("====== sums of today ======");
-		}
-		ItemReader reportReader = readFrom.provideReader();
-		ReportGenerator reporter = new SummingReportGenerator(
-				new StartDateReaderFilter(new SubstringReaderFilter(
-						reportReader, searchString), DateTime.now()
-						.withTimeAtStartOfDay().minusDays(days).toDateTime(),
-						DateTime.now().withTimeAtStartOfDay().plusDays(1)
-								.toDateTime()));
-		List<ReportingItem> report = reporter.report();
-
-		Duration overallDuration = new Duration(0);
-		for (ReportingItem i : report) {
-			Duration duration = i.getDuration();
-			overallDuration = overallDuration.plus(duration);
-			String comment = i.getComment();
-			printTruncatedString(hmsPeriodFormatter.print(duration.toPeriod())
-					+ "   " + comment, printTo, truncateLongLines);
-		}
-
-		printTo.println("====== overall sum: ======\n"
-				+ hmsPeriodFormatter.print(overallDuration.toPeriod()));
-
-		reportReader.close();
 	}
 
 	private void printTruncatedString(StringBuilder toPrint,
