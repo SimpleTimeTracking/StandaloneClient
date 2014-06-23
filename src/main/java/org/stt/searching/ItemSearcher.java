@@ -23,17 +23,6 @@ public interface ItemSearcher {
 			ReadableInstant to);
 
 	/**
-	 * Get all items for end time between from and to, both inclusive. If from
-	 * and to are both null, returns only items without end time.
-	 * 
-	 * @param from
-	 * @param to
-	 * @return
-	 */
-	Collection<TimeTrackingItem> searchByEnd(ReadableInstant from,
-			ReadableInstant to);
-
-	/**
 	 * Returns the current item that is being tracked or <i>absent</i> if none
 	 * is active or available.
 	 */

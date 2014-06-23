@@ -47,40 +47,6 @@ public class DefaultItemSearcher implements ItemSearcher {
 		return foundElements;
 	}
 
-	// FIXME: incomplete and tests missing
-	@Override
-	public Collection<TimeTrackingItem> searchByEnd(ReadableInstant from,
-			ReadableInstant to) {
-
-		Collection<TimeTrackingItem> foundElements = new LinkedList<>();
-		Optional<TimeTrackingItem> item;
-		try (ItemReader reader = provider.provideReader()) {
-			while ((item = reader.read()).isPresent()) {
-				TimeTrackingItem currentItem = item.get();
-				DateTime currentEnd = currentItem.getEnd().orNull();
-
-				if (from == null && to == null && currentEnd == null) {
-					foundElements.add(currentItem);
-
-				} else if (from == null && currentEnd != null) { // NOPMD - not
-																	// implemented
-																	// yet
-
-				} else if (to == null) { // NOPMD - not implemented yet
-
-				} else if (!currentItem.getEnd().get().isBefore(from)
-						&& !currentItem.getEnd().get().isAfter(to)) {
-					foundElements.add(currentItem);
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-
-		throw new RuntimeException("not correctly implemented");
-		// return foundElements;
-	}
-
 	@Override
 	public Optional<TimeTrackingItem> getCurrentTimeTrackingitem() {
 		try (ItemReader reader = provider.provideReader()) {
