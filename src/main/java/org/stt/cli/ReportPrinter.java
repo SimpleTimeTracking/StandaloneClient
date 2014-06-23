@@ -20,9 +20,8 @@ import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.ReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
-import org.stt.searching.ItemSearcher;
+import org.stt.reporting.SummingReportGenerator.Report;
 
 import com.google.common.base.Optional;
 
@@ -42,14 +41,12 @@ public class ReportPrinter {
 			.appendSuffix("m").appendSeparator(":").appendSeconds()
 			.appendSuffix("s").toFormatter();
 
-	private ItemReaderProvider readFrom;
-	private Configuration configuration;
-	private ItemSearcher searcher;
+	private final ItemReaderProvider readFrom;
+	private final Configuration configuration;
 
-	public ReportPrinter(ItemReaderProvider readFrom, ItemSearcher searcher,
+	public ReportPrinter(ItemReaderProvider readFrom,
 			Configuration configuration) {
 		this.readFrom = readFrom;
-		this.searcher = searcher;
 		this.configuration = configuration;
 	}
 
@@ -100,34 +97,32 @@ public class ReportPrinter {
 	 */
 	private void printSums(PrintStream printTo, String searchString, int days,
 			boolean truncateLongLines) throws IOException {
-		if (days > 0) {
-			printTo.println("====== sums of the last " + days + " days ======");
-		} else {
-			printTo.println("====== sums of today ======");
-			TimeTrackingItem first = searcher.getFirstItemOfDay(DateTime.now())
-					.orNull();
-			TimeTrackingItem last = searcher.getLastItemOfDay(DateTime.now())
-					.orNull();
-			if (first != null) {
-				printTo.println("start of day: "
-						+ hmsDateFormat.print(first.getStart()));
-			}
-			if (last != null) {
-				printTo.println("end of day: "
-						+ hmsDateFormat.print(last.getEnd().or(DateTime.now())));
-			}
-		}
 		ItemReader reportReader = readFrom.provideReader();
-		ReportGenerator reporter = new SummingReportGenerator(
+		SummingReportGenerator reporter = new SummingReportGenerator(
 				new StartDateReaderFilter(new SubstringReaderFilter(
 						reportReader, searchString), DateTime.now()
 						.withTimeAtStartOfDay().minusDays(days).toDateTime(),
 						DateTime.now().withTimeAtStartOfDay().plusDays(1)
 								.toDateTime()));
-		List<ReportingItem> report = reporter.report();
+		Report report = reporter.report();
+
+		if (days > 0) {
+			printTo.println("====== sums of the last " + days + " days ======");
+		} else {
+			printTo.println("====== sums of today ======");
+			if (report.getStart() != null) {
+				printTo.println("start of day: "
+						+ hmsDateFormat.print(report.getStart()));
+			}
+			if (report.getEnd() != null) {
+				printTo.println("end of day: "
+						+ hmsDateFormat.print(report.getEnd()));
+			}
+		}
+		List<ReportingItem> reportingItems = report.getReportingItems();
 
 		Duration overallDuration = new Duration(0);
-		for (ReportingItem i : report) {
+		for (ReportingItem i : reportingItems) {
 			Duration duration = i.getDuration();
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();

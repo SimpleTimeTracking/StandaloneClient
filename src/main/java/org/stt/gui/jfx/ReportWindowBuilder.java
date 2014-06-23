@@ -109,7 +109,7 @@ public class ReportWindowBuilder {
 						itemReader, startOfDay, nextDay)) {
 			SummingReportGenerator reportGenerator = new SummingReportGenerator(
 					filter);
-			return reportGenerator.report();
+			return reportGenerator.report().getReportingItems();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

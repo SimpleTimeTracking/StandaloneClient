@@ -24,6 +24,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -32,6 +33,7 @@ import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
 import org.stt.CommandHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
@@ -39,7 +41,7 @@ import org.stt.searching.CommentSearcher;
 
 import com.sun.javafx.application.PlatformImpl;
 
-public class STTApplication {
+public class STTApplication implements ContinueActionHandler {
 	private final Stage stage;
 	@FXML
 	TextArea commandText;
@@ -129,10 +131,14 @@ public class STTApplication {
 				});
 		history.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
 
+			private final Image continueImage = new Image("/Continue.png", 18,
+					18, true, true);
+
 			@Override
 			public ListCell<TimeTrackingItem> call(
 					ListView<TimeTrackingItem> arg0) {
-				return new TimeTrackingItemCell(STTApplication.this);
+				return new TimeTrackingItemCell(STTApplication.this,
+						continueImage);
 			}
 		});
 
@@ -281,6 +287,7 @@ public class STTApplication {
 		});
 	}
 
+	@Override
 	public void continueItem(TimeTrackingItem item) {
 		commandHandler.resumeGivenItem(item);
 		shutdown();

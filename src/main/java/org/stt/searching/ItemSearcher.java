@@ -29,20 +29,6 @@ public interface ItemSearcher {
 	Optional<TimeTrackingItem> getCurrentTimeTrackingitem();
 
 	/**
-	 * Returns the first item of the given day. If an item is active at 00:00 of
-	 * the day, it is returned. If no item has been recorded for the day,
-	 * <i>absent</i> is returned.
-	 */
-	Optional<TimeTrackingItem> getFirstItemOfDay(DateTime theDay);
-
-	/**
-	 * Returns the last item of the given day. If an item is active at 24:00 of
-	 * the day, it is returned. If no item has been recorded for the day,
-	 * <i>absent</i> is returned.
-	 */
-	Optional<TimeTrackingItem> getLastItemOfDay(DateTime theDay);
-
-	/**
 	 * Returns a list with all days that have tracking items.
 	 */
 	Collection<DateTime> getAllTrackedDays();
