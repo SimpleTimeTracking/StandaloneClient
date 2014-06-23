@@ -46,7 +46,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 
 		if (COMMAND_FIN.equals(command)) {
 			return endCurrentItem(DateTime.now());
-		} else if (finAt.isPresent()) {
+		} else if (finAt != null) {
+			// really checking for null here. See comment on tryToParseFinAt
 			return finAt;
 		} else {
 			TimeTrackingItem parsedItem = parse(command);
@@ -92,6 +93,14 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		}
 	}
 
+	/**
+	 * Tries to parse "fin at 22:00". If it cannot be parsed, an
+	 * IllegalStateException is thrown. If parsing succeeds, the current item is
+	 * finished and returned.
+	 * 
+	 * If the command is not recognized at all, <b>null</b> is returned to
+	 * distinguish between "cannot parse at all" and "no current item present"
+	 */
 	private Optional<TimeTrackingItem> tryToParseFinAt(String command) {
 		Matcher finAtMatcher = P_FIN_AT.matcher(command);
 		if (finAtMatcher.matches()) {
@@ -104,7 +113,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			}
 			return endCurrentItem(parsedTime);
 		}
-		return Optional.absent();
+		return null;
 	}
 
 	private TimeTrackingItem parse(String command) {
