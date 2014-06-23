@@ -198,7 +198,7 @@ public class Main {
 	}
 
 	/**
-	 * Prints usage information to stdout
+	 * Prints usage information to the given Stream
 	 */
 	private static void usage(PrintStream printTo) {
 		String usage = "Usage:\n"
@@ -239,7 +239,7 @@ public class Main {
 				}
 			}
 		};
-		return new ReportPrinter(provider, configuration);
+		return new ReportPrinter(provider, searchIn, configuration);
 	}
 
 	/**

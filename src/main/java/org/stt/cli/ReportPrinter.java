@@ -22,6 +22,7 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.ReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
+import org.stt.searching.ItemSearcher;
 
 import com.google.common.base.Optional;
 
@@ -43,10 +44,12 @@ public class ReportPrinter {
 
 	private ItemReaderProvider readFrom;
 	private Configuration configuration;
+	private ItemSearcher searcher;
 
-	public ReportPrinter(ItemReaderProvider readFrom,
+	public ReportPrinter(ItemReaderProvider readFrom, ItemSearcher searcher,
 			Configuration configuration) {
 		this.readFrom = readFrom;
+		this.searcher = searcher;
 		this.configuration = configuration;
 	}
 
@@ -101,6 +104,18 @@ public class ReportPrinter {
 			printTo.println("====== sums of the last " + days + " days ======");
 		} else {
 			printTo.println("====== sums of today ======");
+			TimeTrackingItem first = searcher.getFirstItemOfDay(DateTime.now())
+					.orNull();
+			TimeTrackingItem last = searcher.getLastItemOfDay(DateTime.now())
+					.orNull();
+			if (first != null) {
+				printTo.println("start of day: "
+						+ hmsDateFormat.print(first.getStart()));
+			}
+			if (last != null) {
+				printTo.println("end of day: "
+						+ hmsDateFormat.print(last.getEnd().or(DateTime.now())));
+			}
 		}
 		ItemReader reportReader = readFrom.provideReader();
 		ReportGenerator reporter = new SummingReportGenerator(
