@@ -239,7 +239,7 @@ public class Main {
 				}
 			}
 		};
-		return new ReportPrinter(provider, searchIn, configuration);
+		return new ReportPrinter(provider, configuration);
 	}
 
 	/**

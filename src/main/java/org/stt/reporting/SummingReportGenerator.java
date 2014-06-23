@@ -27,17 +27,17 @@ import com.google.common.base.Optional;
  * 
  * Items will be returned sorted in ascending order of the comments
  */
-public class SummingReportGenerator implements ReportGenerator {
+public class SummingReportGenerator {
 
-	private ItemReader reader;
+	private final ItemReader reader;
 
 	public SummingReportGenerator(ItemReader reader) {
 		this.reader = reader;
 	}
 
-	@Override
-	public List<ReportingItem> report() {
-
+	public Report report() {
+		DateTime startOfReport = null;
+		DateTime endOfReport = null;
 		List<ReportingItem> reportList = new LinkedList<>();
 
 		Map<String, Duration> collectingMap = new HashMap<>();
@@ -45,8 +45,13 @@ public class SummingReportGenerator implements ReportGenerator {
 		Optional<TimeTrackingItem> optionalItem = null;
 		while ((optionalItem = reader.read()).isPresent()) {
 			TimeTrackingItem item = optionalItem.get();
-
 			DateTime end = item.getEnd().or(DateTime.now());
+
+			if (startOfReport == null) {
+				startOfReport = item.getStart();
+			}
+			endOfReport = end;
+
 			Duration duration = new Duration(item.getStart(), end);
 			String comment = item.getComment().or("");
 			if (collectingMap.containsKey(comment)) {
@@ -70,7 +75,33 @@ public class SummingReportGenerator implements ReportGenerator {
 				return o1.getComment().compareTo(o2.getComment());
 			}
 		});
+		return new Report(reportList, startOfReport, endOfReport);
+	}
 
-		return reportList;
+	public static class Report {
+
+		private final List<ReportingItem> reportingItems;
+		private final DateTime start;
+		private final DateTime end;
+
+		public Report(List<ReportingItem> reportingItems, DateTime start,
+				DateTime end) {
+			super();
+			this.reportingItems = reportingItems;
+			this.start = start;
+			this.end = end;
+		}
+
+		public List<ReportingItem> getReportingItems() {
+			return reportingItems;
+		}
+
+		public DateTime getStart() {
+			return start;
+		}
+
+		public DateTime getEnd() {
+			return end;
+		}
 	}
 }
