@@ -2,6 +2,7 @@ package org.stt;
 
 import java.io.Closeable;
 
+import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
 
 import com.google.common.base.Optional;
@@ -22,4 +23,11 @@ public interface CommandHandler extends Closeable {
 	void endCurrentItem();
 
 	void resumeGivenItem(TimeTrackingItem item);
+
+	/**
+	 * Sets the end time for the currently active item. If no active item
+	 * exists, does nothing.
+	 */
+	Optional<TimeTrackingItem> endCurrentItem(
+			DateTime startTimeOfNewItem);
 }

@@ -26,6 +26,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			"(.+)\\s+(\\d+)\\s?h(rs?|ours?)? ago$", Pattern.MULTILINE);
 	private static final Pattern P_SINCE = Pattern.compile(
 			"(.+)\\s+since\\s+(.+)$", Pattern.MULTILINE);
+	private static final Pattern P_FIN_AT = Pattern.compile(
+			"\\s*fin\\s*at\\s*(.+)$", Pattern.MULTILINE);
 
 	private final ItemWriter itemWriter;
 	private final ItemSearcher itemSearcher;
@@ -40,12 +42,12 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	public Optional<TimeTrackingItem> executeCommand(String command) {
 		checkNotNull(command);
 
+		Optional<TimeTrackingItem> finAt = tryToParseFinAt(command);
+
 		if (COMMAND_FIN.equals(command)) {
-			try {
-				return endCurrentItemIfPresent(DateTime.now());
-			} catch (IOException e) {
-				throw new IllegalStateException(e);
-			}
+			return endCurrentItem(DateTime.now());
+		} else if (finAt.isPresent()) {
+			return finAt;
 		} else {
 			TimeTrackingItem parsedItem = parse(command);
 			try {
@@ -59,11 +61,24 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 
 	@Override
 	public void endCurrentItem() {
-		try {
-			endCurrentItemIfPresent(DateTime.now());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		endCurrentItem(DateTime.now());
+	}
+
+	@Override
+	public Optional<TimeTrackingItem> endCurrentItem(DateTime endTime) {
+		Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
+				.getCurrentTimeTrackingitem();
+		if (currentTimeTrackingitem.isPresent()) {
+			TimeTrackingItem unfinisheditem = currentTimeTrackingitem.get();
+			TimeTrackingItem nowFinishedItem = unfinisheditem.withEnd(endTime);
+			try {
+				itemWriter.replace(unfinisheditem, nowFinishedItem);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			return Optional.of(nowFinishedItem);
 		}
+		return Optional.<TimeTrackingItem> absent();
 	}
 
 	@Override
@@ -77,18 +92,19 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		}
 	}
 
-	private Optional<TimeTrackingItem> endCurrentItemIfPresent(
-			DateTime startTimeOfNewItem) throws IOException {
-		Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
-				.getCurrentTimeTrackingitem();
-		if (currentTimeTrackingitem.isPresent()) {
-			TimeTrackingItem unfinisheditem = currentTimeTrackingitem.get();
-			TimeTrackingItem nowFinishedItem = unfinisheditem
-					.withEnd(startTimeOfNewItem);
-			itemWriter.replace(unfinisheditem, nowFinishedItem);
-			return Optional.of(nowFinishedItem);
+	private Optional<TimeTrackingItem> tryToParseFinAt(String command) {
+		Matcher finAtMatcher = P_FIN_AT.matcher(command);
+		if (finAtMatcher.matches()) {
+			String time = finAtMatcher.group(1);
+			DateTime parsedTime = parseHoursMinutesOptionalSeconds(time);
+
+			if (parsedTime == null) {
+				throw new IllegalStateException("cannot parse time \"" + time
+						+ "\"");
+			}
+			return endCurrentItem(parsedTime);
 		}
-		return Optional.<TimeTrackingItem> absent();
+		return Optional.absent();
 	}
 
 	private TimeTrackingItem parse(String command) {
@@ -111,16 +127,21 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private TimeTrackingItem tryToParseSince(String command) {
 		Matcher matcher = P_SINCE.matcher(command);
 		if (matcher.matches()) {
-			DateTime time = parseWithHoursMinutesAndSeconds(matcher.group(2));
-			if (time == null) {
-				time = parseWithHoursAndMinutes(matcher.group(2));
-			}
-			DateTime today = DateTime.now().withTimeAtStartOfDay();
-			DateTime todayWithTime = today.withMillisOfDay(time
-					.getMillisOfDay());
+			DateTime todayWithTime = parseHoursMinutesOptionalSeconds(matcher
+					.group(2));
 			return new TimeTrackingItem(matcher.group(1), todayWithTime);
 		}
 		return null;
+	}
+
+	private DateTime parseHoursMinutesOptionalSeconds(String timeString) {
+		DateTime time = parseWithHoursMinutesAndSeconds(timeString);
+		if (time == null) {
+			time = parseWithHoursAndMinutes(timeString);
+		}
+		DateTime today = DateTime.now().withTimeAtStartOfDay();
+		DateTime todayWithTime = today.withMillisOfDay(time.getMillisOfDay());
+		return todayWithTime;
 	}
 
 	private DateTime parseWithHoursAndMinutes(String time) {
