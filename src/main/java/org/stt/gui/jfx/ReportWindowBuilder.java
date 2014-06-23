@@ -4,10 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import javafx.beans.binding.ListBinding;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -17,6 +18,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableColumn.SortType;
@@ -35,6 +37,7 @@ import javafx.util.StringConverter;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.Factory;
@@ -43,6 +46,7 @@ import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.SummingReportGenerator;
+import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.searching.ItemSearcher;
 
 public class ReportWindowBuilder {
@@ -54,6 +58,9 @@ public class ReportWindowBuilder {
 			.appendSuffix("h").appendSeparator(":").appendMinutes()
 			.appendSuffix("m").appendSeparator(":").appendSeconds()
 			.appendSuffix("s").toFormatter();
+
+	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
+			.forPattern("HH:mm:ss");
 
 	private final Factory<Stage> stageFactory;
 
@@ -79,37 +86,53 @@ public class ReportWindowBuilder {
 		stage.show();
 	}
 
-	private ListBinding<ReportingItem> createReportingItemsListModel(
+	private ObservableValue<Report> createReportModel(
 			final ObservableValue<DateTime> selectedDateTime) {
-		return new ListBinding<ReportingItem>() {
+		return new ObjectBinding<Report>() {
 			{
 				super.bind(selectedDateTime);
 			}
 
 			@Override
-			protected ObservableList<ReportingItem> computeValue() {
-				List<ReportingItem> report;
+			protected Report computeValue() {
+				Report report;
 				if (selectedDateTime.getValue() != null) {
 					DateTime startOfDay = selectedDateTime.getValue();
 					DateTime nextDay = startOfDay.plusDays(1);
 					report = createSummaryReportFor(startOfDay, nextDay);
 				} else {
-					report = Collections.emptyList();
+					report = new Report(
+							Collections.<ReportingItem> emptyList(), null, null);
 				}
-				return FXCollections.observableArrayList(report);
+				return report;
 			}
 
 		};
 	}
 
-	private List<ReportingItem> createSummaryReportFor(DateTime startOfDay,
-			DateTime nextDay) {
+	private ListBinding<ReportingItem> createReportingItemsListModel(
+			final ObservableValue<Report> report) {
+		return new ListBinding<ReportingItem>() {
+			{
+				super.bind(report);
+			}
+
+			@Override
+			protected ObservableList<ReportingItem> computeValue() {
+				return FXCollections.observableArrayList(report.getValue()
+						.getReportingItems());
+			}
+
+		};
+	}
+
+	private Report createSummaryReportFor(DateTime startOfDay, DateTime nextDay) {
 		try (ItemReader itemReader = readerProvider.provideReader();
 				StartDateReaderFilter filter = new StartDateReaderFilter(
 						itemReader, startOfDay, nextDay)) {
 			SummingReportGenerator reportGenerator = new SummingReportGenerator(
 					filter);
-			return reportGenerator.report().getReportingItems();
+			return reportGenerator.report();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -131,6 +154,12 @@ public class ReportWindowBuilder {
 		@FXML
 		private BorderPane borderPane;
 
+		@FXML
+		private Label startOfReport;
+
+		@FXML
+		private Label endOfReport;
+
 		private final Stage stage;
 
 		public ReportWindowController(Stage stage) {
@@ -145,7 +174,33 @@ public class ReportWindowBuilder {
 		@FXML
 		public void initialize() {
 			final ObservableValue<DateTime> selectedDateTimeProperty = addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty();
-			ListBinding<ReportingItem> reportListModel = createReportingItemsListModel(selectedDateTimeProperty);
+			final ObservableValue<Report> reportModel = createReportModel(selectedDateTimeProperty);
+			StringBinding startBinding = new StringBinding() {
+				{
+					bind(reportModel);
+				}
+
+				@Override
+				protected String computeValue() {
+					return hmsDateFormat.print(reportModel.getValue()
+							.getStart());
+				}
+			};
+			StringBinding endBinding = new StringBinding() {
+				{
+					bind(reportModel);
+				}
+
+				@Override
+				protected String computeValue() {
+					return hmsDateFormat.print(reportModel.getValue().getEnd());
+				}
+			};
+
+			startOfReport.textProperty().bind(startBinding);
+			endOfReport.textProperty().bind(endBinding);
+
+			ListBinding<ReportingItem> reportListModel = createReportingItemsListModel(reportModel);
 			tableForReport.setItems(reportListModel);
 
 			setDurationColumnCellFactoryToConvertDurationToString();
