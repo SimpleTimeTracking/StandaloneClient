@@ -124,11 +124,13 @@ public class Main {
 		}
 	}
 
-	private void fin(PrintStream printTo) throws IOException {
+	private void fin(Collection<String> args, PrintStream printTo)
+			throws IOException {
 		try (ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn)) {
 			Optional<TimeTrackingItem> updatedItem = tiw
-					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN);
+					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN
+							+ " " + StringHelper.join(args));
 			if (updatedItem.isPresent()) {
 				printTo.println("stopped working on "
 						+ updatedItem.get().toString());
@@ -185,7 +187,7 @@ public class Main {
 				createNewReportPrinter().report(args, printTo);
 			} else if (mainOperator.startsWith("f")) {
 				// fin
-				fin(printTo);
+				fin(args, printTo);
 			} else if (mainOperator.startsWith("s")) {
 				// search
 				search(args, printTo);
