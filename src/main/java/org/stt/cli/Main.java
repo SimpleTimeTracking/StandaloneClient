@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
@@ -73,11 +72,16 @@ public class Main {
 			throws IOException {
 		String comment = StringHelper.join(args);
 
+		Optional<TimeTrackingItem> currentItem = searchIn
+				.getCurrentTimeTrackingitem();
+
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
 				writeTo, searchIn);
 		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
-		// FIXME: sysout("stopped working on $old_item")
+		if (currentItem.isPresent()) {
+			printTo.println("stopped working on " + currentItem);
+		}
 		printTo.println("start working on "
 				+ createdItem.get().getComment().orNull());
 		tiw.close();
@@ -214,7 +218,7 @@ public class Main {
 				try {
 					return createNewReader();
 				} catch (IOException e) {
-					LOG.log(Level.SEVERE, "Error creating reader", e);
+					LOG.throwing(Main.class.getName(), "createNewSearcher", e);
 					throw new RuntimeException(e);
 				}
 			}
