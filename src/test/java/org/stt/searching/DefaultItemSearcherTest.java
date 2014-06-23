@@ -197,6 +197,70 @@ public class DefaultItemSearcherTest {
 		}
 	}
 
+	@Test
+	public void lastItemOfDayIsAbsentIfNoItemAvailable() {
+
+		// GIVEN
+		givenReaderReads(new TimeTrackingItem("", DateTime.now().plusDays(2)),
+				new TimeTrackingItem("", DateTime.now().minusDays(2)));
+
+		// WHEN
+		Optional<TimeTrackingItem> lastItemOfDay = sut
+				.getLastItemOfDay(DateTime.now());
+
+		// THEN
+		assertThat(lastItemOfDay, is(Optional.<TimeTrackingItem> absent()));
+	}
+
+	@Test
+	public void firstItemOfDayIsAbsentIfNoItemAvailable() {
+
+		// GIVEN
+		givenReaderReads(new TimeTrackingItem("", DateTime.now().plusDays(2)),
+				new TimeTrackingItem("", DateTime.now().minusDays(2)));
+
+		// WHEN
+		Optional<TimeTrackingItem> firstItemOfDay = sut
+				.getFirstItemOfDay(DateTime.now());
+
+		// THEN
+		assertThat(firstItemOfDay, is(Optional.<TimeTrackingItem> absent()));
+	}
+
+	@Test
+	public void firstItemOfDayIsReturned() {
+
+		// GIVEN
+		TimeTrackingItem expected = new TimeTrackingItem("blubb", new DateTime(
+				2012, 12, 12, 10, 10, 10));
+		givenReaderReads(new TimeTrackingItem("", DateTime.now().minusDays(2)),
+				expected);
+
+		// WHEN
+		Optional<TimeTrackingItem> firstItemOfDay = sut
+				.getFirstItemOfDay(new DateTime(2012, 12, 12, 16, 50, 19));
+
+		// THEN
+		assertThat(firstItemOfDay, is(Optional.of(expected)));
+	}
+
+	@Test
+	public void lastItemOfDayIsReturned() {
+
+		// GIVEN
+		TimeTrackingItem expected = new TimeTrackingItem("blubb", new DateTime(
+				2012, 12, 12, 10, 10, 10));
+		givenReaderReads(new TimeTrackingItem("", DateTime.now().minusDays(2)),
+				expected);
+
+		// WHEN
+		Optional<TimeTrackingItem> lastItemOfDay = sut
+				.getLastItemOfDay(new DateTime(2012, 12, 12, 16, 50, 19));
+
+		// THEN
+		assertThat(lastItemOfDay, is(Optional.of(expected)));
+	}
+
 	private void givenReaderReturnsTrackingTimesForStartDates(
 			DateTime[] dateTimes) {
 		TimeTrackingItem[] items = new TimeTrackingItem[dateTimes.length];
