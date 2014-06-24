@@ -23,7 +23,7 @@ public final class TimeTrackingItem {
 	 */
 	public TimeTrackingItem(String comment, DateTime start, DateTime end) {
 		this.comment = Optional.fromNullable(comment);
-		this.start = checkNotNull(start);
+		this.start = checkNotNull(start, "start must not be null");
 		this.end = Optional.of(end);
 		checkState(!end.isBefore(start),
 				"end must not be before start for item " + this.toString());

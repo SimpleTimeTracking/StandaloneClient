@@ -28,6 +28,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			"(.+)\\s+since\\s+(.+)$", Pattern.MULTILINE);
 	private static final Pattern P_FIN_AT = Pattern.compile(
 			"\\s*fin\\s*at\\s*(.+)$", Pattern.MULTILINE);
+	private static final Pattern P_FROM_TO = Pattern.compile(
+			"(.+)\\s+(?:from)?\\s+(.+)\\s+to\\s+(.+)$", Pattern.MULTILINE);
 
 	private final ItemWriter itemWriter;
 	private final ItemSearcher itemSearcher;
@@ -128,6 +130,9 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			result = tryToParseSince(command);
 		}
 		if (result == null) {
+			result = tryToParseFromTo(command);
+		}
+		if (result == null) {
 			result = new TimeTrackingItem(command, DateTime.now());
 		}
 		return result;
@@ -139,6 +144,18 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			DateTime todayWithTime = parseHoursMinutesOptionalSeconds(matcher
 					.group(2));
 			return new TimeTrackingItem(matcher.group(1), todayWithTime);
+		}
+		return null;
+	}
+
+	private TimeTrackingItem tryToParseFromTo(String command) {
+		Matcher matcher = P_FROM_TO.matcher(command);
+		if (matcher.matches()) {
+			DateTime fromTime = parseHoursMinutesOptionalSeconds(matcher
+					.group(2));
+			// if(fromTime)
+			DateTime toTime = parseHoursMinutesOptionalSeconds(matcher.group(3));
+			return new TimeTrackingItem(matcher.group(1), fromTime, toTime);
 		}
 		return null;
 	}

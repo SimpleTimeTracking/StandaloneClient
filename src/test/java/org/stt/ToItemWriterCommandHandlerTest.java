@@ -162,6 +162,24 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void shouldParseFromXtoYCommand() {
+
+		// GIVEN
+		DateTime expectedStart = DateTime.now().withTimeAtStartOfDay()
+				.withHourOfDay(12);
+		DateTime expectedEnd = DateTime.now().withTimeAtStartOfDay()
+				.withHourOfDay(13);
+		TimeTrackingItem expectedItem = new TimeTrackingItem("comment",
+				expectedStart, expectedEnd);
+		// WHEN
+		Optional<TimeTrackingItem> result = sut
+				.executeCommand("comment from 12:00 to 13:00");
+
+		// THEN
+		assertThat(result, is(Optional.of(expectedItem)));
+	}
+
+	@Test
 	public void shouldEndCurrentItemOnFINCommand() throws IOException {
 		// GIVEN
 		TimeTrackingItem unfinished = createUnfinishedItem();
