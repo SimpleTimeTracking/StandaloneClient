@@ -3,6 +3,7 @@ package org.stt;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +17,10 @@ import org.stt.searching.ItemSearcher;
 import com.google.common.base.Optional;
 
 public class ToItemWriterCommandHandler implements CommandHandler {
+
+	private static Logger LOG = Logger
+			.getLogger(ToItemWriterCommandHandler.class.getName());
+
 	private static final DateTimeFormatter FORMAT_HOUR_MINUTES_SECONDS = DateTimeFormat
 			.forPattern("HH:mm:ss");
 
@@ -38,7 +43,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private static final Pattern P_FIN_AT = Pattern.compile(
 			"\\s*fin\\s*at\\s*(.+)$", Pattern.MULTILINE);
 	private static final Pattern P_FROM_TO = Pattern.compile(
-			"(.+?)\\s+(?:from)?\\s*(.+)\\s+to\\s+(.+)$", Pattern.MULTILINE);
+			"(.+?)\\s+(?:from)?\\s*([0-9\\.\\s:]+)\\s+to\\s+([0-9\\.\\s:]+)$",
+			Pattern.MULTILINE);
 
 	private final ItemWriter itemWriter;
 	private final ItemSearcher itemSearcher;
@@ -160,7 +166,6 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		Matcher matcher = P_FROM_TO.matcher(command);
 		if (matcher.matches()) {
 			DateTime fromTime = parseTime(matcher.group(2));
-			// if(fromTime)
 			DateTime toTime = parseTime(matcher.group(3));
 			return new TimeTrackingItem(matcher.group(1), fromTime, toTime);
 		}
@@ -170,8 +175,9 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private DateTime parseTime(String timeString) {
 		DateTime parsedTime = parseTimeWithFormatterOrReturnNull(timeString,
 				FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS);
-		if (parsedTime != null)
+		if (parsedTime != null) {
 			return parsedTime;
+		}
 		return parseHoursMinutesOptionalSeconds(timeString);
 	}
 
@@ -202,6 +208,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		try {
 			return formatter.parseDateTime(time);
 		} catch (IllegalArgumentException e) {
+			LOG.throwing(ToItemWriterCommandHandler.class.getName(),
+					"parseTimeWithFormatterOrReturnNull", e);
 			return null;
 		}
 	}
