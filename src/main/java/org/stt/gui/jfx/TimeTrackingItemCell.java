@@ -17,10 +17,15 @@ import org.stt.model.TimeTrackingItem;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	private final Image imageForContinue;
+	private final String textForEdit;
 	private final ContinueActionHandler continueActionHandler;
+	private final EditActionHandler editActionHandler;
 
 	public TimeTrackingItemCell(ContinueActionHandler continueActionHandler,
-			Image imageForContinue) {
+			EditActionHandler editActionHandler, Image imageForContinue,
+			String textForEdit) {
+		this.editActionHandler = checkNotNull(editActionHandler);
+		this.textForEdit = checkNotNull(textForEdit);
 		this.continueActionHandler = checkNotNull(continueActionHandler);
 		this.imageForContinue = checkNotNull(imageForContinue);
 	}
@@ -49,7 +54,17 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 					continueActionHandler.continueItem(item);
 				}
 			});
-			pane.getChildren().addAll(btn, label);
+			Button editBtn = new Button(textForEdit);
+			editBtn.setOnAction(new EventHandler<ActionEvent>() {
+
+				@Override
+				public void handle(ActionEvent event) {
+					editActionHandler.edit(item);
+					;
+
+				}
+			});
+			pane.getChildren().addAll(btn, editBtn, label);
 		}
 		return pane;
 	}
@@ -75,5 +90,9 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	public interface ContinueActionHandler {
 		void continueItem(TimeTrackingItem item);
+	}
+
+	public interface EditActionHandler {
+		void edit(TimeTrackingItem item);
 	}
 }

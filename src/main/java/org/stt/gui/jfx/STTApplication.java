@@ -34,6 +34,7 @@ import javafx.util.Callback;
 
 import org.stt.CommandHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
@@ -41,7 +42,7 @@ import org.stt.searching.CommentSearcher;
 
 import com.sun.javafx.application.PlatformImpl;
 
-public class STTApplication implements ContinueActionHandler {
+public class STTApplication implements ContinueActionHandler, EditActionHandler {
 	private final Stage stage;
 	@FXML
 	TextArea commandText;
@@ -91,7 +92,7 @@ public class STTApplication implements ContinueActionHandler {
 	}
 
 	public void setupStage() {
-		ResourceBundle localization = ResourceBundle
+		final ResourceBundle localization = ResourceBundle
 				.getBundle("org.stt.gui.Application");
 		FXMLLoader loader = new FXMLLoader(getClass().getResource(
 				"/org/stt/gui/jfx/MainWindow.fxml"), localization);
@@ -138,7 +139,8 @@ public class STTApplication implements ContinueActionHandler {
 			public ListCell<TimeTrackingItem> call(
 					ListView<TimeTrackingItem> arg0) {
 				return new TimeTrackingItemCell(STTApplication.this,
-						continueImage);
+						STTApplication.this, continueImage, localization
+								.getString("item.edit"));
 			}
 		});
 
@@ -293,4 +295,8 @@ public class STTApplication implements ContinueActionHandler {
 		shutdown();
 	}
 
+	@Override
+	public void edit(TimeTrackingItem item) {
+		setCommandText(commandHandler.itemToCommand(item));
+	}
 }

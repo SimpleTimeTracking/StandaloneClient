@@ -151,6 +151,20 @@ public class ToItemWriterCommandHandlerTest {
 		assertThatTimeIsTodayWith(start, 13, 37, 0);
 	}
 
+	@Test
+	public void shouldParseSince2000_01_01_13_37() {
+		// GIVEN
+		givenNoCurrentItemIsAvailable();
+
+		// WHEN
+		sut.executeCommand("test since 2000.01.01 13:37:00");
+
+		// THEN
+		TimeTrackingItem item = retrieveWrittenTimeTrackingItem();
+		DateTime start = item.getStart();
+		assertThat(start, is(new DateTime(2000, 1, 1, 13, 37, 0)));
+	}
+
 	private void assertThatTimeIsTodayWith(DateTime time, int hourOfDay,
 			int minuteOfHour, int secondOfMinute) {
 		assertThat(time.getHourOfDay(), is(hourOfDay));
@@ -292,6 +306,33 @@ public class ToItemWriterCommandHandlerTest {
 				item.getStart(),
 				is(Matchers.<ReadableInstant> lessThanOrEqualTo(DateTime.now()
 						.minusHours(hoursAgo))));
+	}
+
+	@Test
+	public void itemToCommandShouldUseSinceIfEndIsMissing() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", new DateTime(2000,
+				1, 1, 1, 1, 1));
+
+		// WHEN
+		String result = sut.itemToCommand(item);
+
+		// THEN
+		assertThat(result, is("test since 2000.01.01 01:01:01"));
+	}
+
+	@Test
+	public void itemToCommandShouldUseFromToIfEndIsMissing() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", new DateTime(2000,
+				1, 1, 1, 1, 1), new DateTime(2000, 1, 1, 1, 1, 1));
+
+		// WHEN
+		String result = sut.itemToCommand(item);
+
+		// THEN
+		assertThat(result,
+				is("test from 2000.01.01 01:01:01 to 2000.01.01 01:01:01"));
 	}
 
 	private TimeTrackingItem retrieveItemWhenCommandIsExecuted(String command) {

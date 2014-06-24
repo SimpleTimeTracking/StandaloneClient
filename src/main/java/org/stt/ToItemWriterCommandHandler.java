@@ -16,6 +16,15 @@ import org.stt.searching.ItemSearcher;
 import com.google.common.base.Optional;
 
 public class ToItemWriterCommandHandler implements CommandHandler {
+	private static final DateTimeFormatter FORMAT_HOUR_MINUTES_SECONDS = DateTimeFormat
+			.forPattern("HH:mm:ss");
+
+	static final DateTimeFormatter FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS = DateTimeFormat
+			.forPattern("yyyy.MM.dd HH:mm:ss");
+
+	private static final DateTimeFormatter FORMAT_HOUR_MINUTES = DateTimeFormat
+			.forPattern("HH:mm");
+
 	public static final String COMMAND_FIN = "fin";
 
 	private static final Pattern P_MINS_AGO = Pattern.compile(
@@ -141,9 +150,8 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private TimeTrackingItem tryToParseSince(String command) {
 		Matcher matcher = P_SINCE.matcher(command);
 		if (matcher.matches()) {
-			DateTime todayWithTime = parseHoursMinutesOptionalSeconds(matcher
-					.group(2));
-			return new TimeTrackingItem(matcher.group(1), todayWithTime);
+			DateTime parsedTime = parseTime(matcher.group(2));
+			return new TimeTrackingItem(matcher.group(1), parsedTime);
 		}
 		return null;
 	}
@@ -151,13 +159,20 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private TimeTrackingItem tryToParseFromTo(String command) {
 		Matcher matcher = P_FROM_TO.matcher(command);
 		if (matcher.matches()) {
-			DateTime fromTime = parseHoursMinutesOptionalSeconds(matcher
-					.group(2));
+			DateTime fromTime = parseTime(matcher.group(2));
 			// if(fromTime)
-			DateTime toTime = parseHoursMinutesOptionalSeconds(matcher.group(3));
+			DateTime toTime = parseTime(matcher.group(3));
 			return new TimeTrackingItem(matcher.group(1), fromTime, toTime);
 		}
 		return null;
+	}
+
+	private DateTime parseTime(String timeString) {
+		DateTime parsedTime = parseTimeWithFormatterOrReturnNull(timeString,
+				FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS);
+		if (parsedTime != null)
+			return parsedTime;
+		return parseHoursMinutesOptionalSeconds(timeString);
 	}
 
 	private DateTime parseHoursMinutesOptionalSeconds(String timeString) {
@@ -174,16 +189,12 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	}
 
 	private DateTime parseWithHoursAndMinutes(String time) {
-		return parseTimeWithPattern(time, "kk:mm");
+		return parseTimeWithFormatterOrReturnNull(time, FORMAT_HOUR_MINUTES);
 	}
 
 	private DateTime parseWithHoursMinutesAndSeconds(String time) {
-		return parseTimeWithPattern(time, "kk:mm:ss");
-	}
-
-	private DateTime parseTimeWithPattern(String time, String pattern) {
-		DateTimeFormatter formatter = DateTimeFormat.forPattern(pattern);
-		return parseTimeWithFormatterOrReturnNull(time, formatter);
+		return parseTimeWithFormatterOrReturnNull(time,
+				FORMAT_HOUR_MINUTES_SECONDS);
 	}
 
 	private DateTime parseTimeWithFormatterOrReturnNull(String time,
@@ -228,5 +239,36 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	@Override
 	public void close() throws IOException {
 		itemWriter.close();
+	}
+
+	@Override
+	public String itemToCommand(TimeTrackingItem item) {
+		checkNotNull(item);
+		DateTimeFormatter formatForStart = getShortFormatForTodayAndLongForBefore(item
+				.getStart());
+
+		StringBuilder builder = new StringBuilder(item.getComment().or(""));
+		builder.append(' ');
+		if (item.getEnd().isPresent()) {
+			builder.append("from ");
+			builder.append(formatForStart.print(item.getStart()));
+			builder.append(" to ");
+			DateTimeFormatter formatForEnd = getShortFormatForTodayAndLongForBefore(item
+					.getEnd().get());
+			builder.append(formatForEnd.print(item.getEnd().get()));
+		} else {
+			builder.append("since ");
+			builder.append(formatForStart.print(item.getStart()));
+		}
+		return builder.toString();
+	}
+
+	private DateTimeFormatter getShortFormatForTodayAndLongForBefore(
+			DateTime dateTime) {
+		DateTimeFormatter formatForStart = FORMAT_HOUR_MINUTES_SECONDS;
+		if (dateTime.isBefore(DateTime.now().withTimeAtStartOfDay())) {
+			formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
+		}
+		return formatForStart;
 	}
 }

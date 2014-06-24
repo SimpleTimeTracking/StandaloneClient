@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 
@@ -16,6 +17,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 
 public class TimeTrackingItemCellTest {
@@ -24,11 +26,14 @@ public class TimeTrackingItemCellTest {
 	private ContinueActionHandler continueActionHandler;
 	@Mock
 	private Image imageForContinue;
+	@Mock
+	private EditActionHandler editActionHandler;
 
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
-		sut = new TimeTrackingItemCell(continueActionHandler, imageForContinue);
+		sut = new TimeTrackingItemCell(continueActionHandler,
+				editActionHandler, imageForContinue, "edit");
 	}
 
 	@Test
@@ -61,6 +66,20 @@ public class TimeTrackingItemCellTest {
 
 		// THEN
 		verify(continueActionHandler).continueItem(item);
+	}
 
+	@Test
+	public void shouldCallEditHandlerOnClickOnEdit() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
+		sut.updateItem(item, false);
+
+		Pane pane = (Pane) sut.getGraphic();
+		Button editButton = (Button) pane.lookup("Button");
+		// WHEN
+		editButton.fire();
+
+		// THEN
+		verify(editActionHandler).edit(item);
 	}
 }

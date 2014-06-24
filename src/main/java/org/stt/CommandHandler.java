@@ -28,6 +28,7 @@ public interface CommandHandler extends Closeable {
 	 * Sets the end time for the currently active item. If no active item
 	 * exists, does nothing.
 	 */
-	Optional<TimeTrackingItem> endCurrentItem(
-			DateTime startTimeOfNewItem);
+	Optional<TimeTrackingItem> endCurrentItem(DateTime startTimeOfNewItem);
+
+	String itemToCommand(TimeTrackingItem item);
 }
