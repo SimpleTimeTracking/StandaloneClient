@@ -194,6 +194,21 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void shouldParseFromToWithSpaceInComment() {
+		// GIVEN
+
+		// WHEN
+		Optional<TimeTrackingItem> result = sut
+				.executeCommand("no t from 2014.06.22 14:43:14 to 2014.06.22 14:58:41");
+
+		// THEN
+		TimeTrackingItem item = result.get();
+		assertThat(item.getStart(), is(new DateTime(2014, 6, 22, 14, 43, 14)));
+		assertThat(item.getEnd().get(),
+				is(new DateTime(2014, 6, 22, 14, 58, 41)));
+	}
+
+	@Test
 	public void shouldParseFromXtoYWithoutFromCommand() {
 
 		// GIVEN
