@@ -29,7 +29,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private static final Pattern P_FIN_AT = Pattern.compile(
 			"\\s*fin\\s*at\\s*(.+)$", Pattern.MULTILINE);
 	private static final Pattern P_FROM_TO = Pattern.compile(
-			"(.+)\\s+(?:from)?\\s+(.+)\\s+to\\s+(.+)$", Pattern.MULTILINE);
+			"(.+?)\\s+(?:from)?\\s*(.+)\\s+to\\s+(.+)$", Pattern.MULTILINE);
 
 	private final ItemWriter itemWriter;
 	private final ItemSearcher itemSearcher;
