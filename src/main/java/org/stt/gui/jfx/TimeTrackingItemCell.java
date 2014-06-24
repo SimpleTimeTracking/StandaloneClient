@@ -60,8 +60,6 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 				@Override
 				public void handle(ActionEvent event) {
 					editActionHandler.edit(item);
-					;
-
 				}
 			});
 			pane.getChildren().addAll(btn, editBtn, label);
