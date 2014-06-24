@@ -148,6 +148,9 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		if (time == null) {
 			time = parseWithHoursAndMinutes(timeString);
 		}
+		if (time == null) {
+			return null;
+		}
 		DateTime today = DateTime.now().withTimeAtStartOfDay();
 		DateTime todayWithTime = today.withMillisOfDay(time.getMillisOfDay());
 		return todayWithTime;
