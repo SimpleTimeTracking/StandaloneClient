@@ -26,7 +26,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private static Logger LOG = Logger
 			.getLogger(ToItemWriterCommandHandler.class.getName());
 
-	private static final DateTimeFormatter FORMAT_HOUR_MINUTES_SECONDS = DateTimeFormat
+	static final DateTimeFormatter FORMAT_HOUR_MINUTES_SECONDS = DateTimeFormat
 			.forPattern("HH:mm:ss");
 
 	static final DateTimeFormatter FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS = DateTimeFormat
@@ -127,10 +127,15 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		return builder.toString();
 	}
 
+	/**
+	 * @return short time format for today and long format otherwise
+	 */
 	private DateTimeFormatter getShortFormatForTodayAndLongOtherwise(
 			DateTime dateTime) {
 		DateTimeFormatter formatForStart = FORMAT_HOUR_MINUTES_SECONDS;
-		if (dateTime.isBefore(DateTime.now().withTimeAtStartOfDay())) {
+		if (dateTime.isBefore(DateTime.now().withTimeAtStartOfDay())
+				|| dateTime.isAfter(DateTime.now().plusDays(1)
+						.withTimeAtStartOfDay())) {
 			formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
 		}
 		return formatForStart;

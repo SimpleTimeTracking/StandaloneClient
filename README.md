@@ -14,6 +14,9 @@ To remedy this, there already are some great projects (like http://ti.sharats.me
 - modular design to allow easy extension
 - simple setup: no complicated installation, just download and start tracking times
 - information privacy: the data is located on your machine
+- simple data storage format: it is just a text file with one time tracking record per line
+- powerful and customizable parser for commands using [ANTLR](http://www.antlr.org/)
+- Graphical and command line interface. Use what suits you more
 
 # Usage
 
@@ -23,6 +26,8 @@ To start SimpleTimeTrack UI, double click SimpleTimeTrack.jar or (if this does n
 ```bash
 java -jar path/to/SimpleTimeTrack.jar
 ```
+
+Also see https://github.com/Bytekeeper/SimpleTimeTrack/wiki/Intro for other options for launching.
 
 When starting work on a task, just enter a comment about what you are working on in the text field. Comments can span multiple lines. Then either press CTRL+ENTER or click on "Done". The window closes and the task is stored with the current time as start.
 
@@ -34,13 +39,7 @@ To avoid typing a long command every time you want to use SimpleTimeTrack, creat
 java -cp path/to/SimpleTimeTrack.jar org.stt.cli.Main $*
 ```
 
-Autocompletion for Bash (commands and comments) can be achieved by 
-FIXME: describe auto completion here
-
-Autocompletion for ZSH (commands and comments):
-FIXME: describe auto completion here
-```zsh
-```
+See https://github.com/Bytekeeper/SimpleTimeTrack/wiki/CLI for available commands
 
 # Configuration
 

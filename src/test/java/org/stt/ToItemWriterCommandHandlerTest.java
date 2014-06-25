@@ -350,6 +350,25 @@ public class ToItemWriterCommandHandlerTest {
 				is("test from 2000.01.01 01:01:01 to 2000.01.01 01:01:01"));
 	}
 
+	@Test
+	public void itemToCommandShouldUseLongFormatIfEndIsTomorrow() {
+		// GIVEN
+		DateTime expectedStart = DateTime.now();
+		DateTime expectedEnd = DateTime.now().plusDays(1);
+		TimeTrackingItem item = new TimeTrackingItem("test", expectedStart,
+				expectedEnd);
+
+		// WHEN
+		String result = sut.itemToCommand(item);
+
+		// THEN
+		String startString = ToItemWriterCommandHandler.FORMAT_HOUR_MINUTES_SECONDS
+				.print(expectedStart);
+		String endString = ToItemWriterCommandHandler.FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS
+				.print(expectedEnd);
+		assertThat(result, is("test from " + startString + " to " + endString));
+	}
+
 	private TimeTrackingItem retrieveItemWhenCommandIsExecuted(String command) {
 		givenNoCurrentItemIsAvailable();
 		sut.executeCommand(command);
