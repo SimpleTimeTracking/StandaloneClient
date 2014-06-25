@@ -21,7 +21,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private static Logger LOG = Logger
 			.getLogger(ToItemWriterCommandHandler.class.getName());
 
-	private static final DateTimeFormatter FORMAT_HOUR_MINUTES_SECONDS = DateTimeFormat
+	static final DateTimeFormatter FORMAT_HOUR_MINUTES_SECONDS = DateTimeFormat
 			.forPattern("HH:mm:ss");
 
 	static final DateTimeFormatter FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS = DateTimeFormat
@@ -252,7 +252,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	@Override
 	public String itemToCommand(TimeTrackingItem item) {
 		checkNotNull(item);
-		DateTimeFormatter formatForStart = getShortFormatForTodayAndLongForBefore(item
+		DateTimeFormatter formatForStart = getShortFormatForTodayAndLongForOther(item
 				.getStart());
 
 		StringBuilder builder = new StringBuilder(item.getComment().or(""));
@@ -261,7 +261,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			builder.append("from ");
 			builder.append(formatForStart.print(item.getStart()));
 			builder.append(" to ");
-			DateTimeFormatter formatForEnd = getShortFormatForTodayAndLongForBefore(item
+			DateTimeFormatter formatForEnd = getShortFormatForTodayAndLongForOther(item
 					.getEnd().get());
 			builder.append(formatForEnd.print(item.getEnd().get()));
 		} else {
@@ -271,10 +271,15 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		return builder.toString();
 	}
 
-	private DateTimeFormatter getShortFormatForTodayAndLongForBefore(
+	/**
+	 * @return short time format for today and long format for not today
+	 */
+	private DateTimeFormatter getShortFormatForTodayAndLongForOther(
 			DateTime dateTime) {
 		DateTimeFormatter formatForStart = FORMAT_HOUR_MINUTES_SECONDS;
-		if (dateTime.isBefore(DateTime.now().withTimeAtStartOfDay())) {
+		if (dateTime.isBefore(DateTime.now().withTimeAtStartOfDay())
+				|| dateTime.isAfter(DateTime.now().plusDays(1)
+						.withTimeAtStartOfDay())) {
 			formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
 		}
 		return formatForStart;
