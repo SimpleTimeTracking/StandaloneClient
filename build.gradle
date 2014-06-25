@@ -24,6 +24,10 @@ sourceSets {
    main.java.srcDir antlr.antlrGenDir
 }
 
+findbugs {
+   excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
+}
+
 repositories {
    mavenCentral()
 }
