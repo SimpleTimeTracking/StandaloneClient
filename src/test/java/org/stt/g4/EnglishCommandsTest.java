@@ -15,6 +15,7 @@ public class EnglishCommandsTest {
 		EnglishCommandsParser parser = new EnglishCommandsParser(
 				new CommonTokenStream(lexer));
 		CommandContext command = parser.command();
+		System.out.println(command.newItem);
 	}
 
 	@Test
@@ -25,6 +26,7 @@ public class EnglishCommandsTest {
 		EnglishCommandsParser parser = new EnglishCommandsParser(
 				new CommonTokenStream(lexer));
 		CommandContext command = parser.command();
+		System.out.println(command.newItem);
 	}
 
 	@Test
@@ -35,6 +37,7 @@ public class EnglishCommandsTest {
 		EnglishCommandsParser parser = new EnglishCommandsParser(
 				new CommonTokenStream(lexer));
 		CommandContext command = parser.command();
+		System.out.println(command.newItem);
 	}
 
 	@Test
@@ -45,5 +48,6 @@ public class EnglishCommandsTest {
 		EnglishCommandsParser parser = new EnglishCommandsParser(
 				new CommonTokenStream(lexer));
 		CommandContext command = parser.command();
+		System.out.println(command.newItem);
 	}
 }

@@ -44,7 +44,7 @@ public class ToItemWriterCommandHandlerTest {
 	@DataPoints
 	public static Command[] minuteFormats = { min("test %smins ago"),
 			min("test %s mins ago"), min("test %smin ago"),
-			min("test\n%s minutes ago") };
+			min("test\n%s minutes ago"), min("test one\ntest two %smin ago ") };
 
 	@DataPoints
 	public static Command[] secondFormats = { secs("test %ss ago"),
@@ -216,11 +216,11 @@ public class ToItemWriterCommandHandlerTest {
 				.withHourOfDay(12);
 		DateTime expectedEnd = DateTime.now().withTimeAtStartOfDay()
 				.withHourOfDay(13);
-		TimeTrackingItem expectedItem = new TimeTrackingItem("comment",
+		TimeTrackingItem expectedItem = new TimeTrackingItem("com ment",
 				expectedStart, expectedEnd);
 		// WHEN
 		Optional<TimeTrackingItem> result = sut
-				.executeCommand("comment 12:00 to 13:00");
+				.executeCommand("com ment 12:00 to 13:00");
 
 		// THEN
 		assertThat(result, is(Optional.of(expectedItem)));
@@ -337,7 +337,7 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
-	public void itemToCommandShouldUseFromToIfEndIsMissing() {
+	public void itemToCommandShouldUseFromToIfEndIsNotMissing() {
 		// GIVEN
 		TimeTrackingItem item = new TimeTrackingItem("test", new DateTime(2000,
 				1, 1, 1, 1, 1), new DateTime(2000, 1, 1, 1, 1, 1));
