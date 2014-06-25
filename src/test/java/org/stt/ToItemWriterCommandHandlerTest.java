@@ -49,12 +49,14 @@ public class ToItemWriterCommandHandlerTest {
 	@DataPoints
 	public static Command[] secondFormats = { secs("test %ss ago"),
 			secs("test %s sec ago"), secs("test %ssecs ago"),
-			secs("test\n%s second ago"), secs("test %sseconds ago") };
+			secs("test\n%s second ago"), secs("test %sseconds ago"),
+			secs("from here to there %sseconds ago") };
 
 	@DataPoints
 	public static Command[] hourFormats = { hours("test %sh ago"),
 			hours("test %shr ago"), hours("test %s hrs ago"),
-			hours("test\n%shour ago"), hours("test %s hours ago") };
+			hours("test\n%shour ago"), hours("test %s hours ago"),
+			hours("left 3 hours ago %s hours ago") };
 
 	@Before
 	public void setup() {
