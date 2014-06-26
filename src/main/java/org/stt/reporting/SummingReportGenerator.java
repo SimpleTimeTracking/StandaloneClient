@@ -86,7 +86,6 @@ public class SummingReportGenerator {
 
 		public Report(List<ReportingItem> reportingItems, DateTime start,
 				DateTime end) {
-			super();
 			this.reportingItems = reportingItems;
 			this.start = start;
 			this.end = end;
