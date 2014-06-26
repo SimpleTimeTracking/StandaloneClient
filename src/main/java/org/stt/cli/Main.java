@@ -80,7 +80,7 @@ public class Main {
 		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
 		if (currentItem.isPresent()) {
-			printTo.println("stopped working on " + currentItem);
+			printTo.println("stopped working on " + currentItem.get());
 		}
 		printTo.println("start working on "
 				+ createdItem.get().getComment().orNull());
