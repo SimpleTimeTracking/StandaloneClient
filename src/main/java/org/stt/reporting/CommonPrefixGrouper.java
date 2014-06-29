@@ -3,7 +3,6 @@ package org.stt.reporting;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,13 +16,15 @@ public class CommonPrefixGrouper implements ItemGrouper {
 	private final Group root = new Group();
 
 	@Override
-	public List<String> getGroupsOf(TimeTrackingItem item) {
-		checkNotNull(item);
-		if (!item.getComment().isPresent()) {
-			return Collections.emptyList();
-		}
+	public List<String> getGroupsOf(String text) {
+		checkNotNull(text);
+		return root.findGroupsFor(text);
+	}
 
-		return root.findGroupsFor(item.getComment().get());
+	@Override
+	public List<String> getPossibleExpansions(String text) {
+		checkNotNull(text);
+		return root.findExpansions(text);
 	}
 
 	public void scanForGroups(ItemReader itemReader) {
@@ -108,6 +109,28 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			return newChild;
 		}
 
+		public List<String> findExpansions(String comment) {
+			List<String> result = new ArrayList<>();
+			addExpansionsTo(result, comment);
+			return result;
+		}
+
+		private void addExpansionsTo(List<String> result, String comment) {
+			int matchLength = lengthOfCommonPrefix(comment);
+			// System.out.println(prefix + " vs " + comment + " " + matchLength
+			// + " " + prefix.length() + " " + comment.length());
+			if (matchLength == prefix.length()
+					&& matchLength <= comment.length()) {
+				String remaining = comment.substring(matchLength).trim();
+				for (Group child : children) {
+					child.addExpansionsTo(result, remaining);
+				}
+			} else if (matchLength == comment.length()
+					&& matchLength < prefix.length()) {
+				result.add(prefix.substring(matchLength));
+			}
+		}
+
 		private Match findMatch(String comment) {
 			Match match = new Match();
 			for (Group grp : children) {
@@ -139,6 +162,16 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			return 0;
 		}
 
+		private int lengthOfCommonPrefix(String other) {
+			int i = 0;
+			for (; i < other.length() && i < prefix.length(); i++) {
+				if (other.charAt(i) != prefix.charAt(i)) {
+					return i;
+				}
+			}
+			return i;
+		}
+
 		@Override
 		public String toString() {
 			StringBuilder out = new StringBuilder();
@@ -159,4 +192,5 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			return group.prefix.length() == prefixLength;
 		}
 	}
+
 }

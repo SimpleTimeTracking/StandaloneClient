@@ -29,6 +29,8 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.persistence.ItemWriter;
+import org.stt.reporting.CommonPrefixGrouper;
+import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
@@ -47,6 +49,7 @@ public class MainContext {
 	private final ItemSearcher itemSearcher;
 	private final Factory<Stage> stageFactory;
 	private final CommentSearcher commentSearcher;
+	private ItemGrouper itemGrouper;
 
 	public MainContext() {
 		configuration = new Configuration();
@@ -190,9 +193,20 @@ public class MainContext {
 		}
 		ItemReader historyReader = createPersistenceReader();
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
+		itemGrouper = createItemGrouper();
 		ReportWindowBuilder reportWindow = new ReportWindowBuilder(
 				stageFactory, itemReaderProvider, itemSearcher);
 		return new STTApplication(stage, commandHandler, historyReader,
-				executorService, reportWindow, commentSearcher);
+				executorService, reportWindow, commentSearcher, itemGrouper);
+	}
+
+	private ItemGrouper createItemGrouper() {
+		CommonPrefixGrouper grouper = new CommonPrefixGrouper();
+		try (ItemReader itemReader = createPersistenceReader()) {
+			grouper.scanForGroups(itemReader);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return grouper;
 	}
 }

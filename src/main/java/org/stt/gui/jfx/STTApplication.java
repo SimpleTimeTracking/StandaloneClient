@@ -42,6 +42,7 @@ import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
+import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 
 import com.sun.javafx.application.PlatformImpl;
@@ -70,10 +71,13 @@ public class STTApplication implements ContinueActionHandler,
 
 	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
+	private final ItemGrouper grouper;
 
 	public STTApplication(Stage stage, CommandHandler commandHandler,
 			ItemReader historySource, ExecutorService executorService,
-			ReportWindowBuilder reportWindow, CommentSearcher searcher) {
+			ReportWindowBuilder reportWindow, CommentSearcher searcher,
+			ItemGrouper grouper) {
+		this.grouper = checkNotNull(grouper);
 		this.searcher = checkNotNull(searcher);
 		this.reportWindowBuilder = checkNotNull(reportWindow);
 		this.stage = checkNotNull(stage);
@@ -309,12 +313,18 @@ public class STTApplication implements ContinueActionHandler,
 			event.consume();
 			shutdown();
 		}
-		// if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
-		// if (searchView.getItems().size() > 0) {
-		// setCommandText(searchView.getItems().get(0));
-		// }
-		// event.consume();
-		// }
+		if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
+			expandCurrentCommand();
+			event.consume();
+		}
+	}
+
+	void expandCurrentCommand() {
+		String currentText = commandText.getText();
+		List<String> expansions = grouper.getPossibleExpansions(currentText);
+		if (expansions.size() == 1) {
+			setCommandText(currentText + expansions.get(0));
+		}
 	}
 
 	protected void executeCommand() {
