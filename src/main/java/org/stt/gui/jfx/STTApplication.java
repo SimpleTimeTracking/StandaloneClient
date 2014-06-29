@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javafx.application.Platform;
 import javafx.beans.binding.ListBinding;
@@ -49,6 +51,9 @@ import com.sun.javafx.application.PlatformImpl;
 
 public class STTApplication implements ContinueActionHandler,
 		EditActionHandler, DeleteActionHandler {
+	private static final Logger LOG = Logger.getLogger(STTApplication.class
+			.getName());
+
 	private final Stage stage;
 	@FXML
 	TextArea commandText;
@@ -155,12 +160,15 @@ public class STTApplication implements ContinueActionHandler,
 			private final Image editImage = new Image("/Edit.png", 25, 25,
 					true, true);
 
+			private final Image fromToImage = new Image("/FromTo.png", 32, 12,
+					true, true);
+
 			@Override
 			public ListCell<TimeTrackingItem> call(
 					ListView<TimeTrackingItem> arg0) {
 				return new TimeTrackingItemCell(STTApplication.this,
 						STTApplication.this, STTApplication.this,
-						continueImage, editImage, deleteImage);
+						continueImage, editImage, deleteImage, fromToImage);
 			}
 		});
 
@@ -346,7 +354,8 @@ public class STTApplication implements ContinueActionHandler,
 					setupStage();
 					readHistoryFrom(historySource);
 				} catch (Exception e) {
-					throw new RuntimeException(e);
+					LOG.log(Level.SEVERE, "Couldn't start", e);
+					shutdown();
 				}
 			}
 		});

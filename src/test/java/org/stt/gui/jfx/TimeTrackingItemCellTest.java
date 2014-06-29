@@ -35,17 +35,32 @@ public class TimeTrackingItemCellTest {
 	private Image imageForEdit;
 	@Mock
 	private Image imageForDelete;
+	@Mock
+	private Image imageFromTo;
 
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
 		sut = new TimeTrackingItemCell(continueActionHandler,
 				editActionHandler, deleteActionHandler, imageForContinue,
-				imageForEdit, imageForDelete);
+				imageForEdit, imageForDelete, imageFromTo);
 	}
 
 	@Test
 	public void shouldUseContinueImage() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
+
+		// WHEN
+		sut.updateItem(item, false);
+
+		// THEN
+		Pane pane = (Pane) sut.getGraphic();
+		assertPanelHasImageButtonWithImage(pane, imageForContinue);
+	}
+
+	@Test
+	public void shouldUseFromToImage() {
 		// GIVEN
 		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
 

@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -25,7 +26,11 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final Pane space = new Pane();
 
-	private final Label labelForTime = new Label();
+	private final HBox timePane = new HBox();
+
+	private final Label labelForStart = new Label();
+
+	private final Label labelForEnd = new Label();
 
 	private TimeTrackingItem item;
 
@@ -35,11 +40,15 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	final Button deleteButton;
 
+	private final ImageView fromToImageView;
+
 	public TimeTrackingItemCell(
 			final ContinueActionHandler continueActionHandler,
 			final EditActionHandler editActionHandler,
 			final DeleteActionHandler deleteActionHandler,
-			Image imageForContinue, Image imageForEdit, Image imageForDelete) {
+			Image imageForContinue, Image imageForEdit, Image imageForDelete,
+			Image imageFromTo) {
+		checkNotNull(imageFromTo);
 		checkNotNull(editActionHandler);
 		checkNotNull(continueActionHandler);
 		checkNotNull(deleteActionHandler);
@@ -78,10 +87,14 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		HBox.setHgrow(space, Priority.ALWAYS);
 		labelForComment.setWrapText(true);
 		labelForComment.setPrefWidth(400);
-		labelForTime.setPrefWidth(200);
+		fromToImageView = new ImageView(imageFromTo);
+
+		timePane.setPrefWidth(200);
+		timePane.setSpacing(5);
+		timePane.setAlignment(Pos.CENTER_LEFT);
 
 		cellPane.getChildren().addAll(actionsPane, labelForComment, space,
-				labelForTime);
+				timePane);
 		cellPane.setAlignment(Pos.CENTER_LEFT);
 		actionsPane.setAlignment(Pos.CENTER_LEFT);
 	}
@@ -95,7 +108,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		} else {
 			this.item = item;
 			applyLabelForComment();
-			applyLabelForTimePeriod();
+			setupTimePane();
 			setGraphic(cellPane);
 		}
 	}
@@ -108,16 +121,17 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		}
 	}
 
-	private void applyLabelForTimePeriod() {
-		StringBuilder itemText = new StringBuilder();
+	private void setupTimePane() {
 		DateTimeFormatter dateTimeFormatter = DateTimeFormat.shortDateTime();
-		itemText.append(item.getStart().toString(dateTimeFormatter));
-		if (item.getEnd().isPresent()) {
-			itemText.append(" - ");
-			itemText.append(item.getEnd().get().toString(dateTimeFormatter));
-		}
+		labelForStart.setText(dateTimeFormatter.print(item.getStart()));
 
-		labelForTime.setText(itemText.toString());
+		if (!item.getEnd().isPresent()) {
+			timePane.getChildren().setAll(labelForStart);
+		} else {
+			labelForEnd.setText(dateTimeFormatter.print(item.getEnd().get()));
+			timePane.getChildren().setAll(labelForStart, fromToImageView,
+					labelForEnd);
+		}
 	}
 
 	public interface ContinueActionHandler {

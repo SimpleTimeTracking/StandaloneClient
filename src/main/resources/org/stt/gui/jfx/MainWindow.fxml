@@ -15,8 +15,8 @@
          <children>
             <HBox spacing="10.0">
                <children>
-                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" wrapText="true" HBox.hgrow="SOMETIMES" />
-                  <FlowPane alignment="CENTER" hgap="10.0" prefHeight="178.0" prefWidth="204.0" vgap="10.0">
+                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" prefHeight="178.0" prefWidth="624.0" wrapText="true" HBox.hgrow="SOMETIMES" />
+                  <FlowPane alignment="CENTER" hgap="10.0" prefHeight="0.0" prefWidth="0.0" vgap="10.0">
                      <children>
                         <Button fx:id="doneButton" mnemonicParsing="false" onAction="#done" text="%done">
                            <FlowPane.margin>
