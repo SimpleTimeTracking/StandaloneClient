@@ -2,7 +2,7 @@
 
 # Mission statement 
 
-The goal of SimpleTimeTrack is to make time tracking as simple and quick as possible.
+The goal of STT is to make time tracking as simple and quick as possible.
 
 # Background
 
