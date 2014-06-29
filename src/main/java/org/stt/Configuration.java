@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,6 +108,19 @@ public class Configuration {
 		return encoding;
 	}
 
+	public int getDailyWorkingHours() {
+		int hours = Integer.parseInt(getPropertiesReplaced("dailyWorkingHours",
+				"8"));
+		return hours;
+	}
+
+	public Collection<String> getBreakTimeComments() {
+		String comments = getPropertiesReplaced("breakTimeComments",
+				"pause,break,coffee");
+		String[] split = comments.split(",");
+		return Arrays.asList(split);
+	}
+
 	private String getPropertiesReplaced(String propName, String fallback) {
 		String theProperty = loadedProps.getProperty(propName, fallback);
 		Matcher envMatcher = ENV_PATTERN.matcher(theProperty);
@@ -118,4 +133,5 @@ public class Configuration {
 		}
 		return theProperty;
 	}
+
 }

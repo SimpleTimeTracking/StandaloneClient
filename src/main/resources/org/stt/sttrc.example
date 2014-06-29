@@ -24,3 +24,9 @@
 # if you get funny output with umlauts or other non ASCII characters on the Windows CMD,
 # set sysoutEncoding=CP850
 #sysoutEncoding=UTF-8
+
+# the number of hours you have to work per day. This is used for calculating overtime and estimated day end time
+#dailyWorkingHours=8
+
+# comments which should be regarded as break time. The values are case sensitive and may contain white space but must not contain commas
+# breakTimeComments=pause,break,coffee
