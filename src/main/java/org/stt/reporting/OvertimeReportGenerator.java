@@ -12,10 +12,6 @@ import org.stt.reporting.ItemCategorizer.ItemCategory;
 
 import com.google.common.base.Optional;
 
-/**
- * @author tw
- * @date 29.06.2014, 17:40:54
- */
 public class OvertimeReportGenerator {
 
 	private final ItemCategorizer categorizer;
@@ -30,7 +26,7 @@ public class OvertimeReportGenerator {
 
 	}
 
-	public Duration getOvertime() {
+	public Map<DateTime, Duration> getOvertime() {
 		int dailyWorkingHours = configuration.getDailyWorkingHours();
 
 		Optional<TimeTrackingItem> optionalItem = null;
@@ -56,10 +52,6 @@ public class OvertimeReportGenerator {
 			}
 		}
 
-		Duration result = new Duration(0);
-		for (Duration d : dateToOvertime.values()) {
-			result = result.plus(d);
-		}
-		return result;
+		return dateToOvertime;
 	}
 }

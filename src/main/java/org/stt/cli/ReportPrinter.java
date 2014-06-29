@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,8 +21,11 @@ import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
+import org.stt.reporting.ItemCategorizer;
+import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
+import org.stt.reporting.WorktimeCategorizer;
 
 import com.google.common.base.Optional;
 
@@ -34,6 +38,8 @@ public class ReportPrinter {
 			.forPattern("HH:mm:ss");
 	private final DateTimeFormatter mdhmsDateFormat = DateTimeFormat
 			.forPattern("MM-dd HH:mm:ss");
+	private final DateTimeFormatter ymdDateFormat = DateTimeFormat
+			.forPattern("yyyy-MM-dd");
 
 	private final PeriodFormatter hmsPeriodFormatter = new PeriodFormatterBuilder()
 			.printZeroAlways().minimumPrintedDigits(2).appendHours()
@@ -59,13 +65,10 @@ public class ReportPrinter {
 		if (args.size() > 0) {
 			// there is a parameter! Let's parse it ;-)
 
+			truncateLongLines = !args.remove("long");
+
 			// first collapse all following strings
 			String argsString = StringHelper.join(args);
-
-			if (argsString.endsWith("long")) {
-				argsString = argsString.replaceAll("long$", "");
-				truncateLongLines = false;
-			}
 
 			Pattern daysPattern = Pattern.compile("(\\d+) days");
 			Matcher daysMatcher = daysPattern.matcher(argsString);
@@ -76,6 +79,10 @@ public class ReportPrinter {
 				searchString = argsString;
 			}
 		}
+
+		printTo.println("output " + (truncateLongLines ? "" : "not ")
+				+ "truncated lines for "
+				+ (days == 0 ? "today" : "the last" + days + " days"));
 
 		// TODO: implement
 		// - "yesterday": all items of yesterday, grouped by comment and summed
@@ -90,6 +97,25 @@ public class ReportPrinter {
 
 		// create a new reader and output the summed up report
 		printSums(printTo, searchString, days, truncateLongLines);
+
+		printOvertime(printTo, days);
+	}
+
+	private void printOvertime(PrintStream printTo, int days) {
+		Map<DateTime, Duration> overtimeMap = createOvertimeReportGenerator(
+				days).getOvertime();
+
+		printTo.println("====== current overtime: ======");
+		Duration overallDuration = new Duration(0);
+		for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
+			overallDuration = overallDuration.plus(e.getValue());
+
+			printTo.println(ymdDateFormat.print(e.getKey()) + " "
+					+ hmsPeriodFormatter.print(e.getValue().toPeriod()));
+		}
+		printTo.print("sum: ");
+		printTo.println(hmsPeriodFormatter.print(overallDuration.toPeriod()));
+
 	}
 
 	/**
@@ -98,12 +124,14 @@ public class ReportPrinter {
 	private void printSums(PrintStream printTo, String searchString, int days,
 			boolean truncateLongLines) throws IOException {
 		ItemReader reportReader = readFrom.provideReader();
-		SummingReportGenerator reporter = new SummingReportGenerator(
-				new StartDateReaderFilter(new SubstringReaderFilter(
-						reportReader, searchString), DateTime.now()
-						.withTimeAtStartOfDay().minusDays(days).toDateTime(),
-						DateTime.now().withTimeAtStartOfDay().plusDays(1)
-								.toDateTime()));
+
+		SubstringReaderFilter substFilter = new SubstringReaderFilter(
+				reportReader, searchString);
+
+		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
+				substFilter, days);
+
+		SummingReportGenerator reporter = new SummingReportGenerator(dateFilter);
 		Report report = reporter.report();
 
 		if (days > 0) {
@@ -141,6 +169,9 @@ public class ReportPrinter {
 	 */
 	private void printDetails(PrintStream printTo, String searchString,
 			int days, boolean truncateLongLines) throws IOException {
+
+		printTo.println("====== recorded items: ======");
+
 		ItemReader detailsReader = readFrom.provideReader();
 		ItemReader filteredReader = new StartDateReaderFilter(detailsReader,
 				DateTime.now().withTimeAtStartOfDay().minusDays(days)
@@ -178,6 +209,28 @@ public class ReportPrinter {
 			}
 		}
 		filteredReader.close();
+	}
+
+	private OvertimeReportGenerator createOvertimeReportGenerator(int days) {
+		ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
+		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
+				readFrom.provideReader(), days);
+		return new OvertimeReportGenerator(dateFilter, categorizer,
+				configuration);
+	}
+
+	/**
+	 * Creates a filter which only accepts items with start date of
+	 * "today minus the given days" to "today"
+	 */
+	private StartDateReaderFilter createStartDateFilterForDays(
+			ItemReader readerToFilter, int days) {
+
+		StartDateReaderFilter dateFilter = new StartDateReaderFilter(
+				readerToFilter, DateTime.now().withTimeAtStartOfDay()
+						.minusDays(days).toDateTime(), DateTime.now()
+						.withTimeAtStartOfDay().plusDays(1).toDateTime());
+		return dateFilter;
 	}
 
 	private void printTruncatedString(StringBuilder toPrint,
