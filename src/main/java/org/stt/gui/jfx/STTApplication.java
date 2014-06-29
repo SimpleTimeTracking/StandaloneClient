@@ -68,7 +68,7 @@ public class STTApplication implements ContinueActionHandler,
 	private final ReportWindowBuilder reportWindowBuilder;
 	private final CommentSearcher searcher;
 
-	private final ObservableList<TimeTrackingItem> allItems = FXCollections
+	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
 
 	public STTApplication(Stage stage, CommandHandler commandHandler,
@@ -355,7 +355,11 @@ public class STTApplication implements ContinueActionHandler,
 
 	@Override
 	public void delete(TimeTrackingItem item) {
-		// TODO Auto-generated method stub
-
+		try {
+			commandHandler.delete(checkNotNull(item));
+			allItems.remove(item);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

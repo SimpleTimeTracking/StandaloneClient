@@ -76,11 +76,14 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 				editButton);
 
 		HBox.setHgrow(space, Priority.ALWAYS);
+		labelForComment.setWrapText(true);
+		labelForComment.setPrefWidth(400);
 		labelForTime.setPrefWidth(200);
 
 		cellPane.getChildren().addAll(actionsPane, labelForComment, space,
 				labelForTime);
 		cellPane.setAlignment(Pos.CENTER_LEFT);
+		actionsPane.setAlignment(Pos.CENTER_LEFT);
 	}
 
 	@Override

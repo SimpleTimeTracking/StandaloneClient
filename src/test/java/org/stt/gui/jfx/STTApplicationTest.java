@@ -1,7 +1,9 @@
 package org.stt.gui.jfx;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
@@ -66,6 +68,36 @@ public class STTApplicationTest {
 	}
 
 	@Test
+	@NotOnPlatformThread
+	public void shouldDeleteItemIfRequested() throws IOException {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem(null, DateTime.now());
+
+		// WHEN
+		sut.delete(item);
+
+		// THEN
+		verify(commandHandler).delete(item);
+	}
+
+	@Test
+	public void deletedItemShouldBeRemoved() {
+		// GIVEN
+		givenExecutorService();
+		final TimeTrackingItem item = new TimeTrackingItem("comment",
+				DateTime.now());
+		setupStage();
+
+		sut.allItems.setAll(item);
+
+		// WHEN
+		sut.delete(item);
+
+		// THEN
+		assertThat(sut.result.getItems(), not(hasItem(item)));
+	}
+
+	@Test
 	public void shouldShowReportWindow() throws IOException {
 		// GIVEN
 
@@ -125,31 +157,15 @@ public class STTApplicationTest {
 	@Test
 	@NotOnPlatformThread
 	public void shouldReadHistoryItemsFromReader() throws Exception {
-		willAnswer(new Answer<Void>() {
-			@Override
-			public Void answer(InvocationOnMock invocation) throws Throwable {
-				((Runnable) invocation.getArguments()[0]).run();
-				return null;
-			}
-		}).given(executorService).execute(any(Runnable.class));
+		// GIVEN
+		givenExecutorService();
 
 		final TimeTrackingItem item = new TimeTrackingItem("comment",
 				DateTime.now());
-		ItemReader reader = mock(ItemReader.class);
-		given(reader.read()).willReturn(Optional.of(item),
-				Optional.<TimeTrackingItem> absent());
 
-		helper.invokeAndWait(new Runnable() {
+		setupStage();
 
-			@Override
-			public void run() {
-				try {
-					sut.setupStage();
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		});
+		ItemReader reader = givenReaderThatReturns(item);
 
 		// WHEN
 		sut.readHistoryFrom(reader);
@@ -165,6 +181,37 @@ public class STTApplicationTest {
 						is(new TimeTrackingItem[] { item }));
 			}
 		});
+	}
+
+	private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
+		ItemReader reader = mock(ItemReader.class);
+		given(reader.read()).willReturn(Optional.of(item),
+				Optional.<TimeTrackingItem> absent());
+		return reader;
+	}
+
+	private void setupStage() {
+		helper.invokeAndWait(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					sut.setupStage();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		});
+	}
+
+	private void givenExecutorService() {
+		willAnswer(new Answer<Void>() {
+			@Override
+			public Void answer(InvocationOnMock invocation) throws Throwable {
+				((Runnable) invocation.getArguments()[0]).run();
+				return null;
+			}
+		}).given(executorService).execute(any(Runnable.class));
 	}
 
 	private void givenCommand(String command) {

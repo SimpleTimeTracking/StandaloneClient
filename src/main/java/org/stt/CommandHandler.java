@@ -1,6 +1,7 @@
 package org.stt;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
@@ -31,4 +32,6 @@ public interface CommandHandler extends Closeable {
 	Optional<TimeTrackingItem> endCurrentItem(DateTime startTimeOfNewItem);
 
 	String itemToCommand(TimeTrackingItem item);
+
+	void delete(TimeTrackingItem item) throws IOException;
 }
