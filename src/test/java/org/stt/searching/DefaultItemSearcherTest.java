@@ -20,10 +20,10 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.experimental.theories.suppliers.TestedOn;
 import org.junit.runner.RunWith;
-import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
@@ -203,15 +203,7 @@ public class DefaultItemSearcherTest {
 		for (int i = 0; i < dateTimes.length; i++) {
 			items[i] = new TimeTrackingItem(null, dateTimes[i]);
 		}
-		givenReaderReads(items);
+		ItemReaderTestHelper.givenReaderReturns(reader, items);
 	}
 
-	private void givenReaderReads(TimeTrackingItem... items) {
-		BDDMyOngoingStubbing<Optional<TimeTrackingItem>> stubbing = given(reader
-				.read());
-		for (TimeTrackingItem item : items) {
-			stubbing = stubbing.willReturn(Optional.of(item));
-		}
-		stubbing.willReturn(Optional.<TimeTrackingItem> absent());
-	}
 }

@@ -14,11 +14,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
+import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemCategorizer.ItemCategory;
-
-import com.google.common.base.Optional;
 
 public class OvertimeReportGeneratorTest {
 
@@ -50,11 +49,9 @@ public class OvertimeReportGeneratorTest {
 		// GIVEN
 		DateTime startTime = DateTime.now();
 		DateTime endTime = startTime.plusHours(8);
-		given(reader.read())
-				.willReturn(
-						Optional.of(new TimeTrackingItem("working", startTime,
-								endTime))).willReturn(
-						Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(reader, new TimeTrackingItem(
+				"working", startTime, endTime));
+
 		// WHEN
 		Duration overtime = sut.getOvertime();
 
@@ -68,14 +65,10 @@ public class OvertimeReportGeneratorTest {
 		// GIVEN
 		DateTime startTime = DateTime.now();
 		DateTime endTime = startTime.plusHours(8);
-		given(reader.read())
-				.willReturn(
-						Optional.of(new TimeTrackingItem("working", startTime,
-								endTime)))
-				.willReturn(
-						Optional.of(new TimeTrackingItem("pause", DateTime
-								.now(), DateTime.now().plusHours(3))))
-				.willReturn(Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(reader, new TimeTrackingItem(
+				"working", startTime, endTime), new TimeTrackingItem("pause",
+				DateTime.now(), DateTime.now().plusHours(3)));
+
 		// WHEN
 		Duration overtime = sut.getOvertime();
 

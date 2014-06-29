@@ -6,6 +6,7 @@ import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
@@ -13,17 +14,13 @@ import com.google.common.base.Optional;
 
 public class SubstringReaderFilterTest {
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void itemContainingSubstringGetsFound() throws IOException {
 
 		// GIVEN
 		ItemReader readerMock = Mockito.mock(ItemReader.class);
-		Mockito.when(readerMock.read())
-				.thenReturn(
-						Optional.of(new TimeTrackingItem("the comment",
-								DateTime.now())),
-						Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(readerMock,
+				new TimeTrackingItem("the comment", DateTime.now()));
 
 		SubstringReaderFilter filter = new SubstringReaderFilter(readerMock,
 				"comment");
@@ -36,17 +33,13 @@ public class SubstringReaderFilterTest {
 		Assert.assertEquals("the comment", read.get().getComment().get());
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void itemNotContainingSubstringGetsNotFound() throws IOException {
 
 		// GIVEN
 		ItemReader readerMock = Mockito.mock(ItemReader.class);
-		Mockito.when(readerMock.read())
-				.thenReturn(
-						Optional.of(new TimeTrackingItem("the comment",
-								DateTime.now())),
-						Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(readerMock,
+				new TimeTrackingItem("the comment", DateTime.now()));
 
 		SubstringReaderFilter filter = new SubstringReaderFilter(readerMock,
 				"not there");
@@ -59,17 +52,13 @@ public class SubstringReaderFilterTest {
 		Assert.assertEquals(Optional.absent(), read);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void nullSearchStringReturnsAllItems() throws IOException {
 
 		// GIVEN
 		ItemReader readerMock = Mockito.mock(ItemReader.class);
-		Mockito.when(readerMock.read())
-				.thenReturn(
-						Optional.of(new TimeTrackingItem("the comment",
-								DateTime.now())),
-						Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(readerMock,
+				new TimeTrackingItem("the comment", DateTime.now()));
 
 		SubstringReaderFilter filter = new SubstringReaderFilter(readerMock,
 				null);

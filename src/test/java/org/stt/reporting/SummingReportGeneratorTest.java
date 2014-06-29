@@ -10,17 +10,15 @@ import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.stt.ItemReaderTestHelper;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.SummingReportGenerator.Report;
 
-import com.google.common.base.Optional;
-
 public class SummingReportGeneratorTest {
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void groupingByCommentWorks() {
 
 		// GIVEN
@@ -35,9 +33,9 @@ public class SummingReportGeneratorTest {
 						12, 14, 15, 17));
 
 		ItemReader reader = Mockito.mock(ItemReader.class);
-		Mockito.when(reader.read()).thenReturn(Optional.of(expectedItem),
-				Optional.of(expectedItem2), Optional.of(expectedItem3),
-				Optional.<TimeTrackingItem> absent());
+
+		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
+				expectedItem2, expectedItem3);
 
 		SummingReportGenerator generator = new SummingReportGenerator(reader);
 
@@ -52,7 +50,6 @@ public class SummingReportGeneratorTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void nullCommentsGetHandledWell() {
 
 		// GIVEN
@@ -64,9 +61,8 @@ public class SummingReportGeneratorTest {
 						12, 14, 15, 16));
 
 		ItemReader reader = Mockito.mock(ItemReader.class);
-		Mockito.when(reader.read()).thenReturn(Optional.of(expectedItem),
-				Optional.of(expectedItem2),
-				Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
+				expectedItem2);
 
 		SummingReportGenerator generator = new SummingReportGenerator(reader);
 
@@ -80,7 +76,6 @@ public class SummingReportGeneratorTest {
 						60 * 1000 + 2 * 1000), "")));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void reportShouldContainStartOfFirstAndEndOfLastItem() {
 		// GIVEN
@@ -92,9 +87,8 @@ public class SummingReportGeneratorTest {
 				new DateTime(2012, 12, 12, 14, 15, 14), endOfLastItem);
 
 		ItemReader reader = Mockito.mock(ItemReader.class);
-		Mockito.when(reader.read()).thenReturn(Optional.of(expectedItem),
-				Optional.of(expectedItem2),
-				Optional.<TimeTrackingItem> absent());
+		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
+				expectedItem2);
 
 		SummingReportGenerator generator = new SummingReportGenerator(reader);
 
