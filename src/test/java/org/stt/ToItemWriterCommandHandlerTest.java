@@ -371,6 +371,18 @@ public class ToItemWriterCommandHandlerTest {
 		assertThat(result, is("test from " + startString + " to " + endString));
 	}
 
+	@Test
+	public void shouldDelegateDelete() throws IOException {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem(null, DateTime.now());
+
+		// WHEN
+		sut.delete(item);
+
+		// THEN
+		verify(itemWriter).delete(item);
+	}
+
 	private TimeTrackingItem retrieveItemWhenCommandIsExecuted(String command) {
 		givenNoCurrentItemIsAvailable();
 		sut.executeCommand(command);

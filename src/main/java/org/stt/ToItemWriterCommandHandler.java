@@ -153,4 +153,10 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 			return la;
 		}
 	}
+
+	@Override
+	public void delete(TimeTrackingItem item) throws IOException {
+		checkNotNull(item);
+		itemWriter.delete(item);
+	}
 }
