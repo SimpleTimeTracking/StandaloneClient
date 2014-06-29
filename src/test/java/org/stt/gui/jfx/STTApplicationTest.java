@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
 import javafx.scene.control.TextArea;
@@ -30,6 +31,7 @@ import org.stt.CommandHandler;
 import org.stt.gui.jfx.JFXTestRunner.NotOnPlatformThread;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 
 import com.google.common.base.Optional;
@@ -52,23 +54,44 @@ public class STTApplicationTest {
 	@Mock
 	protected CommentSearcher commentSearcher;
 
+	@Mock
+	private ItemGrouper grouper;
+
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
 
 		helper.invokeAndWait(new Runnable() {
+
 			@Override
 			public void run() {
 				stage = helper.createStageForTest();
 				ItemReader historySource = mock(ItemReader.class);
 				sut = new STTApplication(stage, commandHandler, historySource,
-						executorService, reportWindow, commentSearcher);
+						executorService, reportWindow, commentSearcher, grouper);
 			}
 		});
 	}
 
 	@Test
 	@NotOnPlatformThread
+	public void shouldDelegateToGrouper() {
+		// GIVEN
+		setupStage();
+
+		sut.commandText.setText("test");
+
+		given(grouper.getPossibleExpansions("test")).willReturn(
+				Arrays.asList("blub"));
+
+		// WHEN
+		sut.expandCurrentCommand();
+
+		// THEN
+		assertThat(sut.commandText.getText(), is("testblub"));
+	}
+
+	@Test
 	public void shouldDeleteItemIfRequested() throws IOException {
 		// GIVEN
 		TimeTrackingItem item = new TimeTrackingItem(null, DateTime.now());

@@ -1,5 +1,6 @@
 package org.stt.reporting;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -30,15 +31,54 @@ public class CommonPrefixGrouperTest {
 	}
 
 	@Test
-	public void should() {
+	public void shouldFindExpansion() {
+		// GIVEN
+		givenReaderReturnsItemsWithComment("group subgroup one",
+				"group subgroup two");
+		sut.scanForGroups(itemReader);
+
+		// WHEN
+		List<String> expansions = sut.getPossibleExpansions("gr");
+
+		// THEN
+		assertThat(expansions, is(Arrays.asList("oup subgroup")));
+	}
+
+	@Test
+	public void shouldFindSubgroupExpansion() {
+		// GIVEN
+		givenReaderReturnsItemsWithComment("group subgroup one",
+				"group subgroup two");
+		sut.scanForGroups(itemReader);
+
+		// WHEN
+		List<String> expansions = sut.getPossibleExpansions("group subgroup o");
+
+		// THEN
+		assertThat(expansions, is(Arrays.asList("ne")));
+	}
+
+	@Test
+	public void shouldFindMultipleExpansions() {
+		givenReaderReturnsItemsWithComment("group subgroup one",
+				"group subgroup two");
+		sut.scanForGroups(itemReader);
+
+		// WHEN
+		List<String> expansions = sut.getPossibleExpansions("group subgroup ");
+
+		// THEN
+		assertThat(expansions, hasItems("two", "one"));
+	}
+
+	@Test
+	public void shouldHandleGroupsWithLongerTextThanGivenComment() {
 		// GIVEN
 		givenReaderReturnsItemsWithComment("test");
 		sut.scanForGroups(itemReader);
 
-		TimeTrackingItem item = new TimeTrackingItem("t", DateTime.now());
-
 		// WHEN
-		List<String> result = sut.getGroupsOf(item);
+		List<String> result = sut.getGroupsOf("t");
 
 		// THEN
 		assertThat(result, is(Arrays.asList("t")));
@@ -47,12 +87,13 @@ public class CommonPrefixGrouperTest {
 	@Test
 	public void shouldFindGroupsWithSpaces() {
 		// GIVEN
+		String firstComment = "group subgroup one";
 		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				"group subgroup one", "group subgroup two");
+				firstComment, "group subgroup two");
 		sut.scanForGroups(itemReader);
 
 		// WHEN
-		List<String> result = sut.getGroupsOf(items[0]);
+		List<String> result = sut.getGroupsOf(firstComment);
 
 		// THEN
 		assertThat(result, is(Arrays.asList("group subgroup", "one")));
@@ -62,15 +103,15 @@ public class CommonPrefixGrouperTest {
 	@Test
 	public void shouldFindSubGroups() {
 		// GIVEN
+		String firstComment = "group subgroup one";
+		String thirdComment = "group subgroup2 one";
 		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				"group subgroup one", "group subgroup two",
-				"group subgroup2 one");
+				firstComment, "group subgroup two", thirdComment);
 		sut.scanForGroups(itemReader);
-		System.out.println(sut.toString());
 
 		// WHEN
-		List<String> withThreeGroups = sut.getGroupsOf(items[0]);
-		List<String> withTwoGroups = sut.getGroupsOf(items[2]);
+		List<String> withThreeGroups = sut.getGroupsOf(firstComment);
+		List<String> withTwoGroups = sut.getGroupsOf(thirdComment);
 
 		// THEN
 		assertThat(withThreeGroups,
@@ -81,12 +122,13 @@ public class CommonPrefixGrouperTest {
 	@Test
 	public void shouldFindLongestCommonPrefix() {
 		// GIVEN
+		String firstComment = "group one";
 		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				"group one", "group two");
+				firstComment, "group two");
 		sut.scanForGroups(itemReader);
 
 		// WHEN
-		List<String> groups = sut.getGroupsOf(items[0]);
+		List<String> groups = sut.getGroupsOf(firstComment);
 
 		// THEN
 		assertThat(groups, is(Arrays.asList("group", "one")));
@@ -96,15 +138,16 @@ public class CommonPrefixGrouperTest {
 	@Test
 	public void shouldFindGroups() {
 		// GIVEN
-		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment("group",
-				"group");
+		String firstComment = "group";
+		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
+				firstComment, firstComment);
 		sut.scanForGroups(itemReader);
 
 		// WHEN
-		List<String> groups = sut.getGroupsOf(items[0]);
+		List<String> groups = sut.getGroupsOf(firstComment);
 
 		// THEN
-		assertThat(groups, is(Arrays.asList("group")));
+		assertThat(groups, is(Arrays.asList(firstComment)));
 	}
 
 	private TimeTrackingItem[] givenReaderReturnsItemsWithComment(
