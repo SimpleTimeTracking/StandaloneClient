@@ -42,44 +42,21 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final ImageView fromToImageView;
 
-	public TimeTrackingItemCell(
-			final ContinueActionHandler continueActionHandler,
-			final EditActionHandler editActionHandler,
-			final DeleteActionHandler deleteActionHandler,
-			Image imageForContinue, Image imageForEdit, Image imageForDelete,
-			Image imageFromTo) {
-		checkNotNull(imageFromTo);
-		checkNotNull(editActionHandler);
-		checkNotNull(continueActionHandler);
-		checkNotNull(deleteActionHandler);
-		checkNotNull(imageForContinue);
-		checkNotNull(imageForEdit);
+	private final ImageView runningImageView;
 
-		continueButton = new ImageButton(imageForContinue);
-		continueButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				continueActionHandler.continueItem(item);
-			}
-		});
+	private TimeTrackingItemCell(Builder builder) {
+		this.editButton = checkNotNull(builder.editButton);
+		this.continueButton = checkNotNull(builder.continueButton);
+		this.deleteButton = checkNotNull(builder.deleteButton);
+		this.fromToImageView = checkNotNull(builder.fromToImageView);
+		this.runningImageView = checkNotNull(builder.runningImageView);
 
-		editButton = new ImageButton(imageForEdit);
-		editButton.setOnAction(new EventHandler<ActionEvent>() {
+		final ContinueActionHandler continueActionHandler = checkNotNull(builder.continueActionHandler);
+		final EditActionHandler editActionHandler = checkNotNull(builder.editActionHandler);
+		final DeleteActionHandler deleteActionHandler = checkNotNull(builder.deleteActionHandler);
 
-			@Override
-			public void handle(ActionEvent arg0) {
-				editActionHandler.edit(item);
-			}
-		});
-
-		deleteButton = new ImageButton(imageForDelete);
-		deleteButton.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent arg0) {
-				deleteActionHandler.delete(item);
-			}
-		});
+		setupListenersForCallbacks(continueActionHandler, editActionHandler,
+				deleteActionHandler);
 
 		actionsPane.getChildren().addAll(deleteButton, continueButton,
 				editButton);
@@ -87,7 +64,6 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		HBox.setHgrow(space, Priority.ALWAYS);
 		labelForComment.setWrapText(true);
 		labelForComment.setPrefWidth(400);
-		fromToImageView = new ImageView(imageFromTo);
 
 		timePane.setPrefWidth(200);
 		timePane.setSpacing(5);
@@ -97,6 +73,34 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 				timePane);
 		cellPane.setAlignment(Pos.CENTER_LEFT);
 		actionsPane.setAlignment(Pos.CENTER_LEFT);
+	}
+
+	private void setupListenersForCallbacks(
+			final ContinueActionHandler continueActionHandler,
+			final EditActionHandler editActionHandler,
+			final DeleteActionHandler deleteActionHandler) {
+		continueButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				continueActionHandler.continueItem(item);
+			}
+		});
+
+		editButton.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				editActionHandler.edit(item);
+			}
+		});
+
+		deleteButton.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				deleteActionHandler.delete(item);
+			}
+		});
 	}
 
 	@Override
@@ -126,7 +130,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		labelForStart.setText(dateTimeFormatter.print(item.getStart()));
 
 		if (!item.getEnd().isPresent()) {
-			timePane.getChildren().setAll(labelForStart);
+			timePane.getChildren().setAll(labelForStart, runningImageView);
 		} else {
 			labelForEnd.setText(dateTimeFormatter.print(item.getEnd().get()));
 			timePane.getChildren().setAll(labelForStart, fromToImageView,
@@ -144,5 +148,60 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	public interface DeleteActionHandler {
 		void delete(TimeTrackingItem item);
+	}
+
+	public static class Builder {
+		private Button editButton;
+		private Button continueButton;
+		private Button deleteButton;
+		private ImageView fromToImageView;
+		private ImageView runningImageView;
+		private ContinueActionHandler continueActionHandler;
+		private DeleteActionHandler deleteActionHandler;
+		private EditActionHandler editActionHandler;
+
+		public Builder editImage(Image editImage) {
+			this.editButton = new ImageButton(editImage);
+			return this;
+		}
+
+		public Builder continueImage(Image continueImage) {
+			this.continueButton = new ImageButton(continueImage);
+			return this;
+		}
+
+		public Builder deleteImage(Image deleteImage) {
+			this.deleteButton = new ImageButton(deleteImage);
+			return this;
+		}
+
+		public Builder fromToImage(Image fromToImage) {
+			this.fromToImageView = new ImageView(fromToImage);
+			return this;
+		}
+
+		public Builder runningImage(Image runningImage) {
+			this.runningImageView = new ImageView(runningImage);
+			return this;
+		}
+
+		public Builder continueActionHandler(ContinueActionHandler handler) {
+			this.continueActionHandler = handler;
+			return this;
+		}
+
+		public Builder deleteActionHandler(DeleteActionHandler handler) {
+			this.deleteActionHandler = handler;
+			return this;
+		}
+
+		public Builder editActionHandler(EditActionHandler handler) {
+			this.editActionHandler = handler;
+			return this;
+		}
+
+		public TimeTrackingItemCell build() {
+			return new TimeTrackingItemCell(this);
+		}
 	}
 }

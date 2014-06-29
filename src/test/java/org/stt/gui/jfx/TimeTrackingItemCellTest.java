@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.stt.gui.jfx.TimeTrackingItemCell.Builder;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
@@ -37,13 +38,21 @@ public class TimeTrackingItemCellTest {
 	private Image imageForDelete;
 	@Mock
 	private Image imageFromTo;
+	@Mock
+	private Image runningImage;
 
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
-		sut = new TimeTrackingItemCell(continueActionHandler,
-				editActionHandler, deleteActionHandler, imageForContinue,
-				imageForEdit, imageForDelete, imageFromTo);
+		Builder builder = new TimeTrackingItemCell.Builder();
+		builder.continueActionHandler(continueActionHandler)
+				.deleteActionHandler(deleteActionHandler)
+				.editActionHandler(editActionHandler)
+				.continueImage(imageForContinue).deleteImage(imageForDelete)
+				.editImage(imageForEdit).runningImage(runningImage)
+				.fromToImage(imageFromTo);
+
+		sut = builder.build();
 	}
 
 	@Test
