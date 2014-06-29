@@ -4,71 +4,108 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
-	private final Image imageForContinue;
-	private final String textForEdit;
-	private final ContinueActionHandler continueActionHandler;
-	private final EditActionHandler editActionHandler;
+	private final HBox cellPane = new HBox(10);
 
-	public TimeTrackingItemCell(ContinueActionHandler continueActionHandler,
-			EditActionHandler editActionHandler, Image imageForContinue,
-			String textForEdit) {
-		this.editActionHandler = checkNotNull(editActionHandler);
-		this.textForEdit = checkNotNull(textForEdit);
-		this.continueActionHandler = checkNotNull(continueActionHandler);
-		this.imageForContinue = checkNotNull(imageForContinue);
+	private final HBox actionsPane = new HBox();
+
+	private final Label labelForComment = new Label();
+
+	private final Pane space = new Pane();
+
+	private final Label labelForTime = new Label();
+
+	private TimeTrackingItem item;
+
+	final Button editButton;
+
+	final Button continueButton;
+
+	final Button deleteButton;
+
+	public TimeTrackingItemCell(
+			final ContinueActionHandler continueActionHandler,
+			final EditActionHandler editActionHandler,
+			final DeleteActionHandler deleteActionHandler,
+			Image imageForContinue, Image imageForEdit, Image imageForDelete) {
+		checkNotNull(editActionHandler);
+		checkNotNull(continueActionHandler);
+		checkNotNull(deleteActionHandler);
+		checkNotNull(imageForContinue);
+		checkNotNull(imageForEdit);
+
+		continueButton = new ImageButton(imageForContinue);
+		continueButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				continueActionHandler.continueItem(item);
+			}
+		});
+
+		editButton = new ImageButton(imageForEdit);
+		editButton.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				editActionHandler.edit(item);
+			}
+		});
+
+		deleteButton = new ImageButton(imageForDelete);
+		deleteButton.setOnAction(new EventHandler<ActionEvent>() {
+
+			@Override
+			public void handle(ActionEvent arg0) {
+				deleteActionHandler.delete(item);
+			}
+		});
+
+		actionsPane.getChildren().addAll(deleteButton, continueButton,
+				editButton);
+
+		HBox.setHgrow(space, Priority.ALWAYS);
+		labelForTime.setPrefWidth(200);
+
+		cellPane.getChildren().addAll(actionsPane, labelForComment, space,
+				labelForTime);
+		cellPane.setAlignment(Pos.CENTER_LEFT);
 	}
 
 	@Override
 	protected void updateItem(TimeTrackingItem item, boolean empty) {
 		super.updateItem(item, empty);
-		Node graphic = createGraphic();
-		setGraphic(graphic);
-	}
-
-	private Node createGraphic() {
-		final TimeTrackingItem item = getItem();
-		boolean empty = isEmpty();
-		HBox pane = new HBox();
-		pane.setAlignment(Pos.CENTER_LEFT);
-		if (!empty) {
-			Label label = createLabel(item);
-
-			// Image image = new Image(getClass().getResource("/Continue.png")
-			// .toString(), 18, 18, true, true);
-			Button btn = new ImageButton(imageForContinue);
-			btn.setOnAction(new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent event) {
-					continueActionHandler.continueItem(item);
-				}
-			});
-			Button editBtn = new Button(textForEdit);
-			editBtn.setOnAction(new EventHandler<ActionEvent>() {
-
-				@Override
-				public void handle(ActionEvent event) {
-					editActionHandler.edit(item);
-				}
-			});
-			pane.getChildren().addAll(btn, editBtn, label);
+		if (empty) {
+			this.item = null;
+			setGraphic(null);
+		} else {
+			this.item = item;
+			applyLabelForComment();
+			applyLabelForTimePeriod();
+			setGraphic(cellPane);
 		}
-		return pane;
 	}
 
-	private Label createLabel(TimeTrackingItem item) {
-		Label label = new Label();
+	private void applyLabelForComment() {
+		if (item.getComment().isPresent()) {
+			labelForComment.setText(item.getComment().get());
+		} else {
+			labelForComment.setText("");
+		}
+	}
+
+	private void applyLabelForTimePeriod() {
 		StringBuilder itemText = new StringBuilder();
 		DateTimeFormatter dateTimeFormatter = DateTimeFormat.shortDateTime();
 		itemText.append(item.getStart().toString(dateTimeFormatter));
@@ -76,14 +113,8 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			itemText.append(" - ");
 			itemText.append(item.getEnd().get().toString(dateTimeFormatter));
 		}
-		if (item.getComment().isPresent()) {
-			itemText.append(": ");
-			itemText.append(item.getComment().get());
-		}
 
-		label.setText(itemText.toString());
-
-		return label;
+		labelForTime.setText(itemText.toString());
 	}
 
 	public interface ContinueActionHandler {
@@ -92,5 +123,9 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	public interface EditActionHandler {
 		void edit(TimeTrackingItem item);
+	}
+
+	public interface DeleteActionHandler {
+		void delete(TimeTrackingItem item);
 	}
 }

@@ -30,6 +30,21 @@ public class CommonPrefixGrouperTest {
 	}
 
 	@Test
+	public void should() {
+		// GIVEN
+		givenReaderReturnsItemsWithComment("test");
+		sut.scanForGroups(itemReader);
+
+		TimeTrackingItem item = new TimeTrackingItem("t", DateTime.now());
+
+		// WHEN
+		List<String> result = sut.getGroupsOf(item);
+
+		// THEN
+		assertThat(result, is(Arrays.asList("t")));
+	}
+
+	@Test
 	public void shouldFindGroupsWithSpaces() {
 		// GIVEN
 		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(

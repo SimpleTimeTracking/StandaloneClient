@@ -65,9 +65,7 @@ public class CommonPrefixGrouper implements ItemGrouper {
 					groupForRemaining.insert(remainingComment);
 				}
 			} else {
-				Group group = new Group();
-				group.prefix = comment;
-				children.add(group);
+				addChildWithPrefix(comment);
 			}
 		}
 
@@ -90,15 +88,22 @@ public class CommonPrefixGrouper implements ItemGrouper {
 		}
 
 		private Group splitChildAt(Group group, int position) {
-			children.remove(group);
-
 			String newChildPrefix = group.prefix.substring(0, position);
-			Group newChild = new Group();
-			newChild.prefix = newChildPrefix;
+			Group newChild = addChildWithPrefix(newChildPrefix);
 
 			group.prefix = group.prefix.substring(position + 1);
+			moveChildTo(group, newChild);
+			return newChild;
+		}
 
-			newChild.children.add(group);
+		private void moveChildTo(Group group, Group newParent) {
+			children.remove(group);
+			newParent.children.add(group);
+		}
+
+		private Group addChildWithPrefix(String newChildPrefix) {
+			Group newChild = new Group();
+			newChild.prefix = newChildPrefix;
 			children.add(newChild);
 			return newChild;
 		}
@@ -106,27 +111,32 @@ public class CommonPrefixGrouper implements ItemGrouper {
 		private Match findMatch(String comment) {
 			Match match = new Match();
 			for (Group grp : children) {
-				int currentLength = 0;
-				String childPrefix = grp.prefix;
-				for (int i = 0; i < childPrefix.length()
-						&& i < comment.length(); i++) {
-					if (comment.charAt(i) != childPrefix.charAt(i)) {
-						break;
-					}
-					if (comment.charAt(i) == ' ') {
-						currentLength = i;
-					} else if (i == comment.length() - 1
-							|| i == childPrefix.length() - 1
-							&& comment.charAt(i + 1) == ' ') {
-						currentLength = i + 1;
-					}
-				}
-				if (currentLength > match.prefixLength && currentLength > 3) {
+				int currentLength = grp.matchWith(comment);
+				if (currentLength > match.prefixLength) {
 					match.prefixLength = currentLength;
 					match.group = grp;
 				}
 			}
 			return match.prefixLength == 0 ? null : match;
+		}
+
+		private int matchWith(String text) {
+			int currentLength = 0;
+			for (int i = 0; i < prefix.length() && i < text.length(); i++) {
+				if (text.charAt(i) != prefix.charAt(i)) {
+					break;
+				}
+				if (text.charAt(i) == ' ') {
+					currentLength = i;
+				} else if (i == text.length() - 1 || i == prefix.length() - 1
+						&& text.charAt(i + 1) == ' ') {
+					currentLength = i + 1;
+				}
+			}
+			if (currentLength > 3) {
+				return currentLength;
+			}
+			return 0;
 		}
 
 		@Override

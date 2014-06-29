@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +22,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
@@ -34,6 +37,7 @@ import javafx.util.Callback;
 
 import org.stt.CommandHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
@@ -42,14 +46,20 @@ import org.stt.searching.CommentSearcher;
 
 import com.sun.javafx.application.PlatformImpl;
 
-public class STTApplication implements ContinueActionHandler, EditActionHandler {
+public class STTApplication implements ContinueActionHandler,
+		EditActionHandler, DeleteActionHandler {
 	private final Stage stage;
 	@FXML
 	TextArea commandText;
+
 	@FXML
-	ListView<TimeTrackingItem> history;
+	Button finButton;
+
 	@FXML
-	ListView<String> searchView;
+	Button doneButton;
+
+	@FXML
+	ListView<TimeTrackingItem> result;
 
 	private final ExecutorService executorService;
 
@@ -57,6 +67,9 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 	private final ItemReader historySource;
 	private final ReportWindowBuilder reportWindowBuilder;
 	private final CommentSearcher searcher;
+
+	private final ObservableList<TimeTrackingItem> allItems = FXCollections
+			.observableArrayList();
 
 	public STTApplication(Stage stage, CommandHandler commandHandler,
 			ItemReader historySource, ExecutorService executorService,
@@ -78,10 +91,7 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 
 			@Override
 			protected void succeeded() {
-				ObservableList<TimeTrackingItem> items = history.getItems();
-				items.clear();
-				items.addAll(getValue());
-				history.scrollTo(items.size() - 1);
+				allItems.setAll(getValue());
 			}
 
 			@Override
@@ -105,8 +115,9 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 			throw new RuntimeException(e);
 		}
 
-		history.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-		history.getSelectionModel().selectedItemProperty()
+		result.setItems(createResultsListBinding());
+		result.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		result.getSelectionModel().selectedItemProperty()
 				.addListener(new ChangeListener<TimeTrackingItem>() {
 
 					@Override
@@ -114,7 +125,7 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 							ObservableValue<? extends TimeTrackingItem> observable,
 							TimeTrackingItem oldItem, TimeTrackingItem newItem) {
 						if (newItem != null) {
-							history.getSelectionModel().clearSelection();
+							result.getSelectionModel().clearSelection();
 							if (newItem.getComment().isPresent()) {
 								String textToSet = newItem.getComment().get();
 								setCommandText(textToSet);
@@ -130,25 +141,34 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 					}
 
 				});
-		history.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
+		result.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
+			private final Image deleteImage = new Image("/Delete.png", 25, 25,
+					true, true);
 
-			private final Image continueImage = new Image("/Continue.png", 18,
-					18, true, true);
+			private final Image continueImage = new Image("/Continue.png", 25,
+					25, true, true);
+
+			private final Image editImage = new Image("/Edit.png", 25, 25,
+					true, true);
 
 			@Override
 			public ListCell<TimeTrackingItem> call(
 					ListView<TimeTrackingItem> arg0) {
 				return new TimeTrackingItemCell(STTApplication.this,
-						STTApplication.this, continueImage, localization
-								.getString("item.edit"));
+						STTApplication.this, STTApplication.this,
+						continueImage, editImage, deleteImage);
 			}
 		});
 
 		setupSearchView();
 
 		Scene scene = new Scene(pane);
+		finButton.setMnemonicParsing(true);
+
 		stage.setScene(scene);
 		stage.setTitle(localization.getString("window.title"));
+		Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
+		stage.getIcons().add(applicationIcon);
 
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
@@ -164,6 +184,35 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 		});
 		stage.show();
 		commandText.requestFocus();
+	}
+
+	private ObservableList<TimeTrackingItem> createResultsListBinding() {
+		return new ListBinding<TimeTrackingItem>() {
+			{
+				bind(allItems, commandText.textProperty());
+			}
+
+			@Override
+			protected ObservableList<TimeTrackingItem> computeValue() {
+				List<TimeTrackingItem> result;
+
+				String command = commandText.textProperty().get().toLowerCase();
+				if (command.isEmpty()) {
+					result = new ArrayList<>(allItems);
+				} else {
+					result = new ArrayList<TimeTrackingItem>();
+					for (TimeTrackingItem item : allItems) {
+						if (item.getComment().isPresent()
+								&& item.getComment().get().toLowerCase()
+										.contains(command)) {
+							result.add(item);
+						}
+					}
+				}
+				Collections.reverse(result);
+				return FXCollections.observableList(result);
+			}
+		};
 	}
 
 	private void setCommandText(String textToSet) {
@@ -194,24 +243,24 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 				return FXCollections.observableList(resultsToUse);
 			}
 		};
-		searchView.setItems(searchListBinding);
-		searchView.prefHeightProperty().bind(
-				searchListBinding.sizeProperty().multiply(26));
-		searchView.minHeightProperty().bind(searchView.prefHeightProperty());
-		searchView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-		searchView.getSelectionModel().selectedItemProperty()
-				.addListener(new ChangeListener<String>() {
-
-					@Override
-					public void changed(
-							ObservableValue<? extends String> observable,
-							String oldValue, String newValue) {
-						if (newValue != null) {
-							setCommandText(newValue);
-							searchView.getSelectionModel().clearSelection();
-						}
-					}
-				});
+		// searchView.setItems(searchListBinding);
+		// searchView.prefHeightProperty().bind(
+		// searchListBinding.sizeProperty().multiply(26));
+		// searchView.minHeightProperty().bind(searchView.prefHeightProperty());
+		// searchView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		// searchView.getSelectionModel().selectedItemProperty()
+		// .addListener(new ChangeListener<String>() {
+		//
+		// @Override
+		// public void changed(
+		// ObservableValue<? extends String> observable,
+		// String oldValue, String newValue) {
+		// if (newValue != null) {
+		// setCommandText(newValue);
+		// searchView.getSelectionModel().clearSelection();
+		// }
+		// }
+		// });
 	}
 
 	@FXML
@@ -256,12 +305,16 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 			event.consume();
 			done();
 		}
-		if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
-			if (searchView.getItems().size() > 0) {
-				setCommandText(searchView.getItems().get(0));
-			}
+		if (KeyCode.ESCAPE.equals(event.getCode())) {
 			event.consume();
+			shutdown();
 		}
+		// if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
+		// if (searchView.getItems().size() > 0) {
+		// setCommandText(searchView.getItems().get(0));
+		// }
+		// event.consume();
+		// }
 	}
 
 	protected void executeCommand() {
@@ -298,5 +351,11 @@ public class STTApplication implements ContinueActionHandler, EditActionHandler 
 	@Override
 	public void edit(TimeTrackingItem item) {
 		setCommandText(commandHandler.itemToCommand(item));
+	}
+
+	@Override
+	public void delete(TimeTrackingItem item) {
+		// TODO Auto-generated method stub
+
 	}
 }

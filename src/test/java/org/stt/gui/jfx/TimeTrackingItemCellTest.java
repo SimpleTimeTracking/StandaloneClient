@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 
@@ -28,16 +29,23 @@ public class TimeTrackingItemCellTest {
 	private Image imageForContinue;
 	@Mock
 	private EditActionHandler editActionHandler;
+	@Mock
+	private DeleteActionHandler deleteActionHandler;
+	@Mock
+	private Image imageForEdit;
+	@Mock
+	private Image imageForDelete;
 
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
 		sut = new TimeTrackingItemCell(continueActionHandler,
-				editActionHandler, imageForContinue, "edit");
+				editActionHandler, deleteActionHandler, imageForContinue,
+				imageForEdit, imageForDelete);
 	}
 
 	@Test
-	public void shouldUseGivenImage() {
+	public void shouldUseContinueImage() {
 		// GIVEN
 		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
 
@@ -46,10 +54,55 @@ public class TimeTrackingItemCellTest {
 
 		// THEN
 		Pane pane = (Pane) sut.getGraphic();
-		assertThat(
-				pane.getChildren(),
+		assertPanelHasImageButtonWithImage(pane, imageForContinue);
+	}
+
+	@Test
+	public void shouldUseEditImage() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
+
+		// WHEN
+		sut.updateItem(item, false);
+
+		// THEN
+		Pane pane = (Pane) sut.getGraphic();
+		assertPanelHasImageButtonWithImage(pane, imageForEdit);
+	}
+
+	@Test
+	public void shouldUseDeleteImage() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
+
+		// WHEN
+		sut.updateItem(item, false);
+
+		// THEN
+		Pane pane = (Pane) sut.getGraphic();
+		assertPanelHasImageButtonWithImage(pane, imageForDelete);
+	}
+
+	private void assertPanelHasImageButtonWithImage(Pane pane, Image image) {
+		assertThat(pane.getChildren(), hasItem(Matchers.<Node> hasProperty(
+				"children",
 				hasItem(Matchers.<Node> hasProperty("graphic",
-						hasProperty("image", is(imageForContinue)))));
+						hasProperty("image", is(image)))))));
+	}
+
+	@Test
+	public void shouldCallDeleteHandlerOnClickOnDelete() {
+		// GIVEN
+		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
+		sut.updateItem(item, false);
+
+		Button deleteButton = sut.deleteButton;
+
+		// WHEN
+		deleteButton.fire();
+
+		// THEN
+		verify(deleteActionHandler).delete(item);
 	}
 
 	@Test
@@ -58,11 +111,10 @@ public class TimeTrackingItemCellTest {
 		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
 		sut.updateItem(item, false);
 
-		Pane pane = (Pane) sut.getGraphic();
-		ImageButton btn = (ImageButton) pane.lookup("ImageButton");
+		Button continueButton = sut.continueButton;
 
 		// WHEN
-		btn.fire();
+		continueButton.fire();
 
 		// THEN
 		verify(continueActionHandler).continueItem(item);
@@ -74,8 +126,7 @@ public class TimeTrackingItemCellTest {
 		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
 		sut.updateItem(item, false);
 
-		Pane pane = (Pane) sut.getGraphic();
-		Button editButton = (Button) pane.lookup("Button");
+		Button editButton = sut.editButton;
 		// WHEN
 		editButton.fire();
 

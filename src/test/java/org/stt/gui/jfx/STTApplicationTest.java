@@ -10,7 +10,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
 import javafx.scene.control.TextArea;
@@ -161,8 +160,9 @@ public class STTApplicationTest {
 			@Override
 			public void run() {
 				verify(executorService).execute(any(Runnable.class));
-				assertThat(sut.history.getItems(),
-						is(Arrays.asList(new TimeTrackingItem[] { item })));
+				assertThat(
+						sut.result.getItems().toArray(new TimeTrackingItem[0]),
+						is(new TimeTrackingItem[] { item }));
 			}
 		});
 	}
