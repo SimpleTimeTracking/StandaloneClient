@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Bytekeeper/SimpleTimeTrack.svg)](https://travis-ci.org/Bytekeeper/SimpleTimeTrack) [ ![Download](https://api.bintray.com/packages/bytekeeper/generic/SimpleTimeTrack/images/download.png) ](https://bintray.com/bytekeeper/generic/SimpleTimeTrack/_latestVersion)
+[![Build Status](https://travis-ci.org/Bytekeeper/STT.svg)](https://travis-ci.org/Bytekeeper/STT) [ ![Download](https://api.bintray.com/packages/bytekeeper/generic/SimpleTimeTrack/images/download.png) ](https://bintray.com/bytekeeper/generic/SimpleTimeTrack/_latestVersion)
 
 # Mission statement 
 
