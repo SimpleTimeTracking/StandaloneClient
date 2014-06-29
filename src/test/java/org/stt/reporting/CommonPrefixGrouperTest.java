@@ -1,23 +1,21 @@
 package org.stt.reporting;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-
 import java.util.Arrays;
 import java.util.List;
 
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+
+import static org.junit.Assert.assertThat;
 
 public class CommonPrefixGrouperTest {
 	private final CommonPrefixGrouper sut = new CommonPrefixGrouper();
@@ -88,8 +86,7 @@ public class CommonPrefixGrouperTest {
 	public void shouldFindGroupsWithSpaces() {
 		// GIVEN
 		String firstComment = "group subgroup one";
-		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				firstComment, "group subgroup two");
+		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two");
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -105,8 +102,8 @@ public class CommonPrefixGrouperTest {
 		// GIVEN
 		String firstComment = "group subgroup one";
 		String thirdComment = "group subgroup2 one";
-		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				firstComment, "group subgroup two", thirdComment);
+		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two",
+				thirdComment);
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -123,8 +120,7 @@ public class CommonPrefixGrouperTest {
 	public void shouldFindLongestCommonPrefix() {
 		// GIVEN
 		String firstComment = "group one";
-		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				firstComment, "group two");
+		givenReaderReturnsItemsWithComment(firstComment, "group two");
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -139,8 +135,7 @@ public class CommonPrefixGrouperTest {
 	public void shouldFindGroups() {
 		// GIVEN
 		String firstComment = "group";
-		TimeTrackingItem[] items = givenReaderReturnsItemsWithComment(
-				firstComment, firstComment);
+		givenReaderReturnsItemsWithComment(firstComment, firstComment);
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -156,18 +151,8 @@ public class CommonPrefixGrouperTest {
 		for (int i = 0; i < comments.length; i++) {
 			items[i] = new TimeTrackingItem(comments[i], DateTime.now());
 		}
-		givenReaderReturns(items);
+		ItemReaderTestHelper.givenReaderReturns(itemReader, items);
 		return items;
-	}
-
-	private void givenReaderReturns(TimeTrackingItem... items) {
-
-		BDDMyOngoingStubbing<Optional<TimeTrackingItem>> stubbing = given(itemReader
-				.read());
-		for (TimeTrackingItem item : items) {
-			stubbing = stubbing.willReturn(Optional.of(item));
-		}
-		stubbing.willReturn(Optional.<TimeTrackingItem> absent());
 	}
 
 }

@@ -1,14 +1,37 @@
 package org.stt;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
+import static org.hamcrest.CoreMatchers.is;
+
 import static org.junit.Assert.assertThat;
 
-import java.io.File;
+import static org.mockito.Mockito.when;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 public class ConfigurationTest {
-	private final Configuration sut = new Configuration();
+	private Configuration sut;
+
+	@Rule
+	public TemporaryFolder tempFolder = new TemporaryFolder();
+
+	private File currentTempFolder;
+
+	@Before
+	public void setUp() throws IOException {
+		sut = Mockito.spy(new Configuration());
+		currentTempFolder = tempFolder.newFolder();
+		when(sut.determineBaseDir()).thenReturn(currentTempFolder);
+	}
 
 	@Test
 	public void shouldBeAbleToProvideSTTFile() {
@@ -18,7 +41,21 @@ public class ConfigurationTest {
 		File sttFile = sut.getSttFile();
 
 		// THEN
-		assertThat(sttFile, notNullValue());
+		assertThat(sttFile.getAbsoluteFile(), is(new File(currentTempFolder,
+				".stt").getAbsoluteFile()));
+	}
+
+	@Test
+	public void shouldReturnDefaultBreakTimes() {
+
+		// GIVEN
+
+		// WHEN
+		Collection<String> breakTimeComments = sut.getBreakTimeComments();
+
+		// THEN
+		assertThat(breakTimeComments,
+				containsInAnyOrder("break", "pause", "coffee"));
 	}
 
 }
