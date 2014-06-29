@@ -132,11 +132,9 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	 */
 	private DateTimeFormatter getShortFormatForTodayAndLongOtherwise(
 			DateTime dateTime) {
-		DateTimeFormatter formatForStart = FORMAT_HOUR_MINUTES_SECONDS;
-		if (dateTime.isBefore(DateTime.now().withTimeAtStartOfDay())
-				|| dateTime.isAfter(DateTime.now().plusDays(1)
-						.withTimeAtStartOfDay())) {
-			formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
+		DateTimeFormatter formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
+		if (DateTimeHelper.isOnSameDay(dateTime, DateTime.now())) {
+			formatForStart = FORMAT_HOUR_MINUTES_SECONDS;
 		}
 		return formatForStart;
 	}
