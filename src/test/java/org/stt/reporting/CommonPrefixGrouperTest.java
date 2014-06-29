@@ -1,9 +1,5 @@
 package org.stt.reporting;
 
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,6 +11,11 @@ import org.mockito.MockitoAnnotations;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+
+import static org.junit.Assert.assertThat;
 
 public class CommonPrefixGrouperTest {
 	private final CommonPrefixGrouper sut = new CommonPrefixGrouper();
@@ -85,7 +86,7 @@ public class CommonPrefixGrouperTest {
 	public void shouldFindGroupsWithSpaces() {
 		// GIVEN
 		String firstComment = "group subgroup one";
-
+		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two");
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -101,7 +102,8 @@ public class CommonPrefixGrouperTest {
 		// GIVEN
 		String firstComment = "group subgroup one";
 		String thirdComment = "group subgroup2 one";
-
+		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two",
+				thirdComment);
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -118,7 +120,7 @@ public class CommonPrefixGrouperTest {
 	public void shouldFindLongestCommonPrefix() {
 		// GIVEN
 		String firstComment = "group one";
-
+		givenReaderReturnsItemsWithComment(firstComment, "group two");
 		sut.scanForGroups(itemReader);
 
 		// WHEN
@@ -133,7 +135,7 @@ public class CommonPrefixGrouperTest {
 	public void shouldFindGroups() {
 		// GIVEN
 		String firstComment = "group";
-
+		givenReaderReturnsItemsWithComment(firstComment, firstComment);
 		sut.scanForGroups(itemReader);
 
 		// WHEN

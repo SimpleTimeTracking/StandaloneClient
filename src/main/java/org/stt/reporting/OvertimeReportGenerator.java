@@ -51,7 +51,7 @@ public class OvertimeReportGenerator {
 							currentDuration.plus(itemDuration));
 				} else {
 					dateToOvertime.put(currentDay, itemDuration
-							.minus(dailyWorkingHours * 60 * 60 * 1000));
+							.minus(dailyWorkingHours * 60L * 60L * 1000L));
 				}
 			}
 		}

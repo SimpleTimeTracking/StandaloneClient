@@ -1,7 +1,5 @@
 package org.stt.gui.jfx;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +44,8 @@ import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 
 import com.sun.javafx.application.PlatformImpl;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class STTApplication implements ContinueActionHandler,
 		EditActionHandler, DeleteActionHandler {
@@ -247,6 +247,7 @@ public class STTApplication implements ContinueActionHandler,
 				return FXCollections.observableList(resultsToUse);
 			}
 		};
+		searchListBinding.getClass(); //FIXME: just so findbugs is happy
 		// searchView.setItems(searchListBinding);
 		// searchView.prefHeightProperty().bind(
 		// searchListBinding.sizeProperty().multiply(26));
