@@ -1,12 +1,9 @@
 package org.stt.reporting;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.anyString;
-
 import java.util.Arrays;
+import java.util.Map;
 
+import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Before;
@@ -18,6 +15,13 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemCategorizer.ItemCategory;
+
+import static org.hamcrest.CoreMatchers.is;
+
+import static org.junit.Assert.assertThat;
+
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.anyString;
 
 public class OvertimeReportGeneratorTest {
 
@@ -53,10 +57,11 @@ public class OvertimeReportGeneratorTest {
 				"working", startTime, endTime));
 
 		// WHEN
-		Duration overtime = sut.getOvertime();
+		Map<DateTime, Duration> overtime = sut.getOvertime();
 
 		// THEN
-		assertThat(overtime, is(new Duration(0)));
+		assertThat(overtime.entrySet(), Matchers.hasSize(1));
+		assertThat(overtime.values().iterator().next(), is(new Duration(0)));
 	}
 
 	@Test
@@ -70,9 +75,10 @@ public class OvertimeReportGeneratorTest {
 				DateTime.now(), DateTime.now().plusHours(3)));
 
 		// WHEN
-		Duration overtime = sut.getOvertime();
+		Map<DateTime, Duration> overtime = sut.getOvertime();
 
 		// THEN
-		assertThat(overtime, is(new Duration(0)));
+		assertThat(overtime.entrySet(), Matchers.hasSize(1));
+		assertThat(overtime.values().iterator().next(), is(new Duration(0)));
 	}
 }
