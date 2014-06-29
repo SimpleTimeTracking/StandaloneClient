@@ -29,13 +29,10 @@ public class Configuration {
 
 	private final Properties loadedProps;
 
-	private final File baseDir;
-
 	private static final Pattern ENV_PATTERN = Pattern
 			.compile(".*\\$(.*)\\$.*");
 
 	public Configuration() {
-		baseDir = determineBaseDir();
 
 		loadedProps = new Properties();
 		File propertiesFile = getPropertiesFile();
@@ -54,7 +51,7 @@ public class Configuration {
 		}
 	}
 
-	private File determineBaseDir() {
+	File determineBaseDir() {
 		String envHOMEVariable = System.getenv("HOME");
 		if (envHOMEVariable != null) {
 			File homeDirectory = new File(envHOMEVariable);
@@ -78,7 +75,7 @@ public class Configuration {
 	}
 
 	private File getPropertiesFile() {
-		return new File(baseDir, ".sttrc");
+		return new File(determineBaseDir(), ".sttrc");
 	}
 
 	public File getSttFile() {
@@ -128,7 +125,7 @@ public class Configuration {
 			String group = envMatcher.group(1);
 			if ("HOME".equals(group)) {
 				theProperty = theProperty.replace("$" + group + "$",
-						baseDir.getAbsolutePath());
+						determineBaseDir().getAbsolutePath());
 			}
 		}
 		return theProperty;
