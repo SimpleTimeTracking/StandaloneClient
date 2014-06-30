@@ -22,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.stt.CommandHandler;
 import org.stt.Configuration;
 import org.stt.Factory;
+import org.stt.Singleton;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
@@ -30,11 +31,8 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.persistence.ItemWriter;
 import org.stt.reporting.CommonPrefixGrouper;
-import org.stt.reporting.ItemGrouper;
-import org.stt.searching.CommentSearcher;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
-import org.stt.searching.TimeTrackingItemScanningSearcher;
 import org.stt.stt.importer.STTItemExporter;
 import org.stt.stt.importer.STTItemImporter;
 import org.stt.stt.importer.StreamResourceProvider;
@@ -45,105 +43,135 @@ public class MainContext {
 	private static final Logger LOG = Logger.getLogger(MainContext.class
 			.getName());
 	private final Configuration configuration;
-	private final ItemReaderProvider itemReaderProvider;
-	private final ItemSearcher itemSearcher;
-	private final Factory<Stage> stageFactory;
-	private final CommentSearcher commentSearcher;
-	private ItemGrouper itemGrouper;
 
-	public MainContext() {
-		configuration = new Configuration();
-		itemReaderProvider = new ItemReaderProvider() {
-			@Override
-			public ItemReader provideReader() {
-				return createPersistenceReader();
-			}
-		};
-		itemSearcher = createItemSearcher();
-		stageFactory = new Factory<Stage>() {
+	private final Factory<Stage> stageFactory = new Factory<Stage>() {
 
-			@Override
-			public Stage create() {
-				return new Stage();
-			}
-		};
-		commentSearcher = new TimeTrackingItemScanningSearcher(
-				itemReaderProvider);
-	}
+		@Override
+		public Stage create() {
+			return new Stage();
+		}
+	};
 
-	private ItemReader createPersistenceReader() {
-		File file = getSTTFile();
-		if (file.exists()) {
-			try {
-				return new STTItemImporter(new InputStreamReader(
-						new FileInputStream(file), "UTF-8"));
+	private final Factory<CommonPrefixGrouper> commonPrefixGrouper = new Factory<CommonPrefixGrouper>() {
+
+		@Override
+		public CommonPrefixGrouper create() {
+			CommonPrefixGrouper commonPrefixGrouper = new CommonPrefixGrouper();
+
+			try (ItemReader itemReader = persistenceReader.create()) {
+				commonPrefixGrouper.scanForGroups(itemReader);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-		} else {
-			return new ItemReader() {
-				@Override
-				public void close() throws IOException {
+			return commonPrefixGrouper;
+		}
+	};
+
+	private final Factory<ItemReader> persistenceReader = new Factory<ItemReader>() {
+		@Override
+		public ItemReader create() {
+			File file = getSTTFile();
+			if (file.exists()) {
+				try {
+					return new STTItemImporter(new InputStreamReader(
+							new FileInputStream(file), "UTF-8"));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
 				}
+			} else {
+				return new ItemReader() {
+					@Override
+					public void close() throws IOException {
+					}
+
+					@Override
+					public Optional<TimeTrackingItem> read() {
+						return Optional.<TimeTrackingItem> absent();
+					}
+				};
+			}
+		}
+	};
+
+	private final Factory<ItemReaderProvider> itemReaderProvider = new Singleton<ItemReaderProvider>() {
+		@Override
+		protected ItemReaderProvider createInstance() {
+			return new ItemReaderProvider() {
 
 				@Override
-				public Optional<TimeTrackingItem> read() {
-					return Optional.<TimeTrackingItem> absent();
+				public ItemReader provideReader() {
+					return persistenceReader.create();
 				}
 			};
 		}
-	}
+	};
 
-	private ItemSearcher createItemSearcher() {
-		return new DefaultItemSearcher(new ItemReaderProvider() {
+	private final Factory<ItemSearcher> itemSearcher = new Singleton<ItemSearcher>() {
+		@Override
+		protected ItemSearcher createInstance() {
+			return new DefaultItemSearcher(itemReaderProvider.create());
+		}
+	};
 
-			@Override
-			public ItemReader provideReader() {
-				return createPersistenceReader();
-			}
-		});
-	}
+	private final Factory<StreamResourceProvider> streamResourceProvider = new Singleton<StreamResourceProvider>() {
+		@Override
+		protected StreamResourceProvider createInstance() {
+			return new StreamResourceProvider() {
+				private OutputStreamWriter outputStreamWriter;
+				private InputStreamReader inReader;
+				private OutputStreamWriter appendingOutWriter;
 
-	private ItemWriter createPersistenceWriter() throws IOException {
-		return new STTItemExporter(createPersistenceStreamSupport());
-	}
+				@Override
+				public Writer provideTruncatingWriter() throws IOException {
+					outputStreamWriter = new OutputStreamWriter(
+							new FileOutputStream(getSTTFile(), false), "UTF-8");
+					return outputStreamWriter;
+				}
 
-	private StreamResourceProvider createPersistenceStreamSupport()
-			throws IOException {
-		StreamResourceProvider srp = new StreamResourceProvider() {
-			private OutputStreamWriter outputStreamWriter;
-			private InputStreamReader inReader;
-			private OutputStreamWriter appendingOutWriter;
+				@Override
+				public Reader provideReader() throws IOException {
+					inReader = new InputStreamReader(new FileInputStream(
+							getSTTFile()), "UTF-8");
+					return inReader;
+				}
 
-			@Override
-			public Writer provideTruncatingWriter() throws IOException {
-				outputStreamWriter = new OutputStreamWriter(
-						new FileOutputStream(getSTTFile(), false), "UTF-8");
-				return outputStreamWriter;
-			}
+				@Override
+				public Writer provideAppendingWriter() throws IOException {
+					appendingOutWriter = new OutputStreamWriter(
+							new FileOutputStream(getSTTFile(), true), "UTF-8");
+					return appendingOutWriter;
+				}
 
-			@Override
-			public Reader provideReader() throws IOException {
-				inReader = new InputStreamReader(new FileInputStream(
-						getSTTFile()), "UTF-8");
-				return inReader;
-			}
+				@Override
+				public void close() {
+					IOUtils.closeQuietly(outputStreamWriter);
+					IOUtils.closeQuietly(inReader);
+					IOUtils.closeQuietly(appendingOutWriter);
+				}
+			};
 
-			@Override
-			public Writer provideAppendingWriter() throws IOException {
-				appendingOutWriter = new OutputStreamWriter(
-						new FileOutputStream(getSTTFile(), true), "UTF-8");
-				return appendingOutWriter;
-			}
+		}
+	};
 
-			@Override
-			public void close() {
-				IOUtils.closeQuietly(outputStreamWriter);
-				IOUtils.closeQuietly(inReader);
-				IOUtils.closeQuietly(appendingOutWriter);
-			}
-		};
-		return srp;
+	protected Factory<ItemWriter> itemWriter = new Factory<ItemWriter>() {
+
+		@Override
+		public ItemWriter create() {
+			return new STTItemExporter(streamResourceProvider.create());
+		}
+	};
+
+	private final Factory<CommandHandler> commandHandler = new Singleton<CommandHandler>() {
+
+		@Override
+		protected CommandHandler createInstance() {
+			return new ToItemWriterCommandHandler(itemWriter.create(),
+					itemSearcher.create());
+		}
+	};
+
+	public MainContext() {
+		configuration = new Configuration();
 	}
 
 	private File getSTTFile() {
@@ -184,29 +212,12 @@ public class MainContext {
 
 	STTApplication createSTTApplication() {
 		Stage stage = stageFactory.create();
-		CommandHandler commandHandler;
-		try {
-			commandHandler = new ToItemWriterCommandHandler(
-					createPersistenceWriter(), itemSearcher);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		ItemReader historyReader = createPersistenceReader();
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
-		itemGrouper = createItemGrouper();
 		ReportWindowBuilder reportWindow = new ReportWindowBuilder(
-				stageFactory, itemReaderProvider, itemSearcher);
-		return new STTApplication(stage, commandHandler, historyReader,
-				executorService, reportWindow, commentSearcher, itemGrouper);
-	}
-
-	private ItemGrouper createItemGrouper() {
-		CommonPrefixGrouper grouper = new CommonPrefixGrouper();
-		try (ItemReader itemReader = createPersistenceReader()) {
-			grouper.scanForGroups(itemReader);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return grouper;
+				stageFactory, itemReaderProvider.create(),
+				itemSearcher.create());
+		return new STTApplication(stage, commandHandler.create(),
+				persistenceReader.create(), executorService, reportWindow,
+				commonPrefixGrouper.create());
 	}
 }

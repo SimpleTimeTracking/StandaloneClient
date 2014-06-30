@@ -45,8 +45,7 @@ import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
-import org.stt.reporting.ItemGrouper;
-import org.stt.searching.CommentSearcher;
+import org.stt.searching.ExpansionProvider;
 
 import com.sun.javafx.application.PlatformImpl;
 
@@ -73,18 +72,17 @@ public class STTApplication implements ContinueActionHandler,
 	private final CommandHandler commandHandler;
 	private final ItemReader historySource;
 	private final ReportWindowBuilder reportWindowBuilder;
-	private final CommentSearcher searcher;
 
 	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
-	private final ItemGrouper grouper;
+
+	private final ExpansionProvider expansionProvider;
 
 	public STTApplication(Stage stage, CommandHandler commandHandler,
 			ItemReader historySource, ExecutorService executorService,
-			ReportWindowBuilder reportWindow, CommentSearcher searcher,
-			ItemGrouper grouper) {
-		this.grouper = checkNotNull(grouper);
-		this.searcher = checkNotNull(searcher);
+			ReportWindowBuilder reportWindow,
+			ExpansionProvider expansionProvider) {
+		this.expansionProvider = checkNotNull(expansionProvider);
 		this.reportWindowBuilder = checkNotNull(reportWindow);
 		this.stage = checkNotNull(stage);
 		this.commandHandler = checkNotNull(commandHandler);
@@ -181,7 +179,7 @@ public class STTApplication implements ContinueActionHandler,
 			}
 		});
 
-		setupSearchView();
+		// setupSearchView();
 
 		Scene scene = new Scene(pane);
 		finButton.setMnemonicParsing(true);
@@ -241,49 +239,48 @@ public class STTApplication implements ContinueActionHandler,
 		commandText.positionCaret(commandText.getLength());
 	}
 
-	private void setupSearchView() {
-		ListBinding<String> searchListBinding = new ListBinding<String>() {
-			{
-				bind(commandText.textProperty());
-			}
-
-			@Override
-			protected ObservableList<String> computeValue() {
-				if (commandText.getText().isEmpty()) {
-					return FXCollections.emptyObservableList();
-				}
-				Collection<String> results = searcher
-						.searchForComments(commandText.getText());
-				ArrayList<String> resultsToUse = new ArrayList<>();
-				for (String string : results) {
-					resultsToUse.add(string);
-					if (resultsToUse.size() == 5) {
-						break;
-					}
-				}
-				return FXCollections.observableList(resultsToUse);
-			}
-		};
-		searchListBinding.getClass(); // FIXME: just so findbugs is happy
-		// searchView.setItems(searchListBinding);
-		// searchView.prefHeightProperty().bind(
-		// searchListBinding.sizeProperty().multiply(26));
-		// searchView.minHeightProperty().bind(searchView.prefHeightProperty());
-		// searchView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-		// searchView.getSelectionModel().selectedItemProperty()
-		// .addListener(new ChangeListener<String>() {
-		//
-		// @Override
-		// public void changed(
-		// ObservableValue<? extends String> observable,
-		// String oldValue, String newValue) {
-		// if (newValue != null) {
-		// setCommandText(newValue);
-		// searchView.getSelectionModel().clearSelection();
-		// }
-		// }
-		// });
-	}
+	// private void setupSearchView() {
+	// ListBinding<String> searchListBinding = new ListBinding<String>() {
+	// {
+	// bind(commandText.textProperty());
+	// }
+	//
+	// @Override
+	// protected ObservableList<String> computeValue() {
+	// if (commandText.getText().isEmpty()) {
+	// return FXCollections.emptyObservableList();
+	// }
+	// Collection<String> results = searcher
+	// .searchForComments(commandText.getText());
+	// ArrayList<String> resultsToUse = new ArrayList<>();
+	// for (String string : results) {
+	// resultsToUse.add(string);
+	// if (resultsToUse.size() == 5) {
+	// break;
+	// }
+	// }
+	// return FXCollections.observableList(resultsToUse);
+	// }
+	// };
+	// searchView.setItems(searchListBinding);
+	// searchView.prefHeightProperty().bind(
+	// searchListBinding.sizeProperty().multiply(26));
+	// searchView.minHeightProperty().bind(searchView.prefHeightProperty());
+	// searchView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+	// searchView.getSelectionModel().selectedItemProperty()
+	// .addListener(new ChangeListener<String>() {
+	//
+	// @Override
+	// public void changed(
+	// ObservableValue<? extends String> observable,
+	// String oldValue, String newValue) {
+	// if (newValue != null) {
+	// setCommandText(newValue);
+	// searchView.getSelectionModel().clearSelection();
+	// }
+	// }
+	// });
+	// }
 
 	@FXML
 	protected void showReportWindow() {
@@ -339,7 +336,8 @@ public class STTApplication implements ContinueActionHandler,
 
 	void expandCurrentCommand() {
 		String currentText = commandText.getText();
-		List<String> expansions = grouper.getPossibleExpansions(currentText);
+		List<String> expansions = expansionProvider
+				.getPossibleExpansions(currentText);
 		if (expansions.size() == 1) {
 			setCommandText(currentText + expansions.get(0));
 		}

@@ -33,6 +33,7 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
+import org.stt.searching.ExpansionProvider;
 
 import com.google.common.base.Optional;
 
@@ -57,6 +58,9 @@ public class STTApplicationTest {
 	@Mock
 	private ItemGrouper grouper;
 
+	@Mock
+	private ExpansionProvider expansionProvider;
+
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
@@ -68,20 +72,20 @@ public class STTApplicationTest {
 				stage = helper.createStageForTest();
 				ItemReader historySource = mock(ItemReader.class);
 				sut = new STTApplication(stage, commandHandler, historySource,
-						executorService, reportWindow, commentSearcher, grouper);
+						executorService, reportWindow, expansionProvider);
 			}
 		});
 	}
 
 	@Test
 	@NotOnPlatformThread
-	public void shouldDelegateToGrouper() {
+	public void shouldDelegateToExpansionProvider() {
 		// GIVEN
 		setupStage();
 
 		sut.commandText.setText("test");
 
-		given(grouper.getPossibleExpansions("test")).willReturn(
+		given(expansionProvider.getPossibleExpansions("test")).willReturn(
 				Arrays.asList("blub"));
 
 		// WHEN
