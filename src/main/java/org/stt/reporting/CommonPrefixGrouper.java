@@ -9,10 +9,11 @@ import java.util.Set;
 
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.searching.ExpansionProvider;
 
 import com.google.common.base.Optional;
 
-public class CommonPrefixGrouper implements ItemGrouper {
+public class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 	private final RadixTreeNode root = new RadixTreeNode();
 
 	@Override
