@@ -13,7 +13,7 @@ import org.stt.persistence.ItemReader;
 import com.google.common.base.Optional;
 
 public class CommonPrefixGrouper implements ItemGrouper {
-	private final Group root = new Group();
+	private final RadixTreeNode root = new RadixTreeNode();
 
 	@Override
 	public List<String> getGroupsOf(String text) {
@@ -45,17 +45,17 @@ public class CommonPrefixGrouper implements ItemGrouper {
 		return root.toString();
 	}
 
-	private static class Group {
-		private final Set<Group> children = new HashSet<CommonPrefixGrouper.Group>();
+	private static class RadixTreeNode {
+		private final Set<RadixTreeNode> children = new HashSet<CommonPrefixGrouper.RadixTreeNode>();
 		private String prefix = "";
 
 		public void insert(String comment) {
 			if (comment.isEmpty()) {
 				return;
 			}
-			Match bestMatch = findMatch(comment);
+			Match bestMatch = findChildWithLongestCommonPrefix(comment);
 			if (bestMatch != null) {
-				Group groupForRemaining = bestMatch.group;
+				RadixTreeNode groupForRemaining = bestMatch.group;
 				if (!bestMatch.isMatchingCompletePrefix()) {
 					groupForRemaining = splitChildAt(bestMatch.group,
 							bestMatch.prefixLength);
@@ -76,7 +76,7 @@ public class CommonPrefixGrouper implements ItemGrouper {
 
 		private List<String> addGroupOfCommentTo(String comment,
 				ArrayList<String> result) {
-			Match match = findMatch(comment);
+			Match match = findChildWithLongestCommonPrefix(comment);
 			if (match != null && match.isMatchingCompletePrefix()
 					&& comment.length() > match.prefixLength) {
 				result.add(match.group.prefix);
@@ -88,22 +88,22 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			return result;
 		}
 
-		private Group splitChildAt(Group group, int position) {
+		private RadixTreeNode splitChildAt(RadixTreeNode group, int position) {
 			String newChildPrefix = group.prefix.substring(0, position);
-			Group newChild = addChildWithPrefix(newChildPrefix);
+			RadixTreeNode newChild = addChildWithPrefix(newChildPrefix);
 
 			group.prefix = group.prefix.substring(position + 1);
 			moveChildTo(group, newChild);
 			return newChild;
 		}
 
-		private void moveChildTo(Group group, Group newParent) {
+		private void moveChildTo(RadixTreeNode group, RadixTreeNode newParent) {
 			children.remove(group);
 			newParent.children.add(group);
 		}
 
-		private Group addChildWithPrefix(String newChildPrefix) {
-			Group newChild = new Group();
+		private RadixTreeNode addChildWithPrefix(String newChildPrefix) {
+			RadixTreeNode newChild = new RadixTreeNode();
 			newChild.prefix = newChildPrefix;
 			children.add(newChild);
 			return newChild;
@@ -122,7 +122,7 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			if (matchLength == prefix.length()
 					&& matchLength <= comment.length()) {
 				String remaining = comment.substring(matchLength).trim();
-				for (Group child : children) {
+				for (RadixTreeNode child : children) {
 					child.addExpansionsTo(result, remaining);
 				}
 			} else if (matchLength == comment.length()
@@ -131,10 +131,11 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			}
 		}
 
-		private Match findMatch(String comment) {
+		private Match findChildWithLongestCommonPrefix(String comment) {
 			Match match = new Match();
-			for (Group grp : children) {
-				int currentLength = grp.matchWith(comment);
+			for (RadixTreeNode grp : children) {
+				int currentLength = grp
+						.lengthOfValidLongestCommonPrefix(comment);
 				if (currentLength > match.prefixLength) {
 					match.prefixLength = currentLength;
 					match.group = grp;
@@ -143,23 +144,29 @@ public class CommonPrefixGrouper implements ItemGrouper {
 			return match.prefixLength == 0 ? null : match;
 		}
 
-		private int matchWith(String text) {
-			int currentLength = 0;
-			for (int i = 0; i < prefix.length() && i < text.length(); i++) {
-				if (text.charAt(i) != prefix.charAt(i)) {
-					break;
-				}
-				if (text.charAt(i) == ' ') {
-					currentLength = i;
-				} else if (i == text.length() - 1 || i == prefix.length() - 1
-						&& text.charAt(i + 1) == ' ') {
-					currentLength = i + 1;
-				}
-			}
+		private int lengthOfValidLongestCommonPrefix(String text) {
+			int currentLength = lengthOfLongestCommonPrefix(text);
 			if (currentLength > 3) {
 				return currentLength;
 			}
 			return 0;
+		}
+
+		private int lengthOfLongestCommonPrefix(String text) {
+			int lastDelimitedPrefix = 0;
+			int i = 0;
+			for (; i < prefix.length() && i < text.length(); i++) {
+				if (text.charAt(i) != prefix.charAt(i)) {
+					return lastDelimitedPrefix;
+				}
+				if (text.charAt(i) == ' ') {
+					lastDelimitedPrefix = i;
+				}
+			}
+			if (i == text.length() || text.charAt(i) == ' ') {
+				lastDelimitedPrefix = i;
+			}
+			return lastDelimitedPrefix;
 		}
 
 		private int lengthOfCommonPrefix(String other) {
@@ -175,7 +182,7 @@ public class CommonPrefixGrouper implements ItemGrouper {
 		@Override
 		public String toString() {
 			StringBuilder out = new StringBuilder();
-			for (Group child : children) {
+			for (RadixTreeNode child : children) {
 				out.append('\'').append(child.prefix).append("' = [");
 				out.append(child.toString());
 				out.append(']');
@@ -185,7 +192,7 @@ public class CommonPrefixGrouper implements ItemGrouper {
 	}
 
 	private static class Match {
-		protected Group group;
+		protected RadixTreeNode group;
 		protected int prefixLength;
 
 		protected boolean isMatchingCompletePrefix() {
