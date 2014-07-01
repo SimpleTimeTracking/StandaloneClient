@@ -26,6 +26,7 @@ import org.stt.Singleton;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
+import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
@@ -213,11 +214,15 @@ public class MainContext {
 	STTApplication createSTTApplication() {
 		Stage stage = stageFactory.create();
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
-		ReportWindowBuilder reportWindow = new ReportWindowBuilder(
+		ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
 				stageFactory, itemReaderProvider.create(),
 				itemSearcher.create());
-		return new STTApplication(stage, commandHandler.create(),
-				persistenceReader.create(), executorService, reportWindow,
-				commonPrefixGrouper.create());
+		Builder builder = new STTApplication.Builder();
+		builder.stage(stage).commandHandler(commandHandler.create())
+				.historySource(persistenceReader.create())
+				.executorService(executorService)
+				.reportWindowBuilder(reportWindowBuilder)
+				.expansionProvider(commonPrefixGrouper.create());
+		return builder.build();
 	}
 }

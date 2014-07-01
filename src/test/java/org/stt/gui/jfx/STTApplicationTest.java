@@ -29,6 +29,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
 import org.stt.gui.jfx.JFXTestRunner.NotOnPlatformThread;
+import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemGrouper;
@@ -50,7 +51,7 @@ public class STTApplicationTest {
 	private ExecutorService executorService;
 
 	@Mock
-	private ReportWindowBuilder reportWindow;
+	private ReportWindowBuilder reportWindowBuilder;
 
 	@Mock
 	protected CommentSearcher commentSearcher;
@@ -71,8 +72,13 @@ public class STTApplicationTest {
 			public void run() {
 				stage = helper.createStageForTest();
 				ItemReader historySource = mock(ItemReader.class);
-				sut = new STTApplication(stage, commandHandler, historySource,
-						executorService, reportWindow, expansionProvider);
+				Builder builder = new Builder();
+				builder.stage(stage).commandHandler(commandHandler)
+						.historySource(historySource)
+						.executorService(executorService)
+						.reportWindowBuilder(reportWindowBuilder)
+						.expansionProvider(expansionProvider);
+				sut = builder.build();
 			}
 		});
 	}
@@ -93,6 +99,24 @@ public class STTApplicationTest {
 
 		// THEN
 		assertThat(sut.commandText.getText(), is("testblub"));
+	}
+
+	@Test
+	@NotOnPlatformThread
+	public void shouldExpandToCommonPrefix() {
+		// GIVEN
+		setupStage();
+
+		sut.commandText.setText("test");
+
+		given(expansionProvider.getPossibleExpansions("test")).willReturn(
+				Arrays.asList("aaa", "aab"));
+
+		// WHEN
+		sut.expandCurrentCommand();
+
+		// THEN
+		assertThat(sut.commandText.getText(), is("testaa"));
 	}
 
 	@Test
@@ -132,7 +156,7 @@ public class STTApplicationTest {
 		sut.showReportWindow();
 
 		// THEN
-		verify(reportWindow).setupStage();
+		verify(reportWindowBuilder).setupStage();
 	}
 
 	@Test

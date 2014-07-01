@@ -38,7 +38,6 @@ import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
 import org.stt.CommandHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.Builder;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
@@ -54,7 +53,6 @@ public class STTApplication implements ContinueActionHandler,
 	private static final Logger LOG = Logger.getLogger(STTApplication.class
 			.getName());
 
-	private final Stage stage;
 	@FXML
 	TextArea commandText;
 
@@ -67,27 +65,23 @@ public class STTApplication implements ContinueActionHandler,
 	@FXML
 	ListView<TimeTrackingItem> result;
 
+	private final Stage stage;
 	private final ExecutorService executorService;
-
 	private final CommandHandler commandHandler;
 	private final ItemReader historySource;
 	private final ReportWindowBuilder reportWindowBuilder;
+	private final ExpansionProvider expansionProvider;
 
 	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
 
-	private final ExpansionProvider expansionProvider;
-
-	public STTApplication(Stage stage, CommandHandler commandHandler,
-			ItemReader historySource, ExecutorService executorService,
-			ReportWindowBuilder reportWindow,
-			ExpansionProvider expansionProvider) {
-		this.expansionProvider = checkNotNull(expansionProvider);
-		this.reportWindowBuilder = checkNotNull(reportWindow);
-		this.stage = checkNotNull(stage);
-		this.commandHandler = checkNotNull(commandHandler);
-		this.historySource = checkNotNull(historySource);
-		this.executorService = checkNotNull(executorService);
+	private STTApplication(Builder builder) {
+		this.expansionProvider = checkNotNull(builder.expansionProvider);
+		this.reportWindowBuilder = checkNotNull(builder.reportWindowBuilder);
+		this.stage = checkNotNull(builder.stage);
+		this.commandHandler = checkNotNull(builder.commandHandler);
+		this.historySource = checkNotNull(builder.historySource);
+		this.executorService = checkNotNull(builder.executorService);
 	}
 
 	public void readHistoryFrom(final ItemReader reader) {
@@ -168,7 +162,7 @@ public class STTApplication implements ContinueActionHandler,
 			@Override
 			public ListCell<TimeTrackingItem> call(
 					ListView<TimeTrackingItem> arg0) {
-				Builder builder = new TimeTrackingItemCell.Builder();
+				TimeTrackingItemCell.Builder builder = new TimeTrackingItemCell.Builder();
 				builder.continueActionHandler(STTApplication.this)
 						.deleteActionHandler(STTApplication.this)
 						.editActionHandler(STTApplication.this)
@@ -338,9 +332,22 @@ public class STTApplication implements ContinueActionHandler,
 		String currentText = commandText.getText();
 		List<String> expansions = expansionProvider
 				.getPossibleExpansions(currentText);
-		if (expansions.size() == 1) {
-			setCommandText(currentText + expansions.get(0));
+		if (!expansions.isEmpty()) {
+			String maxExpansion = expansions.get(0);
+			for (String exp : expansions) {
+				maxExpansion = commonPrefix(maxExpansion, exp);
+			}
+			setCommandText(currentText + maxExpansion);
 		}
+	}
+
+	String commonPrefix(String a, String b) {
+		for (int i = 0; i < a.length() && i < b.length(); i++) {
+			if (a.charAt(i) != b.charAt(i)) {
+				return a.substring(0, i);
+			}
+		}
+		return a;
 	}
 
 	protected void executeCommand() {
@@ -387,6 +394,50 @@ public class STTApplication implements ContinueActionHandler,
 			allItems.remove(item);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	public static class Builder {
+		private Stage stage;
+		private ExecutorService executorService;
+		private CommandHandler commandHandler;
+		private ItemReader historySource;
+		private ReportWindowBuilder reportWindowBuilder;
+		private ExpansionProvider expansionProvider;
+
+		public Builder stage(Stage stage) {
+			this.stage = stage;
+			return this;
+		}
+
+		public Builder executorService(ExecutorService executorService) {
+			this.executorService = executorService;
+			return this;
+		}
+
+		public Builder commandHandler(CommandHandler commandHandler) {
+			this.commandHandler = commandHandler;
+			return this;
+		}
+
+		public Builder historySource(ItemReader historySource) {
+			this.historySource = historySource;
+			return this;
+		}
+
+		public Builder reportWindowBuilder(
+				ReportWindowBuilder reportWindowBuilder) {
+			this.reportWindowBuilder = reportWindowBuilder;
+			return this;
+		}
+
+		public Builder expansionProvider(ExpansionProvider expansionProvider) {
+			this.expansionProvider = expansionProvider;
+			return this;
+		}
+
+		public STTApplication build() {
+			return new STTApplication(this);
 		}
 	}
 }
