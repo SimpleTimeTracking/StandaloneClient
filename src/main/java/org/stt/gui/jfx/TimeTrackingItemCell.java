@@ -1,6 +1,9 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Set;
+
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -18,6 +21,9 @@ import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
+	private static String STYLE_NORMAL = "-fx-background-color: null;";
+	private static String STYLE_START_OF_DAY = "-fx-background-color: lightblue;";
+
 	private final HBox cellPane = new HBox(10);
 
 	private final HBox actionsPane = new HBox();
@@ -44,12 +50,15 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final ImageView runningImageView;
 
+	private final Set<TimeTrackingItem> firstItemOfDay;
+
 	private TimeTrackingItemCell(Builder builder) {
 		this.editButton = checkNotNull(builder.editButton);
 		this.continueButton = checkNotNull(builder.continueButton);
 		this.deleteButton = checkNotNull(builder.deleteButton);
 		this.fromToImageView = checkNotNull(builder.fromToImageView);
 		this.runningImageView = checkNotNull(builder.runningImageView);
+		this.firstItemOfDay = checkNotNull(builder.firstItemOfDay);
 
 		final ContinueActionHandler continueActionHandler = checkNotNull(builder.continueActionHandler);
 		final EditActionHandler editActionHandler = checkNotNull(builder.editActionHandler);
@@ -106,6 +115,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	@Override
 	protected void updateItem(TimeTrackingItem item, boolean empty) {
 		super.updateItem(item, empty);
+		cellPane.setStyle(STYLE_NORMAL);
 		if (empty) {
 			this.item = null;
 			setGraphic(null);
@@ -114,6 +124,9 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			applyLabelForComment();
 			setupTimePane();
 			setGraphic(cellPane);
+			if (firstItemOfDay.contains(item)) {
+				cellPane.setStyle(STYLE_START_OF_DAY);
+			}
 		}
 	}
 
@@ -159,6 +172,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		private ContinueActionHandler continueActionHandler;
 		private DeleteActionHandler deleteActionHandler;
 		private EditActionHandler editActionHandler;
+		private Set<TimeTrackingItem> firstItemOfDay;
 
 		public Builder editImage(Image editImage) {
 			this.editButton = new ImageButton(editImage);
@@ -200,8 +214,14 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			return this;
 		}
 
+		public void firstItemOfDaySet(Set<TimeTrackingItem> firstItemOfDay) {
+			this.firstItemOfDay = checkNotNull(firstItemOfDay);
+
+		}
+
 		public TimeTrackingItemCell build() {
 			return new TimeTrackingItemCell(this);
 		}
+
 	}
 }

@@ -3,11 +3,22 @@ package org.stt.model;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import java.util.Comparator;
+
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 
 public final class TimeTrackingItem {
+	public static final Comparator<TimeTrackingItem> BY_START_COMPARATOR = new Comparator<TimeTrackingItem>() {
+
+		@Override
+		public int compare(TimeTrackingItem o1, TimeTrackingItem o2) {
+			checkNotNull(o1);
+			checkNotNull(o2);
+			return o1.getStart().compareTo(o2.getStart());
+		}
+	};
 
 	private final Optional<String> comment;
 	private final DateTime start;

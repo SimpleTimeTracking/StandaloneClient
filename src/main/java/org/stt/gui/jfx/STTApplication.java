@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -15,10 +18,12 @@ import java.util.logging.Logger;
 
 import javafx.application.Platform;
 import javafx.beans.binding.ListBinding;
+import javafx.beans.binding.SetBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -143,6 +148,7 @@ public class STTApplication implements ContinueActionHandler,
 					}
 
 				});
+		final ObservableSet<TimeTrackingItem> firstItemOfDayBinding = createFirstItemOfDayBinding();
 		result.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
 			private final Image deleteImage = new Image("/Delete.png", 25, 25,
 					true, true);
@@ -168,7 +174,8 @@ public class STTApplication implements ContinueActionHandler,
 						.editActionHandler(STTApplication.this)
 						.continueImage(continueImage).deleteImage(deleteImage)
 						.editImage(editImage).runningImage(runningImage)
-						.fromToImage(fromToImage);
+						.fromToImage(fromToImage)
+						.firstItemOfDaySet(firstItemOfDayBinding);
 				return builder.build();
 			}
 		});
@@ -197,6 +204,36 @@ public class STTApplication implements ContinueActionHandler,
 		});
 		stage.show();
 		commandText.requestFocus();
+	}
+
+	private ObservableSet<TimeTrackingItem> createFirstItemOfDayBinding() {
+		return new SetBinding<TimeTrackingItem>() {
+			{
+				bind(allItems);
+			}
+
+			@Override
+			protected ObservableSet<TimeTrackingItem> computeValue() {
+				SortedSet<TimeTrackingItem> result = new TreeSet<>(
+						TimeTrackingItem.BY_START_COMPARATOR);
+				result.addAll(allItems);
+				TimeTrackingItem lastItem = null;
+				for (Iterator<TimeTrackingItem> it = result.iterator(); it
+						.hasNext();) {
+					TimeTrackingItem item = it.next();
+					if (lastItem != null
+							&& lastItem
+									.getStart()
+									.withTimeAtStartOfDay()
+									.equals(item.getStart()
+											.withTimeAtStartOfDay())) {
+						it.remove();
+					}
+					lastItem = item;
+				}
+				return FXCollections.observableSet(result);
+			}
+		};
 	}
 
 	private ObservableList<TimeTrackingItem> createResultsListBinding() {
