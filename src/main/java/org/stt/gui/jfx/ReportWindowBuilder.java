@@ -299,8 +299,13 @@ public class ReportWindowBuilder {
 
 		private ObservableValue<DateTime> addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty() {
 			final ComboBox<DateTime> comboBox = new ComboBox<DateTime>();
-			comboBox.setItems(FXCollections.observableArrayList(itemSearcher
-					.getAllTrackedDays()));
+			ObservableList<DateTime> availableDays = FXCollections
+					.observableArrayList(itemSearcher.getAllTrackedDays());
+			comboBox.setItems(availableDays);
+			if (!availableDays.isEmpty()) {
+				comboBox.getSelectionModel().select(
+						availableDays.get(availableDays.size() - 1));
+			}
 			comboBox.setConverter(new StringConverter<DateTime>() {
 				@Override
 				public String toString(DateTime dateTime) {
@@ -316,6 +321,5 @@ public class ReportWindowBuilder {
 
 			return comboBox.getSelectionModel().selectedItemProperty();
 		}
-
 	}
 }

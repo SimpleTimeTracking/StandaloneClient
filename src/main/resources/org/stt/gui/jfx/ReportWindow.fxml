@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <bottom>
       <Button mnemonicParsing="false" onAction="#closeWindow" text="%report.done" BorderPane.alignment="CENTER">
          <BorderPane.margin>
@@ -24,10 +24,10 @@
    <center>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0">
+            <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
                <columns>
-                  <TableColumn fx:id="columnForDuration" prefWidth="89.0" text="%report.duration" />
-                  <TableColumn fx:id="columnForComment" prefWidth="319.0" text="%report.comment" />
+                  <TableColumn fx:id="columnForDuration" prefWidth="156.0" text="%report.duration" />
+                  <TableColumn fx:id="columnForComment" prefWidth="642.0" text="%report.comment" />
                </columns>
                <columnResizePolicy>
                   <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

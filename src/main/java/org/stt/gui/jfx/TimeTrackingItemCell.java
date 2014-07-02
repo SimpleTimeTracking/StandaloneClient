@@ -10,8 +10,10 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -21,9 +23,6 @@ import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
-	private static String STYLE_NORMAL = "-fx-background-color: null;";
-	private static String STYLE_START_OF_DAY = "-fx-background-color: lightblue;";
-
 	private final HBox cellPane = new HBox(10);
 
 	private final HBox actionsPane = new HBox();
@@ -115,7 +114,6 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	@Override
 	protected void updateItem(TimeTrackingItem item, boolean empty) {
 		super.updateItem(item, empty);
-		cellPane.setStyle(STYLE_NORMAL);
 		if (empty) {
 			this.item = null;
 			setGraphic(null);
@@ -123,9 +121,15 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			this.item = item;
 			applyLabelForComment();
 			setupTimePane();
-			setGraphic(cellPane);
 			if (firstItemOfDay.contains(item)) {
-				cellPane.setStyle(STYLE_START_OF_DAY);
+				BorderPane pane = new BorderPane();
+				pane.setCenter(cellPane);
+				Separator separator = new Separator();
+				separator.setPrefHeight(10);
+				pane.setBottom(separator);
+				setGraphic(pane);
+			} else {
+				setGraphic(cellPane);
 			}
 		}
 	}
