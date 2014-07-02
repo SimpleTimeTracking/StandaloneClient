@@ -21,20 +21,21 @@ public class QuotedItemGrouper implements ItemGrouper {
 		int index = 0;
 		while (index < text.length()) {
 			char delimiter = text.charAt(index);
-			if (Character.isWhitespace(delimiter)) {
+			if (!Character.isWhitespace(delimiter)) {
 
-			} else if (!Character.isAlphabetic(delimiter)) {
-				int endOfQuote = text.indexOf(delimiter, index + 1);
-				if (endOfQuote > 0) {
-					groups.add(text.substring(index + 1, endOfQuote));
-					index = endOfQuote;
+				if (!Character.isAlphabetic(delimiter)) {
+					int endOfQuote = text.indexOf(delimiter, index + 1);
+					if (endOfQuote > 0) {
+						groups.add(text.substring(index + 1, endOfQuote));
+						index = endOfQuote;
+					} else {
+						groups.add(text.substring(index));
+						index = text.length();
+					}
 				} else {
 					groups.add(text.substring(index));
 					index = text.length();
 				}
-			} else {
-				groups.add(text.substring(index));
-				index = text.length();
 			}
 			index++;
 		}
