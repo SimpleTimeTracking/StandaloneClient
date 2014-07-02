@@ -329,15 +329,19 @@ public class STTApplication implements ContinueActionHandler,
 	}
 
 	void expandCurrentCommand() {
-		String currentText = commandText.getText();
+		int caretPosition = commandText.getCaretPosition();
+		String textToExpand = commandText.getText().substring(0, caretPosition);
 		List<String> expansions = expansionProvider
-				.getPossibleExpansions(currentText);
+				.getPossibleExpansions(textToExpand);
 		if (!expansions.isEmpty()) {
 			String maxExpansion = expansions.get(0);
 			for (String exp : expansions) {
 				maxExpansion = commonPrefix(maxExpansion, exp);
 			}
-			setCommandText(currentText + maxExpansion);
+			String tail = commandText.getText().substring(caretPosition);
+			String expandedText = textToExpand + maxExpansion;
+			commandText.setText(expandedText + tail);
+			commandText.positionCaret(expandedText.length());
 		}
 	}
 

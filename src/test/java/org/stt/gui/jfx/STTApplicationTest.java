@@ -89,7 +89,7 @@ public class STTApplicationTest {
 		// GIVEN
 		setupStage();
 
-		sut.commandText.setText("test");
+		setTextAndPositionCaretAtEnd("test");
 
 		given(expansionProvider.getPossibleExpansions("test")).willReturn(
 				Arrays.asList("blub"));
@@ -103,13 +103,34 @@ public class STTApplicationTest {
 
 	@Test
 	@NotOnPlatformThread
+	public void shouldExpandWithinText() {
+		// GIVEN
+		setupStage();
+
+		sut.commandText.setText("al beta");
+		sut.commandText.positionCaret(2);
+
+		given(expansionProvider.getPossibleExpansions("al")).willReturn(
+				Arrays.asList("pha"));
+
+		// WHEN
+		sut.expandCurrentCommand();
+
+		// THEN
+		assertThat(sut.commandText.getText(), is("alpha beta"));
+		assertThat(sut.commandText.getCaretPosition(), is(5));
+	}
+
+	@Test
+	@NotOnPlatformThread
 	public void shouldExpandToCommonPrefix() {
 		// GIVEN
 		setupStage();
 
-		sut.commandText.setText("test");
+		String currentText = "test";
+		setTextAndPositionCaretAtEnd(currentText);
 
-		given(expansionProvider.getPossibleExpansions("test")).willReturn(
+		given(expansionProvider.getPossibleExpansions(currentText)).willReturn(
 				Arrays.asList("aaa", "aab"));
 
 		// WHEN
@@ -117,6 +138,11 @@ public class STTApplicationTest {
 
 		// THEN
 		assertThat(sut.commandText.getText(), is("testaa"));
+	}
+
+	private void setTextAndPositionCaretAtEnd(String currentText) {
+		sut.commandText.setText(currentText);
+		sut.commandText.positionCaret(currentText.length());
 	}
 
 	@Test
