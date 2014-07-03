@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/Bytekeeper/STT.svg)](https://travis-ci.org/Bytekeeper/STT) [ ![Download](https://api.bintray.com/packages/bytekeeper/generic/SimpleTimeTrack/images/download.png) ](https://bintray.com/bytekeeper/generic/SimpleTimeTrack/_latestVersion)
 
+![Main window](https://raw.githubusercontent.com/Bytekeeper/SimpleTimeTrack/master/doc/MainApp.png)
+
 # Mission statement 
 
 The goal of STT is to make time tracking as simple and quick as possible.
