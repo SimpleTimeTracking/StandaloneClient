@@ -1,7 +1,5 @@
 package org.stt.cli;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -43,6 +41,8 @@ import org.stt.ti.importer.TiImporter;
 
 import com.google.common.base.Optional;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * The starting point for the CLI
  */
@@ -57,7 +57,6 @@ public class Main {
 	private final File currentTiFile;
 
 	private ItemWriter writeTo;
-	private ItemReader readFrom;
 	private ItemSearcher searchIn;
 
 	public Main(Configuration configuration) {
@@ -108,6 +107,8 @@ public class Main {
 						return o2.getStart().compareTo(o1.getStart());
 					}
 				});
+
+		ItemReader readFrom = createNewReaderProvider().provideReader();
 
 		ItemReader reader = new SubstringReaderFilter(readFrom,
 				StringHelper.join(args));
@@ -170,12 +171,10 @@ public class Main {
 		}
 
 		try (STTItemExporter exporter = new STTItemExporter(
-				createPersistenceStreamSupport());
-				ItemReader importer = createNewReader()) {
+				createStreamResourceProvider());) {
 			DefaultItemSearcher searcher = createNewSearcher();
 
 			writeTo = exporter;
-			readFrom = importer;
 			searchIn = searcher;
 
 			String mainOperator = args.remove(0);
@@ -213,34 +212,11 @@ public class Main {
 	}
 
 	private DefaultItemSearcher createNewSearcher() {
-		return new DefaultItemSearcher(new ItemReaderProvider() {
-
-			@Override
-			public ItemReader provideReader() {
-				try {
-					return createNewReader();
-				} catch (IOException e) {
-					LOG.throwing(Main.class.getName(), "createNewSearcher", e);
-					throw new RuntimeException(e);
-				}
-			}
-		});
+		return new DefaultItemSearcher(createNewReaderProvider());
 	}
 
 	private ReportPrinter createNewReportPrinter() {
-		ItemReaderProvider provider = new ItemReaderProvider() {
-
-			@Override
-			public ItemReader provideReader() {
-				try {
-					return createNewReader();
-				} catch (IOException e) {
-					LOG.throwing(Main.class.getName(),
-							"createNewReportPrinter", e);
-					throw new RuntimeException(e);
-				}
-			}
-		};
+		ItemReaderProvider provider = createNewReaderProvider();
 		return new ReportPrinter(provider, configuration);
 	}
 
@@ -248,33 +224,53 @@ public class Main {
 	 * For each existing file create a reader and return an AggregatingImporter
 	 * of all readers where the corresponding file exists
 	 */
-	private ItemReader createNewReader() throws IOException {
+	private ItemReaderProvider createNewReaderProvider() {
 		List<ItemReader> availableReaders = new LinkedList<>();
 
 		if (timeFile.canRead()) {
-			STTItemImporter timeImporter = new STTItemImporter(
-					new InputStreamReader(new FileInputStream(timeFile),
-							"UTF-8"));
-			availableReaders.add(timeImporter);
+			try {
+				STTItemImporter timeImporter = new STTItemImporter(
+						new InputStreamReader(new FileInputStream(timeFile),
+								"UTF-8"));
+				availableReaders.add(timeImporter);
+			} catch (IOException e) {
+				LOG.throwing(Main.class.getName(), "createNewReaderProvider", e);
+			}
 		}
 		if (tiFile.canRead()) {
-			TiImporter tiImporter = new TiImporter(new InputStreamReader(
-					new FileInputStream(tiFile), "UTF-8"));
-			availableReaders.add(tiImporter);
+			try {
+				TiImporter tiImporter = new TiImporter(new InputStreamReader(
+						new FileInputStream(tiFile), "UTF-8"));
+				availableReaders.add(tiImporter);
+			} catch (IOException e) {
+				LOG.throwing(Main.class.getName(), "createNewReaderProvider", e);
+			}
 		}
 		if (currentTiFile.canRead()) {
-			TiImporter currentTiImporter = new TiImporter(
-					new InputStreamReader(new FileInputStream(currentTiFile),
-							"UTF-8"));
-			availableReaders.add(currentTiImporter);
+			try {
+				TiImporter currentTiImporter = new TiImporter(
+						new InputStreamReader(
+								new FileInputStream(currentTiFile), "UTF-8"));
+				availableReaders.add(currentTiImporter);
+			} catch (IOException e) {
+				LOG.throwing(Main.class.getName(), "createNewReaderProvider", e);
+			}
 		}
-		AggregatingImporter importer = new AggregatingImporter(
+
+		final AggregatingImporter importer = new AggregatingImporter(
 				availableReaders.toArray(new ItemReader[availableReaders.size()]));
 
-		return importer;
+		ItemReaderProvider provider = new ItemReaderProvider() {
+
+			@Override
+			public ItemReader provideReader() {
+				return importer;
+			}
+		};
+		return provider;
 	}
 
-	private StreamResourceProvider createPersistenceStreamSupport()
+	private StreamResourceProvider createStreamResourceProvider()
 			throws IOException {
 		StreamResourceProvider srp = new StreamResourceProvider() {
 			private OutputStreamWriter outputStreamWriter;
