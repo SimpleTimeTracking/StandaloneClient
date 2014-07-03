@@ -5,6 +5,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
+
+import java.util.Collections;
+
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
@@ -50,7 +53,8 @@ public class TimeTrackingItemCellTest {
 				.editActionHandler(editActionHandler)
 				.continueImage(imageForContinue).deleteImage(imageForDelete)
 				.editImage(imageForEdit).runningImage(runningImage)
-				.fromToImage(imageFromTo);
+				.fromToImage(imageFromTo)
+				.firstItemOfDaySet(Collections.<TimeTrackingItem> emptySet());
 
 		sut = builder.build();
 	}
