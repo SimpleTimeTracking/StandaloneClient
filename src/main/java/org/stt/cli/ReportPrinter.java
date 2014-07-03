@@ -1,6 +1,5 @@
 package org.stt.cli;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
@@ -8,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
@@ -56,8 +56,7 @@ public class ReportPrinter {
 		this.configuration = configuration;
 	}
 
-	public void report(Collection<String> args, PrintStream printTo)
-			throws IOException {
+	public void report(Collection<String> args, PrintStream printTo) {
 		String searchString = null;
 		int days = 0;
 		boolean truncateLongLines = true;
@@ -122,7 +121,7 @@ public class ReportPrinter {
 	 * Prints a nice summed and grouped (by comment) report
 	 */
 	private void printSums(PrintStream printTo, String searchString, int days,
-			boolean truncateLongLines) throws IOException {
+			boolean truncateLongLines) {
 		ItemReader reportReader = readFrom.provideReader();
 
 		SubstringReaderFilter substFilter = new SubstringReaderFilter(
@@ -161,14 +160,14 @@ public class ReportPrinter {
 		printTo.println("====== overall sum: ======\n"
 				+ hmsPeriodFormatter.print(overallDuration.toPeriod()));
 
-		reportReader.close();
+		IOUtils.closeQuietly(reportReader);
 	}
 
 	/**
 	 * Prints all items nicely formatted
 	 */
 	private void printDetails(PrintStream printTo, String searchString,
-			int days, boolean truncateLongLines) throws IOException {
+			int days, boolean truncateLongLines) {
 
 		printTo.println("====== recorded items: ======");
 
@@ -208,7 +207,7 @@ public class ReportPrinter {
 				printTruncatedString(builder, printTo, truncateLongLines);
 			}
 		}
-		filteredReader.close();
+		IOUtils.closeQuietly(filteredReader);
 	}
 
 	private OvertimeReportGenerator createOvertimeReportGenerator(int days) {
