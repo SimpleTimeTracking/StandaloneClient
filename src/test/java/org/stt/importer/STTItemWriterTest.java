@@ -22,16 +22,16 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 import org.stt.model.TimeTrackingItem;
-import org.stt.stt.importer.STTItemExporter;
+import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.StreamResourceProvider;
 
 @RunWith(Theories.class)
-public class STTItemExporterTest {
+public class STTItemWriterTest {
 
 	private static final String LINE_SEPERATOR = System
 			.getProperty("line.separator");
 	private StringWriter stringWriter;
-	private STTItemExporter sut;
+	private STTItemPersister sut;
 
 	@DataPoints
 	public static DateTime[] sampleDateTimes = new DateTime[] {
@@ -66,14 +66,14 @@ public class STTItemExporterTest {
 			}
 		};
 
-		sut = new STTItemExporter(provider);
+		sut = new STTItemPersister(provider);
 	}
 
 	@Test(expected = NullPointerException.class)
 	public void writeNullObjectFails() throws IOException {
 
 		// WHEN
-		sut.write(null);
+		sut.insert(null);
 
 		// THEN
 		// Exception expected
@@ -87,7 +87,7 @@ public class STTItemExporterTest {
 				DateTime.now());
 
 		// WHEN
-		sut.write(theItem);
+		sut.insert(theItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -102,7 +102,7 @@ public class STTItemExporterTest {
 		TimeTrackingItem theItem = new TimeTrackingItem(null, theTime);
 
 		// WHEN
-		sut.write(theItem);
+		sut.insert(theItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -119,7 +119,7 @@ public class STTItemExporterTest {
 		TimeTrackingItem theItem = new TimeTrackingItem(null, start, end);
 
 		// WHEN
-		sut.write(theItem);
+		sut.insert(theItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -137,7 +137,7 @@ public class STTItemExporterTest {
 				end);
 
 		// WHEN
-		sut.write(theItem);
+		sut.insert(theItem);
 
 		// THEN
 		Assert.assertThat(
@@ -154,7 +154,7 @@ public class STTItemExporterTest {
 				DateTime.now());
 
 		// WHEN
-		sut.write(theItem);
+		sut.insert(theItem);
 
 		// THEN
 		Assert.assertThat(
@@ -172,8 +172,8 @@ public class STTItemExporterTest {
 				new DateTime(2011, 10, 10, 11, 12, 13));
 		TimeTrackingItem theItem2 = new TimeTrackingItem("testitem",
 				new DateTime(2014, 10, 10, 11, 12, 13));
-		sut.write(theItem);
-		sut.write(theItem2);
+		sut.insert(theItem);
+		sut.insert(theItem2);
 
 		// when
 		sut.delete(theItem2);
@@ -192,7 +192,7 @@ public class STTItemExporterTest {
 				new DateTime(2011, 10, 10, 11, 12, 13));
 		TimeTrackingItem theItem2 = new TimeTrackingItem("testitem",
 				DateTime.now());
-		sut.write(theItem2);
+		sut.insert(theItem2);
 
 		// when
 		sut.replace(theItem2, theItem);
@@ -209,7 +209,7 @@ public class STTItemExporterTest {
 				new DateTime(2011, 10, 10, 11, 12, 13));
 
 		// when
-		sut.write(theItem);
+		sut.insert(theItem);
 
 		// then
 		Assert.assertThat(stringWriter.toString(),
@@ -225,13 +225,13 @@ public class STTItemExporterTest {
 		// GIVEN
 		TimeTrackingItem existingItem = new TimeTrackingItem("testitem",
 				startOfExistingItem);
-		sut.write(existingItem);
+		sut.insert(existingItem);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("testitem2",
 				startOfExistingItem);
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -243,13 +243,13 @@ public class STTItemExporterTest {
 		// GIVEN
 		TimeTrackingItem existingItem = new TimeTrackingItem("testitem",
 				new DateTime(2011, 10, 10, 11, 12, 13));
-		sut.write(existingItem);
+		sut.insert(existingItem);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("testitem2",
 				new DateTime(2011, 10, 10, 11, 12, 14));
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -269,13 +269,13 @@ public class STTItemExporterTest {
 		// GIVEN
 		TimeTrackingItem existingItem = new TimeTrackingItem("existing item",
 				startOfExistingItem, endOfNewItem);
-		sut.write(existingItem);
+		sut.insert(existingItem);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("new item",
 				startOfExistingItem, endOfNewItem);
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -294,13 +294,13 @@ public class STTItemExporterTest {
 		// GIVEN
 		TimeTrackingItem existingItem = new TimeTrackingItem("existing item",
 				startOfExistingItem, endOfExistingItem);
-		sut.write(existingItem);
+		sut.insert(existingItem);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("new item",
 				startOfExistingItem, endOfNewItem);
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 		Assert.assertThat(
@@ -321,13 +321,13 @@ public class STTItemExporterTest {
 		// GIVEN
 		TimeTrackingItem existingItem = new TimeTrackingItem("existing item",
 				startOfExistingItem);
-		sut.write(existingItem);
+		sut.insert(existingItem);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("new item",
 				startOfExistingItem, endOfNewItem);
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 		Assert.assertThat(stringWriter.toString(),
@@ -343,30 +343,30 @@ public class STTItemExporterTest {
 		TimeTrackingItem itemBeforeBefore = new TimeTrackingItem(
 				"Item before before", new DateTime(2010, 10, 10, 11, 12, 13),
 				new DateTime(2010, 10, 10, 11, 14, 13));
-		sut.write(itemBeforeBefore);
+		sut.insert(itemBeforeBefore);
 		TimeTrackingItem itemBefore = new TimeTrackingItem("Item before",
 				new DateTime(2020, 10, 10, 11, 12, 13), new DateTime(2020, 10,
 						10, 11, 14, 13));
-		sut.write(itemBefore);
+		sut.insert(itemBefore);
 		TimeTrackingItem overlappedItem = new TimeTrackingItem(
 				"Overlapped item", new DateTime(2020, 10, 10, 11, 14, 13),
 				new DateTime(2020, 10, 10, 11, 15, 13));
-		sut.write(overlappedItem);
+		sut.insert(overlappedItem);
 		TimeTrackingItem itemAfter = new TimeTrackingItem("Item after",
 				new DateTime(2020, 10, 10, 11, 15, 13), new DateTime(2020, 10,
 						10, 11, 17, 13));
-		sut.write(itemAfter);
+		sut.insert(itemAfter);
 		TimeTrackingItem itemAfterAfter = new TimeTrackingItem(
 				"Item even after", new DateTime(2020, 10, 10, 11, 17, 13),
 				new DateTime(2020, 10, 10, 11, 19, 13));
-		sut.write(itemAfterAfter);
+		sut.insert(itemAfterAfter);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("new item",
 				new DateTime(2020, 10, 10, 11, 13, 13), new DateTime(2020, 10,
 						10, 11, 16, 13));
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 
@@ -385,18 +385,38 @@ public class STTItemExporterTest {
 	}
 
 	@Test
+	public void shouldSplitCoveringExistingItem() throws IOException {
+		// GIVEN
+		TimeTrackingItem coveringItem = new TimeTrackingItem("covering",
+				new DateTime(2012, 1, 1, 10, 0, 0), new DateTime(2012, 1, 1,
+						13, 0, 0));
+		sut.insert(coveringItem);
+		TimeTrackingItem coveredItem = new TimeTrackingItem("newItem",
+				new DateTime(2012, 1, 1, 11, 0, 0), new DateTime(2012, 1, 1,
+						12, 0, 0));
+		sut.insert(coveredItem);
+		// WHEN
+
+		// THEN
+		assertThatFileMatches(
+				"2012-01-01_10:00:00 2012-01-01_11:00:00 covering",
+				"2012-01-01_11:00:00 2012-01-01_12:00:00 newItem",
+				"2012-01-01_12:00:00 2012-01-01_13:00:00 covering");
+	}
+
+	@Test
 	public void shouldNotChangeOldNonOverlappingItem() throws IOException {
 		// GIVEN
 		TimeTrackingItem oldItem = new TimeTrackingItem("old item",
 				new DateTime(2010, 10, 10, 11, 12, 13), new DateTime(2010, 10,
 						10, 11, 14, 13));
-		sut.write(oldItem);
+		sut.insert(oldItem);
 
 		TimeTrackingItem newItem = new TimeTrackingItem("old item",
 				new DateTime(2011, 10, 10, 11, 12, 13));
 
 		// WHEN
-		sut.write(newItem);
+		sut.insert(newItem);
 
 		// THEN
 		assertThatFileMatches(

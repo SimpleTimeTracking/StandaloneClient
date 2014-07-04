@@ -8,11 +8,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.stt.importer.STTItemImporter;
+import org.stt.stt.importer.STTItemReader;
 
 import com.google.common.base.Optional;
 
-public class STTItemImporterTest {
+public class STTItemReaderTest {
 
 	@Test
 	public void multiLineCommentGetsImportedCorrectly() {
@@ -20,7 +20,7 @@ public class STTItemImporterTest {
 		// GIVEN
 		StringReader stringReader = new StringReader(
 				"2012-10-10_22:00:00 2012-11-10_22:00:01 this is\\n a multiline\\r string\\r\\n with different separators");
-		ItemReader theReader = new STTItemImporter(stringReader);
+		ItemReader theReader = new STTItemReader(stringReader);
 
 		// WHEN
 		Optional<TimeTrackingItem> readItem = theReader.read();
@@ -36,7 +36,7 @@ public class STTItemImporterTest {
 
 		// GIVEN
 		StringReader stringReader = new StringReader("2012-10-10_22:00:00");
-		ItemReader theReader = new STTItemImporter(stringReader);
+		ItemReader theReader = new STTItemReader(stringReader);
 
 		// WHEN
 		Optional<TimeTrackingItem> readItem = theReader.read();
@@ -52,7 +52,7 @@ public class STTItemImporterTest {
 		// GIVEN
 		StringReader stringReader = new StringReader(
 				"2012-10-10_22:00:00 the long comment");
-		ItemReader theReader = new STTItemImporter(stringReader);
+		ItemReader theReader = new STTItemReader(stringReader);
 
 		// WHEN
 		Optional<TimeTrackingItem> readItem = theReader.read();

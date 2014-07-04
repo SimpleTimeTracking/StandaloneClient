@@ -16,7 +16,7 @@ import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsParser.CommandContext;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemWriter;
+import org.stt.persistence.ItemPersister;
 import org.stt.searching.ItemSearcher;
 
 import com.google.common.base.Optional;
@@ -34,10 +34,10 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 
 	public static final String COMMAND_FIN = "fin";
 
-	private final ItemWriter itemWriter;
+	private final ItemPersister itemWriter;
 	private final ItemSearcher itemSearcher;
 
-	public ToItemWriterCommandHandler(ItemWriter itemWriter,
+	public ToItemWriterCommandHandler(ItemPersister itemWriter,
 			ItemSearcher itemSearcher) {
 		this.itemWriter = checkNotNull(itemWriter);
 		this.itemSearcher = checkNotNull(itemSearcher);
@@ -55,7 +55,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		if (commandContext.newItem != null) {
 			TimeTrackingItem parsedItem = commandContext.newItem;
 			try {
-				itemWriter.write(parsedItem);
+				itemWriter.insert(parsedItem);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -94,7 +94,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 		TimeTrackingItem newItem = new TimeTrackingItem(
 				item.getComment().get(), DateTime.now());
 		try {
-			itemWriter.write(newItem);
+			itemWriter.insert(newItem);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
