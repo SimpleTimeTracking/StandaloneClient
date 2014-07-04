@@ -10,15 +10,15 @@ import org.stt.persistence.ItemReader;
 import com.google.common.base.Optional;
 
 /**
- * Imports all time tracking records written by {@link STTItemExporter}
+ * Imports all time tracking records written by {@link STTItemPersister}
  */
-public class STTItemImporter implements ItemReader {
+public class STTItemReader implements ItemReader {
 
 	private final LineIterator lineIter;
 
 	private final STTItemConverter converter = new STTItemConverter();
 
-	public STTItemImporter(Reader input) {
+	public STTItemReader(Reader input) {
 		lineIter = IOUtils.lineIterator(input);
 	}
 

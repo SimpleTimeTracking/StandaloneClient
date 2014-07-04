@@ -28,14 +28,14 @@ import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
+import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemWriter;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
 import org.stt.stt.importer.AggregatingImporter;
-import org.stt.stt.importer.STTItemExporter;
-import org.stt.stt.importer.STTItemImporter;
+import org.stt.stt.importer.STTItemPersister;
+import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
 import org.stt.ti.importer.TiImporter;
 
@@ -56,7 +56,8 @@ public class Main {
 	private final File tiFile;
 	private final File currentTiFile;
 
-	private ItemWriter writeTo;
+	private ItemPersister writeTo;
+	private ItemReader readFrom;
 	private ItemSearcher searchIn;
 
 	public Main(Configuration configuration) {
@@ -170,8 +171,9 @@ public class Main {
 			return;
 		}
 
-		try (STTItemExporter exporter = new STTItemExporter(
+		try (STTItemPersister exporter = new STTItemPersister(
 				createStreamResourceProvider());) {
+
 			DefaultItemSearcher searcher = createNewSearcher();
 
 			writeTo = exporter;
@@ -229,7 +231,7 @@ public class Main {
 
 		if (timeFile.canRead()) {
 			try {
-				STTItemImporter timeImporter = new STTItemImporter(
+				STTItemReader timeImporter = new STTItemReader(
 						new InputStreamReader(new FileInputStream(timeFile),
 								"UTF-8"));
 				availableReaders.add(timeImporter);

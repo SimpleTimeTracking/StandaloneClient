@@ -30,12 +30,12 @@ import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemWriter;
+import org.stt.persistence.ItemPersister;
 import org.stt.reporting.CommonPrefixGrouper;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
-import org.stt.stt.importer.STTItemExporter;
-import org.stt.stt.importer.STTItemImporter;
+import org.stt.stt.importer.STTItemPersister;
+import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
 
 import com.google.common.base.Optional;
@@ -74,7 +74,7 @@ public class MainContext {
 			File file = getSTTFile();
 			if (file.exists()) {
 				try {
-					return new STTItemImporter(new InputStreamReader(
+					return new STTItemReader(new InputStreamReader(
 							new FileInputStream(file), "UTF-8"));
 				} catch (IOException e) {
 					throw new RuntimeException(e);
@@ -154,11 +154,11 @@ public class MainContext {
 		}
 	};
 
-	protected Factory<ItemWriter> itemWriter = new Factory<ItemWriter>() {
+	protected Factory<ItemPersister> itemWriter = new Factory<ItemPersister>() {
 
 		@Override
-		public ItemWriter create() {
-			return new STTItemExporter(streamResourceProvider.create());
+		public ItemPersister create() {
+			return new STTItemPersister(streamResourceProvider.create());
 		}
 	};
 

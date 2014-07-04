@@ -26,7 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemWriter;
+import org.stt.persistence.ItemPersister;
 import org.stt.searching.ItemSearcher;
 
 import com.google.common.base.Optional;
@@ -34,7 +34,7 @@ import com.google.common.base.Optional;
 @RunWith(Theories.class)
 public class ToItemWriterCommandHandlerTest {
 	@Mock
-	ItemWriter itemWriter;
+	ItemPersister itemWriter;
 
 	@Mock
 	ItemSearcher itemSearcher;
@@ -393,7 +393,7 @@ public class ToItemWriterCommandHandlerTest {
 		ArgumentCaptor<TimeTrackingItem> newTimeTrackingItemCaptor = ArgumentCaptor
 				.forClass(TimeTrackingItem.class);
 		try {
-			verify(itemWriter).write(newTimeTrackingItemCaptor.capture());
+			verify(itemWriter).insert(newTimeTrackingItemCaptor.capture());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
