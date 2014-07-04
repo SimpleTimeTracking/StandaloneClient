@@ -9,7 +9,7 @@ import com.google.common.base.Optional;
 
 /**
  * <p>
- * Unless otherwised specified, the items returned <b>must</b> be ordered by
+ * Unless otherwise specified, the items returned <b>must</b> be ordered by
  * start time.
  * </p>
  * <p>
