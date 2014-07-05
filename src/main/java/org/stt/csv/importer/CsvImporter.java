@@ -90,7 +90,7 @@ public class CsvImporter implements ItemReader {
 
 				return theItem;
 			} catch (IllegalArgumentException i) {
-				LOG.throwing(CsvImporter.class.getName(), "constructFrom", i);
+				LOG.info("not parseable line: " + line);
 			}
 		} else {
 			LOG.info("not parseable line: " + line);

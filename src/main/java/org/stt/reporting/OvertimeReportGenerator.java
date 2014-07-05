@@ -3,6 +3,7 @@ package org.stt.reporting;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.Configuration;
@@ -52,6 +53,8 @@ public class OvertimeReportGenerator {
 				}
 			}
 		}
+
+		IOUtils.closeQuietly(reader);
 
 		return dateToOvertime;
 	}

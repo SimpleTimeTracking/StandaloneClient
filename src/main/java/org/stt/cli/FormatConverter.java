@@ -110,5 +110,8 @@ public class FormatConverter {
 		while ((current = from.read()).isPresent()) {
 			to.write(current.get());
 		}
+
+		from.close();
+		to.close();
 	}
 }
