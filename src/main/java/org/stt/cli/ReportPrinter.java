@@ -131,7 +131,7 @@ public class ReportPrinter {
 				substFilter, days);
 
 		SummingReportGenerator reporter = new SummingReportGenerator(dateFilter);
-		Report report = reporter.report();
+		Report report = reporter.createReport();
 
 		if (days > 0) {
 			printTo.println("====== sums of the last " + days + " days ======");

@@ -9,6 +9,7 @@ import java.util.ResourceBundle;
 import javafx.beans.binding.ListBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
+import javafx.beans.binding.When;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -29,6 +30,7 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -102,7 +104,8 @@ public class ReportWindowBuilder {
 					report = createSummaryReportFor(startOfDay, nextDay);
 				} else {
 					report = new Report(
-							Collections.<ReportingItem> emptyList(), null, null);
+							Collections.<ReportingItem> emptyList(), null,
+							null, Duration.ZERO);
 				}
 				return report;
 			}
@@ -132,7 +135,7 @@ public class ReportWindowBuilder {
 						itemReader, startOfDay, nextDay)) {
 			SummingReportGenerator reportGenerator = new SummingReportGenerator(
 					filter);
-			return reportGenerator.report();
+			return reportGenerator.createReport();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -160,6 +163,9 @@ public class ReportWindowBuilder {
 		@FXML
 		private Label endOfReport;
 
+		@FXML
+		private Label uncoveredTime;
+
 		private final Stage stage;
 
 		public ReportWindowController(Stage stage) {
@@ -175,30 +181,28 @@ public class ReportWindowBuilder {
 		public void initialize() {
 			final ObservableValue<DateTime> selectedDateTimeProperty = addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty();
 			final ObservableValue<Report> reportModel = createReportModel(selectedDateTimeProperty);
-			StringBinding startBinding = new StringBinding() {
+			StringBinding startBinding = createBindingForStartOfReport(reportModel);
+			StringBinding endBinding = createBindingForEndOfReport(reportModel);
+			final ObjectBinding<Duration> uncoveredTimeBinding = createBindingForUncoveredTimeOfReport(reportModel);
+			StringBinding formattedUncoveredTimeBinding = new StringBinding() {
 				{
-					bind(reportModel);
+					bind(uncoveredTimeBinding);
 				}
 
 				@Override
 				protected String computeValue() {
-					return hmsDateFormat.print(reportModel.getValue()
-							.getStart());
+					return hmsPeriodFormatter.print(uncoveredTimeBinding.get()
+							.toPeriod());
 				}
 			};
-			StringBinding endBinding = new StringBinding() {
-				{
-					bind(reportModel);
-				}
-
-				@Override
-				protected String computeValue() {
-					return hmsDateFormat.print(reportModel.getValue().getEnd());
-				}
-			};
+			ObjectBinding<Color> uncoveredTimeTextFillBinding = new When(
+					uncoveredTimeBinding.isEqualTo(Duration.ZERO)).then(
+					Color.BLACK).otherwise(Color.RED);
 
 			startOfReport.textProperty().bind(startBinding);
 			endOfReport.textProperty().bind(endBinding);
+			uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding);
+			uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding);
 
 			ListBinding<ReportingItem> reportListModel = createReportingItemsListModel(reportModel);
 			tableForReport.setItems(reportListModel);
@@ -211,6 +215,51 @@ public class ReportWindowBuilder {
 			addSelectionToClipboardListenerToTableForReport();
 
 			addSceneToStageAndSetStageToModal();
+		}
+
+		private ObjectBinding<Duration> createBindingForUncoveredTimeOfReport(
+				final ObservableValue<Report> reportModel) {
+			return new ObjectBinding<Duration>() {
+				{
+					bind(reportModel);
+				}
+
+				@Override
+				protected Duration computeValue() {
+					return reportModel.getValue().getUncoveredDuration();
+				}
+			};
+		}
+
+		private StringBinding createBindingForEndOfReport(
+				final ObservableValue<Report> reportModel) {
+			StringBinding endBinding = new StringBinding() {
+				{
+					bind(reportModel);
+				}
+
+				@Override
+				protected String computeValue() {
+					return hmsDateFormat.print(reportModel.getValue().getEnd());
+				}
+			};
+			return endBinding;
+		}
+
+		private StringBinding createBindingForStartOfReport(
+				final ObservableValue<Report> reportModel) {
+			StringBinding startBinding = new StringBinding() {
+				{
+					bind(reportModel);
+				}
+
+				@Override
+				protected String computeValue() {
+					return hmsDateFormat.print(reportModel.getValue()
+							.getStart());
+				}
+			};
+			return startBinding;
 		}
 
 		private void addSceneToStageAndSetStageToModal() {

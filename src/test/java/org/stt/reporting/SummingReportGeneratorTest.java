@@ -1,6 +1,7 @@
 package org.stt.reporting;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
@@ -8,8 +9,10 @@ import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
@@ -17,6 +20,36 @@ import org.stt.persistence.ItemReader;
 import org.stt.reporting.SummingReportGenerator.Report;
 
 public class SummingReportGeneratorTest {
+
+	@Mock
+	ItemReader reader;
+	private SummingReportGenerator sut;
+
+	@Before
+	public void setup() {
+		MockitoAnnotations.initMocks(this);
+		sut = new SummingReportGenerator(reader);
+	}
+
+	@Test
+	public void shouldSumUpHoles() {
+		// GIVEN
+		TimeTrackingItem itemBeforeHole = new TimeTrackingItem(
+				"item before hole", new DateTime(2012, 12, 12, 14, 0, 0),
+				new DateTime(2012, 12, 12, 14, 1, 0));
+		TimeTrackingItem itemAfterHole = new TimeTrackingItem(
+				"item after hole", new DateTime(2012, 12, 12, 14, 2, 0),
+				new DateTime(2012, 12, 12, 14, 3, 0));
+
+		ItemReaderTestHelper.givenReaderReturns(reader, itemBeforeHole,
+				itemAfterHole);
+		// WHEN
+		Report report = sut.createReport();
+
+		// THEN
+		assertThat(report.getUncoveredDuration(),
+				is(Duration.standardMinutes(1)));
+	}
 
 	@Test
 	public void groupingByCommentWorks() {
@@ -32,15 +65,11 @@ public class SummingReportGeneratorTest {
 				new DateTime(2012, 12, 12, 14, 15, 14), new DateTime(2012, 12,
 						12, 14, 15, 17));
 
-		ItemReader reader = Mockito.mock(ItemReader.class);
-
 		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
 				expectedItem2, expectedItem3);
 
-		SummingReportGenerator generator = new SummingReportGenerator(reader);
-
 		// WHEN
-		Report report = generator.report();
+		Report report = sut.createReport();
 		List<ReportingItem> items = report.getReportingItems();
 
 		// THEN
@@ -60,14 +89,11 @@ public class SummingReportGeneratorTest {
 				new DateTime(2012, 12, 12, 14, 15, 14), new DateTime(2012, 12,
 						12, 14, 15, 16));
 
-		ItemReader reader = Mockito.mock(ItemReader.class);
 		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
 				expectedItem2);
 
-		SummingReportGenerator generator = new SummingReportGenerator(reader);
-
 		// WHEN
-		Report report = generator.report();
+		Report report = sut.createReport();
 		List<ReportingItem> reportingItems = report.getReportingItems();
 
 		// THEN
@@ -86,14 +112,11 @@ public class SummingReportGeneratorTest {
 		TimeTrackingItem expectedItem2 = new TimeTrackingItem(null,
 				new DateTime(2012, 12, 12, 14, 15, 14), endOfLastItem);
 
-		ItemReader reader = Mockito.mock(ItemReader.class);
 		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
 				expectedItem2);
 
-		SummingReportGenerator generator = new SummingReportGenerator(reader);
-
 		// WHEN
-		Report report = generator.report();
+		Report report = sut.createReport();
 
 		// THEN
 		Assert.assertThat(report.getStart(), is(startOfFirstItem));

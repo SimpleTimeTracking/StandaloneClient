@@ -1,5 +1,7 @@
 package org.stt.reporting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,24 +37,40 @@ public class SummingReportGenerator {
 		this.reader = reader;
 	}
 
-	public Report report() {
+	public Report createReport() {
 		DateTime startOfReport = null;
 		DateTime endOfReport = null;
 		List<ReportingItem> reportList = new LinkedList<>();
 
 		Map<String, Duration> collectingMap = new HashMap<>();
 
+		Duration uncoveredDuration = Duration.ZERO;
 		Optional<TimeTrackingItem> optionalItem = null;
+		TimeTrackingItem lastItem = null;
 		while ((optionalItem = reader.read()).isPresent()) {
 			TimeTrackingItem item = optionalItem.get();
-			DateTime end = item.getEnd().or(DateTime.now());
+			DateTime now = DateTime.now();
+			DateTime start = item.getStart();
+			DateTime end = item.getEnd().or(now);
+
+			if (lastItem != null) {
+				DateTime endOfLastItem = lastItem.getEnd().or(now);
+				if (endOfLastItem.isBefore(start)) {
+					Duration additionalUncoveredTime = new Duration(
+							endOfLastItem, start);
+					uncoveredDuration = uncoveredDuration
+							.plus(additionalUncoveredTime);
+				}
+			}
+
+			lastItem = item;
 
 			if (startOfReport == null) {
-				startOfReport = item.getStart();
+				startOfReport = start;
 			}
 			endOfReport = end;
 
-			Duration duration = new Duration(item.getStart(), end);
+			Duration duration = new Duration(start, end);
 			String comment = item.getComment().or("");
 			if (collectingMap.containsKey(comment)) {
 				Duration oldDuration = collectingMap.get(comment);
@@ -75,7 +93,8 @@ public class SummingReportGenerator {
 				return o1.getComment().compareTo(o2.getComment());
 			}
 		});
-		return new Report(reportList, startOfReport, endOfReport);
+		return new Report(reportList, startOfReport, endOfReport,
+				uncoveredDuration);
 	}
 
 	public static class Report {
@@ -83,12 +102,14 @@ public class SummingReportGenerator {
 		private final List<ReportingItem> reportingItems;
 		private final DateTime start;
 		private final DateTime end;
+		private final Duration uncoveredDuration;
 
 		public Report(List<ReportingItem> reportingItems, DateTime start,
-				DateTime end) {
+				DateTime end, Duration uncoveredDuration) {
 			this.reportingItems = reportingItems;
 			this.start = start;
 			this.end = end;
+			this.uncoveredDuration = checkNotNull(uncoveredDuration);
 		}
 
 		public List<ReportingItem> getReportingItems() {
@@ -101,6 +122,10 @@ public class SummingReportGenerator {
 
 		public DateTime getEnd() {
 			return end;
+		}
+
+		public Duration getUncoveredDuration() {
+			return uncoveredDuration;
 		}
 	}
 }
