@@ -5,6 +5,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
@@ -15,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -33,11 +33,10 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
-import org.stt.stt.importer.AggregatingImporter;
+import org.stt.stt.importer.CachingItemReader;
 import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
-import org.stt.ti.importer.TiImporter;
 
 import com.google.common.base.Optional;
 
@@ -53,29 +52,25 @@ public class Main {
 	private final Configuration configuration;
 
 	private final File timeFile;
-	private final File tiFile;
-	private final File currentTiFile;
 
-	private ItemPersister writeTo;
-	private ItemSearcher searchIn;
+	private ItemPersister itemPersister;
+	private ItemSearcher itemSearcher;
 
 	public Main(Configuration configuration) {
 		this.configuration = checkNotNull(configuration);
 
 		timeFile = configuration.getSttFile();
-		tiFile = configuration.getTiFile();
-		currentTiFile = configuration.getTiCurrentFile();
 	}
 
 	private void on(Collection<String> args, PrintStream printTo)
 			throws IOException {
 		String comment = StringHelper.join(args);
 
-		Optional<TimeTrackingItem> currentItem = searchIn
+		Optional<TimeTrackingItem> currentItem = itemSearcher
 				.getCurrentTimeTrackingitem();
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
-				writeTo, searchIn);
+				itemPersister, itemSearcher);
 		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
 		if (currentItem.isPresent()) {
@@ -108,7 +103,7 @@ public class Main {
 					}
 				});
 
-		ItemReader readFrom = createNewReaderProvider().provideReader();
+		ItemReader readFrom = createNewReaderProvider(timeFile).provideReader();
 
 		ItemReader reader = new SubstringReaderFilter(readFrom,
 				StringHelper.join(args));
@@ -125,10 +120,27 @@ public class Main {
 		}
 	}
 
+	private void report(List<String> args, PrintStream printTo) {
+		File source = timeFile;
+		int sourceIndex = args.indexOf("--source");
+		if (sourceIndex != -1) {
+			args.remove(sourceIndex);
+			String sourceParameter = args.get(sourceIndex);
+			if (sourceParameter.equals("-")) {
+				source = null;
+			} else {
+				source = new File(sourceParameter);
+			}
+			args.remove(sourceIndex);
+		}
+
+		createNewReportPrinter(source).report(args, printTo);
+	}
+
 	private void fin(Collection<String> args, PrintStream printTo)
 			throws IOException {
 		try (ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
-				writeTo, searchIn)) {
+				itemPersister, itemSearcher)) {
 			Optional<TimeTrackingItem> updatedItem = tiw
 					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN
 							+ " " + StringHelper.join(args));
@@ -159,9 +171,9 @@ public class Main {
 		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
 				true, configuration.getSystemOutEncoding()));
 
-		Main m = new Main(configuration);
+		Main main = new Main(configuration);
 		List<String> argsList = new ArrayList<>(Arrays.asList(args));
-		m.executeCommand(argsList, System.out);
+		main.executeCommand(argsList, System.out);
 	}
 
 	void executeCommand(List<String> args, PrintStream printTo) {
@@ -170,13 +182,13 @@ public class Main {
 			return;
 		}
 
-		try (STTItemPersister exporter = new STTItemPersister(
+		try (STTItemPersister itemPersister = new STTItemPersister(
 				createStreamResourceProvider());) {
 
 			DefaultItemSearcher searcher = createNewSearcher();
 
-			writeTo = exporter;
-			searchIn = searcher;
+			this.itemPersister = itemPersister;
+			itemSearcher = searcher;
 
 			String mainOperator = args.remove(0);
 			if (mainOperator.startsWith("o")) {
@@ -184,13 +196,16 @@ public class Main {
 				on(args, printTo);
 			} else if (mainOperator.startsWith("r")) {
 				// report
-				createNewReportPrinter().report(args, printTo);
+				report(args, printTo);
 			} else if (mainOperator.startsWith("f")) {
 				// fin
 				fin(args, printTo);
 			} else if (mainOperator.startsWith("s")) {
 				// search
 				search(args, printTo);
+			} else if (mainOperator.startsWith("c")) {
+				// convert
+				new FormatConverter(args).convert();
 			} else {
 				usage(printTo);
 			}
@@ -213,59 +228,43 @@ public class Main {
 	}
 
 	private DefaultItemSearcher createNewSearcher() {
-		return new DefaultItemSearcher(createNewReaderProvider());
+		return new DefaultItemSearcher(createNewReaderProvider(timeFile));
 	}
 
-	private ReportPrinter createNewReportPrinter() {
-		ItemReaderProvider provider = createNewReaderProvider();
+	private ReportPrinter createNewReportPrinter(File source) {
+		ItemReaderProvider provider = createNewReaderProvider(source);
 		return new ReportPrinter(provider, configuration);
 	}
 
 	/**
-	 * For each existing file create a reader and return an AggregatingImporter
-	 * of all readers where the corresponding file exists
+	 * creates a new ItemReaderProvider for timeFile
 	 */
-	private ItemReaderProvider createNewReaderProvider() {
-		List<ItemReader> availableReaders = new LinkedList<>();
-
-		if (timeFile.canRead()) {
-			try {
-				STTItemReader timeImporter = new STTItemReader(
-						new InputStreamReader(new FileInputStream(timeFile),
-								"UTF-8"));
-				availableReaders.add(timeImporter);
-			} catch (IOException e) {
-				LOG.throwing(Main.class.getName(), "createNewReaderProvider", e);
-			}
-		}
-		if (tiFile.canRead()) {
-			try {
-				TiImporter tiImporter = new TiImporter(new InputStreamReader(
-						new FileInputStream(tiFile), "UTF-8"));
-				availableReaders.add(tiImporter);
-			} catch (IOException e) {
-				LOG.throwing(Main.class.getName(), "createNewReaderProvider", e);
-			}
-		}
-		if (currentTiFile.canRead()) {
-			try {
-				TiImporter currentTiImporter = new TiImporter(
-						new InputStreamReader(
-								new FileInputStream(currentTiFile), "UTF-8"));
-				availableReaders.add(currentTiImporter);
-			} catch (IOException e) {
-				LOG.throwing(Main.class.getName(), "createNewReaderProvider", e);
-			}
-		}
-
-		final AggregatingImporter importer = new AggregatingImporter(
-				availableReaders.toArray(new ItemReader[availableReaders.size()]));
+	private ItemReaderProvider createNewReaderProvider(final File source) {
 
 		ItemReaderProvider provider = new ItemReaderProvider() {
+			CachingItemReader cachingReader;
 
 			@Override
 			public ItemReader provideReader() {
-				return importer;
+				try {
+					InputStream inStream;
+					if (source == null) {
+						inStream = System.in;
+					} else {
+						inStream = new FileInputStream(source);
+					}
+					ItemReader itemReader = new STTItemReader(
+							new InputStreamReader(inStream, "UTF-8"));
+					if (source == null) {
+						if (cachingReader == null) {
+							cachingReader = new CachingItemReader(itemReader);
+						}
+						return cachingReader;
+					}
+					return itemReader;
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		};
 		return provider;
