@@ -146,6 +146,11 @@ public class ReportPrinter {
 						+ hmsDateFormat.print(report.getEnd()));
 			}
 		}
+		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
+			printTo.println("time not yet tracked: "
+					+ hmsPeriodFormatter.print(report.getUncoveredDuration()
+							.toPeriod()));
+		}
 		List<ReportingItem> reportingItems = report.getReportingItems();
 
 		Duration overallDuration = new Duration(0);

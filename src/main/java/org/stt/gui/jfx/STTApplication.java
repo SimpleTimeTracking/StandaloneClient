@@ -270,49 +270,6 @@ public class STTApplication implements ContinueActionHandler,
 		commandText.positionCaret(commandText.getLength());
 	}
 
-	// private void setupSearchView() {
-	// ListBinding<String> searchListBinding = new ListBinding<String>() {
-	// {
-	// bind(commandText.textProperty());
-	// }
-	//
-	// @Override
-	// protected ObservableList<String> computeValue() {
-	// if (commandText.getText().isEmpty()) {
-	// return FXCollections.emptyObservableList();
-	// }
-	// Collection<String> results = searcher
-	// .searchForComments(commandText.getText());
-	// ArrayList<String> resultsToUse = new ArrayList<>();
-	// for (String string : results) {
-	// resultsToUse.add(string);
-	// if (resultsToUse.size() == 5) {
-	// break;
-	// }
-	// }
-	// return FXCollections.observableList(resultsToUse);
-	// }
-	// };
-	// searchView.setItems(searchListBinding);
-	// searchView.prefHeightProperty().bind(
-	// searchListBinding.sizeProperty().multiply(26));
-	// searchView.minHeightProperty().bind(searchView.prefHeightProperty());
-	// searchView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-	// searchView.getSelectionModel().selectedItemProperty()
-	// .addListener(new ChangeListener<String>() {
-	//
-	// @Override
-	// public void changed(
-	// ObservableValue<? extends String> observable,
-	// String oldValue, String newValue) {
-	// if (newValue != null) {
-	// setCommandText(newValue);
-	// searchView.getSelectionModel().clearSelection();
-	// }
-	// }
-	// });
-	// }
-
 	@FXML
 	protected void showReportWindow() {
 		try {
