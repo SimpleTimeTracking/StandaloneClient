@@ -27,7 +27,6 @@ public class OvertimeReportGenerator {
 	}
 
 	public Map<DateTime, Duration> getOvertime() {
-		int dailyWorkingHours = configuration.getDailyWorkingHours();
 
 		Optional<TimeTrackingItem> optionalItem = null;
 
@@ -46,12 +45,21 @@ public class OvertimeReportGenerator {
 					dateToOvertime.put(currentDay,
 							currentDuration.plus(itemDuration));
 				} else {
-					dateToOvertime.put(currentDay, itemDuration
-							.minus(dailyWorkingHours * 60L * 60L * 1000L));
+					dateToOvertime
+							.put(currentDay,
+									itemDuration
+											.minus(getDailyWorkingHours(currentDay) * 60L * 60L * 1000L));
 				}
 			}
 		}
 
 		return dateToOvertime;
+	}
+
+	/**
+	 * returns the configured daily working hours
+	 */
+	private Integer getDailyWorkingHours(DateTime date) {
+		return configuration.getDailyWorkingHours().get(date.getDayOfWeek());
 	}
 }

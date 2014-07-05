@@ -81,7 +81,7 @@ public class ReportPrinter {
 
 		printTo.println("output " + (truncateLongLines ? "" : "not ")
 				+ "truncated lines for "
-				+ (days == 0 ? "today" : "the last" + days + " days"));
+				+ (days == 0 ? "today" : "the last " + days + " days"));
 
 		// TODO: implement
 		// - "yesterday": all items of yesterday, grouped by comment and summed
@@ -172,10 +172,8 @@ public class ReportPrinter {
 		printTo.println("====== recorded items: ======");
 
 		ItemReader detailsReader = readFrom.provideReader();
-		ItemReader filteredReader = new StartDateReaderFilter(detailsReader,
-				DateTime.now().withTimeAtStartOfDay().minusDays(days)
-						.toDateTime(), DateTime.now().withTimeAtStartOfDay()
-						.plusDays(1).toDateTime());
+		ItemReader filteredReader = createStartDateFilterForDays(detailsReader,
+				days);
 		Optional<TimeTrackingItem> optionalItem;
 		while ((optionalItem = filteredReader.read()).isPresent()) {
 			TimeTrackingItem item = optionalItem.get();

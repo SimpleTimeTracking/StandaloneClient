@@ -9,6 +9,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
+import org.joda.time.DateTimeConstants;
 
 /**
  * Simple configuration mechanism with fallback values.
@@ -105,10 +108,23 @@ public class Configuration {
 		return encoding;
 	}
 
-	public int getDailyWorkingHours() {
-		int hours = Integer.parseInt(getPropertiesReplaced("dailyWorkingHours",
-				"8"));
-		return hours;
+	public Map<Integer, Integer> getDailyWorkingHours() {
+		Map<Integer, Integer> workingHours = new HashMap<>();
+		workingHours.put(DateTimeConstants.MONDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursMon", "8")));
+		workingHours.put(DateTimeConstants.TUESDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursTue", "8")));
+		workingHours.put(DateTimeConstants.WEDNESDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursWed", "8")));
+		workingHours.put(DateTimeConstants.THURSDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursThu", "8")));
+		workingHours.put(DateTimeConstants.FRIDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursFri", "8")));
+		workingHours.put(DateTimeConstants.SATURDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursSat", "0")));
+		workingHours.put(DateTimeConstants.SUNDAY,
+				Integer.valueOf(getPropertiesReplaced("hoursSun", "0")));
+		return workingHours;
 	}
 
 	public Collection<String> getBreakTimeComments() {

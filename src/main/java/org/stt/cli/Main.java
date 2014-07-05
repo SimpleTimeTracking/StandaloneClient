@@ -57,7 +57,6 @@ public class Main {
 	private final File currentTiFile;
 
 	private ItemPersister writeTo;
-	private ItemReader readFrom;
 	private ItemSearcher searchIn;
 
 	public Main(Configuration configuration) {
