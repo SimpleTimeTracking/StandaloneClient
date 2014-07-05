@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -30,7 +31,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextArea;
@@ -40,13 +40,13 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import javafx.util.Callback;
 
 import org.stt.CommandHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
+import org.stt.model.TimeTrackingItemFilter;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.searching.ExpansionProvider;
@@ -122,6 +122,33 @@ public class STTApplication implements ContinueActionHandler,
 			throw new RuntimeException(e);
 		}
 
+		setupResultView();
+
+		Scene scene = new Scene(pane);
+		finButton.setMnemonicParsing(true);
+
+		stage.setScene(scene);
+		stage.setTitle(localization.getString("window.title"));
+		Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
+		stage.getIcons().add(applicationIcon);
+
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent arg0) {
+				Platform.runLater(new Runnable() {
+
+					@Override
+					public void run() {
+						shutdown();
+					}
+				});
+			}
+		});
+		stage.show();
+		commandText.requestFocus();
+	}
+
+	private void setupResultView() {
 		result.setItems(createResultsListBinding());
 		result.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 		result.getSelectionModel().selectedItemProperty()
@@ -149,65 +176,21 @@ public class STTApplication implements ContinueActionHandler,
 
 				});
 		final ObservableSet<TimeTrackingItem> firstItemOfDayBinding = createFirstItemOfDayBinding();
-		result.setCellFactory(new Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>>() {
-			private final Image deleteImage = new Image("/Delete.png", 25, 25,
-					true, true);
-
-			private final Image continueImage = new Image("/Continue.png", 25,
-					25, true, true);
-
-			private final Image editImage = new Image("/Edit.png", 25, 25,
-					true, true);
-
-			private final Image fromToImage = new Image("/FromTo.png", 32, 12,
-					true, true);
-
-			private final Image runningImage = new Image("Running.png", 32, 8,
-					true, true);
-
-			@Override
-			public ListCell<TimeTrackingItem> call(
-					ListView<TimeTrackingItem> arg0) {
-				TimeTrackingItemCell.Builder builder = new TimeTrackingItemCell.Builder();
-				builder.continueActionHandler(STTApplication.this)
-						.deleteActionHandler(STTApplication.this)
-						.editActionHandler(STTApplication.this)
-						.continueImage(continueImage).deleteImage(deleteImage)
-						.editImage(editImage).runningImage(runningImage)
-						.fromToImage(fromToImage)
-						.firstItemOfDaySet(firstItemOfDayBinding);
-				return builder.build();
-			}
-		});
-
-		// setupSearchView();
-
-		Scene scene = new Scene(pane);
-		finButton.setMnemonicParsing(true);
-
-		stage.setScene(scene);
-		stage.setTitle(localization.getString("window.title"));
-		Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
-		stage.getIcons().add(applicationIcon);
-
-		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			@Override
-			public void handle(WindowEvent arg0) {
-				Platform.runLater(new Runnable() {
+		result.setCellFactory(new TimeTrackingItemCellFactory(this, this, this,
+				new TimeTrackingItemFilter() {
 
 					@Override
-					public void run() {
-						shutdown();
+					public boolean filter(TimeTrackingItem item) {
+						return firstItemOfDayBinding.contains(item);
 					}
-				});
-			}
-		});
-		stage.show();
-		commandText.requestFocus();
+				}));
 	}
 
 	private ObservableSet<TimeTrackingItem> createFirstItemOfDayBinding() {
 		return new SetBinding<TimeTrackingItem>() {
+			private final ObservableSet<TimeTrackingItem> firstItemsOfDaySet = FXCollections
+					.observableSet(new HashSet<TimeTrackingItem>());
+
 			{
 				bind(allItems);
 			}
@@ -231,7 +214,9 @@ public class STTApplication implements ContinueActionHandler,
 					}
 					lastItem = item;
 				}
-				return FXCollections.observableSet(result);
+				firstItemsOfDaySet.retainAll(result);
+				firstItemsOfDaySet.addAll(result);
+				return firstItemsOfDaySet;
 			}
 		};
 	}

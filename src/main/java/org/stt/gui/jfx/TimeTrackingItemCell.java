@@ -1,9 +1,6 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.Set;
-
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -21,6 +18,7 @@ import javafx.scene.layout.Priority;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
+import org.stt.model.TimeTrackingItemFilter;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	private final HBox cellPane = new HBox(10);
@@ -49,15 +47,17 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final ImageView runningImageView;
 
-	private final Set<TimeTrackingItem> firstItemOfDay;
+	private final TimeTrackingItemFilter firstItemOfTheDayFilter;
 
 	private TimeTrackingItemCell(Builder builder) {
-		this.editButton = checkNotNull(builder.editButton);
-		this.continueButton = checkNotNull(builder.continueButton);
-		this.deleteButton = checkNotNull(builder.deleteButton);
-		this.fromToImageView = checkNotNull(builder.fromToImageView);
-		this.runningImageView = checkNotNull(builder.runningImageView);
-		this.firstItemOfDay = checkNotNull(builder.firstItemOfDay);
+		this.editButton = new ImageButton(checkNotNull(builder.editImage));
+		this.continueButton = new ImageButton(
+				checkNotNull(builder.continueImage));
+		this.deleteButton = new ImageButton(checkNotNull(builder.deleteImage));
+		this.fromToImageView = new ImageView(checkNotNull(builder.fromToImage));
+		this.runningImageView = new ImageView(
+				checkNotNull(builder.runningImage));
+		this.firstItemOfTheDayFilter = checkNotNull(builder.firstItemOfTheDayFilter);
 
 		final ContinueActionHandler continueActionHandler = checkNotNull(builder.continueActionHandler);
 		final EditActionHandler editActionHandler = checkNotNull(builder.editActionHandler);
@@ -121,7 +121,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			this.item = item;
 			applyLabelForComment();
 			setupTimePane();
-			if (firstItemOfDay.contains(item)) {
+			if (firstItemOfTheDayFilter.filter(item)) {
 				BorderPane pane = new BorderPane();
 				pane.setCenter(cellPane);
 				Separator separator = new Separator();
@@ -168,38 +168,38 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	}
 
 	public static class Builder {
-		private Button editButton;
-		private Button continueButton;
-		private Button deleteButton;
-		private ImageView fromToImageView;
-		private ImageView runningImageView;
 		private ContinueActionHandler continueActionHandler;
 		private DeleteActionHandler deleteActionHandler;
 		private EditActionHandler editActionHandler;
-		private Set<TimeTrackingItem> firstItemOfDay;
+		private TimeTrackingItemFilter firstItemOfTheDayFilter;
+		private Image editImage;
+		private Image deleteImage;
+		private Image continueImage;
+		private Image fromToImage;
+		private Image runningImage;
 
 		public Builder editImage(Image editImage) {
-			this.editButton = new ImageButton(editImage);
+			this.editImage = checkNotNull(editImage);
 			return this;
 		}
 
 		public Builder continueImage(Image continueImage) {
-			this.continueButton = new ImageButton(continueImage);
+			this.continueImage = checkNotNull(continueImage);
 			return this;
 		}
 
 		public Builder deleteImage(Image deleteImage) {
-			this.deleteButton = new ImageButton(deleteImage);
+			this.deleteImage = checkNotNull(deleteImage);
 			return this;
 		}
 
 		public Builder fromToImage(Image fromToImage) {
-			this.fromToImageView = new ImageView(fromToImage);
+			this.fromToImage = checkNotNull(fromToImage);
 			return this;
 		}
 
 		public Builder runningImage(Image runningImage) {
-			this.runningImageView = new ImageView(runningImage);
+			this.runningImage = checkNotNull(runningImage);
 			return this;
 		}
 
@@ -218,9 +218,10 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			return this;
 		}
 
-		public void firstItemOfDaySet(Set<TimeTrackingItem> firstItemOfDay) {
-			this.firstItemOfDay = checkNotNull(firstItemOfDay);
-
+		public Builder firstItemOfTheDayFilter(
+				TimeTrackingItemFilter firstItemOfTheDayFilter) {
+			this.firstItemOfTheDayFilter = checkNotNull(firstItemOfTheDayFilter);
+			return this;
 		}
 
 		public TimeTrackingItemCell build() {

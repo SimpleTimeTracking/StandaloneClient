@@ -5,9 +5,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
-
-import java.util.Collections;
-
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
@@ -24,6 +21,7 @@ import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
+import org.stt.model.TimeTrackingItemFilter;
 
 public class TimeTrackingItemCellTest {
 	private TimeTrackingItemCell sut;
@@ -43,6 +41,8 @@ public class TimeTrackingItemCellTest {
 	private Image imageFromTo;
 	@Mock
 	private Image runningImage;
+	@Mock
+	private TimeTrackingItemFilter firstItemOfTheDayFilter;
 
 	@Before
 	public void setup() {
@@ -54,7 +54,7 @@ public class TimeTrackingItemCellTest {
 				.continueImage(imageForContinue).deleteImage(imageForDelete)
 				.editImage(imageForEdit).runningImage(runningImage)
 				.fromToImage(imageFromTo)
-				.firstItemOfDaySet(Collections.<TimeTrackingItem> emptySet());
+				.firstItemOfTheDayFilter(firstItemOfTheDayFilter);
 
 		sut = builder.build();
 	}

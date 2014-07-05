@@ -24,12 +24,13 @@ public class ImageButton extends Button {
 			}
 		});
 
-		setOnMouseReleased(new EventHandler<MouseEvent>() {
+		EventHandler<MouseEvent> setStyleToNormalEventHandler = new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
 				setStyle(STYLE_NORMAL);
 			}
-		});
+		};
+		setOnMouseReleased(setStyleToNormalEventHandler);
 
 		setOnMouseEntered(new EventHandler<MouseEvent>() {
 			@Override
@@ -37,12 +38,6 @@ public class ImageButton extends Button {
 				setStyle(STYLE_HOVER);
 			}
 		});
-
-		setOnMouseExited(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				setStyle(STYLE_NORMAL);
-			}
-		});
+		setOnMouseExited(setStyleToNormalEventHandler);
 	}
 }
