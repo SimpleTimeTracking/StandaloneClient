@@ -69,6 +69,19 @@ public class ReportPrinter {
 			// first collapse all following strings
 			String argsString = StringHelper.join(args);
 
+			// TODO: this should be replaced by the central time parsing
+			// (EnglishCommandsParser)
+			Pattern sincePattern = Pattern.compile("since (.+)");
+			Matcher sinceMatcher = sincePattern.matcher(argsString);
+			if (sinceMatcher.find()) {
+				DateTime start = DateTimeFormat.forPattern("yyyy-MM-dd")
+						.parseDateTime(sinceMatcher.group(1));
+				days = (int) new Duration(start, DateTime.now())
+						.getStandardDays();
+
+				argsString = sinceMatcher.replaceAll("");
+			}
+
 			Pattern daysPattern = Pattern.compile("(\\d+) days");
 			Matcher daysMatcher = daysPattern.matcher(argsString);
 
