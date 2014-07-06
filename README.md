@@ -9,7 +9,9 @@ The goal of STT is to make time tracking as simple and quick as possible.
 # Background
 
 Many people struggle with time tracking software which is targeted not at the person tracking his/her time efficiently but on management to provide statistics etc.
-To remedy this, there already are some great projects (like http://ti.sharats.me/ ) but they lack some features like integration of other time tracking software.
+To remedy this, there already are some great projects (like http://ti.sharats.me/ ) but they lack some features like reporting/aggregation of tasks or a quick way of copy & pasting recorded times to other places. 
+
+The creators of STT are not very excited about the time tracking software they have to use in their company, so they try to implement the least annoying time tracking software from which they can copy & paste tracked time into other systems (like the "not exciting one" ;-) ).
 
 # Features of STT
 
