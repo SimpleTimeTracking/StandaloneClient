@@ -3,28 +3,17 @@ package org.stt.gui.jfx;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javafx.application.Platform;
-import javafx.beans.binding.ListBinding;
-import javafx.beans.binding.SetBinding;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -32,7 +21,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -42,19 +30,15 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import org.stt.CommandHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
+import org.stt.gui.jfx.ResultViewConfigurer.Callback;
 import org.stt.model.TimeTrackingItem;
-import org.stt.model.TimeTrackingItemFilter;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.searching.ExpansionProvider;
 
 import com.sun.javafx.application.PlatformImpl;
 
-public class STTApplication implements ContinueActionHandler,
-		EditActionHandler, DeleteActionHandler {
+public class STTApplication implements Callback {
 	private static final Logger LOG = Logger.getLogger(STTApplication.class
 			.getName());
 
@@ -149,105 +133,24 @@ public class STTApplication implements ContinueActionHandler,
 	}
 
 	private void setupResultView() {
-		result.setItems(createResultsListBinding());
-		result.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-		result.getSelectionModel().selectedItemProperty()
-				.addListener(new ChangeListener<TimeTrackingItem>() {
-
-					@Override
-					public void changed(
-							ObservableValue<? extends TimeTrackingItem> observable,
-							TimeTrackingItem oldItem, TimeTrackingItem newItem) {
-						if (newItem != null) {
-							result.getSelectionModel().clearSelection();
-							if (newItem.getComment().isPresent()) {
-								String textToSet = newItem.getComment().get();
-								setCommandText(textToSet);
-								Platform.runLater(new Runnable() {
-									@Override
-									public void run() {
-										commandText.requestFocus();
-									}
-								});
-							}
-						}
-
-					}
-
-				});
-		final ObservableSet<TimeTrackingItem> firstItemOfDayBinding = createFirstItemOfDayBinding();
-		result.setCellFactory(new TimeTrackingItemCellFactory(this, this, this,
-				new TimeTrackingItemFilter() {
-
-					@Override
-					public boolean filter(TimeTrackingItem item) {
-						return firstItemOfDayBinding.contains(item);
-					}
-				}));
+		ResultViewConfigurer resultViewConfigurer = new ResultViewConfigurer();
+		resultViewConfigurer.configure(result, allItems,
+				commandText.textProperty(), this);
 	}
 
-	private ObservableSet<TimeTrackingItem> createFirstItemOfDayBinding() {
-		return new SetBinding<TimeTrackingItem>() {
-			private final ObservableSet<TimeTrackingItem> firstItemsOfDaySet = FXCollections
-					.observableSet(new HashSet<TimeTrackingItem>());
-
-			{
-				bind(allItems);
-			}
-
-			@Override
-			protected ObservableSet<TimeTrackingItem> computeValue() {
-				SortedSet<TimeTrackingItem> result = new TreeSet<>(
-						TimeTrackingItem.BY_START_COMPARATOR);
-				result.addAll(allItems);
-				TimeTrackingItem lastItem = null;
-				for (Iterator<TimeTrackingItem> it = result.iterator(); it
-						.hasNext();) {
-					TimeTrackingItem item = it.next();
-					if (lastItem != null
-							&& lastItem
-									.getStart()
-									.withTimeAtStartOfDay()
-									.equals(item.getStart()
-											.withTimeAtStartOfDay())) {
-						it.remove();
-					}
-					lastItem = item;
-				}
-				firstItemsOfDaySet.retainAll(result);
-				firstItemsOfDaySet.addAll(result);
-				return firstItemsOfDaySet;
-			}
-		};
+	@Override
+	public void textOfSelectedItem(String textToSet) {
+		setCommandText(textToSet);
+		requestFocusOnCommandText();
 	}
 
-	private ObservableList<TimeTrackingItem> createResultsListBinding() {
-		return new ListBinding<TimeTrackingItem>() {
-			{
-				bind(allItems, commandText.textProperty());
-			}
-
+	private void requestFocusOnCommandText() {
+		Platform.runLater(new Runnable() {
 			@Override
-			protected ObservableList<TimeTrackingItem> computeValue() {
-				List<TimeTrackingItem> result;
-
-				String command = commandText.textProperty().get().toLowerCase();
-				if (command.isEmpty()) {
-					result = new ArrayList<>(allItems);
-				} else {
-					result = new ArrayList<TimeTrackingItem>();
-					for (TimeTrackingItem item : allItems) {
-						if (item.getComment().isPresent()
-								&& item.getComment().get().toLowerCase()
-										.contains(command)) {
-							result.add(item);
-						}
-					}
-				}
-				Collections.reverse(result);
-				return FXCollections.observableList(result);
+			public void run() {
+				commandText.requestFocus();
 			}
-		};
+		});
 	}
 
 	private void setCommandText(String textToSet) {
