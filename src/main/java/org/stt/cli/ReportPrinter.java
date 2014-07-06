@@ -11,10 +11,8 @@ import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.Configuration;
+import org.stt.DateTimeHelper;
 import org.stt.filter.StartDateReaderFilter;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.ReportingItem;
@@ -33,19 +31,6 @@ import com.google.common.base.Optional;
  * Prints a nicely formatted report of {@link TimeTrackingItem}s
  */
 public class ReportPrinter {
-
-	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
-			.forPattern("HH:mm:ss");
-	private final DateTimeFormatter mdhmsDateFormat = DateTimeFormat
-			.forPattern("MM-dd HH:mm:ss");
-	private final DateTimeFormatter ymdDateFormat = DateTimeFormat
-			.forPattern("yyyy-MM-dd");
-
-	private final PeriodFormatter hmsPeriodFormatter = new PeriodFormatterBuilder()
-			.printZeroAlways().minimumPrintedDigits(2).appendHours()
-			.appendSuffix("h").appendSeparator(":").appendMinutes()
-			.appendSuffix("m").appendSeparator(":").appendSeconds()
-			.appendSuffix("s").toFormatter();
 
 	private final ItemReaderProvider readFrom;
 	private final Configuration configuration;
@@ -122,11 +107,14 @@ public class ReportPrinter {
 		for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
 			overallDuration = overallDuration.plus(e.getValue());
 
-			printTo.println(ymdDateFormat.print(e.getKey()) + " "
-					+ hmsPeriodFormatter.print(e.getValue().toPeriod()));
+			printTo.println(ItemFormattingHelper.ymdDateFormat.print(e.getKey())
+					+ " "
+					+ ItemFormattingHelper.hmsPeriodFormatter.print(e
+							.getValue().toPeriod()));
 		}
-		printTo.print("sum: ");
-		printTo.println(hmsPeriodFormatter.print(overallDuration.toPeriod()));
+		printTo.print("sum:       ");
+		printTo.println(ItemFormattingHelper.hmsPeriodFormatter
+				.print(overallDuration.toPeriod()));
 
 	}
 
@@ -152,17 +140,19 @@ public class ReportPrinter {
 			printTo.println("====== sums of today ======");
 			if (report.getStart() != null) {
 				printTo.println("start of day: "
-						+ hmsDateFormat.print(report.getStart()));
+						+ ItemFormattingHelper.hmsDateFormat.print(report
+								.getStart()));
 			}
 			if (report.getEnd() != null) {
-				printTo.println("end of day: "
-						+ hmsDateFormat.print(report.getEnd()));
+				printTo.println("end of day:   "
+						+ ItemFormattingHelper.hmsDateFormat.print(report
+								.getEnd()));
 			}
 		}
 		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
 			printTo.println("time not yet tracked: "
-					+ hmsPeriodFormatter.print(report.getUncoveredDuration()
-							.toPeriod()));
+					+ ItemFormattingHelper.hmsPeriodFormatter.print(report
+							.getUncoveredDuration().toPeriod()));
 		}
 		List<ReportingItem> reportingItems = report.getReportingItems();
 
@@ -171,12 +161,15 @@ public class ReportPrinter {
 			Duration duration = i.getDuration();
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
-			printTruncatedString(hmsPeriodFormatter.print(duration.toPeriod())
-					+ "   " + comment, printTo, truncateLongLines);
+			printTruncatedString(
+					ItemFormattingHelper.hmsPeriodFormatter.print(duration
+							.toPeriod()) + "   " + comment, printTo,
+					truncateLongLines);
 		}
 
 		printTo.println("====== overall sum: ======\n"
-				+ hmsPeriodFormatter.print(overallDuration.toPeriod()));
+				+ ItemFormattingHelper.hmsPeriodFormatter.print(overallDuration
+						.toPeriod()));
 
 		IOUtils.closeQuietly(reportReader);
 	}
@@ -200,21 +193,22 @@ public class ReportPrinter {
 			String comment = item.getComment().orNull();
 
 			StringBuilder builder = new StringBuilder();
-			if (start.getYear() == DateTime.now().getYear()
-					&& start.getDayOfYear() == DateTime.now().getDayOfYear()) {
-				builder.append(hmsDateFormat.print(start));
+			if (DateTimeHelper.isOnSameDay(start, DateTime.now())) {
+				builder.append(ItemFormattingHelper.hmsDateFormat.print(start));
 			} else {
-				builder.append(mdhmsDateFormat.print(start));
+				builder.append(ItemFormattingHelper.mdhmsDateFormat
+						.print(start));
 			}
 			builder.append(" - ");
 			if (end == null) {
 				builder.append("now     ");
 			} else {
-				builder.append(hmsDateFormat.print(end));
+				builder.append(ItemFormattingHelper.hmsDateFormat.print(end));
 			}
 			builder.append(" ( ");
-			builder.append(hmsPeriodFormatter.print(new Duration(start,
-					(end == null ? DateTime.now() : end)).toPeriod()));
+			builder.append(ItemFormattingHelper.hmsPeriodFormatter
+					.print(new Duration(start, (end == null ? DateTime.now()
+							: end)).toPeriod()));
 			builder.append(" ) ");
 			builder.append(" => ");
 			builder.append(comment);

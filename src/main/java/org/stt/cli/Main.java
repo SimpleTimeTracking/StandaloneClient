@@ -74,7 +74,7 @@ public class Main {
 		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
 		if (currentItem.isPresent()) {
-			printTo.println("stopped working on " + currentItem.get());
+			prettyPrintTimeTrackingItem(printTo, currentItem);
 		}
 		printTo.println("start working on "
 				+ createdItem.get().getComment().orNull());
@@ -145,9 +145,21 @@ public class Main {
 					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN
 							+ " " + StringHelper.join(args));
 			if (updatedItem.isPresent()) {
-				printTo.println("stopped working on "
-						+ updatedItem.get().toString());
+				prettyPrintTimeTrackingItem(printTo, updatedItem);
 			}
+		}
+	}
+
+	/**
+	 * @param printTo
+	 * @param updatedItem
+	 */
+	private void prettyPrintTimeTrackingItem(PrintStream printTo,
+			Optional<TimeTrackingItem> updatedItem) {
+		if (updatedItem.isPresent()) {
+			StringBuilder itemString = ItemFormattingHelper
+					.prettyPrintItem(updatedItem);
+			printTo.println("stopped working on " + itemString.toString());
 		}
 	}
 
