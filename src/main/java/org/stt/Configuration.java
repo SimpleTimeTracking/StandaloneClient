@@ -81,9 +81,18 @@ public class Configuration {
 		return new File(determineBaseDir(), ".sttrc");
 	}
 
+	/**
+	 * @return the .stt file which will be created if it does not yet exist
+	 */
 	public File getSttFile() {
-		String sttFile = getPropertiesReplaced("sttFile", "$HOME$/.stt");
-		return new File(sttFile);
+		String sttFileString = getPropertiesReplaced("sttFile", "$HOME$/.stt");
+		File sttFile = new File(sttFileString);
+		try {
+			sttFile.createNewFile();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return sttFile;
 	}
 
 	public File getTiFile() {
