@@ -1,5 +1,7 @@
 package org.stt.cli;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -31,6 +33,7 @@ import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
+import org.stt.reporting.WorkingtimeItemProvider;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
 import org.stt.stt.importer.CachingItemReader;
@@ -39,8 +42,6 @@ import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
 
 import com.google.common.base.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The starting point for the CLI
@@ -245,7 +246,8 @@ public class Main {
 
 	private ReportPrinter createNewReportPrinter(File source) {
 		ItemReaderProvider provider = createNewReaderProvider(source);
-		return new ReportPrinter(provider, configuration);
+		return new ReportPrinter(provider, configuration,
+				new WorkingtimeItemProvider(configuration));
 	}
 
 	/**

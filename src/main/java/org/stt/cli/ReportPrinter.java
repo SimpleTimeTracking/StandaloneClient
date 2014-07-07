@@ -4,17 +4,19 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.joda.time.format.DateTimeFormat;
 import org.stt.Configuration;
 import org.stt.DateTimeHelper;
 import org.stt.filter.StartDateReaderFilter;
 import org.stt.filter.SubstringReaderFilter;
+import org.stt.g4.EnglishCommandsLexer;
+import org.stt.g4.EnglishCommandsParser;
+import org.stt.g4.EnglishCommandsParser.ReportStartContext;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -35,11 +37,14 @@ public class ReportPrinter {
 
 	private final ItemReaderProvider readFrom;
 	private final Configuration configuration;
+	private final WorkingtimeItemProvider workingtimeItemProvider;
 
 	public ReportPrinter(ItemReaderProvider readFrom,
-			Configuration configuration) {
+			Configuration configuration,
+			WorkingtimeItemProvider workingtimeItemProvider) {
 		this.readFrom = readFrom;
 		this.configuration = configuration;
+		this.workingtimeItemProvider = workingtimeItemProvider;
 	}
 
 	public void report(Collection<String> args, PrintStream printTo) {
@@ -55,24 +60,14 @@ public class ReportPrinter {
 			// first collapse all following strings
 			String argsString = StringHelper.join(args);
 
-			// TODO: this should be replaced by the central time parsing
-			// (EnglishCommandsParser)
-			Pattern sincePattern = Pattern.compile("since (.+)");
-			Matcher sinceMatcher = sincePattern.matcher(argsString);
-			if (sinceMatcher.find()) {
-				DateTime start = DateTimeFormat.forPattern("yyyy-MM-dd")
-						.parseDateTime(sinceMatcher.group(1));
-				days = (int) new Duration(start, DateTime.now())
-						.getStandardDays();
+			EnglishCommandsLexer lexer = new EnglishCommandsLexer(
+					new ANTLRInputStream(argsString));
+			EnglishCommandsParser parser = new EnglishCommandsParser(
+					new CommonTokenStream(lexer));
 
-				argsString = sinceMatcher.replaceAll("");
-			}
-
-			Pattern daysPattern = Pattern.compile("(\\d+) days");
-			Matcher daysMatcher = daysPattern.matcher(argsString);
-
-			if (daysMatcher.find()) {
-				days = Integer.parseInt(daysMatcher.group(1));
+			ReportStartContext reportStart = parser.reportStart();
+			if (reportStart.days != null) {
+				days = reportStart.days;
 			} else {
 				searchString = argsString;
 			}
@@ -219,8 +214,6 @@ public class ReportPrinter {
 
 	private OvertimeReportGenerator createOvertimeReportGenerator(int days) {
 		ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
-		WorkingtimeItemProvider workingtimeItemProvider = new WorkingtimeItemProvider(
-				configuration);
 		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
 				readFrom.provideReader(), days);
 		return new OvertimeReportGenerator(dateFilter, categorizer,

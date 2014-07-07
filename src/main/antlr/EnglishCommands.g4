@@ -40,7 +40,7 @@ import org.stt.model.*;
 	
 }
 
-anyToken: HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN;
+anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN;
 comment: anyToken*?;
 
 agoFormat returns [DateTime result]
@@ -53,11 +53,13 @@ agoFormat returns [DateTime result]
 	| 	SECONDS {$result = $result.minusSeconds($amount.int); }
 	) AGO;
 
-optDateWithTime: (NUMBER DOT NUMBER DOT NUMBER)? NUMBER COLON NUMBER (COLON NUMBER)?;
+date: NUMBER DOT NUMBER DOT NUMBER;
+
+optDateWithTime: date? NUMBER COLON NUMBER (COLON NUMBER)?;
 
 dateTime returns [DateTime result]: txt=optDateWithTime { $result = parseDateTime($txt.text); };
 
-sinceFormat returns [DateTime result]: SINCE dt=dateTime { $result = $dt.result; };
+sinceFormat returns [DateTime result]: (SINCE|AT) dt=dateTime { $result = $dt.result; };
 
 fromToFormat returns [DateTime start, DateTime end]: FROM? s=dateTime TO e=dateTime { 
 	$start = $s.result;
@@ -81,6 +83,19 @@ command returns [TimeTrackingItem newItem, DateTime fin]:
 	) EOF;
 
 
+// CLI stuff
+
+reportStart 
+returns [Integer days]
+locals [DateTime start]: 
+		SINCE d=date { 
+		$start = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);
+		$days = Integer.valueOf( (int) new Duration($start, DateTime.now()).getStandardDays() );		
+		 }
+	|  	n=NUMBER DAYS { $days = $n.int; }
+	|	anyToken*; 
+
+
 // WHEN ADDING TOKENS: ADD THEM to anyToken above!!
 // SYMBOLS
 COLON: ':';
@@ -91,6 +106,7 @@ AGO: 'ago';
 AT: 'at';
 FIN: 'fin';
 FROM: 'from';
+DAYS: 'days';
 HOURS: 'h' | 'hr' | 'hrs' | 'hour' | 'hours';
 MINUTES: 'min' | 'mins' | 'minute' | 'minutes';
 SINCE: 'since';

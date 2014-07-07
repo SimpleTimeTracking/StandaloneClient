@@ -1,5 +1,7 @@
 package org.stt.filter;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 
 import org.joda.time.DateTime;
@@ -19,9 +21,9 @@ public class StartDateReaderFilter implements ItemReader {
 	private final DateTime to;
 
 	public StartDateReaderFilter(ItemReader reader, DateTime from, DateTime to) {
-		this.reader = reader;
-		this.from = from;
-		this.to = to;
+		this.reader = checkNotNull(reader);
+		this.from = checkNotNull(from);
+		this.to = checkNotNull(to);
 	}
 
 	@Override

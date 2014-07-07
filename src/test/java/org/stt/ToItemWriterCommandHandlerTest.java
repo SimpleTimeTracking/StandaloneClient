@@ -126,6 +126,20 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	@Test
+	public void shouldParseAt7_00() {
+		// GIVEN
+		givenNoCurrentItemIsAvailable();
+
+		// WHEN
+		sut.executeCommand("test at 7:00");
+
+		// THEN
+		TimeTrackingItem item = retrieveWrittenTimeTrackingItem();
+		DateTime start = item.getStart();
+		assertThatTimeIsTodayWith(start, 7, 0, 0);
+	}
+
+	@Test
 	public void shouldParseSince03_12_11() {
 		// GIVEN
 		givenNoCurrentItemIsAvailable();
