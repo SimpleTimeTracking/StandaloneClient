@@ -6,7 +6,6 @@ import java.util.TreeMap;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.stt.Configuration;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemCategorizer.ItemCategory;
@@ -16,14 +15,15 @@ import com.google.common.base.Optional;
 public class OvertimeReportGenerator {
 
 	private final ItemCategorizer categorizer;
-	private final Configuration configuration;
 	private final ItemReader reader;
+	private WorkingtimeItemProvider workingtimeItemProvider;
 
 	public OvertimeReportGenerator(ItemReader reader,
-			ItemCategorizer categorizer, Configuration configuration) {
+			ItemCategorizer categorizer,
+			WorkingtimeItemProvider workingtimeItemProvider) {
 		this.reader = reader;
 		this.categorizer = categorizer;
-		this.configuration = configuration;
+		this.workingtimeItemProvider = workingtimeItemProvider;
 
 	}
 
@@ -46,10 +46,8 @@ public class OvertimeReportGenerator {
 					dateToOvertime.put(currentDay,
 							currentDuration.plus(itemDuration));
 				} else {
-					dateToOvertime
-							.put(currentDay,
-									itemDuration
-											.minus(getDailyWorkingHours(currentDay) * 60L * 60L * 1000L));
+					dateToOvertime.put(currentDay, itemDuration
+							.minus(getDailyWorkingHours(currentDay)));
 				}
 			}
 		}
@@ -62,7 +60,9 @@ public class OvertimeReportGenerator {
 	/**
 	 * returns the configured daily working hours
 	 */
-	private Integer getDailyWorkingHours(DateTime date) {
-		return configuration.getDailyWorkingHours().get(date.getDayOfWeek());
+	private Duration getDailyWorkingHours(DateTime date) {
+		Duration workingTimeForDate = workingtimeItemProvider
+				.getWorkingTimeFor(date);
+		return workingTimeForDate;
 	}
 }

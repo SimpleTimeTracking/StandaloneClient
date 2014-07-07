@@ -9,8 +9,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +16,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTimeConstants;
 
 /**
  * Simple configuration mechanism with fallback values.
@@ -68,6 +65,9 @@ public class Configuration {
 	private void createSttrc() {
 
 		File propertiesFile = getPropertiesFile();
+
+		LOG.info("creating " + propertiesFile.getAbsolutePath());
+
 		try (InputStream rcStream = this.getClass().getResourceAsStream(
 				"/org/stt/sttrc.example")) {
 			IOUtils.copy(rcStream, new FileOutputStream(propertiesFile));
@@ -117,23 +117,16 @@ public class Configuration {
 		return encoding;
 	}
 
-	public Map<Integer, Integer> getDailyWorkingHours() {
-		Map<Integer, Integer> workingHours = new HashMap<>();
-		workingHours.put(DateTimeConstants.MONDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursMon", "8")));
-		workingHours.put(DateTimeConstants.TUESDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursTue", "8")));
-		workingHours.put(DateTimeConstants.WEDNESDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursWed", "8")));
-		workingHours.put(DateTimeConstants.THURSDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursThu", "8")));
-		workingHours.put(DateTimeConstants.FRIDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursFri", "8")));
-		workingHours.put(DateTimeConstants.SATURDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursSat", "0")));
-		workingHours.put(DateTimeConstants.SUNDAY,
-				Integer.valueOf(getPropertiesReplaced("hoursSun", "0")));
-		return workingHours;
+	public File getWorkingTimesFile() {
+		String workigTimesFileString = getPropertiesReplaced(
+				"workingTimesFile", "$HOME$/.stt_worktimes");
+		File workingTimesFile = new File(workigTimesFileString);
+		try {
+			workingTimesFile.createNewFile();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return workingTimesFile;
 	}
 
 	public Collection<String> getBreakTimeComments() {
@@ -143,7 +136,7 @@ public class Configuration {
 		return Arrays.asList(split);
 	}
 
-	private String getPropertiesReplaced(String propName, String fallback) {
+	public String getPropertiesReplaced(String propName, String fallback) {
 		String theProperty = loadedProps.getProperty(propName, fallback);
 		Matcher envMatcher = ENV_PATTERN.matcher(theProperty);
 		if (envMatcher.find()) {

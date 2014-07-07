@@ -1,0 +1,19 @@
+
+# the number of hours you have to work per day. This is used for calculating overtime and estimated day end time 
+hoursMon = 8
+hoursTue = 8
+hoursWed = 8
+hoursThu = 8
+hoursFri = 8
+hoursSat = 0
+hoursSun = 0
+
+# example entries:
+# worktime for the date is 10h
+2014-01-01 10
+
+# implement later: worktime for the date is 8-10h
+# if actual working time is less than 8h, the difference is subtracted from current overtime
+# if actual working time is more than 10h, the difference is added to current overtime
+# if actual working time is between 8h and 10h, current overtime is not modified
+2014-01-02 8 10

@@ -26,13 +26,7 @@
 #sysoutEncoding=UTF-8
 
 # comments which should be regarded as break time. The values are case sensitive and may contain white space but must not contain commas
-# breakTimeComments=pause,break,coffee
+#breakTimeComments=pause,break,coffee
 
-# the number of hours you have to work per day. This is used for calculating overtime and estimated day end time 
-hoursMon = 8
-hoursTue = 8
-hoursWed = 8
-hoursThu = 8
-hoursFri = 8
-hoursSat = 0
-hoursSun = 0
+# the file where working time specifications are stored
+#workingTimesFile=$HOME$/.stt_worktimes

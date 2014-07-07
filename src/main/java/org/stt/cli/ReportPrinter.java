@@ -23,6 +23,7 @@ import org.stt.reporting.ItemCategorizer;
 import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
+import org.stt.reporting.WorkingtimeItemProvider;
 import org.stt.reporting.WorktimeCategorizer;
 
 import com.google.common.base.Optional;
@@ -107,14 +108,14 @@ public class ReportPrinter {
 		for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
 			overallDuration = overallDuration.plus(e.getValue());
 
-			printTo.println(ItemFormattingHelper.ymdDateFormat.print(e.getKey())
+			printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
 					+ " "
-					+ ItemFormattingHelper.hmsPeriodFormatter.print(e
-							.getValue().toPeriod()));
+					+ DateTimeHelper.hmsPeriodFormatter.print(e.getValue()
+							.toPeriod()));
 		}
 		printTo.print("sum:       ");
-		printTo.println(ItemFormattingHelper.hmsPeriodFormatter
-				.print(overallDuration.toPeriod()));
+		printTo.println(DateTimeHelper.hmsPeriodFormatter.print(overallDuration
+				.toPeriod()));
 
 	}
 
@@ -140,18 +141,16 @@ public class ReportPrinter {
 			printTo.println("====== sums of today ======");
 			if (report.getStart() != null) {
 				printTo.println("start of day: "
-						+ ItemFormattingHelper.hmsDateFormat.print(report
-								.getStart()));
+						+ DateTimeHelper.hmsDateFormat.print(report.getStart()));
 			}
 			if (report.getEnd() != null) {
 				printTo.println("end of day:   "
-						+ ItemFormattingHelper.hmsDateFormat.print(report
-								.getEnd()));
+						+ DateTimeHelper.hmsDateFormat.print(report.getEnd()));
 			}
 		}
 		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
 			printTo.println("time not yet tracked: "
-					+ ItemFormattingHelper.hmsPeriodFormatter.print(report
+					+ DateTimeHelper.hmsPeriodFormatter.print(report
 							.getUncoveredDuration().toPeriod()));
 		}
 		List<ReportingItem> reportingItems = report.getReportingItems();
@@ -162,13 +161,12 @@ public class ReportPrinter {
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
 			printTruncatedString(
-					ItemFormattingHelper.hmsPeriodFormatter.print(duration
-							.toPeriod()) + "   " + comment, printTo,
-					truncateLongLines);
+					DateTimeHelper.hmsPeriodFormatter.print(duration.toPeriod())
+							+ "   " + comment, printTo, truncateLongLines);
 		}
 
 		printTo.println("====== overall sum: ======\n"
-				+ ItemFormattingHelper.hmsPeriodFormatter.print(overallDuration
+				+ DateTimeHelper.hmsPeriodFormatter.print(overallDuration
 						.toPeriod()));
 
 		IOUtils.closeQuietly(reportReader);
@@ -194,19 +192,18 @@ public class ReportPrinter {
 
 			StringBuilder builder = new StringBuilder();
 			if (DateTimeHelper.isOnSameDay(start, DateTime.now())) {
-				builder.append(ItemFormattingHelper.hmsDateFormat.print(start));
+				builder.append(DateTimeHelper.hmsDateFormat.print(start));
 			} else {
-				builder.append(ItemFormattingHelper.mdhmsDateFormat
-						.print(start));
+				builder.append(DateTimeHelper.mdhmsDateFormat.print(start));
 			}
 			builder.append(" - ");
 			if (end == null) {
 				builder.append("now     ");
 			} else {
-				builder.append(ItemFormattingHelper.hmsDateFormat.print(end));
+				builder.append(DateTimeHelper.hmsDateFormat.print(end));
 			}
 			builder.append(" ( ");
-			builder.append(ItemFormattingHelper.hmsPeriodFormatter
+			builder.append(DateTimeHelper.hmsPeriodFormatter
 					.print(new Duration(start, (end == null ? DateTime.now()
 							: end)).toPeriod()));
 			builder.append(" ) ");
@@ -222,10 +219,12 @@ public class ReportPrinter {
 
 	private OvertimeReportGenerator createOvertimeReportGenerator(int days) {
 		ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
+		WorkingtimeItemProvider workingtimeItemProvider = new WorkingtimeItemProvider(
+				configuration);
 		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
 				readFrom.provideReader(), days);
 		return new OvertimeReportGenerator(dateFilter, categorizer,
-				configuration);
+				workingtimeItemProvider);
 	}
 
 	/**
