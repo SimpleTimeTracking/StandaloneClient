@@ -16,6 +16,7 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemCategorizer.ItemCategory;
+import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import static org.hamcrest.CoreMatchers.is;
 
@@ -60,8 +61,9 @@ public class OvertimeReportGeneratorTest {
 		ItemReaderTestHelper.givenReaderReturns(reader, new TimeTrackingItem(
 				"working", startTime, endTime));
 
+		Duration toReturn = new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR);
 		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
-				new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR));
+				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
 		Map<DateTime, Duration> overtime = sut.getOvertime();
@@ -82,8 +84,9 @@ public class OvertimeReportGeneratorTest {
 				"working", startTime, endTime), new TimeTrackingItem("pause",
 				breakStartTime, breakStartTime.plusHours(3)));
 
+		Duration toReturn = new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR);
 		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
-				new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR));
+				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
 		Map<DateTime, Duration> overtime = sut.getOvertime();
@@ -104,8 +107,9 @@ public class OvertimeReportGeneratorTest {
 				"working", startTime, endTime), new TimeTrackingItem("pause",
 				breakStartTime, breakStartTime.plusHours(1)));
 
+		Duration toReturn = new Duration(0);
 		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
-				new Duration(0));
+				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
 		Map<DateTime, Duration> overtime = sut.getOvertime();
@@ -126,8 +130,9 @@ public class OvertimeReportGeneratorTest {
 				"working", startTime, endTime), new TimeTrackingItem("pause",
 				breakStartTime, breakStartTime.plusHours(1)));
 
+		Duration toReturn = new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR);
 		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
-				new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR));
+				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
 		Map<DateTime, Duration> overtime = sut.getOvertime();

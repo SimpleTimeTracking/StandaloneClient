@@ -9,6 +9,7 @@ import org.joda.time.Duration;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemCategorizer.ItemCategory;
+import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import com.google.common.base.Optional;
 
@@ -46,12 +47,15 @@ public class OvertimeReportGenerator {
 					dateToOvertime.put(currentDay,
 							currentDuration.plus(itemDuration));
 				} else {
-					dateToOvertime.put(currentDay, itemDuration
-							.minus(getDailyWorkingHours(currentDay)));
+					dateToOvertime.put(currentDay, itemDuration);
 				}
 			}
 		}
 
+		for (Map.Entry<DateTime, Duration> e : dateToOvertime.entrySet()) {
+			dateToOvertime.put(e.getKey(),
+					getOvertime(e.getKey(), e.getValue()));
+		}
 		IOUtils.closeQuietly(reader);
 
 		return dateToOvertime;
@@ -60,9 +64,15 @@ public class OvertimeReportGenerator {
 	/**
 	 * returns the configured daily working hours
 	 */
-	private Duration getDailyWorkingHours(DateTime date) {
-		Duration workingTimeForDate = workingtimeItemProvider
+	private Duration getOvertime(DateTime date, Duration duration) {
+		WorkingtimeItem workingTimeForDate = workingtimeItemProvider
 				.getWorkingTimeFor(date);
-		return workingTimeForDate;
+		if (duration.isLongerThan(workingTimeForDate.getMax())) {
+			return duration.minus(workingTimeForDate.getMax());
+		} else if (duration.isShorterThan(workingTimeForDate.getMin())) {
+			return duration.minus(workingTimeForDate.getMin());
+		}
+
+		return new Duration(0);
 	}
 }
