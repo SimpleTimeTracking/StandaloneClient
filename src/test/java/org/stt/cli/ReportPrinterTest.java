@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 
 import org.junit.Before;
@@ -41,10 +42,10 @@ public class ReportPrinterTest {
 	}
 
 	@Test
-	public void shouldParseSince() {
+	public void shouldParseSince() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out);
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
 		ItemReaderTestHelper.givenReaderReturns(itemReader);
 
 		// WHEN
@@ -54,25 +55,25 @@ public class ReportPrinterTest {
 	}
 
 	@Test
-	public void shouldParseDays() {
+	public void shouldParseDays() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out);
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
 		ItemReaderTestHelper.givenReaderReturns(itemReader);
 
 		// WHEN
 		sut.report(Collections.singleton("10 days"), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray());
+		String result = new String(out.toByteArray(), "UTF8");
 		assertThat(result, containsString("10 days"));
 	}
 
 	@Test
-	public void shouldParseSearchFilter() {
+	public void shouldParseSearchFilter() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out);
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
 		ItemReaderTestHelper.givenReaderReturns(itemReader);
 
 		// WHEN
