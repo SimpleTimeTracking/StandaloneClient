@@ -40,7 +40,7 @@ import org.stt.model.*;
 	
 }
 
-anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN;
+anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS;
 comment: anyToken*?;
 
 agoFormat returns [DateTime result]
@@ -54,6 +54,7 @@ agoFormat returns [DateTime result]
 	) AGO;
 
 date: NUMBER DOT NUMBER DOT NUMBER;
+dateMinus: NUMBER MINUS NUMBER MINUS NUMBER;
 
 optDateWithTime: date? NUMBER COLON NUMBER (COLON NUMBER)?;
 
@@ -88,7 +89,7 @@ command returns [TimeTrackingItem newItem, DateTime fin]:
 reportStart 
 returns [Integer days]
 locals [DateTime start]: 
-		SINCE d=date { 
+		SINCE d=dateMinus { 
 		$start = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);
 		$days = Integer.valueOf( (int) new Duration($start, DateTime.now()).getStandardDays() );		
 		 }
@@ -100,6 +101,7 @@ locals [DateTime start]:
 // SYMBOLS
 COLON: ':';
 DOT: '.';
+MINUS: '-';
 
 // WORDS
 AGO: 'ago';
