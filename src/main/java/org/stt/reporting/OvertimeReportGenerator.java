@@ -13,6 +13,9 @@ import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import com.google.common.base.Optional;
 
+/**
+ * Calculates overtime information
+ */
 public class OvertimeReportGenerator {
 
 	private final ItemCategorizer categorizer;
@@ -28,6 +31,10 @@ public class OvertimeReportGenerator {
 
 	}
 
+	/**
+	 * @return the date and the according overtime (positive or negative) for
+	 *         all elements
+	 */
 	public Map<DateTime, Duration> getOvertime() {
 
 		Optional<TimeTrackingItem> optionalItem = null;
@@ -57,24 +64,31 @@ public class OvertimeReportGenerator {
 					getOvertime(e.getKey(), e.getValue()));
 		}
 		IOUtils.closeQuietly(reader);
-		
-		if(dateToOvertime.size() > 0) {
-			dateToOvertime.putAll(getAbsencesMap(dateToOvertime.keySet().iterator().next()));
+
+		if (dateToOvertime.size() > 0) {
+			dateToOvertime.putAll(getAbsencesMap(dateToOvertime.keySet()
+					.iterator().next()));
 		}
 		return dateToOvertime;
 	}
 
+	/**
+	 * returns the dates and corresponding absence durations for the given date
+	 */
 	private Map<DateTime, Duration> getAbsencesMap(DateTime since) {
-		Map<DateTime, WorkingtimeItem> overtimeAbsencesSince = workingtimeItemProvider.getOvertimeAbsencesSince(since);
+		Map<DateTime, WorkingtimeItem> overtimeAbsencesSince = workingtimeItemProvider
+				.getOvertimeAbsencesSince(since);
 		Map<DateTime, Duration> resultMap = new TreeMap<>();
-		for(Map.Entry<DateTime, WorkingtimeItem> e : overtimeAbsencesSince.entrySet()) {
+		for (Map.Entry<DateTime, WorkingtimeItem> e : overtimeAbsencesSince
+				.entrySet()) {
 			resultMap.put(e.getKey(), e.getValue().getMin());
 		}
 		return resultMap;
 	}
 
 	/**
-	 * returns the configured daily working hours
+	 * returns the overtime (positive or negative) for the given date and
+	 * duration
 	 */
 	private Duration getOvertime(DateTime date, Duration duration) {
 		WorkingtimeItem workingTimeForDate = workingtimeItemProvider

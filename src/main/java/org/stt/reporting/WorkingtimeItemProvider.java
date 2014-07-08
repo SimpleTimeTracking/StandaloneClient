@@ -15,6 +15,10 @@ import org.joda.time.Duration;
 import org.stt.Configuration;
 import org.stt.DateTimeHelper;
 
+/**
+ * Reads information about working times from the configured workingTimes file
+ * and aggregates them into {@link WorkingtimeItem}s
+ */
 public class WorkingtimeItemProvider {
 
 	private Map<Integer, WorkingtimeItem> defaultWorkingHours = new HashMap<>();
@@ -24,17 +28,32 @@ public class WorkingtimeItemProvider {
 		populateHoursMapsFromFile(configuration.getWorkingTimesFile());
 	}
 
+	/**
+	 * 
+	 * @param date
+	 * @return the dates and corresponding absence times since the given date
+	 *         (inclusive)
+	 */
 	public Map<DateTime, WorkingtimeItem> getOvertimeAbsencesSince(DateTime date) {
 		Map<DateTime, WorkingtimeItem> overtimeAbsenceDuration = new TreeMap<>();
-		for(Map.Entry<DateTime, WorkingtimeItem> e : workingHoursPerDay.entrySet()) {
-			//if time is negative...
-			if(date.isBefore(e.getKey()) && e.getValue().getMin().isShorterThan(new Duration(0))) {
+		for (Map.Entry<DateTime, WorkingtimeItem> e : workingHoursPerDay
+				.entrySet()) {
+			// if time is negative...
+			if (date.isBefore(e.getKey())
+					&& e.getValue().getMin().isShorterThan(new Duration(0))) {
 				overtimeAbsenceDuration.put(e.getKey(), e.getValue());
 			}
 		}
-		
+
 		return overtimeAbsenceDuration;
 	}
+
+	/**
+	 * 
+	 * @param date
+	 * @return the configured duration to be worked without producing positive
+	 *         or negative overtime
+	 */
 	public WorkingtimeItem getWorkingTimeFor(DateTime date) {
 		WorkingtimeItem workingHours = workingHoursPerDay.get(date
 				.withTimeAtStartOfDay());
@@ -136,6 +155,9 @@ public class WorkingtimeItemProvider {
 		return new WorkingtimeItem(d, d);
 	}
 
+	/**
+	 *  
+	 */
 	public static class WorkingtimeItem {
 
 		private Duration min;
