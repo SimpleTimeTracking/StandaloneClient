@@ -10,10 +10,14 @@ hoursSun = 0
 
 # example entries:
 # worktime for the date is 10h
-2014-01-01 10
+#2014-01-01 10
 
-# implement later: worktime for the date is 8-10h
+# worktime for the date is 8-10h
 # if actual working time is less than 8h, the difference is subtracted from current overtime
 # if actual working time is more than 10h, the difference is added to current overtime
 # if actual working time is between 8h and 10h, current overtime is not modified
-2014-01-02 8 10
+#2014-01-02 8 10
+
+# overtime absence:
+# subtract 8h from overtime on Feb. 05:
+#2014-02-05 -8

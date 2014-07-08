@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
@@ -23,6 +24,17 @@ public class WorkingtimeItemProvider {
 		populateHoursMapsFromFile(configuration.getWorkingTimesFile());
 	}
 
+	public Map<DateTime, WorkingtimeItem> getOvertimeAbsencesSince(DateTime date) {
+		Map<DateTime, WorkingtimeItem> overtimeAbsenceDuration = new TreeMap<>();
+		for(Map.Entry<DateTime, WorkingtimeItem> e : workingHoursPerDay.entrySet()) {
+			//if time is negative...
+			if(date.isBefore(e.getKey()) && e.getValue().getMin().isShorterThan(new Duration(0))) {
+				overtimeAbsenceDuration.put(e.getKey(), e.getValue());
+			}
+		}
+		
+		return overtimeAbsenceDuration;
+	}
 	public WorkingtimeItem getWorkingTimeFor(DateTime date) {
 		WorkingtimeItem workingHours = workingHoursPerDay.get(date
 				.withTimeAtStartOfDay());
