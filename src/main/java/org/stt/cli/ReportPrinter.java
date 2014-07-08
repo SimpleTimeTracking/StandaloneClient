@@ -98,19 +98,28 @@ public class ReportPrinter {
 		Map<DateTime, Duration> overtimeMap = createOvertimeReportGenerator(
 				days).getOvertime();
 
-		printTo.println("====== current overtime: ======");
-		Duration overallDuration = new Duration(0);
-		for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
-			overallDuration = overallDuration.plus(e.getValue());
+		if (days > 0) {
+			printTo.println("====== overtime since "
+					+ DateTimeHelper.ymdDateFormat.print(DateTime.now()
+							.minusDays(days)) + ": ======");
+			Duration overallDuration = new Duration(0);
+			for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
+				overallDuration = overallDuration.plus(e.getValue());
 
-			printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
-					+ " "
-					+ DateTimeHelper.hmsPeriodFormatter.print(e.getValue()
-							.toPeriod()));
+				printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
+						+ " "
+						+ DateTimeHelper.prettyPrintDuration(e.getValue()));
+			}
+			printTo.print("sum:       ");
+			printTo.println(DateTimeHelper.prettyPrintDuration(overallDuration));
+		} else {
+			printTo.println("====== closing time today: ======");
+			Duration duration = overtimeMap.get(DateTime.now()
+					.withTimeAtStartOfDay());
+			String prettyTime = DateTimeHelper.prettyPrintDate(DateTime.now()
+					.minus(duration));
+			printTo.println(prettyTime);
 		}
-		printTo.print("sum:       ");
-		printTo.println(DateTimeHelper.hmsPeriodFormatter.print(overallDuration
-				.toPeriod()));
 
 	}
 
@@ -145,8 +154,8 @@ public class ReportPrinter {
 		}
 		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
 			printTo.println("time not yet tracked: "
-					+ DateTimeHelper.hmsPeriodFormatter.print(report
-							.getUncoveredDuration().toPeriod()));
+					+ DateTimeHelper.prettyPrintDuration(report
+							.getUncoveredDuration()));
 		}
 		List<ReportingItem> reportingItems = report.getReportingItems();
 
@@ -155,14 +164,12 @@ public class ReportPrinter {
 			Duration duration = i.getDuration();
 			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
-			printTruncatedString(
-					DateTimeHelper.hmsPeriodFormatter.print(duration.toPeriod())
-							+ "   " + comment, printTo, truncateLongLines);
+			printTruncatedString(DateTimeHelper.prettyPrintDuration(duration)
+					+ "   " + comment, printTo, truncateLongLines);
 		}
 
 		printTo.println("====== overall sum: ======\n"
-				+ DateTimeHelper.hmsPeriodFormatter.print(overallDuration
-						.toPeriod()));
+				+ DateTimeHelper.prettyPrintDuration(overallDuration));
 
 		IOUtils.closeQuietly(reportReader);
 	}
@@ -198,9 +205,8 @@ public class ReportPrinter {
 				builder.append(DateTimeHelper.hmsDateFormat.print(end));
 			}
 			builder.append(" ( ");
-			builder.append(DateTimeHelper.hmsPeriodFormatter
-					.print(new Duration(start, (end == null ? DateTime.now()
-							: end)).toPeriod()));
+			builder.append(DateTimeHelper.prettyPrintDuration(new Duration(
+					start, (end == null ? DateTime.now() : end))));
 			builder.append(" ) ");
 			builder.append(" => ");
 			builder.append(comment);
@@ -242,7 +248,8 @@ public class ReportPrinter {
 	private void printTruncatedString(String toPrint, PrintStream printTo,
 			boolean doTruncate) {
 
-		int desiredWidth = configuration.getCliReportingWidth() - 3;
+		int desiredWidth = Math.max(configuration.getCliReportingWidth() - 3,
+				10);
 		if (doTruncate && desiredWidth < toPrint.length()) {
 			String substr = toPrint.substring(0, desiredWidth);
 			printTo.println(substr + "...");
