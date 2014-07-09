@@ -113,12 +113,18 @@ public class ReportPrinter {
 			printTo.print("sum:       ");
 			printTo.println(DateTimeHelper.prettyPrintDuration(overallDuration));
 		} else {
-			printTo.println("====== closing time today: ======");
+			printTo.println("====== times for today: ======");
 			Duration duration = overtimeMap.get(DateTime.now()
 					.withTimeAtStartOfDay());
-			String prettyTime = DateTimeHelper.prettyPrintDate(DateTime.now()
-					.minus(duration));
-			printTo.println(prettyTime);
+			if (duration != null) {
+				String closingTime = DateTimeHelper.prettyPrintDate(DateTime
+						.now().minus(duration));
+				printTo.println("closing time: " + closingTime);
+				String timeToGo = DateTimeHelper
+						.prettyPrintDuration(new Duration(duration.getMillis()
+								* -1));
+				printTo.println("time to go:   " + timeToGo);
+			}
 		}
 
 	}
