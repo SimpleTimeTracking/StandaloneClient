@@ -27,6 +27,7 @@ import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
 import org.stt.reporting.WorktimeCategorizer;
+import org.stt.stt.importer.CachingItemReader;
 
 import com.google.common.base.Optional;
 
@@ -85,8 +86,12 @@ public class ReportPrinter {
 	}
 
 	private void printOvertime(PrintStream printTo, int days) {
-		Map<DateTime, Duration> overtimeMap = createOvertimeReportGenerator(
-				days).getOvertime();
+		OvertimeReportGenerator overtimeReportGenerator = createOvertimeReportGenerator();
+		Map<DateTime, Duration> overtimeMap = overtimeReportGenerator
+				.getOvertime(DateTime.now().minusDays(days)
+						.withTimeAtStartOfDay(), DateTime.now().plusDays(1)
+						.withTimeAtStartOfDay());
+		Duration overallOvertime = overtimeReportGenerator.getOverallOvertime();
 
 		if (days > 0) {
 			printTo.println("====== overtime since "
@@ -116,6 +121,8 @@ public class ReportPrinter {
 				printTo.println("time to go:   " + timeToGo);
 			}
 		}
+		printTo.println("overall overtime: "
+				+ DateTimeHelper.prettyPrintDuration(overallOvertime));
 
 	}
 
@@ -210,11 +217,11 @@ public class ReportPrinter {
 		IOUtils.closeQuietly(filteredReader);
 	}
 
-	private OvertimeReportGenerator createOvertimeReportGenerator(int days) {
+	private OvertimeReportGenerator createOvertimeReportGenerator() {
 		ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
-		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
-				readFrom.provideReader(), days);
-		return new OvertimeReportGenerator(dateFilter, categorizer,
+		CachingItemReader cacher = new CachingItemReader(
+				readFrom.provideReader());
+		return new OvertimeReportGenerator(cacher, categorizer,
 				workingtimeItemProvider);
 	}
 

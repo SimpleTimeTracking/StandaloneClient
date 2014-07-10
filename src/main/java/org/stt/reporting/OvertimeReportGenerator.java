@@ -6,6 +6,7 @@ import java.util.TreeMap;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.stt.DateTimeHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.ItemCategorizer.ItemCategory;
@@ -28,7 +29,28 @@ public class OvertimeReportGenerator {
 		this.reader = reader;
 		this.categorizer = categorizer;
 		this.workingtimeItemProvider = workingtimeItemProvider;
+	}
 
+	/**
+	 * @return overtime information from the given time to the other given time
+	 */
+	public Map<DateTime, Duration> getOvertime(DateTime from, DateTime to) {
+		Map<DateTime, Duration> result = new TreeMap<>();
+
+		for (Map.Entry<DateTime, Duration> e : getOvertime().entrySet()) {
+			if (DateTimeHelper.isBetween(e.getKey(), from, to)) {
+				result.put(e.getKey(), e.getValue());
+			}
+		}
+		return result;
+	}
+
+	public Duration getOverallOvertime() {
+		Duration result = new Duration(0);
+		for (Duration d : getOvertime().values()) {
+			result = result.plus(d);
+		}
+		return result;
 	}
 
 	/**

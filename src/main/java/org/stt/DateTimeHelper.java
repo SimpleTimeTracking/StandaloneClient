@@ -33,6 +33,13 @@ public class DateTimeHelper {
 	}
 
 	/**
+	 * @return if source is between from and to (both inclusive)
+	 */
+	public static boolean isBetween(DateTime source, DateTime from, DateTime to) {
+		return !source.isBefore(from) && !source.isAfter(to);
+	}
+
+	/**
 	 * returns the formatted date in format "HH:mm:ss" if the given date is
 	 * today, "yyyy-MM-dd HH:mm:ss" if the given date is not today
 	 */
