@@ -36,7 +36,7 @@ public class DateTimeHelper {
 	 * returns the formatted date in format "HH:mm:ss" if the given date is
 	 * today, "yyyy-MM-dd HH:mm:ss" if the given date is not today
 	 */
-	public static String prettyPrintDate(DateTime date) {
+	public static String prettyPrintTime(DateTime date) {
 		if (isOnSameDay(date, DateTime.now())) {
 			return hmsDateFormat.print(date);
 		} else {

@@ -77,18 +77,8 @@ public class ReportPrinter {
 				+ "truncated lines for "
 				+ (days == 0 ? "today" : "the last " + days + " days"));
 
-		// TODO: implement
-		// - "yesterday": all items of yesterday, grouped by comment and summed
-		// by durations
-		// - "week": all items of this week, grouped by comment and summed by
-		// durations
-		// - "last week": all items of last week, grouped by comment and summed
-		// by durations
-		// - "year": all items of this year, grouped by comment and summed by
-		// durations
 		printDetails(printTo, searchString, days, truncateLongLines);
 
-		// create a new reader and output the summed up report
 		printSums(printTo, searchString, days, truncateLongLines);
 
 		printOvertime(printTo, days);
@@ -117,7 +107,7 @@ public class ReportPrinter {
 			Duration duration = overtimeMap.get(DateTime.now()
 					.withTimeAtStartOfDay());
 			if (duration != null) {
-				String closingTime = DateTimeHelper.prettyPrintDate(DateTime
+				String closingTime = DateTimeHelper.prettyPrintTime(DateTime
 						.now().minus(duration));
 				printTo.println("closing time: " + closingTime);
 				String timeToGo = DateTimeHelper
@@ -151,11 +141,11 @@ public class ReportPrinter {
 			printTo.println("====== sums of today ======");
 			if (report.getStart() != null) {
 				printTo.println("start of day: "
-						+ DateTimeHelper.hmsDateFormat.print(report.getStart()));
+						+ DateTimeHelper.prettyPrintTime(report.getStart()));
 			}
 			if (report.getEnd() != null) {
 				printTo.println("end of day:   "
-						+ DateTimeHelper.hmsDateFormat.print(report.getEnd()));
+						+ DateTimeHelper.prettyPrintTime(report.getEnd()));
 			}
 		}
 		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
@@ -199,16 +189,12 @@ public class ReportPrinter {
 			String comment = item.getComment().orNull();
 
 			StringBuilder builder = new StringBuilder();
-			if (DateTimeHelper.isOnSameDay(start, DateTime.now())) {
-				builder.append(DateTimeHelper.hmsDateFormat.print(start));
-			} else {
-				builder.append(DateTimeHelper.mdhmsDateFormat.print(start));
-			}
+			builder.append(DateTimeHelper.prettyPrintTime(start));
 			builder.append(" - ");
 			if (end == null) {
 				builder.append("now     ");
 			} else {
-				builder.append(DateTimeHelper.hmsDateFormat.print(end));
+				builder.append(DateTimeHelper.prettyPrintTime(end));
 			}
 			builder.append(" ( ");
 			builder.append(DateTimeHelper.prettyPrintDuration(new Duration(
