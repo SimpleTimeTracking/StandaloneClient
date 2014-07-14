@@ -87,19 +87,16 @@ public class OvertimeReportGenerator {
 		}
 		IOUtils.closeQuietly(reader);
 
-		if (dateToOvertime.size() > 0) {
-			dateToOvertime.putAll(getAbsencesMap(dateToOvertime.keySet()
-					.iterator().next()));
-		}
+		dateToOvertime.putAll(getAbsencesMap());
 		return dateToOvertime;
 	}
 
 	/**
 	 * returns the dates and corresponding absence durations for the given date
 	 */
-	private Map<DateTime, Duration> getAbsencesMap(DateTime since) {
+	private Map<DateTime, Duration> getAbsencesMap() {
 		Map<DateTime, WorkingtimeItem> overtimeAbsencesSince = workingtimeItemProvider
-				.getOvertimeAbsencesSince(since);
+				.getOvertimeAbsences();
 		Map<DateTime, Duration> resultMap = new TreeMap<>();
 		for (Map.Entry<DateTime, WorkingtimeItem> e : overtimeAbsencesSince
 				.entrySet()) {

@@ -58,7 +58,7 @@ public class DateTimeHelper {
 					+ hmsPeriodFormatter.print(new Duration(duration
 							.getMillis() * -1).toPeriod());
 		} else {
-			return hmsPeriodFormatter.print(duration.toPeriod());
+			return " " + hmsPeriodFormatter.print(duration.toPeriod());
 		}
 	}
 }

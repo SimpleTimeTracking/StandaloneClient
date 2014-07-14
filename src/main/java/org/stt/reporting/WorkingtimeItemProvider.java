@@ -31,16 +31,14 @@ public class WorkingtimeItemProvider {
 	/**
 	 * 
 	 * @param date
-	 * @return the dates and corresponding absence times since the given date
-	 *         (inclusive)
+	 * @return the dates and corresponding absence times
 	 */
-	public Map<DateTime, WorkingtimeItem> getOvertimeAbsencesSince(DateTime date) {
+	public Map<DateTime, WorkingtimeItem> getOvertimeAbsences() {
 		Map<DateTime, WorkingtimeItem> overtimeAbsenceDuration = new TreeMap<>();
 		for (Map.Entry<DateTime, WorkingtimeItem> e : workingHoursPerDay
 				.entrySet()) {
 			// if time is negative...
-			if (date.isBefore(e.getKey())
-					&& e.getValue().getMin().isShorterThan(new Duration(0))) {
+			if (e.getValue().getMin().isShorterThan(new Duration(0))) {
 				overtimeAbsenceDuration.put(e.getKey(), e.getValue());
 			}
 		}

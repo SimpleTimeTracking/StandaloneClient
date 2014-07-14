@@ -103,7 +103,8 @@ public class ReportPrinter {
 
 				printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
 						+ " "
-						+ DateTimeHelper.prettyPrintDuration(e.getValue()));
+						+ DateTimeHelper.prettyPrintDuration(e.getValue()) 
+						+ " overall: " + DateTimeHelper.prettyPrintDuration(overallDuration));
 			}
 			printTo.print("sum:       ");
 			printTo.println(DateTimeHelper.prettyPrintDuration(overallDuration));
