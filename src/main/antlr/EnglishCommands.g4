@@ -87,13 +87,15 @@ command returns [TimeTrackingItem newItem, DateTime fin]:
 // CLI stuff
 
 reportStart 
-returns [Integer days]
+returns [DateTime since_date, DateTime at_date]
 locals [DateTime start]: 
 		SINCE d=dateMinus { 
-		$start = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);
-		$days = Integer.valueOf( (int) new Duration($start, DateTime.now()).getStandardDays() );		
+		$since_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);		
 		 }
-	|  	n=NUMBER DAYS { $days = $n.int; }
+	|  	n=NUMBER DAYS { $since_date = new DateTime().minusDays($n.int); }
+	|   AT d=dateMinus {
+	    $at_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);
+	    }
 	|	anyToken*; 
 
 

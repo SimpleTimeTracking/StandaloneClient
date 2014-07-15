@@ -20,7 +20,7 @@ public class ItemFormattingHelper {
 			DateTime end = item.getEnd().orNull();
 			String comment = item.getComment().orNull();
 
-			if (DateTimeHelper.isOnSameDay(start, DateTime.now())) {
+			if (DateTimeHelper.isToday(start)) {
 				builder.append(DateTimeHelper.hmsDateFormat.print(start));
 			} else {
 				builder.append(DateTimeHelper.mdhmsDateFormat.print(start));

@@ -1,7 +1,5 @@
 package org.stt;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -20,6 +18,8 @@ import org.stt.persistence.ItemPersister;
 import org.stt.searching.ItemSearcher;
 
 import com.google.common.base.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ToItemWriterCommandHandler implements CommandHandler {
 
@@ -133,7 +133,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private DateTimeFormatter getShortFormatForTodayAndLongOtherwise(
 			DateTime dateTime) {
 		DateTimeFormatter formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
-		if (DateTimeHelper.isOnSameDay(dateTime, DateTime.now())) {
+		if (DateTimeHelper.isToday(dateTime)) {
 			formatForStart = FORMAT_HOUR_MINUTES_SECONDS;
 		}
 		return formatForStart;

@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
+import org.stt.DateTimeHelper;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -76,7 +77,26 @@ public class ReportPrinterTest {
 
 		// THEN
 		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("10 days"));
+		String expected = DateTimeHelper.prettyPrintTime(DateTime.now()
+				.minusDays(10));
+		assertThat(result, containsString(expected));
+	}
+
+	@Test
+	public void shouldParseAt() throws UnsupportedEncodingException {
+		// GIVEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
+		ItemReaderTestHelper.givenReaderReturns(itemReader,
+				new TimeTrackingItem("comment", new DateTime(2014, 1, 1, 10, 0,
+						0), new DateTime(2014, 1, 1, 12, 0, 0)));
+
+		// WHEN
+		sut.report(Collections.singleton("at 2014-01-01"), printStream);
+
+		// THEN
+		String result = new String(out.toByteArray(), "UTF8");
+		assertThat(result, containsString("comment"));
 	}
 
 	@Test

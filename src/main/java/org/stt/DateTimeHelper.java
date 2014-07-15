@@ -24,6 +24,10 @@ public class DateTimeHelper {
 			.appendSuffix("m").appendSeparator(":").appendSeconds()
 			.appendSuffix("s").toFormatter();
 
+	public static boolean isToday(DateTime date) {
+		return isOnSameDay(date, DateTime.now());
+	}
+
 	public static boolean isOnSameDay(DateTime d1, DateTime d2) {
 		if (d1 == null || d2 == null) {
 			return false;
@@ -61,4 +65,5 @@ public class DateTimeHelper {
 			return " " + hmsPeriodFormatter.print(duration.toPeriod());
 		}
 	}
+
 }

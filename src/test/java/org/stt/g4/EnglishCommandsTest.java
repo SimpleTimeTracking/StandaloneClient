@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Test;
 import org.stt.g4.EnglishCommandsParser.CommandContext;
+import org.stt.g4.EnglishCommandsParser.ReportStartContext;
 
 public class EnglishCommandsTest {
 	@Test
@@ -49,5 +50,27 @@ public class EnglishCommandsTest {
 				new CommonTokenStream(lexer));
 		CommandContext command = parser.command();
 		System.out.println(command.newItem);
+	}
+
+	@Test
+	public void shouldParseReportStartAtCommand() {
+		String commandToParse = "at 20014-01-01";
+		CharStream input = new ANTLRInputStream(commandToParse);
+		EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
+		EnglishCommandsParser parser = new EnglishCommandsParser(
+				new CommonTokenStream(lexer));
+		ReportStartContext reportStart = parser.reportStart();
+		System.out.println(reportStart.at_date);
+	}
+
+	@Test
+	public void shouldParseReportStartSinceCommand() {
+		String commandToParse = "since 20014-01-01";
+		CharStream input = new ANTLRInputStream(commandToParse);
+		EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
+		EnglishCommandsParser parser = new EnglishCommandsParser(
+				new CommonTokenStream(lexer));
+		ReportStartContext reportStart = parser.reportStart();
+		System.out.println(reportStart.since_date);
 	}
 }

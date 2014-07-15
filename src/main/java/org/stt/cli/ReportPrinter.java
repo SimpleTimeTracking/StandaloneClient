@@ -50,7 +50,8 @@ public class ReportPrinter {
 
 	public void report(Collection<String> args, PrintStream printTo) {
 		String searchString = null;
-		int days = 0;
+		DateTime reportStart = DateTime.now().withTimeAtStartOfDay();
+		DateTime reportEnd = DateTime.now().plusDays(1).withTimeAtStartOfDay();
 		boolean truncateLongLines = true;
 
 		if (args.size() > 0) {
@@ -66,49 +67,46 @@ public class ReportPrinter {
 			EnglishCommandsParser parser = new EnglishCommandsParser(
 					new CommonTokenStream(lexer));
 
-			ReportStartContext reportStart = parser.reportStart();
-			if (reportStart.days != null) {
-				days = reportStart.days;
+			ReportStartContext startContext = parser.reportStart();
+			if (startContext.at_date != null) {
+				reportStart = startContext.at_date;
+				reportEnd = startContext.at_date.plusDays(1)
+						.withTimeAtStartOfDay();
+			} else if (startContext.since_date != null) {
+				reportStart = startContext.since_date;
+				reportEnd = DateTime.now();
 			} else {
 				searchString = argsString;
 			}
 		}
 
-		printTo.println("output " + (truncateLongLines ? "" : "not ")
-				+ "truncated lines for "
-				+ (days == 0 ? "today" : "the last " + days + " days"));
+		String output = "output " + (truncateLongLines ? "" : "not ")
+				+ "truncated lines for ";
+		if (DateTimeHelper.isToday(reportStart)) {
+			output += "today";
 
-		printDetails(printTo, searchString, days, truncateLongLines);
+		}
+		output += DateTimeHelper.ymdDateFormat.print(reportStart) + " to "
+				+ DateTimeHelper.ymdDateFormat.print(reportEnd);
+		printTo.println(output);
 
-		printSums(printTo, searchString, days, truncateLongLines);
+		printDetails(printTo, searchString, reportStart, reportEnd,
+				truncateLongLines);
 
-		printOvertime(printTo, days);
+		printSums(printTo, searchString, reportStart, reportEnd,
+				truncateLongLines);
+
+		printOvertime(printTo, reportStart, reportEnd);
 	}
 
-	private void printOvertime(PrintStream printTo, int days) {
+	private void printOvertime(PrintStream printTo, DateTime reportStart,
+			DateTime reportEnd) {
 		OvertimeReportGenerator overtimeReportGenerator = createOvertimeReportGenerator();
 		Map<DateTime, Duration> overtimeMap = overtimeReportGenerator
-				.getOvertime(DateTime.now().minusDays(days)
-						.withTimeAtStartOfDay(), DateTime.now().plusDays(1)
-						.withTimeAtStartOfDay());
+				.getOvertime(reportStart, reportEnd);
 		Duration overallOvertime = overtimeReportGenerator.getOverallOvertime();
 
-		if (days > 0) {
-			printTo.println("====== overtime since "
-					+ DateTimeHelper.ymdDateFormat.print(DateTime.now()
-							.minusDays(days)) + ": ======");
-			Duration overallDuration = new Duration(0);
-			for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
-				overallDuration = overallDuration.plus(e.getValue());
-
-				printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
-						+ " "
-						+ DateTimeHelper.prettyPrintDuration(e.getValue()) 
-						+ " overall: " + DateTimeHelper.prettyPrintDuration(overallDuration));
-			}
-			printTo.print("sum:       ");
-			printTo.println(DateTimeHelper.prettyPrintDuration(overallDuration));
-		} else {
+		if (DateTimeHelper.isToday(reportStart)) {
 			printTo.println("====== times for today: ======");
 			Duration duration = overtimeMap.get(DateTime.now()
 					.withTimeAtStartOfDay());
@@ -121,6 +119,23 @@ public class ReportPrinter {
 								* -1));
 				printTo.println("time to go:   " + timeToGo);
 			}
+
+		} else {
+			printTo.println("====== overtime since "
+					+ DateTimeHelper.ymdDateFormat.print(reportStart)
+					+ ": ======");
+			Duration overallDuration = new Duration(0);
+			for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
+				overallDuration = overallDuration.plus(e.getValue());
+
+				printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
+						+ " "
+						+ DateTimeHelper.prettyPrintDuration(e.getValue())
+						+ " overall: "
+						+ DateTimeHelper.prettyPrintDuration(overallDuration));
+			}
+			printTo.print("sum:       ");
+			printTo.println(DateTimeHelper.prettyPrintDuration(overallDuration));
 		}
 		printTo.println("overall overtime: "
 				+ DateTimeHelper.prettyPrintDuration(overallOvertime));
@@ -130,22 +145,20 @@ public class ReportPrinter {
 	/**
 	 * Prints a nice summed and grouped (by comment) report
 	 */
-	private void printSums(PrintStream printTo, String searchString, int days,
-			boolean truncateLongLines) {
+	private void printSums(PrintStream printTo, String searchString,
+			DateTime reportStart, DateTime reportEnd, boolean truncateLongLines) {
 		ItemReader reportReader = readFrom.provideReader();
 
 		SubstringReaderFilter substFilter = new SubstringReaderFilter(
 				reportReader, searchString);
 
 		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
-				substFilter, days);
+				substFilter, reportStart, reportEnd);
 
 		SummingReportGenerator reporter = new SummingReportGenerator(dateFilter);
 		Report report = reporter.createReport();
 
-		if (days > 0) {
-			printTo.println("====== sums of the last " + days + " days ======");
-		} else {
+		if (DateTimeHelper.isToday(reportStart)) {
 			printTo.println("====== sums of today ======");
 			if (report.getStart() != null) {
 				printTo.println("start of day: "
@@ -155,6 +168,9 @@ public class ReportPrinter {
 				printTo.println("end of day:   "
 						+ DateTimeHelper.prettyPrintTime(report.getEnd()));
 			}
+		} else {
+			printTo.println("====== sums since "
+					+ DateTimeHelper.prettyPrintTime(reportStart));
 		}
 		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
 			printTo.println("time not yet tracked: "
@@ -182,13 +198,13 @@ public class ReportPrinter {
 	 * Prints all items nicely formatted
 	 */
 	private void printDetails(PrintStream printTo, String searchString,
-			int days, boolean truncateLongLines) {
+			DateTime reportStart, DateTime reportEnd, boolean truncateLongLines) {
 
 		printTo.println("====== recorded items: ======");
 
 		ItemReader detailsReader = readFrom.provideReader();
 		ItemReader filteredReader = createStartDateFilterForDays(detailsReader,
-				days);
+				reportStart, reportEnd);
 		Optional<TimeTrackingItem> optionalItem;
 		while ((optionalItem = filteredReader.read()).isPresent()) {
 			TimeTrackingItem item = optionalItem.get();
@@ -231,12 +247,9 @@ public class ReportPrinter {
 	 * "today minus the given days" to "today"
 	 */
 	private StartDateReaderFilter createStartDateFilterForDays(
-			ItemReader readerToFilter, int days) {
-
+			ItemReader readerToFilter, DateTime start, DateTime end) {
 		StartDateReaderFilter dateFilter = new StartDateReaderFilter(
-				readerToFilter, DateTime.now().withTimeAtStartOfDay()
-						.minusDays(days).toDateTime(), DateTime.now()
-						.withTimeAtStartOfDay().plusDays(1).toDateTime());
+				readerToFilter, start, end);
 		return dateFilter;
 	}
 
