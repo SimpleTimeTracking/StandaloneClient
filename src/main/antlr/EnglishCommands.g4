@@ -53,8 +53,7 @@ agoFormat returns [DateTime result]
 	| 	SECONDS {$result = $result.minusSeconds($amount.int); }
 	) AGO;
 
-date: NUMBER DOT NUMBER DOT NUMBER;
-dateMinus: NUMBER MINUS NUMBER MINUS NUMBER;
+date: NUMBER (DOT|MINUS) NUMBER (DOT|MINUS) NUMBER;
 
 optDateWithTime: date? NUMBER COLON NUMBER (COLON NUMBER)?;
 
@@ -65,6 +64,14 @@ sinceFormat returns [DateTime result]: (SINCE|AT) dt=dateTime { $result = $dt.re
 fromToFormat returns [DateTime start, DateTime end]: FROM? s=dateTime TO e=dateTime { 
 	$start = $s.result;
 	$end = $e.result; 
+};
+
+//the same as above but just for date without time
+justDate returns [DateTime result]: txt=date { $result = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($txt.text); };
+
+fromToDateFormat returns [DateTime start, DateTime end]: FROM? s=justDate TO e=justDate { 
+	$start = $s.result;
+	$end = $e.result;
 };
 
 timeFormat[String _comment] returns [TimeTrackingItem item]:
@@ -86,16 +93,15 @@ command returns [TimeTrackingItem newItem, DateTime fin]:
 
 // CLI stuff
 
-reportStart 
-returns [DateTime since_date, DateTime at_date]
-locals [DateTime start]: 
-		SINCE d=dateMinus { 
-		$since_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);		
+reportStart returns [DateTime from_date, DateTime to_date]: 
+		SINCE d=date { 
+		$from_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text); $to_date = DateTime.now();		
 		 }
-	|  	n=NUMBER DAYS { $since_date = new DateTime().minusDays($n.int); }
-	|   AT d=dateMinus {
-	    $at_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text);
+	|  	n=NUMBER DAYS { $from_date = new DateTime().minusDays($n.int); $to_date = DateTime.now();}
+	|   AT d=date {
+	    $from_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text); $to_date=$from_date;
 	    }
+	|   fromTo = fromToDateFormat { $from_date = $fromTo.start; $to_date = $fromTo.end; }
 	|	anyToken*; 
 
 

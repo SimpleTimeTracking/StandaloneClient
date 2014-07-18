@@ -55,6 +55,13 @@ public class DateTimeHelper {
 		}
 	}
 
+	/**
+	 * returns the formatted date in format "yyyy-MM-dd"
+	 */
+	public static String prettyPrintDate(DateTime date) {
+		return ymdDateFormat.print(date);
+	}
+
 	public static String prettyPrintDuration(Duration duration) {
 		if (duration.isShorterThan(new Duration(0))) {
 			// it is negative

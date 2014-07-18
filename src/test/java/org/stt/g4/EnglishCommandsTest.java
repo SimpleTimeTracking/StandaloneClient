@@ -60,7 +60,7 @@ public class EnglishCommandsTest {
 		EnglishCommandsParser parser = new EnglishCommandsParser(
 				new CommonTokenStream(lexer));
 		ReportStartContext reportStart = parser.reportStart();
-		System.out.println(reportStart.at_date);
+		System.out.println(reportStart.from_date);
 	}
 
 	@Test
@@ -71,6 +71,6 @@ public class EnglishCommandsTest {
 		EnglishCommandsParser parser = new EnglishCommandsParser(
 				new CommonTokenStream(lexer));
 		ReportStartContext reportStart = parser.reportStart();
-		System.out.println(reportStart.since_date);
+		System.out.println(reportStart.from_date);
 	}
 }

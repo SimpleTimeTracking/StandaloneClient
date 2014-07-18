@@ -51,7 +51,8 @@ public class ReportPrinter {
 	public void report(Collection<String> args, PrintStream printTo) {
 		String searchString = null;
 		DateTime reportStart = DateTime.now().withTimeAtStartOfDay();
-		DateTime reportEnd = DateTime.now().plusDays(1).withTimeAtStartOfDay();
+		DateTime reportEnd = DateTime.now().plusDays(1).withTimeAtStartOfDay()
+				.minus(1);
 		boolean truncateLongLines = true;
 
 		if (args.size() > 0) {
@@ -68,13 +69,10 @@ public class ReportPrinter {
 					new CommonTokenStream(lexer));
 
 			ReportStartContext startContext = parser.reportStart();
-			if (startContext.at_date != null) {
-				reportStart = startContext.at_date;
-				reportEnd = startContext.at_date.plusDays(1)
-						.withTimeAtStartOfDay();
-			} else if (startContext.since_date != null) {
-				reportStart = startContext.since_date;
-				reportEnd = DateTime.now();
+			if (startContext.from_date != null) {
+				reportStart = startContext.from_date;
+				reportEnd = startContext.to_date.plusDays(1)
+						.withTimeAtStartOfDay().minus(1);
 			} else {
 				searchString = argsString;
 			}
@@ -83,11 +81,12 @@ public class ReportPrinter {
 		String output = "output " + (truncateLongLines ? "" : "not ")
 				+ "truncated lines for ";
 		if (DateTimeHelper.isToday(reportStart)) {
-			output += "today";
+			output += "today ";
 
+		} else {
+			output += DateTimeHelper.prettyPrintDate(reportStart) + " to "
+					+ DateTimeHelper.prettyPrintDate(reportEnd);
 		}
-		output += DateTimeHelper.ymdDateFormat.print(reportStart) + " to "
-				+ DateTimeHelper.ymdDateFormat.print(reportEnd);
 		printTo.println(output);
 
 		printDetails(printTo, searchString, reportStart, reportEnd,
@@ -121,14 +120,14 @@ public class ReportPrinter {
 			}
 
 		} else {
-			printTo.println("====== overtime since "
-					+ DateTimeHelper.ymdDateFormat.print(reportStart)
-					+ ": ======");
+			printTo.println("====== overtime from "
+					+ DateTimeHelper.prettyPrintDate(reportStart) + " to "
+					+ DateTimeHelper.prettyPrintDate(reportEnd) + ": ======");
 			Duration overallDuration = new Duration(0);
 			for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
 				overallDuration = overallDuration.plus(e.getValue());
 
-				printTo.println(DateTimeHelper.ymdDateFormat.print(e.getKey())
+				printTo.println(DateTimeHelper.prettyPrintDate(e.getKey())
 						+ " "
 						+ DateTimeHelper.prettyPrintDuration(e.getValue())
 						+ " overall: "
@@ -169,8 +168,9 @@ public class ReportPrinter {
 						+ DateTimeHelper.prettyPrintTime(report.getEnd()));
 			}
 		} else {
-			printTo.println("====== sums since "
-					+ DateTimeHelper.prettyPrintTime(reportStart));
+			printTo.println("====== sums from "
+					+ DateTimeHelper.prettyPrintDate(reportStart) + " to "
+					+ DateTimeHelper.prettyPrintDate(reportEnd));
 		}
 		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
 			printTo.println("time not yet tracked: "

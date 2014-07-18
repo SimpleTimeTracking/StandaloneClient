@@ -77,7 +77,7 @@ public class ReportPrinterTest {
 
 		// THEN
 		String result = new String(out.toByteArray(), "UTF8");
-		String expected = DateTimeHelper.prettyPrintTime(DateTime.now()
+		String expected = DateTimeHelper.prettyPrintDate(DateTime.now()
 				.minusDays(10));
 		assertThat(result, containsString(expected));
 	}
@@ -113,5 +113,30 @@ public class ReportPrinterTest {
 		// THEN
 		String result = new String(out.toByteArray(), "UTF8");
 		assertThat(result, containsString("comment blub"));
+	}
+
+	@Test
+	public void shouldParseFromTo() throws UnsupportedEncodingException {
+		// GIVEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
+		TimeTrackingItem expected1 = new TimeTrackingItem(
+				"comment blub and stuff", new DateTime(2014, 10, 10, 0, 0, 0),
+				new DateTime(2014, 10, 10, 1, 0, 0));
+		TimeTrackingItem expected2 = new TimeTrackingItem("other stuff",
+				new DateTime(2014, 10, 11, 0, 0, 0), new DateTime(2014, 10, 11,
+						2, 0, 0));
+
+		ItemReaderTestHelper.givenReaderReturns(itemReader, expected1,
+				expected2);
+
+		// WHEN
+		sut.report(Collections.singleton("from 2014-10-10 to 2014-10-12"),
+				printStream);
+
+		// THEN
+		String result = new String(out.toByteArray(), "UTF8");
+		assertThat(result, containsString("comment blub"));
+		assertThat(result, containsString("other stuff"));
 	}
 }
