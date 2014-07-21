@@ -16,6 +16,8 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
+import org.stt.reporting.ItemCategorizer;
+import org.stt.reporting.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider;
 
 import static org.hamcrest.CoreMatchers.containsString;
@@ -23,6 +25,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.anyString;
 
 public class ReportPrinterTest {
 	private ReportPrinter sut;
@@ -38,14 +41,19 @@ public class ReportPrinterTest {
 	@Mock
 	private WorkingtimeItemProvider workingtimeItemProvider;
 
+	@Mock
+	private ItemCategorizer categorizer;
+
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
 
 		given(configuration.getCliReportingWidth()).willReturn(120);
 		given(readFrom.provideReader()).willReturn(itemReader);
+		given(categorizer.getCategory(anyString())).willReturn(
+				ItemCategory.WORKTIME);
 		sut = new ReportPrinter(readFrom, configuration,
-				workingtimeItemProvider);
+				workingtimeItemProvider, categorizer);
 	}
 
 	@Test

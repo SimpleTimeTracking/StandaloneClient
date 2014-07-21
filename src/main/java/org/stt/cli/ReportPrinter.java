@@ -22,11 +22,11 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.ItemCategorizer;
+import org.stt.reporting.ItemCategorizer.ItemCategory;
 import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.reporting.WorktimeCategorizer;
 import org.stt.stt.importer.CachingItemReader;
 
 import com.google.common.base.Optional;
@@ -39,13 +39,16 @@ public class ReportPrinter {
 	private final ItemReaderProvider readFrom;
 	private final Configuration configuration;
 	private final WorkingtimeItemProvider workingtimeItemProvider;
+	private final ItemCategorizer categorizer;
 
 	public ReportPrinter(ItemReaderProvider readFrom,
 			Configuration configuration,
-			WorkingtimeItemProvider workingtimeItemProvider) {
+			WorkingtimeItemProvider workingtimeItemProvider,
+			ItemCategorizer categorizer) {
 		this.readFrom = readFrom;
 		this.configuration = configuration;
 		this.workingtimeItemProvider = workingtimeItemProvider;
+		this.categorizer = categorizer;
 	}
 
 	public void report(Collection<String> args, PrintStream printTo) {
@@ -179,17 +182,28 @@ public class ReportPrinter {
 		}
 		List<ReportingItem> reportingItems = report.getReportingItems();
 
-		Duration overallDuration = new Duration(0);
+		Duration worktimeDuration = new Duration(0);
+		Duration breakTimeDuration = new Duration(0);
 		for (ReportingItem i : reportingItems) {
 			Duration duration = i.getDuration();
-			overallDuration = overallDuration.plus(duration);
 			String comment = i.getComment();
-			printTruncatedString(DateTimeHelper.prettyPrintDuration(duration)
-					+ "   " + comment, printTo, truncateLongLines);
+			String prefix = " ";
+			if (ItemCategory.BREAK.equals(categorizer.getCategory(comment))) {
+				prefix = "*";
+				breakTimeDuration = breakTimeDuration.plus(duration);
+			} else {
+				worktimeDuration = worktimeDuration.plus(duration);
+			}
+			printTruncatedString(
+					prefix + DateTimeHelper.prettyPrintDuration(duration)
+							+ "   " + comment, printTo, truncateLongLines);
 		}
 
-		printTo.println("====== overall sum: ======\n"
-				+ DateTimeHelper.prettyPrintDuration(overallDuration));
+		printTo.println("====== overall sum: ======");
+		printTo.println("work:  "
+				+ DateTimeHelper.prettyPrintDuration(worktimeDuration));
+		printTo.println("break: "
+				+ DateTimeHelper.prettyPrintDuration(breakTimeDuration));
 
 		IOUtils.closeQuietly(reportReader);
 	}
@@ -235,7 +249,7 @@ public class ReportPrinter {
 	}
 
 	private OvertimeReportGenerator createOvertimeReportGenerator() {
-		ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
+
 		CachingItemReader cacher = new CachingItemReader(
 				readFrom.provideReader());
 		return new OvertimeReportGenerator(cacher, categorizer,
