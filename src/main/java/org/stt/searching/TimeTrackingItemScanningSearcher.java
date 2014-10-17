@@ -1,7 +1,7 @@
 package org.stt.searching;
 
+import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,13 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-
-import com.google.common.base.Optional;
 
 public class TimeTrackingItemScanningSearcher implements CommentSearcher {
 	private final ItemReaderProvider itemReaderProvider;
@@ -43,7 +40,7 @@ public class TimeTrackingItemScanningSearcher implements CommentSearcher {
 			String last = null;
 			for (Iterator<String> it = result.iterator(); it.hasNext();) {
 				String current = it.next();
-				if (last != null && current.equals(last)) {
+				if (last != null && last.equals(current)) {
 					it.remove();
 				}
 				last = current;

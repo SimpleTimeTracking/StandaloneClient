@@ -1,11 +1,9 @@
 package org.stt.filter;
 
+import com.google.common.base.Optional;
 import java.io.IOException;
-
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-
-import com.google.common.base.Optional;
 
 /**
  * Reads from the given reader but only returns items where the comment contains
@@ -48,7 +46,7 @@ public class SubstringReaderFilter implements ItemReader {
 			}
 
 			if (searchString == null
-					|| (comment != null && comment.contains(searchString))) {
+					|| comment != null && comment.contains(searchString)) {
 				return item;
 			}
 		}
