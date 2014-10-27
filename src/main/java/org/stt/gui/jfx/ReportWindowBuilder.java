@@ -350,10 +350,10 @@ public class ReportWindowBuilder {
 			final ComboBox<DateTime> comboBox = new ComboBox<DateTime>();
 			ObservableList<DateTime> availableDays = FXCollections
 					.observableArrayList(itemSearcher.getAllTrackedDays());
+                        Collections.reverse(availableDays);
 			comboBox.setItems(availableDays);
 			if (!availableDays.isEmpty()) {
-				comboBox.getSelectionModel().select(
-						availableDays.get(availableDays.size() - 1));
+				comboBox.getSelectionModel().select(0);
 			}
 			comboBox.setConverter(new StringConverter<DateTime>() {
 				@Override

@@ -49,7 +49,7 @@ public class STTApplication implements Callback {
 	Button finButton;
 
 	@FXML
-	Button doneButton;
+	Button insertButton;
 
 	@FXML
 	ListView<TimeTrackingItem> result;
@@ -109,6 +109,7 @@ public class STTApplication implements Callback {
 		setupResultView();
 
 		Scene scene = new Scene(pane);
+                insertButton.setMnemonicParsing(true);
 		finButton.setMnemonicParsing(true);
 
 		stage.setScene(scene);
@@ -172,6 +173,12 @@ public class STTApplication implements Callback {
 		executeCommand();
 		shutdown();
 	}
+
+        @FXML
+        protected void insert() {
+                executeCommand();
+                clearCommand();
+        }
 
 	private void shutdown() {
 		stage.close();

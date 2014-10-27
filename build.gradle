@@ -1,3 +1,4 @@
+apply plugin: 'application'
 apply plugin: 'java';
 apply plugin: 'eclipse';
 apply plugin: 'findbugs';
@@ -7,6 +8,7 @@ apply plugin: 'jacoco';
 def javaHome = System.properties['java.home']
 
 sourceCompatibility = 1.7
+mainClassName='org.stt.StartWithJFX'
 
 configurations {
    antlr4 {
