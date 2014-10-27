@@ -1,5 +1,6 @@
 package org.stt.gui;
 
+import com.google.common.base.Optional;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,11 +14,9 @@ import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
-
 import org.apache.commons.io.IOUtils;
 import org.stt.CommandHandler;
 import org.stt.Configuration;
@@ -28,9 +27,9 @@ import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.persistence.ItemPersister;
 import org.stt.reporting.CommonPrefixGrouper;
 import org.stt.searching.DefaultItemSearcher;
 import org.stt.searching.ItemSearcher;
@@ -38,9 +37,8 @@ import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
 
-import com.google.common.base.Optional;
-
 public class MainContext {
+
 	private static final Logger LOG = Logger.getLogger(MainContext.class
 			.getName());
 	private final Configuration configuration;
@@ -87,7 +85,7 @@ public class MainContext {
 
 					@Override
 					public Optional<TimeTrackingItem> read() {
-						return Optional.<TimeTrackingItem> absent();
+						return Optional.<TimeTrackingItem>absent();
 					}
 				};
 			}
@@ -219,7 +217,7 @@ public class MainContext {
 				itemSearcher.create());
 		Builder builder = new STTApplication.Builder();
 		builder.stage(stage).commandHandler(commandHandler.create())
-				.historySource(persistenceReader.create())
+				.historySourceProvider(itemReaderProvider.create())
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
 				.expansionProvider(commonPrefixGrouper.create());

@@ -1,29 +1,28 @@
 package org.stt.gui.jfx;
 
+import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import javafx.scene.control.TextArea;
+import javafx.stage.Stage;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-
-import javafx.scene.control.TextArea;
-import javafx.stage.Stage;
-
 import org.joda.time.DateTime;
+import org.junit.Assert;
+import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Matchers.any;
 import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -32,14 +31,15 @@ import org.stt.gui.jfx.JFXTestRunner.NotOnPlatformThread;
 import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 import org.stt.searching.ExpansionProvider;
 
-import com.google.common.base.Optional;
-
+@Ignore(value = "JavaFX testing is unstable: The toolkit might shut down more or less anytime, unless a window is still open - or keep the test running forever")
 @RunWith(JFXTestRunner.class)
 public class STTApplicationTest {
+
 	private STTApplication sut;
 	private final JFXTestHelper helper = new JFXTestHelper();
 	private Stage stage;
@@ -71,10 +71,10 @@ public class STTApplicationTest {
 			@Override
 			public void run() {
 				stage = helper.createStageForTest();
-				ItemReader historySource = mock(ItemReader.class);
+				ItemReaderProvider historySourceProvider = mock(ItemReaderProvider.class);
 				Builder builder = new Builder();
 				builder.stage(stage).commandHandler(commandHandler)
-						.historySource(historySource)
+						.historySourceProvider(historySourceProvider)
 						.executorService(executorService)
 						.reportWindowBuilder(reportWindowBuilder)
 						.expansionProvider(expansionProvider);
@@ -189,16 +189,13 @@ public class STTApplicationTest {
 	public void shouldShowWindow() throws Exception {
 
 		// GIVEN
-
 		// WHEN
 		sut.setupStage();
 
 		// THEN
 		assertThat(stage.isShowing(), is(true));
-
 	}
 
-	@Ignore
 	@Test
 	public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
 		// GIVEN
@@ -213,7 +210,6 @@ public class STTApplicationTest {
 		assertThat(commandArea.getText(), equalTo(""));
 	}
 
-	@Ignore
 	@Test
 	public void shouldDelegateCommandExecutionToCommandHandler()
 			throws Exception {
@@ -228,6 +224,20 @@ public class STTApplicationTest {
 
 		// THEN
 		verify(commandHandler).executeCommand(testCommand);
+	}
+
+	@Test
+	public void shouldNotCloseWindowOnInsert() {
+		// GIVEN
+		sut.setupStage();
+		givenCommand("Hello World");
+
+		// WHEN
+		sut.insert();
+
+		// THEN
+		assertThat(sut.stage.isShowing(), is(true));
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -255,7 +265,7 @@ public class STTApplicationTest {
 				verify(executorService).execute(any(Runnable.class));
 				assertThat(
 						sut.result.getItems().toArray(new TimeTrackingItem[0]),
-						is(new TimeTrackingItem[] { item }));
+						is(new TimeTrackingItem[]{item}));
 			}
 		});
 	}
@@ -263,7 +273,7 @@ public class STTApplicationTest {
 	private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
 		ItemReader reader = mock(ItemReader.class);
 		given(reader.read()).willReturn(Optional.of(item),
-				Optional.<TimeTrackingItem> absent());
+				Optional.<TimeTrackingItem>absent());
 		return reader;
 	}
 
@@ -297,6 +307,8 @@ public class STTApplicationTest {
 	}
 
 	private TextArea getCommandArea() {
-		return (TextArea) stage.getScene().lookup("*#commandText");
+		final TextArea commandArea = (TextArea) stage.getScene().lookup("#commandText");
+		Assert.assertNotNull(commandArea);
+		return commandArea;
 	}
 }

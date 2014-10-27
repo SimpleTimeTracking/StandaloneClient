@@ -1,7 +1,8 @@
 package org.stt.gui.jfx;
 
+import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.sun.javafx.application.PlatformImpl;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -10,7 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,17 +28,16 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
 import org.stt.CommandHandler;
 import org.stt.gui.jfx.ResultViewConfigurer.Callback;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
 import org.stt.searching.ExpansionProvider;
 
-import com.sun.javafx.application.PlatformImpl;
-
 public class STTApplication implements Callback {
+
 	private static final Logger LOG = Logger.getLogger(STTApplication.class
 			.getName());
 
@@ -54,10 +53,10 @@ public class STTApplication implements Callback {
 	@FXML
 	ListView<TimeTrackingItem> result;
 
-	private final Stage stage;
+	final Stage stage;
 	private final ExecutorService executorService;
 	private final CommandHandler commandHandler;
-	private final ItemReader historySource;
+	private final ItemReaderProvider historySourceProvider;
 	private final ReportWindowBuilder reportWindowBuilder;
 	private final ExpansionProvider expansionProvider;
 
@@ -69,11 +68,11 @@ public class STTApplication implements Callback {
 		this.reportWindowBuilder = checkNotNull(builder.reportWindowBuilder);
 		this.stage = checkNotNull(builder.stage);
 		this.commandHandler = checkNotNull(builder.commandHandler);
-		this.historySource = checkNotNull(builder.historySource);
+		this.historySourceProvider = checkNotNull(builder.historySourceProvider);
 		this.executorService = checkNotNull(builder.executorService);
 	}
 
-	public void readHistoryFrom(final ItemReader reader) {
+	void readHistoryFrom(final ItemReader reader) {
 		executorService.execute(new Task<Collection<TimeTrackingItem>>() {
 			@Override
 			protected Collection<TimeTrackingItem> call() throws Exception {
@@ -109,7 +108,7 @@ public class STTApplication implements Callback {
 		setupResultView();
 
 		Scene scene = new Scene(pane);
-                insertButton.setMnemonicParsing(true);
+		insertButton.setMnemonicParsing(true);
 		finButton.setMnemonicParsing(true);
 
 		stage.setScene(scene);
@@ -174,13 +173,15 @@ public class STTApplication implements Callback {
 		shutdown();
 	}
 
-        @FXML
-        protected void insert() {
-                executeCommand();
-                clearCommand();
-        }
+	@FXML
+	protected void insert() {
+		Optional<TimeTrackingItem> item = executeCommand();
+		if (item.isPresent()) {
+			readHistoryFrom(historySourceProvider.provideReader());
+		}
+	}
 
-	private void shutdown() {
+	void shutdown() {
 		stage.close();
 		executorService.shutdown();
 		Platform.exit();
@@ -243,11 +244,13 @@ public class STTApplication implements Callback {
 		return a;
 	}
 
-	protected void executeCommand() {
+	protected Optional<TimeTrackingItem> executeCommand() {
 		if (!commandText.getText().trim().isEmpty()) {
-			commandHandler.executeCommand(commandText.getText());
+			Optional<TimeTrackingItem> result = commandHandler.executeCommand(commandText.getText());
 			clearCommand();
+			return result;
 		}
+		return Optional.<TimeTrackingItem>absent();
 	}
 
 	private void clearCommand() {
@@ -260,7 +263,7 @@ public class STTApplication implements Callback {
 			public void run() {
 				try {
 					setupStage();
-					readHistoryFrom(historySource);
+					readHistoryFrom(historySourceProvider.provideReader());
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE, "Couldn't start", e);
 					shutdown();
@@ -291,10 +294,11 @@ public class STTApplication implements Callback {
 	}
 
 	public static class Builder {
+
 		private Stage stage;
 		private ExecutorService executorService;
 		private CommandHandler commandHandler;
-		private ItemReader historySource;
+		private ItemReaderProvider historySourceProvider;
 		private ReportWindowBuilder reportWindowBuilder;
 		private ExpansionProvider expansionProvider;
 
@@ -313,8 +317,8 @@ public class STTApplication implements Callback {
 			return this;
 		}
 
-		public Builder historySource(ItemReader historySource) {
-			this.historySource = historySource;
+		public Builder historySourceProvider(ItemReaderProvider historySourceProvider) {
+			this.historySourceProvider = historySourceProvider;
 			return this;
 		}
 
