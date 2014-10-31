@@ -1,11 +1,9 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.ResourceBundle;
-
 import javafx.beans.binding.ListBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
@@ -35,7 +33,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
-
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
@@ -43,15 +40,14 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.Factory;
-import org.stt.filter.StartDateReaderFilter;
+import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.model.ReportingItem;
-import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.searching.ItemSearcher;
 
 public class ReportWindowBuilder {
+
 	private final ItemReaderProvider readerProvider;
 	private final ItemSearcher itemSearcher;
 
@@ -90,27 +86,17 @@ public class ReportWindowBuilder {
 
 	private ObservableValue<Report> createReportModel(
 			final ObservableValue<DateTime> selectedDateTime) {
-		return new ObjectBinding<Report>() {
+		ObservableValue<DateTime> nextDay = new ObjectBinding<DateTime>() {
 			{
-				super.bind(selectedDateTime);
+				bind(selectedDateTime);
 			}
 
 			@Override
-			protected Report computeValue() {
-				Report report;
-				if (selectedDateTime.getValue() != null) {
-					DateTime startOfDay = selectedDateTime.getValue();
-					DateTime nextDay = startOfDay.plusDays(1);
-					report = createSummaryReportFor(startOfDay, nextDay);
-				} else {
-					report = new Report(
-							Collections.<ReportingItem> emptyList(), null,
-							null, Duration.ZERO);
-				}
-				return report;
+			protected DateTime computeValue() {
+				return selectedDateTime.getValue() != null ? selectedDateTime.getValue().plusDays(1) : null;
 			}
-
 		};
+		return new ReportBinding(selectedDateTime, nextDay, readerProvider);
 	}
 
 	private ListBinding<ReportingItem> createReportingItemsListModel(
@@ -129,19 +115,8 @@ public class ReportWindowBuilder {
 		};
 	}
 
-	private Report createSummaryReportFor(DateTime startOfDay, DateTime nextDay) {
-		try (ItemReader itemReader = readerProvider.provideReader();
-				StartDateReaderFilter filter = new StartDateReaderFilter(
-						itemReader, startOfDay, nextDay)) {
-			SummingReportGenerator reportGenerator = new SummingReportGenerator(
-					filter);
-			return reportGenerator.createReport();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	public class ReportWindowController {
+
 		@FXML
 		private TableColumn<ReportingItem, String> columnForDuration;
 
@@ -197,7 +172,7 @@ public class ReportWindowBuilder {
 			};
 			ObjectBinding<Color> uncoveredTimeTextFillBinding = new When(
 					uncoveredTimeBinding.isEqualTo(Duration.ZERO)).then(
-					Color.BLACK).otherwise(Color.RED);
+							Color.BLACK).otherwise(Color.RED);
 
 			startOfReport.textProperty().bind(startBinding);
 			endOfReport.textProperty().bind(endBinding);
@@ -277,7 +252,7 @@ public class ReportWindowBuilder {
 		private void setCommentColumnCellFactory() {
 			columnForComment
 					.setCellValueFactory(new PropertyValueFactory<ReportingItem, String>(
-							"comment"));
+									"comment"));
 		}
 
 		@SuppressWarnings("rawtypes")
@@ -288,25 +263,25 @@ public class ReportWindowBuilder {
 						@Override
 						public void onChanged(
 								javafx.collections.ListChangeListener.Change<? extends TablePosition> change) {
-							ObservableList<? extends TablePosition> selectedPositions = change
+									ObservableList<? extends TablePosition> selectedPositions = change
 									.getList();
-							setClipboardIfExactlyOneItemWasSelected(selectedPositions);
-						}
-
-						private void setClipboardIfExactlyOneItemWasSelected(
-								ObservableList<? extends TablePosition> selectedPositions) {
-							if (selectedPositions.size() == 1) {
-								TablePosition position = selectedPositions
-										.get(0);
-								ReportingItem reportingItem = tableForReport
-										.getItems().get(position.getRow());
-								if (position.getTableColumn() == columnForDuration) {
-									setClipBoard(reportingItem.getDuration());
-								} else {
-									setClipboard(reportingItem.getComment());
+									setClipboardIfExactlyOneItemWasSelected(selectedPositions);
 								}
-							}
-						}
+
+								private void setClipboardIfExactlyOneItemWasSelected(
+										ObservableList<? extends TablePosition> selectedPositions) {
+											if (selectedPositions.size() == 1) {
+												TablePosition position = selectedPositions
+												.get(0);
+												ReportingItem reportingItem = tableForReport
+												.getItems().get(position.getRow());
+												if (position.getTableColumn() == columnForDuration) {
+													setClipBoard(reportingItem.getDuration());
+												} else {
+													setClipboard(reportingItem.getComment());
+												}
+											}
+										}
 
 					});
 		}
@@ -334,23 +309,23 @@ public class ReportWindowBuilder {
 		private void setDurationColumnCellFactoryToConvertDurationToString() {
 			columnForDuration
 					.setCellValueFactory(new PropertyValueFactory<ReportingItem, String>(
-							"duration") {
-						@Override
-						public ObservableValue<String> call(
-								CellDataFeatures<ReportingItem, String> cellDataFeatures) {
-							String duration = hmsPeriodFormatter
-									.print(cellDataFeatures.getValue()
-											.getDuration().toPeriod());
-							return new SimpleStringProperty(duration);
-						}
-					});
+									"duration") {
+										@Override
+										public ObservableValue<String> call(
+												CellDataFeatures<ReportingItem, String> cellDataFeatures) {
+													String duration = hmsPeriodFormatter
+													.print(cellDataFeatures.getValue()
+															.getDuration().toPeriod());
+													return new SimpleStringProperty(duration);
+												}
+									});
 		}
 
 		private ObservableValue<DateTime> addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty() {
 			final ComboBox<DateTime> comboBox = new ComboBox<DateTime>();
 			ObservableList<DateTime> availableDays = FXCollections
 					.observableArrayList(itemSearcher.getAllTrackedDays());
-                        Collections.reverse(availableDays);
+			Collections.reverse(availableDays);
 			comboBox.setItems(availableDays);
 			if (!availableDays.isEmpty()) {
 				comboBox.getSelectionModel().select(0);
