@@ -6,4 +6,6 @@ build
 .classpath
 .settings
 **.swp
-/.nb-gradle/private/
+/.nb-gradle
+/.idea
+/*.iml

@@ -199,7 +199,8 @@ public class MainContext {
 		setupLogging();
 
 		STTApplication application = createSTTApplication();
-		application.start();
+		Stage stage = stageFactory.create();
+		application.start(stage);
 	}
 
 	private void setupLogging() {
@@ -210,13 +211,12 @@ public class MainContext {
 	}
 
 	STTApplication createSTTApplication() {
-		Stage stage = stageFactory.create();
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
 		ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
 				stageFactory, itemReaderProvider.create(),
 				itemSearcher.create());
 		Builder builder = new STTApplication.Builder();
-		builder.stage(stage).commandHandler(commandHandler.create())
+		builder.commandHandler(commandHandler.create())
 				.historySourceProvider(itemReaderProvider.create())
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)

@@ -3,23 +3,20 @@ package org.stt.gui.jfx;
 import com.google.common.base.Optional;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
-import javafx.scene.control.TextArea;
-import javafx.stage.Stage;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import org.joda.time.DateTime;
-import org.junit.Assert;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,7 +24,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
-import org.stt.gui.jfx.JFXTestRunner.NotOnPlatformThread;
 import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -36,13 +32,9 @@ import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 import org.stt.searching.ExpansionProvider;
 
-@Ignore(value = "JavaFX testing is unstable: The toolkit might shut down more or less anytime, unless a window is still open - or keep the test running forever")
-@RunWith(JFXTestRunner.class)
 public class STTApplicationTest {
 
 	private STTApplication sut;
-	private final JFXTestHelper helper = new JFXTestHelper();
-	private Stage stage;
 
 	@Mock
 	private CommandHandler commandHandler;
@@ -62,32 +54,49 @@ public class STTApplicationTest {
 	@Mock
 	private ExpansionProvider expansionProvider;
 
+	private boolean shutdownCalled;
+
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
 
-		helper.invokeAndWait(new Runnable() {
+		ItemReaderProvider historySourceProvider = mock(ItemReaderProvider.class);
+		Builder builder = new Builder();
+		builder.commandHandler(commandHandler)
+				.historySourceProvider(historySourceProvider)
+				.executorService(executorService)
+				.reportWindowBuilder(reportWindowBuilder)
+				.expansionProvider(expansionProvider);
+		sut = builder.build();
+		sut.viewAdapter
+				= sut.new ViewAdapter(
 
-			@Override
-			public void run() {
-				stage = helper.createStageForTest();
-				ItemReaderProvider historySourceProvider = mock(ItemReaderProvider.class);
-				Builder builder = new Builder();
-				builder.stage(stage).commandHandler(commandHandler)
-						.historySourceProvider(historySourceProvider)
-						.executorService(executorService)
-						.reportWindowBuilder(reportWindowBuilder)
-						.expansionProvider(expansionProvider);
-				sut = builder.build();
-			}
-		});
+
+					null) {
+
+            @Override
+					protected void show() throws RuntimeException {
+					}
+
+					@Override
+					protected void requestFocusOnCommandText() {
+					}
+
+					@Override
+					protected void updateAllItems(Collection<TimeTrackingItem> updateWith) {
+						sut.allItems.setAll(updateWith);
+					}
+
+					@Override
+					protected void shutdown() {
+						shutdownCalled = true;
+					}
+				};
 	}
 
 	@Test
-	@NotOnPlatformThread
 	public void shouldDelegateToExpansionProvider() {
 		// GIVEN
-		setupStage();
 
 		setTextAndPositionCaretAtEnd("test");
 
@@ -98,17 +107,15 @@ public class STTApplicationTest {
 		sut.expandCurrentCommand();
 
 		// THEN
-		assertThat(sut.commandText.getText(), is("testblub"));
+		assertThat(sut.currentCommand.get(), is("testblub"));
 	}
 
 	@Test
-	@NotOnPlatformThread
 	public void shouldExpandWithinText() {
 		// GIVEN
-		setupStage();
 
-		sut.commandText.setText("al beta");
-		sut.commandText.positionCaret(2);
+		sut.currentCommand.set("al beta");
+		sut.commandCaretPosition.set(2);
 
 		given(expansionProvider.getPossibleExpansions("al")).willReturn(
 				Arrays.asList("pha"));
@@ -117,15 +124,13 @@ public class STTApplicationTest {
 		sut.expandCurrentCommand();
 
 		// THEN
-		assertThat(sut.commandText.getText(), is("alpha beta"));
-		assertThat(sut.commandText.getCaretPosition(), is(5));
+		assertThat(sut.currentCommand.get(), is("alpha beta"));
+		assertThat(sut.commandCaretPosition.get(), is(5));
 	}
 
 	@Test
-	@NotOnPlatformThread
 	public void shouldExpandToCommonPrefix() {
 		// GIVEN
-		setupStage();
 
 		String currentText = "test";
 		setTextAndPositionCaretAtEnd(currentText);
@@ -137,12 +142,12 @@ public class STTApplicationTest {
 		sut.expandCurrentCommand();
 
 		// THEN
-		assertThat(sut.commandText.getText(), is("testaa"));
+		assertThat(sut.currentCommand.get(), is("testaa"));
 	}
 
 	private void setTextAndPositionCaretAtEnd(String currentText) {
-		sut.commandText.setText(currentText);
-		sut.commandText.positionCaret(currentText.length());
+		sut.currentCommand.set(currentText);
+		sut.commandCaretPosition.set(currentText.length());
 	}
 
 	@Test
@@ -163,7 +168,6 @@ public class STTApplicationTest {
 		givenExecutorService();
 		final TimeTrackingItem item = new TimeTrackingItem("comment",
 				DateTime.now());
-		setupStage();
 
 		sut.allItems.setAll(item);
 
@@ -171,43 +175,30 @@ public class STTApplicationTest {
 		sut.delete(item);
 
 		// THEN
-		assertThat(sut.result.getItems(), not(hasItem(item)));
+		assertThat(sut.filteredList.get(), not(hasItem(item)));
 	}
 
 	@Test
 	public void shouldShowReportWindow() throws IOException {
-		// GIVEN
+        // GIVEN
 
 		// WHEN
-		sut.showReportWindow();
+		sut.viewAdapter.showReportWindow();
 
 		// THEN
 		verify(reportWindowBuilder).setupStage();
 	}
 
 	@Test
-	public void shouldShowWindow() throws Exception {
-
-		// GIVEN
-		// WHEN
-		sut.setupStage();
-
-		// THEN
-		assertThat(stage.isShowing(), is(true));
-	}
-
-	@Test
 	public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
 		// GIVEN
-		sut.setupStage();
-		TextArea commandArea = getCommandArea();
-		commandArea.setText("test");
+		givenCommand("test");
 
 		// WHEN
 		sut.executeCommand();
 
 		// THEN
-		assertThat(commandArea.getText(), equalTo(""));
+		assertThat(sut.currentCommand.get(), equalTo(""));
 	}
 
 	@Test
@@ -216,7 +207,6 @@ public class STTApplicationTest {
 		// GIVEN
 		String testCommand = "test";
 
-		sut.setupStage();
 		givenCommand(testCommand);
 
 		// WHEN
@@ -229,20 +219,18 @@ public class STTApplicationTest {
 	@Test
 	public void shouldNotCloseWindowOnInsert() {
 		// GIVEN
-		sut.setupStage();
 		givenCommand("Hello World");
+		given(commandHandler.executeCommand(anyString())).willReturn(Optional.<TimeTrackingItem>absent());
 
 		// WHEN
-		sut.insert();
+		sut.viewAdapter.insert();
 
 		// THEN
-		assertThat(sut.stage.isShowing(), is(true));
-
+		assertThat(shutdownCalled, is(false));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
-	@NotOnPlatformThread
 	public void shouldReadHistoryItemsFromReader() throws Exception {
 		// GIVEN
 		givenExecutorService();
@@ -250,24 +238,16 @@ public class STTApplicationTest {
 		final TimeTrackingItem item = new TimeTrackingItem("comment",
 				DateTime.now());
 
-		setupStage();
-
 		ItemReader reader = givenReaderThatReturns(item);
 
 		// WHEN
 		sut.readHistoryFrom(reader);
 
 		// THEN
-		helper.invokeAndWait(new Runnable() {
-
-			@Override
-			public void run() {
-				verify(executorService).execute(any(Runnable.class));
-				assertThat(
-						sut.result.getItems().toArray(new TimeTrackingItem[0]),
-						is(new TimeTrackingItem[]{item}));
-			}
-		});
+		verify(executorService).execute(any(Runnable.class));
+		assertThat(
+				sut.filteredList.get().toArray(new TimeTrackingItem[0]),
+				is(new TimeTrackingItem[]{item}));
 	}
 
 	private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
@@ -275,20 +255,6 @@ public class STTApplicationTest {
 		given(reader.read()).willReturn(Optional.of(item),
 				Optional.<TimeTrackingItem>absent());
 		return reader;
-	}
-
-	private void setupStage() {
-		helper.invokeAndWait(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					sut.setupStage();
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		});
 	}
 
 	private void givenExecutorService() {
@@ -302,13 +268,6 @@ public class STTApplicationTest {
 	}
 
 	private void givenCommand(String command) {
-		TextArea commandArea = getCommandArea();
-		commandArea.setText(command);
-	}
-
-	private TextArea getCommandArea() {
-		final TextArea commandArea = (TextArea) stage.getScene().lookup("#commandText");
-		Assert.assertNotNull(commandArea);
-		return commandArea;
+		sut.currentCommand.set(command);
 	}
 }
