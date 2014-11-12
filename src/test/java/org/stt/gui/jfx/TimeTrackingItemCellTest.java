@@ -1,20 +1,20 @@
 package org.stt.gui.jfx;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.verify;
+import javafx.embed.swing.JFXPanel;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
-
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
 import org.hamcrest.Matchers;
+import static org.hamcrest.Matchers.hasProperty;
 import org.joda.time.DateTime;
+import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
 import org.mockito.MockitoAnnotations;
 import org.stt.gui.jfx.TimeTrackingItemCell.Builder;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
@@ -24,6 +24,7 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 
 public class TimeTrackingItemCellTest {
+
 	private TimeTrackingItemCell sut;
 	@Mock
 	private ContinueActionHandler continueActionHandler;
@@ -45,7 +46,8 @@ public class TimeTrackingItemCellTest {
 	private TimeTrackingItemFilter firstItemOfTheDayFilter;
 
 	@Before
-	public void setup() {
+	public void setup() throws Throwable {
+		new JFXPanel();
 		MockitoAnnotations.initMocks(this);
 		Builder builder = new TimeTrackingItemCell.Builder();
 		builder.continueActionHandler(continueActionHandler)
@@ -112,10 +114,10 @@ public class TimeTrackingItemCellTest {
 	}
 
 	private void assertPanelHasImageButtonWithImage(Pane pane, Image image) {
-		assertThat(pane.getChildren(), hasItem(Matchers.<Node> hasProperty(
+		assertThat(pane.getChildren(), hasItem(Matchers.<Node>hasProperty(
 				"children",
-				hasItem(Matchers.<Node> hasProperty("graphic",
-						hasProperty("image", is(image)))))));
+				hasItem(Matchers.<Node>hasProperty("graphic",
+								hasProperty("image", is(image)))))));
 	}
 
 	@Test
