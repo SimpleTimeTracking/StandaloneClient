@@ -14,13 +14,13 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
-
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 
 public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
+
 	private final HBox cellPane = new HBox(10);
 
 	private final HBox actionsPane = new HBox();
@@ -35,8 +35,6 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final Label labelForEnd = new Label();
 
-	private TimeTrackingItem item;
-
 	final Button editButton;
 
 	final Button continueButton;
@@ -48,6 +46,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	private final ImageView runningImageView;
 
 	private final TimeTrackingItemFilter firstItemOfTheDayFilter;
+	private BorderPane firstDayPane;
 
 	private TimeTrackingItemCell(Builder builder) {
 		this.editButton = new ImageButton(checkNotNull(builder.editImage));
@@ -81,6 +80,8 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 				timePane);
 		cellPane.setAlignment(Pos.CENTER_LEFT);
 		actionsPane.setAlignment(Pos.CENTER_LEFT);
+
+		createFirstDayPane();
 	}
 
 	private void setupListenersForCallbacks(
@@ -90,7 +91,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		continueButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				continueActionHandler.continueItem(item);
+				continueActionHandler.continueItem(getItem());
 			}
 		});
 
@@ -98,7 +99,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 			@Override
 			public void handle(ActionEvent arg0) {
-				editActionHandler.edit(item);
+				editActionHandler.edit(getItem());
 			}
 		});
 
@@ -106,7 +107,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 			@Override
 			public void handle(ActionEvent arg0) {
-				deleteActionHandler.delete(item);
+				deleteActionHandler.delete(getItem());
 			}
 		});
 	}
@@ -115,28 +116,30 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	protected void updateItem(TimeTrackingItem item, boolean empty) {
 		super.updateItem(item, empty);
 		if (empty) {
-			this.item = null;
 			setGraphic(null);
 		} else {
-			this.item = item;
 			applyLabelForComment();
 			setupTimePane();
 			if (firstItemOfTheDayFilter.filter(item)) {
-				BorderPane pane = new BorderPane();
-				pane.setCenter(cellPane);
-				Separator separator = new Separator();
-				separator.setPrefHeight(10);
-				pane.setBottom(separator);
-				setGraphic(pane);
+				setGraphic(firstDayPane);
 			} else {
 				setGraphic(cellPane);
 			}
 		}
 	}
 
+	private void createFirstDayPane() {
+		firstDayPane = new BorderPane();
+		firstDayPane.setCenter(cellPane);
+		Separator separator = new Separator();
+		separator.setPrefHeight(10);
+		firstDayPane.setBottom(separator);
+		setGraphic(firstDayPane);
+	}
+
 	private void applyLabelForComment() {
-		if (item.getComment().isPresent()) {
-			labelForComment.setText(item.getComment().get());
+		if (getItem().getComment().isPresent()) {
+			labelForComment.setText(getItem().getComment().get());
 		} else {
 			labelForComment.setText("");
 		}
@@ -144,30 +147,34 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private void setupTimePane() {
 		DateTimeFormatter dateTimeFormatter = DateTimeFormat.shortDateTime();
-		labelForStart.setText(dateTimeFormatter.print(item.getStart()));
+		labelForStart.setText(dateTimeFormatter.print(getItem().getStart()));
 
-		if (!item.getEnd().isPresent()) {
+		if (!getItem().getEnd().isPresent()) {
 			timePane.getChildren().setAll(labelForStart, runningImageView);
 		} else {
-			labelForEnd.setText(dateTimeFormatter.print(item.getEnd().get()));
+			labelForEnd.setText(dateTimeFormatter.print(getItem().getEnd().get()));
 			timePane.getChildren().setAll(labelForStart, fromToImageView,
 					labelForEnd);
 		}
 	}
 
 	public interface ContinueActionHandler {
+
 		void continueItem(TimeTrackingItem item);
 	}
 
 	public interface EditActionHandler {
+
 		void edit(TimeTrackingItem item);
 	}
 
 	public interface DeleteActionHandler {
+
 		void delete(TimeTrackingItem item);
 	}
 
 	public static class Builder {
+
 		private ContinueActionHandler continueActionHandler;
 		private DeleteActionHandler deleteActionHandler;
 		private EditActionHandler editActionHandler;

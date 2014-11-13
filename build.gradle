@@ -10,6 +10,8 @@ def javaHome = System.properties['java.home']
 sourceCompatibility = 1.7
 mainClassName='org.stt.StartWithJFX'
 
+ext.mainClass = mainClassName
+
 configurations {
 	antlr4 {
 		description = "ANTLR4"
