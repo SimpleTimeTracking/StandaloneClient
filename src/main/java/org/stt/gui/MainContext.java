@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
@@ -169,6 +170,15 @@ public class MainContext {
 		}
 	};
 
+	private final Factory<ResourceBundle> resourceBundle = new Singleton<ResourceBundle>() {
+
+		@Override
+		protected ResourceBundle createInstance() {
+			return ResourceBundle
+					.getBundle("org.stt.gui.Application");
+		}
+	};
+
 	public MainContext() {
 		configuration = new Configuration();
 	}
@@ -220,7 +230,8 @@ public class MainContext {
 				.historySourceProvider(itemReaderProvider.create())
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
-				.expansionProvider(commonPrefixGrouper.create());
+				.expansionProvider(commonPrefixGrouper.create())
+				.resourceBundle(resourceBundle.create());
 		return builder.build();
 	}
 }

@@ -1,11 +1,11 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.ResourceBundle;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.util.Callback;
-
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
@@ -34,10 +34,12 @@ public class TimeTrackingItemCellFactory implements
 			ContinueActionHandler continueActionHandler,
 			DeleteActionHandler deleteActionHandler,
 			EditActionHandler editActionHandler,
-			TimeTrackingItemFilter firstItemOfTheDayFilter) {
+			TimeTrackingItemFilter firstItemOfTheDayFilter,
+			ResourceBundle resourceBundle) {
 		checkNotNull(continueActionHandler);
 		checkNotNull(deleteActionHandler);
 		checkNotNull(editActionHandler);
+		checkNotNull(resourceBundle);
 
 		timeTrackingItemCellBuilder = new TimeTrackingItemCell.Builder()
 				.continueActionHandler(continueActionHandler)
@@ -46,12 +48,12 @@ public class TimeTrackingItemCellFactory implements
 				.continueImage(continueImage).deleteImage(deleteImage)
 				.editImage(editImage).runningImage(runningImage)
 				.fromToImage(fromToImage)
-				.firstItemOfTheDayFilter(firstItemOfTheDayFilter);
-
+				.firstItemOfTheDayFilter(firstItemOfTheDayFilter)
+				.resourceBundle(resourceBundle);
 	}
 
 	@Override
 	public ListCell<TimeTrackingItem> call(ListView<TimeTrackingItem> arg0) {
-		return timeTrackingItemCellBuilder.build();
+		return new TimeTrackingItemCell(timeTrackingItemCellBuilder);
 	}
 }

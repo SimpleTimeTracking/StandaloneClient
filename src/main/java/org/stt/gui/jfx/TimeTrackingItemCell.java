@@ -1,6 +1,7 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -8,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -48,11 +50,13 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	private final TimeTrackingItemFilter firstItemOfTheDayFilter;
 	private BorderPane firstDayPane;
 
-	private TimeTrackingItemCell(Builder builder) {
+	public TimeTrackingItemCell(Builder builder) {
+		ResourceBundle localization = builder.resourceBundle;
 		this.editButton = new ImageButton(checkNotNull(builder.editImage));
 		this.continueButton = new ImageButton(
 				checkNotNull(builder.continueImage));
 		this.deleteButton = new ImageButton(checkNotNull(builder.deleteImage));
+		setupTooltips(localization);
 		this.fromToImageView = new ImageView(checkNotNull(builder.fromToImage));
 		this.runningImageView = new ImageView(
 				checkNotNull(builder.runningImage));
@@ -82,6 +86,12 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		actionsPane.setAlignment(Pos.CENTER_LEFT);
 
 		createFirstDayPane();
+	}
+
+	protected void setupTooltips(ResourceBundle localization) {
+		editButton.setTooltip(new Tooltip(localization.getString("itemList.edit")));
+		continueButton.setTooltip(new Tooltip(localization.getString("itemList.continue")));
+		deleteButton.setTooltip(new Tooltip(localization.getString("itemList.delete")));
 	}
 
 	private void setupListenersForCallbacks(
@@ -179,6 +189,7 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		private DeleteActionHandler deleteActionHandler;
 		private EditActionHandler editActionHandler;
 		private TimeTrackingItemFilter firstItemOfTheDayFilter;
+		private ResourceBundle resourceBundle;
 		private Image editImage;
 		private Image deleteImage;
 		private Image continueImage;
@@ -231,9 +242,9 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			return this;
 		}
 
-		public TimeTrackingItemCell build() {
-			return new TimeTrackingItemCell(this);
+		public Builder resourceBundle(ResourceBundle resourceBundle) {
+			this.resourceBundle = checkNotNull(resourceBundle);
+			return this;
 		}
-
 	}
 }

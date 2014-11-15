@@ -1,5 +1,6 @@
 package org.stt.gui.jfx;
 
+import java.util.ResourceBundle;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -50,15 +51,23 @@ public class TimeTrackingItemCellTest {
 		new JFXPanel();
 		MockitoAnnotations.initMocks(this);
 		Builder builder = new TimeTrackingItemCell.Builder();
+		ResourceBundle resourceBundle = ResourceBundle
+				.getBundle("org.stt.gui.Application");
 		builder.continueActionHandler(continueActionHandler)
 				.deleteActionHandler(deleteActionHandler)
 				.editActionHandler(editActionHandler)
 				.continueImage(imageForContinue).deleteImage(imageForDelete)
 				.editImage(imageForEdit).runningImage(runningImage)
 				.fromToImage(imageFromTo)
-				.firstItemOfTheDayFilter(firstItemOfTheDayFilter);
+				.firstItemOfTheDayFilter(firstItemOfTheDayFilter)
+				.resourceBundle(resourceBundle);
 
-		sut = builder.build();
+		sut = new TimeTrackingItemCell(builder) {
+
+			@Override
+			protected void setupTooltips(ResourceBundle localization) {
+			}
+		};
 	}
 
 	@Test

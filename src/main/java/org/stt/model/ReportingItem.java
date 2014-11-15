@@ -4,8 +4,8 @@ import org.joda.time.Duration;
 
 public class ReportingItem {
 
-	private Duration duration;
-	private String comment;
+	private final Duration duration;
+	private final String comment;
 
 	public ReportingItem(Duration duration, String comment) {
 		this.duration = duration;

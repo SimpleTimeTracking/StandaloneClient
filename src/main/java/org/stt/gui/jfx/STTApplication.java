@@ -70,10 +70,11 @@ public class STTApplication implements Callback {
 	private final ItemReaderProvider historySourceProvider;
 	private final ReportWindowBuilder reportWindowBuilder;
 	private final ExpansionProvider expansionProvider;
+	private final ResourceBundle localization;
 
 	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
-	ListProperty<TimeTrackingItem> filteredList = new SimpleListProperty<TimeTrackingItem>(FXCollections
+	ListProperty<TimeTrackingItem> filteredList = new SimpleListProperty<>(FXCollections
 			.<TimeTrackingItem>observableArrayList());
 	final StringProperty currentCommand = new SimpleStringProperty("");
 	final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
@@ -87,6 +88,7 @@ public class STTApplication implements Callback {
 		this.commandHandler = checkNotNull(builder.commandHandler);
 		this.historySourceProvider = checkNotNull(builder.historySourceProvider);
 		this.executorService = checkNotNull(builder.executorService);
+		this.localization = checkNotNull(builder.resourceBundle);
 
 		ResultViewConfigurer resultViewConfigurer = new ResultViewConfigurer();
 		resultViewConfigurer.configure(filteredList, selectedItem, allItems,
@@ -209,6 +211,7 @@ public class STTApplication implements Callback {
 		private ItemReaderProvider historySourceProvider;
 		private ReportWindowBuilder reportWindowBuilder;
 		private ExpansionProvider expansionProvider;
+		private ResourceBundle resourceBundle;
 
 		public Builder executorService(ExecutorService executorService) {
 			this.executorService = executorService;
@@ -236,9 +239,15 @@ public class STTApplication implements Callback {
 			return this;
 		}
 
+		public Builder resourceBundle(ResourceBundle resourceBundle) {
+			this.resourceBundle = resourceBundle;
+			return this;
+		}
+
 		public STTApplication build() {
 			return new STTApplication(this);
 		}
+
 	}
 
 	public class ViewAdapter {
@@ -262,8 +271,6 @@ public class STTApplication implements Callback {
 		}
 
 		protected void show() throws RuntimeException {
-			final ResourceBundle localization = ResourceBundle
-					.getBundle("org.stt.gui.Application");
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(
 					"/org/stt/gui/jfx/MainWindow.fxml"), localization);
 			loader.setController(this);
@@ -351,7 +358,7 @@ public class STTApplication implements Callback {
 						public boolean filter(TimeTrackingItem item) {
 							return firstItemOfDayBinding.contains(item);
 						}
-					}));
+					}, localization));
 		}
 
 		private ObservableSet<TimeTrackingItem> createFirstItemOfDayBinding(

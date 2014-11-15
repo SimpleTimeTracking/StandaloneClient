@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -54,6 +55,9 @@ public class STTApplicationTest {
 	@Mock
 	private ExpansionProvider expansionProvider;
 
+	@Mock
+	private ResourceBundle resourceBundle;
+
 	private boolean shutdownCalled;
 
 	@Before
@@ -66,7 +70,8 @@ public class STTApplicationTest {
 				.historySourceProvider(historySourceProvider)
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
-				.expansionProvider(expansionProvider);
+				.expansionProvider(expansionProvider)
+				.resourceBundle(resourceBundle);
 		sut = builder.build();
 		sut.viewAdapter
 				= sut.new ViewAdapter(
