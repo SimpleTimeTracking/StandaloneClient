@@ -3,7 +3,10 @@ package org.stt.gui.jfx;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 import com.sun.javafx.application.PlatformImpl;
+import java.awt.Desktop;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -461,6 +464,13 @@ public class STTApplication implements Callback {
 			if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
 				expandCurrentCommand();
 				event.consume();
+			}
+			if (KeyCode.F1.equals(event.getCode())) {
+				try {
+					Desktop.getDesktop().browse(new URI("https://github.com/Bytekeeper/STT/wiki/CLI"));
+				} catch (IOException | URISyntaxException ex) {
+					LOG.log(Level.SEVERE, null, ex);
+				}
 			}
 		}
 

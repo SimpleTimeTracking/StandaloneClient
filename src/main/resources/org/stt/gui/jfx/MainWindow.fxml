@@ -15,7 +15,10 @@
          <children>
             <HBox spacing="10.0">
                <children>
-                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" prefHeight="178.0" prefWidth="624.0" wrapText="true" HBox.hgrow="SOMETIMES" />
+                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" prefHeight="178.0" prefWidth="624.0" wrapText="true" HBox.hgrow="SOMETIMES">
+                     <tooltip>
+                        <Tooltip text="%command.tooltip" />
+                     </tooltip></TextArea>
                   <FlowPane alignment="CENTER" hgap="10.0" prefHeight="0.0" prefWidth="0.0" vgap="10.0">
                      <children>
                         <Button fx:id="insertButton" mnemonicParsing="false" onAction="#insert" text="%insert">
