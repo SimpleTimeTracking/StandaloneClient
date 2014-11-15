@@ -40,7 +40,7 @@ import org.stt.model.*;
 	
 }
 
-anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS;
+anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL;
 comment: anyToken*?;
 
 agoFormat returns [DateTime result]
@@ -59,7 +59,10 @@ optDateWithTime: date? NUMBER COLON NUMBER (COLON NUMBER)?;
 
 dateTime returns [DateTime result]: txt=optDateWithTime { $result = parseDateTime($txt.text); };
 
-sinceFormat returns [DateTime result]: (SINCE|AT) dt=dateTime { $result = $dt.result; };
+sinceFormat returns [DateTime start, DateTime end]: (SINCE|AT) s=dateTime 
+	(UNTIL e=dateTime { $end = $e.result; })? {
+$start = $s.result;
+};
 
 fromToFormat returns [DateTime start, DateTime end]: FROM? s=dateTime TO e=dateTime { 
 	$start = $s.result;
@@ -76,8 +79,14 @@ fromToDateFormat returns [DateTime start, DateTime end]: FROM? s=justDate TO e=j
 
 timeFormat[String _comment] returns [TimeTrackingItem item]:
 		ago=agoFormat { $item = new TimeTrackingItem($_comment, $ago.result); } 
-	| 	since=sinceFormat { $item = new TimeTrackingItem($_comment, $since.result); }
-	|	fromTo=fromToFormat { $item = new TimeTrackingItem($_comment, $fromTo.start, $fromTo.end); }
+	| 	since=sinceFormat {
+	if ($since.end == null) {
+		$item = new TimeTrackingItem($_comment, $since.start);
+	} else {
+		$item = new TimeTrackingItem($_comment, $since.start, $since.end);
+}
+		}
+|	fromTo=fromToFormat { $item = new TimeTrackingItem($_comment, $fromTo.start, $fromTo.end); }
 	|	{ $item = new TimeTrackingItem($_comment, DateTime.now()); };
 	
 command returns [TimeTrackingItem newItem, DateTime fin]:
@@ -122,6 +131,7 @@ MINUTES: 'min' | 'mins' | 'minute' | 'minutes';
 SINCE: 'since';
 SECONDS: 's' | 'sec' | 'secs' | 'second' | 'seconds';
 TO: 'to';
+UNTIL: 'until';
 
 WS: [ \t\r\n]+ -> channel(HIDDEN);
 fragment DIGIT: [0-9];

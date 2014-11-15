@@ -1,19 +1,14 @@
 package org.stt;
 
+import com.google.common.base.Optional;
+import java.io.IOException;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
-import java.io.IOException;
-
 import org.hamcrest.Matchers;
+import static org.hamcrest.Matchers.greaterThan;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
+import static org.junit.Assert.assertThat;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,13 +18,15 @@ import org.junit.experimental.theories.Theory;
 import org.junit.experimental.theories.suppliers.TestedOn;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.eq;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 import org.stt.searching.ItemSearcher;
-
-import com.google.common.base.Optional;
 
 @RunWith(Theories.class)
 public class ToItemWriterCommandHandlerTest {
@@ -208,7 +205,23 @@ public class ToItemWriterCommandHandlerTest {
 		// THEN
 		assertThat(result, is(Optional.of(expectedItem)));
 	}
+	@Test
+	public void shouldParseSinceXUntilYCommand() {
+		// GIVEN
+		DateTime expectedStart = DateTime.now().withTimeAtStartOfDay()
+				.withHourOfDay(12);
+		DateTime expectedEnd = DateTime.now().withTimeAtStartOfDay()
+				.withHourOfDay(13);
+		TimeTrackingItem expectedItem = new TimeTrackingItem("comment",
+				expectedStart, expectedEnd);
+		// WHEN
+		Optional<TimeTrackingItem> result = sut
+				.executeCommand("comment since 12:00 until 13:00");
 
+		// THEN
+		assertThat(result, is(Optional.of(expectedItem)));
+	}
+	
 	@Test
 	public void shouldParseFromToWithSpaceInComment() {
 		// GIVEN
