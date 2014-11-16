@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.text.*?>
-<?import javafx.geometry.*?>
 <?import java.lang.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.text.*?>
 
 <BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <bottom>
@@ -27,6 +26,7 @@
          <children>
             <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
                <columns>
+                  <TableColumn fx:id="columnForRoundedDuration" prefWidth="75.0" text="%report.rounded" />
                   <TableColumn fx:id="columnForDuration" prefWidth="156.0" text="%report.duration" />
                   <TableColumn fx:id="columnForComment" prefWidth="642.0" text="%report.comment" />
                </columns>

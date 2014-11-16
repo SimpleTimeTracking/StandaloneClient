@@ -2,7 +2,9 @@ package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 import javafx.beans.binding.ListBinding;
 import javafx.beans.binding.ObjectBinding;
@@ -45,6 +47,7 @@ import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.searching.ItemSearcher;
+import org.stt.time.DurationRounder;
 
 public class ReportWindowBuilder {
 
@@ -61,12 +64,14 @@ public class ReportWindowBuilder {
 			.forPattern("HH:mm:ss");
 
 	private final Factory<Stage> stageFactory;
+	private final DurationRounder rounder;
 
 	public ReportWindowBuilder(Factory<Stage> stageFactory,
-			ItemReaderProvider readerProvider, ItemSearcher searcher) {
+			ItemReaderProvider readerProvider, ItemSearcher searcher, DurationRounder rounder) {
 		this.stageFactory = checkNotNull(stageFactory);
 		this.itemSearcher = checkNotNull(searcher);
 		this.readerProvider = checkNotNull(readerProvider);
+		this.rounder = checkNotNull(rounder);
 	}
 
 	public void setupStage() throws IOException {
@@ -99,32 +104,64 @@ public class ReportWindowBuilder {
 		return new ReportBinding(selectedDateTime, nextDay, readerProvider);
 	}
 
-	private ListBinding<ReportingItem> createReportingItemsListModel(
+	private ListBinding<ListItem> createReportingItemsListModel(
 			final ObservableValue<Report> report) {
-		return new ListBinding<ReportingItem>() {
+		return new ListBinding<ListItem>() {
 			{
 				super.bind(report);
 			}
 
 			@Override
-			protected ObservableList<ReportingItem> computeValue() {
-				return FXCollections.observableArrayList(report.getValue()
-						.getReportingItems());
+			protected ObservableList<ListItem> computeValue() {
+				List<ReportingItem> reportingItems = report.getValue().getReportingItems();
+				List<ListItem> resultList = new ArrayList<>();
+				for (ReportingItem reportItem : reportingItems) {
+					resultList.add(new ListItem(reportItem.getComment(), reportItem.getDuration(), rounder.roundDuration(reportItem.getDuration())));
+				}
+				return FXCollections.observableArrayList(resultList);
 			}
 
 		};
 	}
 
+	public static class ListItem {
+
+		private String comment;
+		private Duration duration;
+		private Duration roundedDuration;
+
+		public ListItem(String comment, Duration duration, Duration roundedDuration) {
+			this.comment = comment;
+			this.duration = duration;
+			this.roundedDuration = roundedDuration;
+		}
+
+		public String getComment() {
+			return comment;
+		}
+
+		public Duration getDuration() {
+			return duration;
+		}
+
+		public Duration getRoundedDuration() {
+			return roundedDuration;
+		}
+	}
+
 	public class ReportWindowController {
 
 		@FXML
-		private TableColumn<ReportingItem, String> columnForDuration;
+		private TableColumn<ListItem, String> columnForRoundedDuration;
 
 		@FXML
-		private TableColumn<ReportingItem, String> columnForComment;
+		private TableColumn<ListItem, String> columnForDuration;
 
 		@FXML
-		private TableView<ReportingItem> tableForReport;
+		private TableColumn<ListItem, String> columnForComment;
+
+		@FXML
+		private TableView<ListItem> tableForReport;
 
 		@FXML
 		private FlowPane reportControlsPane;
@@ -179,9 +216,10 @@ public class ReportWindowBuilder {
 			uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding);
 			uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding);
 
-			ListBinding<ReportingItem> reportListModel = createReportingItemsListModel(reportModel);
+			ListBinding<ListItem> reportListModel = createReportingItemsListModel(reportModel);
 			tableForReport.setItems(reportListModel);
 
+			setRoundedDurationColumnCellFactoryToConvertDurationToString();
 			setDurationColumnCellFactoryToConvertDurationToString();
 			setCommentColumnCellFactory();
 
@@ -251,7 +289,7 @@ public class ReportWindowBuilder {
 
 		private void setCommentColumnCellFactory() {
 			columnForComment
-					.setCellValueFactory(new PropertyValueFactory<ReportingItem, String>(
+					.setCellValueFactory(new PropertyValueFactory<ListItem, String>(
 									"comment"));
 		}
 
@@ -273,12 +311,14 @@ public class ReportWindowBuilder {
 											if (selectedPositions.size() == 1) {
 												TablePosition position = selectedPositions
 												.get(0);
-												ReportingItem reportingItem = tableForReport
+												ListItem listItem = tableForReport
 												.getItems().get(position.getRow());
-												if (position.getTableColumn() == columnForDuration) {
-													setClipBoard(reportingItem.getDuration());
-												} else {
-													setClipboard(reportingItem.getComment());
+												if (position.getTableColumn() == columnForRoundedDuration) {
+													setClipBoard(listItem.getRoundedDuration());
+												} else if (position.getTableColumn() == columnForDuration) {
+													setClipBoard(listItem.getDuration());
+												} else if (position.getTableColumn() == columnForComment) {
+													setClipboard(listItem.getComment());
 												}
 											}
 										}
@@ -295,7 +335,7 @@ public class ReportWindowBuilder {
 		private void setClipBoard(Duration duration) {
 			ClipboardContent content = new ClipboardContent();
 			PeriodFormatter formatter = new PeriodFormatterBuilder()
-					.printZeroIfSupported().appendHours().appendSeparator(":")
+					.printZeroIfSupported().minimumPrintedDigits(2).appendHours().appendSeparator(":")
 					.appendMinutes().toFormatter();
 			content.putString(formatter.print(duration.toPeriod()));
 			setClipboardContentTo(content);
@@ -308,11 +348,11 @@ public class ReportWindowBuilder {
 
 		private void setDurationColumnCellFactoryToConvertDurationToString() {
 			columnForDuration
-					.setCellValueFactory(new PropertyValueFactory<ReportingItem, String>(
+					.setCellValueFactory(new PropertyValueFactory<ListItem, String>(
 									"duration") {
 										@Override
 										public ObservableValue<String> call(
-												CellDataFeatures<ReportingItem, String> cellDataFeatures) {
+												CellDataFeatures<ListItem, String> cellDataFeatures) {
 													String duration = hmsPeriodFormatter
 													.print(cellDataFeatures.getValue()
 															.getDuration().toPeriod());
@@ -321,8 +361,23 @@ public class ReportWindowBuilder {
 									});
 		}
 
+		private void setRoundedDurationColumnCellFactoryToConvertDurationToString() {
+			columnForRoundedDuration
+					.setCellValueFactory(new PropertyValueFactory<ListItem, String>(
+									"roundedDuration") {
+										@Override
+										public ObservableValue<String> call(
+												CellDataFeatures<ListItem, String> cellDataFeatures) {
+													String duration = hmsPeriodFormatter
+													.print(cellDataFeatures.getValue()
+															.getRoundedDuration().toPeriod());
+													return new SimpleStringProperty(duration);
+												}
+									});
+		}
+
 		private ObservableValue<DateTime> addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty() {
-			final ComboBox<DateTime> comboBox = new ComboBox<DateTime>();
+			final ComboBox<DateTime> comboBox = new ComboBox<>();
 			ObservableList<DateTime> availableDays = FXCollections
 					.observableArrayList(itemSearcher.getAllTrackedDays());
 			Collections.reverse(availableDays);

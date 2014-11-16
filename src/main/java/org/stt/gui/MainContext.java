@@ -19,6 +19,7 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
 import org.apache.commons.io.IOUtils;
+import org.joda.time.Duration;
 import org.stt.CommandHandler;
 import org.stt.Configuration;
 import org.stt.Factory;
@@ -37,6 +38,8 @@ import org.stt.searching.ItemSearcher;
 import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
+import org.stt.time.DurationRounder;
+import org.stt.time.Formats;
 
 public class MainContext {
 
@@ -179,6 +182,17 @@ public class MainContext {
 		}
 	};
 
+	private final Factory<DurationRounder> durationRounder = new Singleton<DurationRounder>() {
+		@Override
+		protected DurationRounder createInstance() {
+			DurationRounder rounder = new DurationRounder();
+			final Duration durationToRoundTo = configuration.getDurationToRoundTo();
+			rounder.setInterval(durationToRoundTo);
+			LOG.info("Rounding to " + Formats.FORMATTER_PERIOD_HH_MM_SS.print(durationToRoundTo.toPeriod()));
+			return rounder;
+		}
+	};
+
 	public MainContext() {
 		configuration = new Configuration();
 	}
@@ -224,7 +238,7 @@ public class MainContext {
 		ExecutorService executorService = Executors.newSingleThreadExecutor();
 		ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
 				stageFactory, itemReaderProvider.create(),
-				itemSearcher.create());
+				itemSearcher.create(), durationRounder.create());
 		Builder builder = new STTApplication.Builder();
 		builder.commandHandler(commandHandler.create())
 				.historySourceProvider(itemReaderProvider.create())

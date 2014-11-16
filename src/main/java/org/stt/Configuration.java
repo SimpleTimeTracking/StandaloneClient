@@ -14,16 +14,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.commons.io.IOUtils;
+import org.joda.time.Duration;
+import org.stt.time.Formats;
 
 /**
  * Simple configuration mechanism with fallback values.
- * 
+ *
  * Resolves environment variables like HOME if enclosed in $ signs like so:
  * $HOME$/.stt
  */
 public class Configuration {
+
 	private static final Logger LOG = Logger.getLogger(Configuration.class
 			.getName());
 
@@ -134,6 +136,10 @@ public class Configuration {
 				"pause,break,coffee");
 		String[] split = comments.split(",");
 		return Arrays.asList(split);
+	}
+
+	public Duration getDurationToRoundTo() {
+		return Formats.FORMATTER_PERIOD_HH_MM_SS.parsePeriod(getPropertiesReplaced("durationRoundingInterval", "00:05:00")).toStandardDuration();
 	}
 
 	public String getPropertiesReplaced(String propName, String fallback) {
