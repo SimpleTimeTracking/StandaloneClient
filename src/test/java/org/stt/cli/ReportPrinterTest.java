@@ -21,6 +21,7 @@ import org.stt.reporting.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
 
 import static org.junit.Assert.assertThat;
 
@@ -54,6 +55,29 @@ public class ReportPrinterTest {
 				ItemCategory.WORKTIME);
 		sut = new ReportPrinter(readFrom, configuration,
 				workingtimeItemProvider, categorizer);
+	}
+
+	@Test
+	public void shouldReportCurrentDayOnNoOptions()
+			throws UnsupportedEncodingException {
+		// GIVEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
+
+		DateTime twoDaysAgo = DateTime.now().minusDays(2);
+		ItemReaderTestHelper.givenReaderReturns(itemReader,
+				new TimeTrackingItem("comment", DateTime.now().minusHours(2),
+						DateTime.now().minusHours(1)));
+		new TimeTrackingItem("comment yesterday", twoDaysAgo,
+				twoDaysAgo.plusHours(1));
+
+		// WHEN
+		sut.report(Collections.singleton(""), printStream);
+
+		// THEN
+		String result = new String(out.toByteArray(), "UTF8");
+		assertThat(result, containsString("comment"));
+		assertThat(result, not(containsString("yesterday")));
 	}
 
 	@Test
@@ -121,6 +145,26 @@ public class ReportPrinterTest {
 		// THEN
 		String result = new String(out.toByteArray(), "UTF8");
 		assertThat(result, containsString("comment blub"));
+	}
+
+	@Test
+	public void shouldParseSearchFilterAllTime()
+			throws UnsupportedEncodingException {
+		// GIVEN
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		PrintStream printStream = new PrintStream(out, true, "UTF8");
+
+		DateTime twoDaysBefore = DateTime.now().minusDays(2);
+		ItemReaderTestHelper.givenReaderReturns(itemReader,
+				new TimeTrackingItem("comment blub yesterday", twoDaysBefore,
+						twoDaysBefore.plusHours(1)));
+
+		// WHEN
+		sut.report(Collections.singleton("blub"), printStream);
+
+		// THEN
+		String result = new String(out.toByteArray(), "UTF8");
+		assertThat(result, containsString("comment blub yesterday"));
 	}
 
 	@Test
