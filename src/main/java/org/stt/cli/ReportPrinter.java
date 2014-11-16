@@ -76,13 +76,14 @@ public class ReportPrinter {
 				reportStart = startContext.from_date;
 				reportEnd = startContext.to_date.plusDays(1)
 						.withTimeAtStartOfDay().minus(1);
-			} else {
+			} else if (!argsString.isEmpty()) {
 				searchString = argsString;
+				reportStart = new DateTime(0);
 			}
 		}
 
-		String output = "output " + (truncateLongLines ? "" : "not ")
-				+ "truncated lines for ";
+		String output = "output " + (truncateLongLines ? "truncated" : "full")
+				+ " lines for ";
 		if (DateTimeHelper.isToday(reportStart)) {
 			output += "today ";
 
@@ -98,7 +99,11 @@ public class ReportPrinter {
 		printSums(printTo, searchString, reportStart, reportEnd,
 				truncateLongLines);
 
-		printOvertime(printTo, reportStart, reportEnd);
+		// only print overtime if we don't search for specific items
+		// In this case overtime is just confusing
+		if (searchString == null || searchString.isEmpty()) {
+			printOvertime(printTo, reportStart, reportEnd);
+		}
 	}
 
 	private void printOvertime(PrintStream printTo, DateTime reportStart,
