@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.stt.time;
 
 import com.google.common.base.Preconditions;
@@ -13,6 +8,7 @@ import org.joda.time.Duration;
  * @author dante
  */
 public class DurationRounder {
+
 	private long intervalMillis;
 	private long tieBreakMillis;
 

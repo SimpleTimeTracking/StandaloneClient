@@ -1,14 +1,13 @@
 package org.stt.reporting;
 
+import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -16,17 +15,15 @@ import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
-
 /**
  * Reads all elements from the given reader and groups by the comment of the
  * item: all items with the identical comment get merged into one
  * {@link ReportingItem}. Duration is the sum of all durations of the items.
- * 
+ *
  * Items without an end date get reported as if the end date was now
- * 
+ *
  * If a comment of an item is null, it will be treated as the empty String.
- * 
+ *
  * Items will be returned sorted in ascending order of the comments
  */
 public class SummingReportGenerator {
@@ -45,7 +42,7 @@ public class SummingReportGenerator {
 		Map<String, Duration> collectingMap = new HashMap<>();
 
 		Duration uncoveredDuration = Duration.ZERO;
-		Optional<TimeTrackingItem> optionalItem = null;
+		Optional<TimeTrackingItem> optionalItem;
 		TimeTrackingItem lastItem = null;
 		while ((optionalItem = reader.read()).isPresent()) {
 			TimeTrackingItem item = optionalItem.get();

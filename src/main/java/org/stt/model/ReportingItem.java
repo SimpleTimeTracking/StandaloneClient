@@ -20,10 +20,6 @@ public class ReportingItem {
 		return comment;
 	}
 
-	public ReportingItem addDurationOf(ReportingItem item) {
-		return new ReportingItem(getDuration().plus(duration), comment);
-	}
-
 	@Override
 	public String toString() {
 		return duration.toString() + " " + comment;
