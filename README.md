@@ -43,7 +43,7 @@ To avoid typing a long command every time you want to use STT, create a little s
 java -cp path/to/STT.jar org.stt.cli.Main $*
 ```
 
-See https://github.com/Bytekeeper/STT/wiki/CLI for available commands
+See https://github.com/Bytekeeper/STT/wiki/CLI for additional information about the CLI and available commands
 
 # Configuration
 
@@ -53,14 +53,13 @@ The file is $HOME/.sttrc (Linux) resp. %HOME%\.sttrc (Windows)
 # Start hacking
 
 to start hacking on STT:
-- install gradle from http://www.gradle.org/
 - make sure you have an Oracle JDK >= 1.7
 - clone this repository 
 - build it
 ```bash
 git clone https://github.com/Bytekeeper/STT.git
 cd STT
-gradle build
+gradlew build
 ```
 The created fat jar can be found in build/libs
 
