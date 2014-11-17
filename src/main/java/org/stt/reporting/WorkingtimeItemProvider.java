@@ -83,7 +83,7 @@ public class WorkingtimeItemProvider {
 				if (currentLine.matches("^\\d+.*")) {
 					// it is a date
 					String[] split = currentLine.split("\\s+");
-					DateTime parseDateTime = DateTimeHelper.ymdDateFormat
+					DateTime parseDateTime = DateTimeHelper.DATE_TIME_FORMATTER_YYYY_MM_DD
 							.parseDateTime(split[0]);
 					String minHours = split[1];
 					String maxHours = minHours;

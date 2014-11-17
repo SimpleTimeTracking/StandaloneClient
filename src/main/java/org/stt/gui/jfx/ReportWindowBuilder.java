@@ -11,6 +11,7 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -38,30 +39,23 @@ import javafx.util.StringConverter;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.Factory;
 import org.stt.gui.jfx.binding.ReportBinding;
+import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.searching.ItemSearcher;
+import org.stt.time.DateTimeHelper;
+import static org.stt.time.DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs;
 import org.stt.time.DurationRounder;
 
 public class ReportWindowBuilder {
 
 	private final ItemReaderProvider readerProvider;
 	private final ItemSearcher itemSearcher;
-
-	private final PeriodFormatter hmsPeriodFormatter = new PeriodFormatterBuilder()
-			.printZeroAlways().minimumPrintedDigits(2).appendHours()
-			.appendSuffix("h").appendSeparator(":").appendMinutes()
-			.appendSuffix("m").appendSeparator(":").appendSeconds()
-			.appendSuffix("s").toFormatter();
-
-	private final DateTimeFormatter hmsDateFormat = DateTimeFormat
-			.forPattern("HH:mm:ss");
 
 	private final Factory<Stage> stageFactory;
 	private final DurationRounder rounder;
@@ -126,9 +120,9 @@ public class ReportWindowBuilder {
 
 	public static class ListItem {
 
-		private String comment;
-		private Duration duration;
-		private Duration roundedDuration;
+		private final String comment;
+		private final Duration duration;
+		private final Duration roundedDuration;
 
 		public ListItem(String comment, Duration duration, Duration roundedDuration) {
 			this.comment = comment;
@@ -178,6 +172,9 @@ public class ReportWindowBuilder {
 		@FXML
 		private Label uncoveredTime;
 
+		@FXML
+		private Label roundedDurationSum;
+
 		private final Stage stage;
 
 		public ReportWindowController(Stage stage) {
@@ -195,18 +192,9 @@ public class ReportWindowBuilder {
 			final ObservableValue<Report> reportModel = createReportModel(selectedDateTimeProperty);
 			StringBinding startBinding = createBindingForStartOfReport(reportModel);
 			StringBinding endBinding = createBindingForEndOfReport(reportModel);
-			final ObjectBinding<Duration> uncoveredTimeBinding = createBindingForUncoveredTimeOfReport(reportModel);
-			StringBinding formattedUncoveredTimeBinding = new StringBinding() {
-				{
-					bind(uncoveredTimeBinding);
-				}
-
-				@Override
-				protected String computeValue() {
-					return hmsPeriodFormatter.print(uncoveredTimeBinding.get()
-							.toPeriod());
-				}
-			};
+			final ObjectBinding<Duration> uncoveredTimeBinding
+					= createBindingForUncoveredTimeOfReport(reportModel);
+			ObservableStringValue formattedUncoveredTimeBinding = STTBindings.formattedDuration(uncoveredTimeBinding);
 			ObjectBinding<Color> uncoveredTimeTextFillBinding = new When(
 					uncoveredTimeBinding.isEqualTo(Duration.ZERO)).then(
 							Color.BLACK).otherwise(Color.RED);
@@ -219,6 +207,8 @@ public class ReportWindowBuilder {
 			ListBinding<ListItem> reportListModel = createReportingItemsListModel(reportModel);
 			tableForReport.setItems(reportListModel);
 
+			roundedDurationSum.textProperty().bind(STTBindings.formattedDuration(createBindingForRoundedDurationSum(reportListModel)));
+
 			setRoundedDurationColumnCellFactoryToConvertDurationToString();
 			setDurationColumnCellFactoryToConvertDurationToString();
 			setCommentColumnCellFactory();
@@ -228,6 +218,26 @@ public class ReportWindowBuilder {
 			addSelectionToClipboardListenerToTableForReport();
 
 			addSceneToStageAndSetStageToModal();
+
+			columnForComment.prefWidthProperty()
+					.bind(tableForReport.widthProperty().subtract(columnForRoundedDuration.widthProperty().add(columnForDuration.widthProperty())));
+		}
+
+		private ObservableValue<Duration> createBindingForRoundedDurationSum(final ListBinding<ListItem> items) {
+			return new ObjectBinding<Duration>() {
+				{
+					bind(items);
+				}
+
+				@Override
+				protected Duration computeValue() {
+					Duration duration = Duration.ZERO;
+					for (ListItem item : items) {
+						duration = duration.plus(item.roundedDuration);
+					}
+					return duration;
+				}
+			};
 		}
 
 		private ObjectBinding<Duration> createBindingForUncoveredTimeOfReport(
@@ -253,7 +263,7 @@ public class ReportWindowBuilder {
 
 				@Override
 				protected String computeValue() {
-					return hmsDateFormat.print(reportModel.getValue().getEnd());
+					return DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS.print(reportModel.getValue().getEnd());
 				}
 			};
 			return endBinding;
@@ -268,7 +278,7 @@ public class ReportWindowBuilder {
 
 				@Override
 				protected String computeValue() {
-					return hmsDateFormat.print(reportModel.getValue()
+					return DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS.print(reportModel.getValue()
 							.getStart());
 				}
 			};
@@ -353,7 +363,7 @@ public class ReportWindowBuilder {
 										@Override
 										public ObservableValue<String> call(
 												CellDataFeatures<ListItem, String> cellDataFeatures) {
-													String duration = hmsPeriodFormatter
+													String duration = FORMATTER_PERIOD_HHh_MMm_SSs
 													.print(cellDataFeatures.getValue()
 															.getDuration().toPeriod());
 													return new SimpleStringProperty(duration);
@@ -368,7 +378,7 @@ public class ReportWindowBuilder {
 										@Override
 										public ObservableValue<String> call(
 												CellDataFeatures<ListItem, String> cellDataFeatures) {
-													String duration = hmsPeriodFormatter
+													String duration = FORMATTER_PERIOD_HHh_MMm_SSs
 													.print(cellDataFeatures.getValue()
 															.getRoundedDuration().toPeriod());
 													return new SimpleStringProperty(duration);

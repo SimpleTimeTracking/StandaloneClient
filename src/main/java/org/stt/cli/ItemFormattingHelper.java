@@ -21,18 +21,18 @@ public class ItemFormattingHelper {
 			String comment = item.getComment().orNull();
 
 			if (DateTimeHelper.isToday(start)) {
-				builder.append(DateTimeHelper.hmsDateFormat.print(start));
+				builder.append(DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS.print(start));
 			} else {
-				builder.append(DateTimeHelper.mdhmsDateFormat.print(start));
+				builder.append(DateTimeHelper.DATE_TIME_FORMATTER_MM_DD_HH_MM_SS.print(start));
 			}
 			builder.append(" - ");
 			if (end == null) {
 				builder.append("now     ");
 			} else {
-				builder.append(DateTimeHelper.hmsDateFormat.print(end));
+				builder.append(DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS.print(end));
 			}
 			builder.append(" ( ");
-			builder.append(DateTimeHelper.hmsPeriodFormatter
+			builder.append(DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs
 					.print(new Duration(start, (end == null ? DateTime.now()
 							: end)).toPeriod()));
 			builder.append(" ) ");

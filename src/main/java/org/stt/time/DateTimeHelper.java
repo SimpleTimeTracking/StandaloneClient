@@ -9,16 +9,16 @@ import org.joda.time.format.PeriodFormatterBuilder;
 
 public class DateTimeHelper {
 
-	public static final DateTimeFormatter hmsDateFormat = DateTimeFormat
+	public static final DateTimeFormatter DATE_TIME_FORMATTER_HH_MM_SS = DateTimeFormat
 			.forPattern("HH:mm:ss");
-	public static final DateTimeFormatter ymdhmsDateFormat = DateTimeFormat
+	public static final DateTimeFormatter DATE_TIME_FORMATTER_YYYY_MM_DD_HH_MM_SS = DateTimeFormat
 			.forPattern("yyyy-MM-dd HH:mm:ss");
-	public static final DateTimeFormatter mdhmsDateFormat = DateTimeFormat
+	public static final DateTimeFormatter DATE_TIME_FORMATTER_MM_DD_HH_MM_SS = DateTimeFormat
 			.forPattern("MM-dd HH:mm:ss");
-	public static final DateTimeFormatter ymdDateFormat = DateTimeFormat
+	public static final DateTimeFormatter DATE_TIME_FORMATTER_YYYY_MM_DD = DateTimeFormat
 			.forPattern("yyyy-MM-dd");
 
-	public static final PeriodFormatter hmsPeriodFormatter = new PeriodFormatterBuilder()
+	public static final PeriodFormatter FORMATTER_PERIOD_HHh_MMm_SSs = new PeriodFormatterBuilder()
 			.printZeroAlways().minimumPrintedDigits(2).appendHours()
 			.appendSuffix("h").appendSeparator(":").appendMinutes()
 			.appendSuffix("m").appendSeparator(":").appendSeconds()
@@ -54,9 +54,9 @@ public class DateTimeHelper {
 	 */
 	public static String prettyPrintTime(DateTime date) {
 		if (isOnSameDay(date, DateTime.now())) {
-			return hmsDateFormat.print(date);
+			return DATE_TIME_FORMATTER_HH_MM_SS.print(date);
 		} else {
-			return ymdhmsDateFormat.print(date);
+			return DATE_TIME_FORMATTER_YYYY_MM_DD_HH_MM_SS.print(date);
 		}
 	}
 
@@ -64,17 +64,17 @@ public class DateTimeHelper {
 	 * returns the formatted date in format "yyyy-MM-dd"
 	 */
 	public static String prettyPrintDate(DateTime date) {
-		return ymdDateFormat.print(date);
+		return DATE_TIME_FORMATTER_YYYY_MM_DD.print(date);
 	}
 
 	public static String prettyPrintDuration(Duration duration) {
 		if (duration.isShorterThan(new Duration(0))) {
 			// it is negative
 			return "-"
-					+ hmsPeriodFormatter.print(new Duration(duration
+					+ FORMATTER_PERIOD_HHh_MMm_SSs.print(new Duration(duration
 									.getMillis() * -1).toPeriod());
 		} else {
-			return " " + hmsPeriodFormatter.print(duration.toPeriod());
+			return " " + FORMATTER_PERIOD_HHh_MMm_SSs.print(duration.toPeriod());
 		}
 	}
 
