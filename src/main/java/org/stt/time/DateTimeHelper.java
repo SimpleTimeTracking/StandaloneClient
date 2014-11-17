@@ -1,4 +1,4 @@
-package org.stt;
+package org.stt.time;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -23,6 +23,11 @@ public class DateTimeHelper {
 			.appendSuffix("h").appendSeparator(":").appendMinutes()
 			.appendSuffix("m").appendSeparator(":").appendSeconds()
 			.appendSuffix("s").toFormatter();
+
+	public static final PeriodFormatter FORMATTER_PERIOD_H_M_S = new PeriodFormatterBuilder()
+			.printZeroAlways().appendHours()
+			.appendSeparator(":").appendMinutes()
+			.appendSeparator(":").appendSeconds().toFormatter();
 
 	public static boolean isToday(DateTime date) {
 		return isOnSameDay(date, DateTime.now());
@@ -67,7 +72,7 @@ public class DateTimeHelper {
 			// it is negative
 			return "-"
 					+ hmsPeriodFormatter.print(new Duration(duration
-							.getMillis() * -1).toPeriod());
+									.getMillis() * -1).toPeriod());
 		} else {
 			return " " + hmsPeriodFormatter.print(duration.toPeriod());
 		}

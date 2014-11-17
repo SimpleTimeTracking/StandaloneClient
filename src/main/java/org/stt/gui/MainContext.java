@@ -38,8 +38,8 @@ import org.stt.searching.ItemSearcher;
 import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
+import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
-import org.stt.time.Formats;
 
 public class MainContext {
 
@@ -188,7 +188,7 @@ public class MainContext {
 			DurationRounder rounder = new DurationRounder();
 			final Duration durationToRoundTo = configuration.getDurationToRoundTo();
 			rounder.setInterval(durationToRoundTo);
-			LOG.info("Rounding to " + Formats.FORMATTER_PERIOD_HH_MM_SS.print(durationToRoundTo.toPeriod()));
+			LOG.info("Rounding to " + DateTimeHelper.FORMATTER_PERIOD_H_M_S.print(durationToRoundTo.toPeriod()));
 			return rounder;
 		}
 	};

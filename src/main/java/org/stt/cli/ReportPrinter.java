@@ -1,17 +1,17 @@
 package org.stt.cli;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.Configuration;
-import org.stt.DateTimeHelper;
 import org.stt.filter.StartDateReaderFilter;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.g4.EnglishCommandsLexer;
@@ -28,8 +28,7 @@ import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
 import org.stt.stt.importer.CachingItemReader;
-
-import com.google.common.base.Optional;
+import org.stt.time.DateTimeHelper;
 
 /**
  * Prints a nicely formatted report of {@link TimeTrackingItem}s
@@ -64,7 +63,7 @@ public class ReportPrinter {
 			truncateLongLines = !args.remove("long");
 
 			// first collapse all following strings
-			String argsString = StringHelper.join(args);
+			String argsString = Joiner.on(" ").join(args);
 
 			EnglishCommandsLexer lexer = new EnglishCommandsLexer(
 					new ANTLRInputStream(argsString));
@@ -123,7 +122,7 @@ public class ReportPrinter {
 				printTo.println("closing time: " + closingTime);
 				String timeToGo = DateTimeHelper
 						.prettyPrintDuration(new Duration(duration.getMillis()
-								* -1));
+										* -1));
 				printTo.println("time to go:   " + timeToGo);
 			}
 
@@ -201,7 +200,7 @@ public class ReportPrinter {
 			}
 			printTruncatedString(
 					prefix + DateTimeHelper.prettyPrintDuration(duration)
-							+ "   " + comment, printTo, truncateLongLines);
+					+ "   " + comment, printTo, truncateLongLines);
 		}
 
 		printTo.println("====== overall sum: ======");
@@ -262,8 +261,8 @@ public class ReportPrinter {
 	}
 
 	/**
-	 * Creates a filter which only accepts items with start date of
-	 * "today minus the given days" to "today"
+	 * Creates a filter which only accepts items with start date of "today minus
+	 * the given days" to "today"
 	 */
 	private StartDateReaderFilter createStartDateFilterForDays(
 			ItemReader readerToFilter, DateTime start, DateTime end) {

@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
-import org.stt.time.Formats;
+import org.stt.time.DateTimeHelper;
 
 /**
  * Simple configuration mechanism with fallback values.
@@ -139,7 +139,7 @@ public class Configuration {
 	}
 
 	public Duration getDurationToRoundTo() {
-		return Formats.FORMATTER_PERIOD_HH_MM_SS.parsePeriod(getPropertiesReplaced("durationRoundingInterval", "00:05:00")).toStandardDuration();
+		return DateTimeHelper.FORMATTER_PERIOD_H_M_S.parsePeriod(getPropertiesReplaced("durationRoundingInterval", "00:05:00")).toStandardDuration();
 	}
 
 	public String getPropertiesReplaced(String propName, String fallback) {

@@ -1,5 +1,8 @@
 package org.stt.cli;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -21,7 +24,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
-
 import org.apache.commons.io.IOUtils;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
@@ -39,10 +41,6 @@ import org.stt.stt.importer.CachingItemReader;
 import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
-
-import com.google.common.base.Optional;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The starting point for the CLI
@@ -66,7 +64,7 @@ public class Main {
 
 	private void on(Collection<String> args, PrintStream printTo)
 			throws IOException {
-		String comment = StringHelper.join(args);
+		String comment = Joiner.on(" ").join(args);
 
 		Optional<TimeTrackingItem> currentItem = itemSearcher
 				.getCurrentTimeTrackingitem();
@@ -86,11 +84,11 @@ public class Main {
 	/**
 	 * output all items where the comment contains (ignoring case) the given
 	 * args.
-	 * 
+	 *
 	 * Only unique comments are printed.
-	 * 
+	 *
 	 * The ordering of the output is from newest to oldest.
-	 * 
+	 *
 	 * Useful for completion.
 	 */
 	private void search(Collection<String> args, PrintStream printTo)
@@ -108,7 +106,7 @@ public class Main {
 		ItemReader readFrom = createNewReaderProvider(timeFile).provideReader();
 
 		ItemReader reader = new SubstringReaderFilter(readFrom,
-				StringHelper.join(args));
+				Joiner.on(" ").join(args));
 		sortedItems.addAll(IOUtil.readAll(reader));
 
 		Set<String> sortedUniqueComments = new HashSet<>(sortedItems.size());
@@ -145,7 +143,7 @@ public class Main {
 				itemPersister, itemSearcher)) {
 			Optional<TimeTrackingItem> updatedItem = tiw
 					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN
-							+ " " + StringHelper.join(args));
+							+ " " + Joiner.on(" ").join(args));
 			if (updatedItem.isPresent()) {
 				prettyPrintTimeTrackingItem(printTo, updatedItem);
 			}
@@ -166,15 +164,15 @@ public class Main {
 	}
 
 	/*
-	 * 
+	 *
 	 * CLI use (example from ti usage):
-	 * 
+	 *
 	 * ti on long text containing comment //starts a new entry and inserts
 	 * comment
-	 * 
+	 *
 	 * ti on other comment //sets end time to the previous item and starts the
 	 * new one
-	 * 
+	 *
 	 * ti fin // sets end time of previous item
 	 */
 	public static void main(String[] args) throws IOException {

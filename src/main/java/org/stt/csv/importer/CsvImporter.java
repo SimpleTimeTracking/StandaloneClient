@@ -12,7 +12,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-import org.stt.DateTimeHelper;
+import org.stt.time.DateTimeHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 

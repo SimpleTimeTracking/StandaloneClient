@@ -3,7 +3,7 @@
 
 # Put this file to $HOME/.sttrc and it will be used automatically
 
-# You can use environment variables anywhere you like if they are enclosed by dollar signs ($). 
+# You can use environment variables anywhere you like if they are enclosed by dollar signs ($).
 # Example:
 # tiFile=$HOME$/.ti-sheet
 
@@ -30,3 +30,6 @@
 
 # the file where working time specifications are stored
 #workingTimesFile=$HOME$/.stt_worktimes
+
+# The interval in hh:mm:ss that durations in reports are rounded to
+#durationRoundingInterval=00:05:00

@@ -13,7 +13,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Duration;
 import org.stt.Configuration;
-import org.stt.DateTimeHelper;
+import org.stt.time.DateTimeHelper;
 
 /**
  * Reads information about working times from the configured workingTimes file

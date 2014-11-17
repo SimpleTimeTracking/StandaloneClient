@@ -2,7 +2,7 @@ package org.stt.cli;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.stt.DateTimeHelper;
+import org.stt.time.DateTimeHelper;
 import org.stt.model.TimeTrackingItem;
 
 import com.google.common.base.Optional;
