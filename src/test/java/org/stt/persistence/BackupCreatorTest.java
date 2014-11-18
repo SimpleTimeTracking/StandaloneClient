@@ -71,7 +71,8 @@ public class BackupCreatorTest {
 				FileFileFilter.FILE, null);
 
 		Assert.assertEquals(1, files.size());
-		Assert.assertThat(files.iterator().next(), is(backedUp));
+		Assert.assertThat(files.iterator().next().getAbsoluteFile(),
+				is(backedUp.getAbsoluteFile()));
 	}
 
 	@Test
