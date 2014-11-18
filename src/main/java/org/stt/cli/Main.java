@@ -1,8 +1,5 @@
 package org.stt.cli;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -24,11 +21,13 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
+
 import org.apache.commons.io.IOUtils;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.BackupCreator;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
@@ -41,6 +40,11 @@ import org.stt.stt.importer.CachingItemReader;
 import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
 import org.stt.stt.importer.StreamResourceProvider;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The starting point for the CLI
@@ -84,11 +88,11 @@ public class Main {
 	/**
 	 * output all items where the comment contains (ignoring case) the given
 	 * args.
-	 *
+	 * 
 	 * Only unique comments are printed.
-	 *
+	 * 
 	 * The ordering of the output is from newest to oldest.
-	 *
+	 * 
 	 * Useful for completion.
 	 */
 	private void search(Collection<String> args, PrintStream printTo)
@@ -105,8 +109,8 @@ public class Main {
 
 		ItemReader readFrom = createNewReaderProvider(timeFile).provideReader();
 
-		ItemReader reader = new SubstringReaderFilter(readFrom,
-				Joiner.on(" ").join(args));
+		ItemReader reader = new SubstringReaderFilter(readFrom, Joiner.on(" ")
+				.join(args));
 		sortedItems.addAll(IOUtil.readAll(reader));
 
 		Set<String> sortedUniqueComments = new HashSet<>(sortedItems.size());
@@ -164,15 +168,15 @@ public class Main {
 	}
 
 	/*
-	 *
+	 * 
 	 * CLI use (example from ti usage):
-	 *
+	 * 
 	 * ti on long text containing comment //starts a new entry and inserts
 	 * comment
-	 *
+	 * 
 	 * ti on other comment //sets end time to the previous item and starts the
 	 * new one
-	 *
+	 * 
 	 * ti fin // sets end time of previous item
 	 */
 	public static void main(String[] args) throws IOException {
@@ -186,6 +190,9 @@ public class Main {
 		Main main = new Main(configuration);
 		List<String> argsList = new ArrayList<>(Arrays.asList(args));
 		main.executeCommand(argsList, System.out);
+
+		// FIXME: perform backup
+		// main.createNewBackupCreator(configuration).performBackup();
 	}
 
 	void executeCommand(List<String> args, PrintStream printTo) {
@@ -320,5 +327,9 @@ public class Main {
 			}
 		};
 		return srp;
+	}
+
+	private BackupCreator createNewBackupCreator(Configuration config) {
+		return new BackupCreator(config);
 	}
 }

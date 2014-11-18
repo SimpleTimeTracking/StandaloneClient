@@ -14,13 +14,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.time.DateTimeHelper;
 
 /**
  * Simple configuration mechanism with fallback values.
- *
+ * 
  * Resolves environment variables like HOME if enclosed in $ signs like so:
  * $HOME$/.stt
  */
@@ -114,9 +115,9 @@ public class Configuration {
 	}
 
 	public int getCliReportingWidth() {
-		int encoding = Integer.parseInt(getPropertiesReplaced(
+		int reportingWidth = Integer.parseInt(getPropertiesReplaced(
 				"cliReportingWidth", "80"));
-		return encoding;
+		return reportingWidth;
 	}
 
 	public File getWorkingTimesFile() {
@@ -139,7 +140,9 @@ public class Configuration {
 	}
 
 	public Duration getDurationToRoundTo() {
-		return DateTimeHelper.FORMATTER_PERIOD_H_M_S.parsePeriod(getPropertiesReplaced("durationRoundingInterval", "00:05:00")).toStandardDuration();
+		return DateTimeHelper.FORMATTER_PERIOD_H_M_S.parsePeriod(
+				getPropertiesReplaced("durationRoundingInterval", "00:05:00"))
+				.toStandardDuration();
 	}
 
 	public String getPropertiesReplaced(String propName, String fallback) {
@@ -155,4 +158,21 @@ public class Configuration {
 		return theProperty;
 	}
 
+	public File getBackupLocation() {
+		String backupLocation = getPropertiesReplaced("backupLocation",
+				"$HOME$");
+		return new File(backupLocation);
+	}
+
+	public int getBackupInterval() {
+		int backupInterval = Integer.parseInt(getPropertiesReplaced(
+				"backupInterval", "7"));
+		return backupInterval;
+	}
+
+	public int getBackupRetentionCount() {
+		int retentionCount = Integer.parseInt(getPropertiesReplaced(
+				"backupRetention", "0"));
+		return retentionCount;
+	}
 }

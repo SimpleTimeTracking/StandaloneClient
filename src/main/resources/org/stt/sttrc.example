@@ -1,9 +1,12 @@
 # This is an example properties file
-# Lines starting with the hash sign and empty lines are ignored
+# Lines starting with the hash sign "#" and empty lines are ignored
 
 # Put this file to $HOME/.sttrc and it will be used automatically
 
 # You can use environment variables anywhere you like if they are enclosed by dollar signs ($).
+
+# Paths can be specified with slashes "/" or backslashes "\"
+
 # Example:
 # tiFile=$HOME$/.ti-sheet
 
@@ -33,3 +36,15 @@
 
 # The interval in hh:mm:ss that durations in reports are rounded to
 #durationRoundingInterval=00:05:00
+
+# backup location. This is where backup files of sttFile will be created. No trailing slash.
+#backupLocation=$HOME$
+
+# backup interval in days. 0 will disable backups
+#backupInterval=7
+
+# backup retention count. This specifies how many backup files will remain. The oldest ones are automatically deleted until this many files remain.
+# 0 disables deletion of old backup files.
+# WARNING: this will delete files with name .stt-YYYY-mm-dd regardless who created them. If in doubt, leave this set to 0 and delete old backup files yourself.
+#backupRetention=0
+ 

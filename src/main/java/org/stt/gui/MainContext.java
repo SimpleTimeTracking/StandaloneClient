@@ -1,6 +1,7 @@
 package org.stt.gui;
 
 import com.google.common.base.Optional;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,9 +16,11 @@ import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
+
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.CommandHandler;
@@ -29,6 +32,7 @@ import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.BackupCreator;
 import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
@@ -193,6 +197,14 @@ public class MainContext {
 		}
 	};
 
+	private final Factory<BackupCreator> backupCreator = new Singleton<BackupCreator>() {
+		
+		@Override
+		protected BackupCreator createInstance() {
+			return new BackupCreator(configuration);
+		}
+	};
+	
 	public MainContext() {
 		configuration = new Configuration();
 	}
@@ -210,6 +222,8 @@ public class MainContext {
 			public void run() {
 				MainContext main = new MainContext();
 				main.start();
+				// FIXME: perform backup
+				//backupCreator.crate().performBackup();
 			}
 		});
 	}
