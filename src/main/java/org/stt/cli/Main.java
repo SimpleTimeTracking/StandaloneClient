@@ -191,8 +191,8 @@ public class Main {
 		List<String> argsList = new ArrayList<>(Arrays.asList(args));
 		main.executeCommand(argsList, System.out);
 
-		// FIXME: perform backup
-		// main.createNewBackupCreator(configuration).performBackup();
+		// perform backup
+		main.createNewBackupCreator(configuration).performBackup();
 	}
 
 	void executeCommand(List<String> args, PrintStream printTo) {

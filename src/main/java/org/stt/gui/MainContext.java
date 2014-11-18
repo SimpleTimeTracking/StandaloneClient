@@ -222,8 +222,13 @@ public class MainContext {
 			public void run() {
 				MainContext main = new MainContext();
 				main.start();
-				// FIXME: perform backup
-				//backupCreator.crate().performBackup();
+				// perform backup
+				try {
+					main.backupCreator.create().performBackup();
+				} catch (IOException e) {
+					LOG.log(Level.SEVERE, e.getMessage(), e);
+					throw new RuntimeException(e);
+				}
 			}
 		});
 	}
