@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.sun.javafx.application.PlatformImpl;
 import java.awt.Desktop;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -45,13 +46,18 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.stt.CommandHandler;
+import org.stt.fun.Achievement;
+import org.stt.fun.Achievements;
 import org.stt.gui.jfx.ResultViewConfigurer.Callback;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
@@ -71,6 +77,7 @@ public class STTApplication implements Callback {
 	private final ReportWindowBuilder reportWindowBuilder;
 	private final ExpansionProvider expansionProvider;
 	private final ResourceBundle localization;
+	private final Achievements achievements;
 
 	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
@@ -89,6 +96,7 @@ public class STTApplication implements Callback {
 		this.historySourceProvider = checkNotNull(builder.historySourceProvider);
 		this.executorService = checkNotNull(builder.executorService);
 		this.localization = checkNotNull(builder.resourceBundle);
+		this.achievements = checkNotNull(builder.achievements);
 
 		ResultViewConfigurer resultViewConfigurer = new ResultViewConfigurer();
 		resultViewConfigurer.configure(filteredList, selectedItem, allItems,
@@ -212,6 +220,7 @@ public class STTApplication implements Callback {
 		private ReportWindowBuilder reportWindowBuilder;
 		private ExpansionProvider expansionProvider;
 		private ResourceBundle resourceBundle;
+		private Achievements achievements;
 
 		public Builder executorService(ExecutorService executorService) {
 			this.executorService = executorService;
@@ -244,6 +253,11 @@ public class STTApplication implements Callback {
 			return this;
 		}
 
+		public Builder achievements(Achievements achievements) {
+			this.achievements = achievements;
+			return this;
+		}
+
 		public STTApplication build() {
 			return new STTApplication(this);
 		}
@@ -266,6 +280,9 @@ public class STTApplication implements Callback {
 		@FXML
 		ListView<TimeTrackingItem> result;
 
+		@FXML
+		FlowPane achievements;
+
 		ViewAdapter(Stage stage) {
 			this.stage = stage;
 		}
@@ -280,6 +297,21 @@ public class STTApplication implements Callback {
 				pane = (BorderPane) loader.load();
 			} catch (IOException e) {
 				throw new RuntimeException(e);
+			}
+
+			for (Achievement achievement : STTApplication.this.achievements.getReachedAchievements()) {
+				final String imageName = "/achievements/" + achievement.getCode();
+				InputStream imageStream = getClass().getResourceAsStream(imageName);
+				if (imageStream != null) {
+					final ImageView imageView = new ImageView(new Image(imageStream));
+					String description = achievement.getDescription();
+					if (description != null) {
+						Tooltip.install(imageView, new Tooltip(description));
+					}
+					achievements.getChildren().add(imageView);
+				} else {
+					LOG.severe("Image " + imageName + " not found!");
+				}
 			}
 
 			Scene scene = new Scene(pane);

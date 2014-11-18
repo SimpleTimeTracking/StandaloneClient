@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -25,6 +26,8 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
+import org.stt.fun.Achievement;
+import org.stt.fun.Achievements;
 import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -59,6 +62,7 @@ public class STTApplicationTest {
 	private ResourceBundle resourceBundle;
 
 	private boolean shutdownCalled;
+	private final Achievements achievements = new Achievements(Collections.<Achievement>emptyList());
 
 	@Before
 	public void setup() {
@@ -71,11 +75,11 @@ public class STTApplicationTest {
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
 				.expansionProvider(expansionProvider)
-				.resourceBundle(resourceBundle);
+				.resourceBundle(resourceBundle)
+				.achievements(achievements);
 		sut = builder.build();
 		sut.viewAdapter
 				= sut.new ViewAdapter(
-
 
 					null) {
 

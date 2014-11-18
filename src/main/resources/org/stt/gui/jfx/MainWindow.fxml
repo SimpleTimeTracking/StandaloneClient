@@ -45,6 +45,7 @@
                   </Button>
                </children>
             </FlowPane>
+            <FlowPane fx:id="achievements" style="-fx-background-color: lightgray;" />
          </children>
       </VBox>
    </center>

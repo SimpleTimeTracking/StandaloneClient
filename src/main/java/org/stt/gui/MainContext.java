@@ -1,7 +1,6 @@
 package org.stt.gui;
 
 import com.google.common.base.Optional;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,17 +9,18 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
-
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.CommandHandler;
@@ -28,6 +28,9 @@ import org.stt.Configuration;
 import org.stt.Factory;
 import org.stt.Singleton;
 import org.stt.ToItemWriterCommandHandler;
+import org.stt.fun.Achievement;
+import org.stt.fun.Achievements;
+import org.stt.fun.DaysTrackedAchievement;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.gui.jfx.STTApplication.Builder;
@@ -198,13 +201,27 @@ public class MainContext {
 	};
 
 	private final Factory<BackupCreator> backupCreator = new Singleton<BackupCreator>() {
-		
+
 		@Override
 		protected BackupCreator createInstance() {
 			return new BackupCreator(configuration);
 		}
 	};
-	
+
+	private final Factory<Achievements> achievements = new Singleton<Achievements>() {
+
+		@Override
+		protected Achievements createInstance() {
+			Collection<Achievement> listOfAchievments = new ArrayList<>();
+			for (int i : Arrays.asList(11, 23, 31, 41, 61, 83, 101)) {
+				listOfAchievments.add(new DaysTrackedAchievement(resourceBundle.create(), i));
+			}
+			Achievements achievements = new Achievements(listOfAchievments);
+			achievements.determineAchievementsFrom(itemReaderProvider.create().provideReader());
+			return achievements;
+		}
+	};
+
 	public MainContext() {
 		configuration = new Configuration();
 	}
@@ -259,7 +276,8 @@ public class MainContext {
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
 				.expansionProvider(commonPrefixGrouper.create())
-				.resourceBundle(resourceBundle.create());
+				.resourceBundle(resourceBundle.create())
+				.achievements(achievements.create());
 		return builder.build();
 	}
 }

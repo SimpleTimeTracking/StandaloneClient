@@ -3,25 +3,23 @@ package org.stt.persistence;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
+import static org.hamcrest.CoreMatchers.is;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import static org.mockito.BDDMockito.given;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
 import org.stt.time.DateTimeHelper;
-
-import static org.hamcrest.CoreMatchers.is;
-
-import static org.mockito.BDDMockito.given;
 
 public class BackupCreatorTest {
 
@@ -42,8 +40,10 @@ public class BackupCreatorTest {
 
 		currentTempFolder = tempFolder.newFolder();
 		currentSttFile = tempFolder.newFile();
-		IOUtils.write("blubb, just a test line", new FileOutputStream(
-				currentSttFile));
+		try (OutputStream out = new FileOutputStream(
+				currentSttFile)) {
+			IOUtils.write("blubb, just a test line", out);
+		}
 
 		given(configuration.getSttFile()).willReturn(currentSttFile);
 		given(configuration.getBackupInterval()).willReturn(7);
