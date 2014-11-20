@@ -13,7 +13,6 @@ public class LocalizedAchievement extends Achievement {
 
 	public LocalizedAchievement(ResourceBundle resourceBundle) {
 		this.resourceBundle = Preconditions.checkNotNull(resourceBundle);
-		this.resourceBundle = resourceBundle;
 	}
 
 	protected String localize(String key) {
