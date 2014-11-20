@@ -5,7 +5,6 @@
  */
 package org.stt.fun;
 
-import java.util.ResourceBundle;
 import static org.hamcrest.CoreMatchers.is;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,10 +15,9 @@ import org.stt.model.TimeTrackingItem;
  *
  * @author dante
  */
-public class LongCommentsTest {
+public class LongCommentsTest extends AchievementTestBase {
 
 	private LongComments sut;
-	private ResourceBundle resourceBundle = ResourceBundle.getBundle("org.stt.gui.Application");
 
 	@Before
 	public void setup() {

@@ -31,6 +31,7 @@ import org.stt.ToItemWriterCommandHandler;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
 import org.stt.fun.DaysTrackedAchievement;
+import org.stt.fun.HoursTrackedAchievement;
 import org.stt.fun.LongComments;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
@@ -218,6 +219,7 @@ public class MainContext {
 				listOfAchievments.add(new DaysTrackedAchievement(resourceBundle.create(), i));
 			}
 			listOfAchievments.add(new LongComments(resourceBundle.create(), 7, 200));
+			listOfAchievments.add(new HoursTrackedAchievement(resourceBundle.create(), 1009));
 			Achievements achievements = new Achievements(listOfAchievments);
 			achievements.determineAchievementsFrom(itemReaderProvider.create().provideReader());
 			return achievements;
