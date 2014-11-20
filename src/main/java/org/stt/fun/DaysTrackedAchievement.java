@@ -1,6 +1,5 @@
 package org.stt.fun;
 
-import com.google.common.base.Preconditions;
 import java.util.ResourceBundle;
 import org.stt.model.TimeTrackingItem;
 
@@ -8,16 +7,15 @@ import org.stt.model.TimeTrackingItem;
  *
  * @author dante
  */
-public class DaysTrackedAchievement extends Achievement {
+public class DaysTrackedAchievement extends LocalizedAchievement {
 
 	private int daysTracked;
 	private TimeTrackingItem lastItem;
-	private final ResourceBundle resourceBundle;
 	private final int daysRequired;
 	private boolean achieved;
 
 	public DaysTrackedAchievement(ResourceBundle resourceBundle, int daysRequired) {
-		this.resourceBundle = Preconditions.checkNotNull(resourceBundle);
+		super(resourceBundle);
 		this.daysRequired = daysRequired;
 	}
 
@@ -50,12 +48,12 @@ public class DaysTrackedAchievement extends Achievement {
 
 	@Override
 	public String getCode() {
-		return "ascended_level" + daysRequired + ".png";
+		return "daysTracked" + daysRequired;
 	}
 
 	@Override
 	public String getDescription() {
-		return String.format(resourceBundle.getString("achievement.daysTracked"), daysRequired);
+		return String.format(localize("achievement.daysTracked"), daysRequired, daysRequired);
 	}
 
 }

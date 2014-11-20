@@ -300,7 +300,7 @@ public class STTApplication implements Callback {
 			}
 
 			for (Achievement achievement : STTApplication.this.achievements.getReachedAchievements()) {
-				final String imageName = "/achievements/" + achievement.getCode();
+				final String imageName = "/achievements/" + achievement.getCode() + ".png";
 				InputStream imageStream = getClass().getResourceAsStream(imageName);
 				if (imageStream != null) {
 					final ImageView imageView = new ImageView(new Image(imageStream));

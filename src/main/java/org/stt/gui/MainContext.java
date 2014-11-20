@@ -31,6 +31,7 @@ import org.stt.ToItemWriterCommandHandler;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
 import org.stt.fun.DaysTrackedAchievement;
+import org.stt.fun.LongComments;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.gui.jfx.STTApplication.Builder;
@@ -213,9 +214,10 @@ public class MainContext {
 		@Override
 		protected Achievements createInstance() {
 			Collection<Achievement> listOfAchievments = new ArrayList<>();
-			for (int i : Arrays.asList(11, 23, 31, 41, 61, 83, 101)) {
+			for (int i : Arrays.asList(11, 31, 61, 101)) {
 				listOfAchievments.add(new DaysTrackedAchievement(resourceBundle.create(), i));
 			}
+			listOfAchievments.add(new LongComments(resourceBundle.create(), 7, 200));
 			Achievements achievements = new Achievements(listOfAchievments);
 			achievements.determineAchievementsFrom(itemReaderProvider.create().provideReader());
 			return achievements;
