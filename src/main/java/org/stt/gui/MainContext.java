@@ -30,6 +30,7 @@ import org.stt.Singleton;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
+import org.stt.fun.AmountOfItemsAchievement;
 import org.stt.fun.DaysTrackedAchievement;
 import org.stt.fun.HoursTrackedAchievement;
 import org.stt.fun.LongComments;
@@ -220,6 +221,7 @@ public class MainContext {
 			}
 			listOfAchievments.add(new LongComments(resourceBundle.create(), 7, 200));
 			listOfAchievments.add(new HoursTrackedAchievement(resourceBundle.create(), 1009));
+			listOfAchievments.add(new AmountOfItemsAchievement(resourceBundle.create(), 41));
 			Achievements achievements = new Achievements(listOfAchievments);
 			achievements.determineAchievementsFrom(itemReaderProvider.create().provideReader());
 			return achievements;
