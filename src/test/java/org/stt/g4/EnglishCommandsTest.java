@@ -42,6 +42,17 @@ public class EnglishCommandsTest {
 	}
 
 	@Test
+	public void shouldParseSinceHrsAgoCommand() {
+		String commandToParse = "test 1 since 2 hrs ago";
+		CharStream input = new ANTLRInputStream(commandToParse);
+		EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
+		EnglishCommandsParser parser = new EnglishCommandsParser(
+				new CommonTokenStream(lexer));
+		CommandContext command = parser.command();
+		System.out.println(command.newItem);
+	}
+
+	@Test
 	public void shouldParseSinceCommand() {
 		String commandToParse = "test 1 since 10:00:00";
 		CharStream input = new ANTLRInputStream(commandToParse);

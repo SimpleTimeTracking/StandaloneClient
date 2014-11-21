@@ -47,11 +47,11 @@ agoFormat returns [DateTime result]
 @init {
 	$result = DateTime.now();
 }
-: amount=NUMBER (
+: SINCE? amount=NUMBER (
 	 	HOURS {$result = $result.minusHours($amount.int); }
 	| 	MINUTES {$result = $result.minusMinutes($amount.int); } 
 	| 	SECONDS {$result = $result.minusSeconds($amount.int); }
-	) AGO;
+	) AGO?;
 
 date: NUMBER (DOT|MINUS) NUMBER (DOT|MINUS) NUMBER;
 
