@@ -1,8 +1,7 @@
 package org.stt.gui.jfx;
 
-import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
-import com.sun.javafx.application.PlatformImpl;
+
 import java.awt.Desktop;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,15 +19,14 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.SetBinding;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ListProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -55,7 +53,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+
 import org.stt.CommandHandler;
+import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
 import org.stt.gui.jfx.ResultViewConfigurer.Callback;
@@ -65,6 +65,9 @@ import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.searching.ExpansionProvider;
+
+import com.google.common.base.Optional;
+import com.sun.javafx.application.PlatformImpl;
 
 public class STTApplication implements Callback {
 
@@ -81,8 +84,7 @@ public class STTApplication implements Callback {
 
 	final ObservableList<TimeTrackingItem> allItems = FXCollections
 			.observableArrayList();
-	ListProperty<TimeTrackingItem> filteredList = new SimpleListProperty<>(FXCollections
-			.<TimeTrackingItem>observableArrayList());
+	ObservableList<TimeTrackingItem> filteredList;
 	final StringProperty currentCommand = new SimpleStringProperty("");
 	final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
 	Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
@@ -97,10 +99,13 @@ public class STTApplication implements Callback {
 		this.executorService = checkNotNull(builder.executorService);
 		this.localization = checkNotNull(builder.resourceBundle);
 		this.achievements = checkNotNull(builder.achievements);
+		TimeTrackingItemListConfig timeTrackingItemListConfig = checkNotNull(builder.timeTrackingItemListConfig);
 
 		ResultViewConfigurer resultViewConfigurer = new ResultViewConfigurer();
-		resultViewConfigurer.configure(filteredList, selectedItem, allItems,
-				currentCommand, STTApplication.this);
+		filteredList = resultViewConfigurer.configure(selectedItem, allItems,
+				currentCommand,
+				timeTrackingItemListConfig.isFilterDuplicatesWhenSearching(),
+				STTApplication.this);
 
 	}
 
@@ -161,11 +166,12 @@ public class STTApplication implements Callback {
 	protected Optional<TimeTrackingItem> executeCommand() {
 		final String text = currentCommand.get();
 		if (!text.trim().isEmpty()) {
-			Optional<TimeTrackingItem> result = commandHandler.executeCommand(text);
+			Optional<TimeTrackingItem> result = commandHandler
+					.executeCommand(text);
 			clearCommand();
 			return result;
 		}
-		return Optional.<TimeTrackingItem>absent();
+		return Optional.<TimeTrackingItem> absent();
 	}
 
 	private void clearCommand() {
@@ -221,6 +227,7 @@ public class STTApplication implements Callback {
 		private ExpansionProvider expansionProvider;
 		private ResourceBundle resourceBundle;
 		private Achievements achievements;
+		private TimeTrackingItemListConfig timeTrackingItemListConfig;
 
 		public Builder executorService(ExecutorService executorService) {
 			this.executorService = executorService;
@@ -232,7 +239,8 @@ public class STTApplication implements Callback {
 			return this;
 		}
 
-		public Builder historySourceProvider(ItemReaderProvider historySourceProvider) {
+		public Builder historySourceProvider(
+				ItemReaderProvider historySourceProvider) {
 			this.historySourceProvider = historySourceProvider;
 			return this;
 		}
@@ -255,6 +263,12 @@ public class STTApplication implements Callback {
 
 		public Builder achievements(Achievements achievements) {
 			this.achievements = achievements;
+			return this;
+		}
+
+		public Builder timeTrackingItemListConfig(
+				TimeTrackingItemListConfig timeTrackingItemListConfig) {
+			this.timeTrackingItemListConfig = timeTrackingItemListConfig;
 			return this;
 		}
 
@@ -299,11 +313,15 @@ public class STTApplication implements Callback {
 				throw new RuntimeException(e);
 			}
 
-			for (Achievement achievement : STTApplication.this.achievements.getReachedAchievements()) {
-				final String imageName = "/achievements/" + achievement.getCode() + ".png";
-				InputStream imageStream = getClass().getResourceAsStream(imageName);
+			for (Achievement achievement : STTApplication.this.achievements
+					.getReachedAchievements()) {
+				final String imageName = "/achievements/"
+						+ achievement.getCode() + ".png";
+				InputStream imageStream = getClass().getResourceAsStream(
+						imageName);
 				if (imageStream != null) {
-					final ImageView imageView = new ImageView(new Image(imageStream));
+					final ImageView imageView = new ImageView(new Image(
+							imageStream));
 					String description = achievement.getDescription();
 					if (description != null) {
 						Tooltip.install(imageView, new Tooltip(description));
@@ -333,6 +351,17 @@ public class STTApplication implements Callback {
 					});
 				}
 			});
+			scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+
+				@Override
+				public void handle(KeyEvent event) {
+					if (KeyCode.ESCAPE.equals(event.getCode())) {
+						event.consume();
+						shutdown();
+					}
+				}
+			});
+
 			stage.show();
 			requestFocusOnCommandText();
 		}
@@ -356,27 +385,34 @@ public class STTApplication implements Callback {
 			insertButton.setMnemonicParsing(true);
 			finButton.setMnemonicParsing(true);
 			setupCellFactory();
-			final MultipleSelectionModel<TimeTrackingItem> selectionModel = result.getSelectionModel();
+			final MultipleSelectionModel<TimeTrackingItem> selectionModel = result
+					.getSelectionModel();
 			selectionModel.setSelectionMode(SelectionMode.SINGLE);
 
 			bindCaretPosition();
 			commandText.textProperty().bindBidirectional(currentCommand);
-			result.itemsProperty().bindBidirectional(filteredList);
+			result.setItems(filteredList);
 			bindItemSelection();
 		}
 
 		private void bindItemSelection() {
-			result.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TimeTrackingItem>() {
+			result.getSelectionModel().selectedItemProperty()
+					.addListener(new ChangeListener<TimeTrackingItem>() {
 
-				@Override
-				public void changed(ObservableValue<? extends TimeTrackingItem> observable, TimeTrackingItem oldValue, TimeTrackingItem newValue) {
-					selectedItem.setValue(newValue);
-				}
-			});
+						@Override
+						public void changed(
+								ObservableValue<? extends TimeTrackingItem> observable,
+								TimeTrackingItem oldValue,
+								TimeTrackingItem newValue) {
+							selectedItem.setValue(newValue);
+						}
+					});
 			selectedItem.addListener(new ChangeListener<TimeTrackingItem>() {
 
 				@Override
-				public void changed(ObservableValue<? extends TimeTrackingItem> observable, TimeTrackingItem oldValue, TimeTrackingItem newValue) {
+				public void changed(
+						ObservableValue<? extends TimeTrackingItem> observable,
+						TimeTrackingItem oldValue, TimeTrackingItem newValue) {
 					result.getSelectionModel().select(newValue);
 				}
 			});
@@ -384,8 +420,9 @@ public class STTApplication implements Callback {
 
 		private void setupCellFactory() {
 			final ObservableSet<TimeTrackingItem> firstItemOfDayBinding = createFirstItemOfDayBinding(allItems);
-			result.setCellFactory(new TimeTrackingItemCellFactory(STTApplication.this,
-					STTApplication.this, STTApplication.this, new TimeTrackingItemFilter() {
+			result.setCellFactory(new TimeTrackingItemCellFactory(
+					STTApplication.this, STTApplication.this,
+					STTApplication.this, new TimeTrackingItemFilter() {
 						@Override
 						public boolean filter(TimeTrackingItem item) {
 							return firstItemOfDayBinding.contains(item);
@@ -419,7 +456,7 @@ public class STTApplication implements Callback {
 				TimeTrackingItem item = it.next();
 				if (lastItem != null
 						&& lastItem.getStart().withTimeAtStartOfDay()
-						.equals(item.getStart().withTimeAtStartOfDay())) {
+								.equals(item.getStart().withTimeAtStartOfDay())) {
 					it.remove();
 				}
 				lastItem = item;
@@ -434,12 +471,14 @@ public class STTApplication implements Callback {
 					commandText.positionCaret(commandCaretPosition.get());
 				}
 			});
-			commandText.caretPositionProperty().addListener(new InvalidationListener() {
-				@Override
-				public void invalidated(Observable observable) {
-					commandCaretPosition.set(commandText.getCaretPosition());
-				}
-			});
+			commandText.caretPositionProperty().addListener(
+					new InvalidationListener() {
+						@Override
+						public void invalidated(Observable observable) {
+							commandCaretPosition.set(commandText
+									.getCaretPosition());
+						}
+					});
 		}
 
 		protected void requestFocusOnCommandText() {
@@ -451,7 +490,8 @@ public class STTApplication implements Callback {
 			});
 		}
 
-		protected void updateAllItems(final Collection<TimeTrackingItem> updateWith) {
+		protected void updateAllItems(
+				final Collection<TimeTrackingItem> updateWith) {
 			PlatformImpl.runLater(new Runnable() {
 				@Override
 				public void run() {
@@ -496,17 +536,15 @@ public class STTApplication implements Callback {
 				event.consume();
 				done();
 			}
-			if (KeyCode.ESCAPE.equals(event.getCode())) {
-				event.consume();
-				shutdown();
-			}
 			if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
 				expandCurrentCommand();
 				event.consume();
 			}
 			if (KeyCode.F1.equals(event.getCode())) {
 				try {
-					Desktop.getDesktop().browse(new URI("https://github.com/Bytekeeper/STT/wiki/CLI"));
+					Desktop.getDesktop()
+							.browse(new URI(
+									"https://github.com/Bytekeeper/STT/wiki/CLI"));
 				} catch (IOException | URISyntaxException ex) {
 					LOG.log(Level.SEVERE, null, ex);
 				}

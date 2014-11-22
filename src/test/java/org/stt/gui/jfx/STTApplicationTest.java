@@ -1,27 +1,28 @@
 package org.stt.gui.jfx;
 
-import com.google.common.base.Optional;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+
 import org.joda.time.DateTime;
-import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import org.mockito.Mock;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -35,6 +36,8 @@ import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.ItemGrouper;
 import org.stt.searching.CommentSearcher;
 import org.stt.searching.ExpansionProvider;
+
+import com.google.common.base.Optional;
 
 public class STTApplicationTest {
 
@@ -62,7 +65,8 @@ public class STTApplicationTest {
 	private ResourceBundle resourceBundle;
 
 	private boolean shutdownCalled;
-	private final Achievements achievements = new Achievements(Collections.<Achievement>emptyList());
+	private final Achievements achievements = new Achievements(
+			Collections.<Achievement> emptyList());
 
 	@Before
 	public void setup() {
@@ -75,32 +79,31 @@ public class STTApplicationTest {
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
 				.expansionProvider(expansionProvider)
-				.resourceBundle(resourceBundle)
-				.achievements(achievements);
+				.resourceBundle(resourceBundle).achievements(achievements);
 		sut = builder.build();
-		sut.viewAdapter
-				= sut.new ViewAdapter(
+		sut.viewAdapter = sut.new ViewAdapter(
 
-					null) {
+		null) {
 
-            @Override
-					protected void show() throws RuntimeException {
-					}
+			@Override
+			protected void show() throws RuntimeException {
+			}
 
-					@Override
-					protected void requestFocusOnCommandText() {
-					}
+			@Override
+			protected void requestFocusOnCommandText() {
+			}
 
-					@Override
-					protected void updateAllItems(Collection<TimeTrackingItem> updateWith) {
-						sut.allItems.setAll(updateWith);
-					}
+			@Override
+			protected void updateAllItems(
+					Collection<TimeTrackingItem> updateWith) {
+				sut.allItems.setAll(updateWith);
+			}
 
-					@Override
-					protected void shutdown() {
-						shutdownCalled = true;
-					}
-				};
+			@Override
+			protected void shutdown() {
+				shutdownCalled = true;
+			}
+		};
 	}
 
 	@Test
@@ -184,12 +187,12 @@ public class STTApplicationTest {
 		sut.delete(item);
 
 		// THEN
-		assertThat(sut.filteredList.get(), not(hasItem(item)));
+		assertThat(sut.filteredList, not(hasItem(item)));
 	}
 
 	@Test
 	public void shouldShowReportWindow() throws IOException {
-        // GIVEN
+		// GIVEN
 
 		// WHEN
 		sut.viewAdapter.showReportWindow();
@@ -229,7 +232,8 @@ public class STTApplicationTest {
 	public void shouldNotCloseWindowOnInsert() {
 		// GIVEN
 		givenCommand("Hello World");
-		given(commandHandler.executeCommand(anyString())).willReturn(Optional.<TimeTrackingItem>absent());
+		given(commandHandler.executeCommand(anyString())).willReturn(
+				Optional.<TimeTrackingItem> absent());
 
 		// WHEN
 		sut.viewAdapter.insert();
@@ -254,15 +258,14 @@ public class STTApplicationTest {
 
 		// THEN
 		verify(executorService).execute(any(Runnable.class));
-		assertThat(
-				sut.filteredList.get().toArray(new TimeTrackingItem[0]),
-				is(new TimeTrackingItem[]{item}));
+		assertThat(sut.filteredList.toArray(new TimeTrackingItem[0]),
+				is(new TimeTrackingItem[] { item }));
 	}
 
 	private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
 		ItemReader reader = mock(ItemReader.class);
 		given(reader.read()).willReturn(Optional.of(item),
-				Optional.<TimeTrackingItem>absent());
+				Optional.<TimeTrackingItem> absent());
 		return reader;
 	}
 

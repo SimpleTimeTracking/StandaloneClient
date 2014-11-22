@@ -1,11 +1,14 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ResourceBundle;
+
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Separator;
@@ -16,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
@@ -48,7 +52,9 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	private final ImageView runningImageView;
 
 	private final TimeTrackingItemFilter firstItemOfTheDayFilter;
-	private BorderPane firstDayPane;
+	private final BorderPane firstDayPane;
+
+	private final Separator separator;
 
 	public TimeTrackingItemCell(Builder builder) {
 		ResourceBundle localization = builder.resourceBundle;
@@ -85,13 +91,19 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		cellPane.setAlignment(Pos.CENTER_LEFT);
 		actionsPane.setAlignment(Pos.CENTER_LEFT);
 
-		createFirstDayPane();
+		firstDayPane = new BorderPane();
+		separator = new Separator();
+
+		setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 	}
 
 	protected void setupTooltips(ResourceBundle localization) {
-		editButton.setTooltip(new Tooltip(localization.getString("itemList.edit")));
-		continueButton.setTooltip(new Tooltip(localization.getString("itemList.continue")));
-		deleteButton.setTooltip(new Tooltip(localization.getString("itemList.delete")));
+		editButton.setTooltip(new Tooltip(localization
+				.getString("itemList.edit")));
+		continueButton.setTooltip(new Tooltip(localization
+				.getString("itemList.continue")));
+		deleteButton.setTooltip(new Tooltip(localization
+				.getString("itemList.delete")));
 	}
 
 	private void setupListenersForCallbacks(
@@ -131,20 +143,22 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 			applyLabelForComment();
 			setupTimePane();
 			if (firstItemOfTheDayFilter.filter(item)) {
+				setupFirstDayPane();
 				setGraphic(firstDayPane);
 			} else {
+				setupCellPane();
 				setGraphic(cellPane);
 			}
 		}
 	}
 
-	private void createFirstDayPane() {
-		firstDayPane = new BorderPane();
+	private void setupCellPane() {
+		firstDayPane.getChildren().clear();
+	}
+
+	private void setupFirstDayPane() {
 		firstDayPane.setCenter(cellPane);
-		Separator separator = new Separator();
-		separator.setPrefHeight(10);
 		firstDayPane.setBottom(separator);
-		setGraphic(firstDayPane);
 	}
 
 	private void applyLabelForComment() {
@@ -162,7 +176,8 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		if (!getItem().getEnd().isPresent()) {
 			timePane.getChildren().setAll(labelForStart, runningImageView);
 		} else {
-			labelForEnd.setText(dateTimeFormatter.print(getItem().getEnd().get()));
+			labelForEnd.setText(dateTimeFormatter.print(getItem().getEnd()
+					.get()));
 			timePane.getChildren().setAll(labelForStart, fromToImageView,
 					labelForEnd);
 		}

@@ -1,6 +1,5 @@
 package org.stt.gui;
 
-import com.google.common.base.Optional;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,9 +17,11 @@ import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
+
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.CommandHandler;
@@ -28,6 +29,7 @@ import org.stt.Configuration;
 import org.stt.Factory;
 import org.stt.Singleton;
 import org.stt.ToItemWriterCommandHandler;
+import org.stt.YamlConfig;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
 import org.stt.fun.AmountOfItemsAchievement;
@@ -51,11 +53,14 @@ import org.stt.stt.importer.StreamResourceProvider;
 import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
 
+import com.google.common.base.Optional;
+
 public class MainContext {
 
 	private static final Logger LOG = Logger.getLogger(MainContext.class
 			.getName());
 	private final Configuration configuration;
+	private final YamlConfig yamlConfig;
 
 	private final Factory<Stage> stageFactory = new Factory<Stage>() {
 
@@ -99,7 +104,7 @@ public class MainContext {
 
 					@Override
 					public Optional<TimeTrackingItem> read() {
-						return Optional.<TimeTrackingItem>absent();
+						return Optional.<TimeTrackingItem> absent();
 					}
 				};
 			}
@@ -187,8 +192,7 @@ public class MainContext {
 
 		@Override
 		protected ResourceBundle createInstance() {
-			return ResourceBundle
-					.getBundle("org.stt.gui.Application");
+			return ResourceBundle.getBundle("org.stt.gui.Application");
 		}
 	};
 
@@ -196,9 +200,12 @@ public class MainContext {
 		@Override
 		protected DurationRounder createInstance() {
 			DurationRounder rounder = new DurationRounder();
-			final Duration durationToRoundTo = configuration.getDurationToRoundTo();
+			final Duration durationToRoundTo = configuration
+					.getDurationToRoundTo();
 			rounder.setInterval(durationToRoundTo);
-			LOG.info("Rounding to " + DateTimeHelper.FORMATTER_PERIOD_H_M_S.print(durationToRoundTo.toPeriod()));
+			LOG.info("Rounding to "
+					+ DateTimeHelper.FORMATTER_PERIOD_H_M_S
+							.print(durationToRoundTo.toPeriod()));
 			return rounder;
 		}
 	};
@@ -217,19 +224,25 @@ public class MainContext {
 		protected Achievements createInstance() {
 			Collection<Achievement> listOfAchievments = new ArrayList<>();
 			for (int i : Arrays.asList(11, 31, 61, 101)) {
-				listOfAchievments.add(new DaysTrackedAchievement(resourceBundle.create(), i));
+				listOfAchievments.add(new DaysTrackedAchievement(resourceBundle
+						.create(), i));
 			}
-			listOfAchievments.add(new LongComments(resourceBundle.create(), 7, 200));
-			listOfAchievments.add(new HoursTrackedAchievement(resourceBundle.create(), 1009));
-			listOfAchievments.add(new AmountOfItemsAchievement(resourceBundle.create(), 41));
+			listOfAchievments.add(new LongComments(resourceBundle.create(), 7,
+					200));
+			listOfAchievments.add(new HoursTrackedAchievement(resourceBundle
+					.create(), 1009));
+			listOfAchievments.add(new AmountOfItemsAchievement(resourceBundle
+					.create(), 41));
 			Achievements achievements = new Achievements(listOfAchievments);
-			achievements.determineAchievementsFrom(itemReaderProvider.create().provideReader());
+			achievements.determineAchievementsFrom(itemReaderProvider.create()
+					.provideReader());
 			return achievements;
 		}
 	};
 
 	public MainContext() {
 		configuration = new Configuration();
+		yamlConfig = new YamlConfig();
 	}
 
 	private File getSTTFile() {
@@ -288,7 +301,9 @@ public class MainContext {
 				.reportWindowBuilder(reportWindowBuilder)
 				.expansionProvider(commonPrefixGrouper.create())
 				.resourceBundle(resourceBundle.create())
-				.achievements(achievements.create());
+				.achievements(achievements.create())
+				.timeTrackingItemListConfig(
+						yamlConfig.getConfig().getTimeTrackingItemListConfig());
 		return builder.build();
 	}
 }

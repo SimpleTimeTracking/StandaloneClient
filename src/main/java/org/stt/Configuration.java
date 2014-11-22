@@ -54,7 +54,7 @@ public class Configuration {
 		}
 	}
 
-	File determineBaseDir() {
+	public static File determineBaseDir() {
 		String envHOMEVariable = System.getenv("HOME");
 		if (envHOMEVariable != null) {
 			File homeDirectory = new File(envHOMEVariable);
