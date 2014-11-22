@@ -85,13 +85,12 @@ public class ResultViewConfigurer {
 			result = new ArrayList<TimeTrackingItem>();
 			Set<String> itemsInResult = new HashSet<>();
 			for (TimeTrackingItem item : allItems) {
-				if (item.getComment().isPresent()) {
-					if ((!filterDuplicates || !itemsInResult.contains(item
-							.getComment().get()))
-							&& matchesFilter(item, filter)) {
-						result.add(item);
-						itemsInResult.add(item.getComment().get());
-					}
+				if (item.getComment().isPresent()
+						&& (!filterDuplicates || !itemsInResult.contains(item
+								.getComment().get()))
+						&& matchesFilter(item, filter)) {
+					result.add(item);
+					itemsInResult.add(item.getComment().get());
 				}
 			}
 		}

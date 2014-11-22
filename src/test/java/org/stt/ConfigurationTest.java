@@ -1,5 +1,10 @@
 package org.stt;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -9,14 +14,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
-
-import static org.hamcrest.CoreMatchers.is;
-
-import static org.junit.Assert.assertThat;
-
-import static org.mockito.Mockito.when;
-
-import static org.hamcrest.Matchers.containsInAnyOrder;
 
 public class ConfigurationTest {
 	private Configuration sut;

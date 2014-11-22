@@ -27,6 +27,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
+import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
 import org.stt.gui.jfx.STTApplication.Builder;
@@ -79,7 +80,8 @@ public class STTApplicationTest {
 				.executorService(executorService)
 				.reportWindowBuilder(reportWindowBuilder)
 				.expansionProvider(expansionProvider)
-				.resourceBundle(resourceBundle).achievements(achievements);
+				.resourceBundle(resourceBundle).achievements(achievements)
+				.timeTrackingItemListConfig(new TimeTrackingItemListConfig());
 		sut = builder.build();
 		sut.viewAdapter = sut.new ViewAdapter(
 
