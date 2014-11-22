@@ -8,12 +8,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +19,6 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.binding.SetBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -58,7 +53,11 @@ import org.stt.CommandHandler;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
-import org.stt.gui.jfx.ResultViewConfigurer.Callback;
+import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
+import org.stt.gui.jfx.binding.FirstItemOfDaySet;
+import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 import org.stt.persistence.IOUtil;
@@ -69,7 +68,8 @@ import org.stt.searching.ExpansionProvider;
 import com.google.common.base.Optional;
 import com.sun.javafx.application.PlatformImpl;
 
-public class STTApplication implements Callback {
+public class STTApplication implements DeleteActionHandler, EditActionHandler,
+		ContinueActionHandler {
 
 	private static final Logger LOG = Logger.getLogger(STTApplication.class
 			.getName());
@@ -101,12 +101,28 @@ public class STTApplication implements Callback {
 		this.achievements = checkNotNull(builder.achievements);
 		TimeTrackingItemListConfig timeTrackingItemListConfig = checkNotNull(builder.timeTrackingItemListConfig);
 
-		ResultViewConfigurer resultViewConfigurer = new ResultViewConfigurer();
-		filteredList = resultViewConfigurer.configure(selectedItem, allItems,
-				currentCommand,
-				timeTrackingItemListConfig.isFilterDuplicatesWhenSearching(),
-				STTApplication.this);
+		filteredList = new TimeTrackingListFilter(allItems, currentCommand,
+				timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
 
+		bindUnidirectionalCommandTextToSelectedItem();
+	}
+
+	private void bindUnidirectionalCommandTextToSelectedItem() {
+		selectedItem.addListener(new ChangeListener<TimeTrackingItem>() {
+			@Override
+			public void changed(
+					ObservableValue<? extends TimeTrackingItem> observable,
+					TimeTrackingItem oldItem, TimeTrackingItem newItem) {
+				if (newItem != null) {
+					selectedItem.setValue(null);
+					if (newItem.getComment().isPresent()) {
+						String textToSet = newItem.getComment().get();
+						textOfSelectedItem(textToSet);
+					}
+				}
+
+			}
+		});
 	}
 
 	void readHistoryFrom(final ItemReader reader) {
@@ -126,7 +142,6 @@ public class STTApplication implements Callback {
 		}, null));
 	}
 
-	@Override
 	public void textOfSelectedItem(String textToSet) {
 		setCommandText(textToSet);
 		viewAdapter.requestFocusOnCommandText();
@@ -419,49 +434,17 @@ public class STTApplication implements Callback {
 		}
 
 		private void setupCellFactory() {
-			final ObservableSet<TimeTrackingItem> firstItemOfDayBinding = createFirstItemOfDayBinding(allItems);
 			result.setCellFactory(new TimeTrackingItemCellFactory(
 					STTApplication.this, STTApplication.this,
 					STTApplication.this, new TimeTrackingItemFilter() {
+						ObservableSet<TimeTrackingItem> firstItemOfDayBinding = new FirstItemOfDaySet(
+								allItems);
+
 						@Override
 						public boolean filter(TimeTrackingItem item) {
 							return firstItemOfDayBinding.contains(item);
 						}
 					}, localization));
-		}
-
-		private ObservableSet<TimeTrackingItem> createFirstItemOfDayBinding(
-				final ObservableList<TimeTrackingItem> allItems) {
-			return new SetBinding<TimeTrackingItem>() {
-				{
-					bind(allItems);
-				}
-
-				@Override
-				protected ObservableSet<TimeTrackingItem> computeValue() {
-					Set<TimeTrackingItem> result = getSetOfFirstItemOfTheDayIn(allItems);
-					return FXCollections.observableSet(result);
-				}
-
-			};
-		}
-
-		private Set<TimeTrackingItem> getSetOfFirstItemOfTheDayIn(
-				Collection<TimeTrackingItem> allItems) {
-			SortedSet<TimeTrackingItem> items = new TreeSet<>(
-					TimeTrackingItem.BY_START_COMPARATOR);
-			items.addAll(allItems);
-			TimeTrackingItem lastItem = null;
-			for (Iterator<TimeTrackingItem> it = items.iterator(); it.hasNext();) {
-				TimeTrackingItem item = it.next();
-				if (lastItem != null
-						&& lastItem.getStart().withTimeAtStartOfDay()
-								.equals(item.getStart().withTimeAtStartOfDay())) {
-					it.remove();
-				}
-				lastItem = item;
-			}
-			return items;
 		}
 
 		private void bindCaretPosition() {
