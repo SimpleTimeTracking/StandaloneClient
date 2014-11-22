@@ -1,6 +1,6 @@
 package org.stt.config;
 
-public class TimeTrackingItemListConfig {
+public class TimeTrackingItemListConfig implements Config {
 	private boolean filterDuplicatesWhenSearching = false;
 
 	/**
@@ -13,6 +13,10 @@ public class TimeTrackingItemListConfig {
 	public void setFilterDuplicatesWhenSearching(
 			boolean filterDuplicatesWhenSearching) {
 		this.filterDuplicatesWhenSearching = filterDuplicatesWhenSearching;
+	}
+
+	@Override
+	public void applyDefaults() {
 	}
 
 }

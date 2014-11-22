@@ -32,6 +32,7 @@ public class YamlConfig {
 		try (FileInputStream fileInputStream = new FileInputStream(sttYaml)) {
 			Yaml yaml = new Yaml(new Constructor(BaseConfig.class));
 			config = (BaseConfig) yaml.load(fileInputStream);
+			config.applyDefaults();
 		} catch (FileNotFoundException e) {
 			config = new BaseConfig();
 			try (FileOutputStream out = new FileOutputStream(sttYaml);
