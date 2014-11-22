@@ -1,11 +1,13 @@
-apply plugin: 'application'
+apply plugin: 'application';
 apply plugin: 'java';
 apply plugin: 'eclipse';
 apply plugin: 'findbugs';
 apply plugin: 'pmd';
 apply plugin: 'jacoco';
 
-version = '1.1-SNAPSHOT'
+
+// -SNAPSHOT is added if the release task is not set
+version = '1.1'
 archivesBaseName = 'STT'
 
 def javaHome = System.properties['java.home']
@@ -143,4 +145,14 @@ clean {
 
 task wrapper(type: Wrapper) {
 	gradleVersion = '2.2'
+}
+
+task release(dependsOn: 'distZip') << {
+	println "Built release for $project.version"
+}
+
+gradle.taskGraph.whenReady {taskGraph ->
+	if (!taskGraph.hasTask(release)) {
+		version += '-SNAPSHOT'
+	}
 }
