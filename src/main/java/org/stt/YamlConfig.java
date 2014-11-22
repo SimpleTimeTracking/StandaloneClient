@@ -35,6 +35,7 @@ public class YamlConfig {
 			config.applyDefaults();
 		} catch (FileNotFoundException e) {
 			config = new BaseConfig();
+			config.applyDefaults();
 			try (FileOutputStream out = new FileOutputStream(sttYaml);
 					Writer writer = new OutputStreamWriter(out, "UTF8")) {
 				DumperOptions options = new DumperOptions();
