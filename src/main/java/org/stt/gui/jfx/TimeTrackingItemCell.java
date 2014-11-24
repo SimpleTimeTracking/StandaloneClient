@@ -1,9 +1,7 @@
 package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.ResourceBundle;
-
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -19,7 +17,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
-
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
@@ -153,7 +150,8 @@ public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 	}
 
 	private void setupCellPane() {
-		firstDayPane.getChildren().clear();
+		firstDayPane.setCenter(null);
+		firstDayPane.setBottom(null);
 	}
 
 	private void setupFirstDayPane() {
