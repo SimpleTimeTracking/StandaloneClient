@@ -26,8 +26,12 @@ configurations {
 ext.antlr = [
 	antlrDestPkg: "org.stt.g4",
 	antlrSrcDir : "src/main/antlr",
-	antlrGenDir : "build/antlr/java"
+	antlrGenDir : "gen-src/antlr/java"
 ]
+
+clean {
+	delete antlr.antlrGenDir
+}
 
 sourceSets {
 	main.java.srcDirs += antlr.antlrGenDir
