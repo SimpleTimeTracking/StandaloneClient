@@ -44,6 +44,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
@@ -87,7 +88,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 	ObservableList<TimeTrackingItem> filteredList;
 	final StringProperty currentCommand = new SimpleStringProperty("");
 	final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
-	Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
+//	Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
 
 	ViewAdapter viewAdapter;
 
@@ -104,25 +105,15 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 		filteredList = new TimeTrackingListFilter(allItems, currentCommand,
 				timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
 
-		bindUnidirectionalCommandTextToSelectedItem();
 	}
 
-	private void bindUnidirectionalCommandTextToSelectedItem() {
-		selectedItem.addListener(new ChangeListener<TimeTrackingItem>() {
-			@Override
-			public void changed(
-					ObservableValue<? extends TimeTrackingItem> observable,
-					TimeTrackingItem oldItem, TimeTrackingItem newItem) {
-				if (newItem != null) {
-					selectedItem.setValue(null);
-					if (newItem.getComment().isPresent()) {
-						String textToSet = newItem.getComment().get();
-						textOfSelectedItem(textToSet);
-					}
-				}
-
+	protected void resultItemSelected(TimeTrackingItem item) {
+		if (item != null) {
+			if (item.getComment().isPresent()) {
+				String textToSet = item.getComment().get();
+				textOfSelectedItem(textToSet);
 			}
-		});
+		}
 	}
 
 	void readHistoryFrom(final ItemReader reader) {
@@ -411,24 +402,11 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 		}
 
 		private void bindItemSelection() {
-			result.getSelectionModel().selectedItemProperty()
-					.addListener(new ChangeListener<TimeTrackingItem>() {
-
-						@Override
-						public void changed(
-								ObservableValue<? extends TimeTrackingItem> observable,
-								TimeTrackingItem oldValue,
-								TimeTrackingItem newValue) {
-							selectedItem.setValue(newValue);
-						}
-					});
-			selectedItem.addListener(new ChangeListener<TimeTrackingItem>() {
-
+			result.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
-				public void changed(
-						ObservableValue<? extends TimeTrackingItem> observable,
-						TimeTrackingItem oldValue, TimeTrackingItem newValue) {
-					result.getSelectionModel().select(newValue);
+				public void handle(MouseEvent event) {
+					TimeTrackingItem selectedItem = result.getSelectionModel().getSelectedItem();
+					resultItemSelected(selectedItem);
 				}
 			});
 		}
