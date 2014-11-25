@@ -7,7 +7,7 @@ apply plugin: 'jacoco';
 
 
 // -SNAPSHOT is added if the release task is not set
-version = '1.1'
+version = '1.2'
 archivesBaseName = 'STT'
 
 def javaHome = System.properties['java.home']
