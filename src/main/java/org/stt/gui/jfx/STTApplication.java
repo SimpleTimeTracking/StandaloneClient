@@ -88,7 +88,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 	ObservableList<TimeTrackingItem> filteredList;
 	final StringProperty currentCommand = new SimpleStringProperty("");
 	final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
-//	Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
+	// Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
 
 	ViewAdapter viewAdapter;
 
@@ -108,11 +108,9 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 	}
 
 	protected void resultItemSelected(TimeTrackingItem item) {
-		if (item != null) {
-			if (item.getComment().isPresent()) {
-				String textToSet = item.getComment().get();
-				textOfSelectedItem(textToSet);
-			}
+		if (item != null && item.getComment().isPresent()) {
+			String textToSet = item.getComment().get();
+			textOfSelectedItem(textToSet);
 		}
 	}
 
@@ -405,7 +403,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 			result.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent event) {
-					TimeTrackingItem selectedItem = result.getSelectionModel().getSelectedItem();
+					TimeTrackingItem selectedItem = result.getSelectionModel()
+							.getSelectedItem();
 					resultItemSelected(selectedItem);
 				}
 			});
