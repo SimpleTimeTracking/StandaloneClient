@@ -386,8 +386,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 		}
 
 		public void initialize() {
-			insertButton.setMnemonicParsing(true);
-			finButton.setMnemonicParsing(true);
 			setupCellFactory();
 			final MultipleSelectionModel<TimeTrackingItem> selectionModel = result
 					.getSelectionModel();

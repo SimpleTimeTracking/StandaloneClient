@@ -21,12 +21,12 @@
                      </tooltip></TextArea>
                   <FlowPane alignment="CENTER" hgap="10.0" prefHeight="0.0" prefWidth="0.0" vgap="10.0">
                      <children>
-                        <Button fx:id="insertButton" mnemonicParsing="false" onAction="#insert" text="%insert">
+                        <Button fx:id="insertButton" mnemonicParsing="true" onAction="#insert" text="%insert">
                            <FlowPane.margin>
                               <Insets />
                            </FlowPane.margin>
                         </Button>
-                        <Button fx:id="finButton" mnemonicParsing="false" onAction="#fin" text="%fin" />
+                        <Button fx:id="finButton" mnemonicParsing="true" onAction="#fin" text="%fin" />
                      </children>
                   </FlowPane>
                </children>
@@ -38,7 +38,7 @@
             </ListView>
             <FlowPane>
                <children>
-                  <Button mnemonicParsing="false" onAction="#showReportWindow" text="%show_report">
+                  <Button mnemonicParsing="true" onAction="#showReportWindow" text="%show_report">
                      <FlowPane.margin>
                         <Insets />
                      </FlowPane.margin>
