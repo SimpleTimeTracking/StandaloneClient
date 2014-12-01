@@ -13,6 +13,11 @@ import org.stt.searching.ExpansionProvider;
 
 import com.google.common.base.Optional;
 
+/**
+ * Learns common prefixes and uses them to determine groups.
+ * Note that items are split at 'space' unless the resulting subgroup would have less than
+ * 3 characters, in which case the group gets expanded.
+ */
 public class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 	private final RadixTreeNode root = new RadixTreeNode();
 
@@ -36,9 +41,13 @@ public class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 			Optional<String> optComment = item.get().getComment();
 			if (optComment.isPresent()) {
 				String comment = optComment.get();
-				root.insert(comment);
+				learnLine(comment);
 			}
 		}
+	}
+
+	public void learnLine(String comment) {
+		root.insert(comment);
 	}
 
 	@Override
@@ -147,7 +156,7 @@ public class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 
 		private int lengthOfValidLongestCommonPrefix(String text) {
 			int currentLength = lengthOfLongestCommonPrefix(text);
-			if (currentLength > 3) {
+			if (currentLength >= 3) {
 				return currentLength;
 			}
 			return 0;

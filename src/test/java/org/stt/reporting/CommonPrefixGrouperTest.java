@@ -145,6 +145,21 @@ public class CommonPrefixGrouperTest {
 		assertThat(groups, is(Arrays.asList(firstComment)));
 	}
 
+	@Test
+	public void shouldCutGroupAtShorterItem()
+	{
+		// GIVEN
+		sut.learnLine("aaaa");
+		sut.learnLine("aaaa bbbb");
+		sut.learnLine("aaaa bbbb cccc");
+
+		// WHEN
+		List<String> result = sut.getGroupsOf("aaaa bbbb cccc dddd");
+
+		// THEN
+		assertThat(result, is(Arrays.asList("aaaa", "bbbb", "cccc", "dddd")));
+	}
+
 	private TimeTrackingItem[] givenReaderReturnsItemsWithComment(
 			String... comments) {
 		TimeTrackingItem items[] = new TimeTrackingItem[comments.length];
