@@ -1,16 +1,15 @@
 package org.stt.gui.jfx;
 
 import com.google.common.base.Joiner;
-import javafx.beans.binding.ListBinding;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.binding.StringBinding;
-import javafx.beans.binding.When;
+import javafx.animation.PauseTransition;
+import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -21,13 +20,9 @@ import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.joda.time.DateTime;
@@ -36,6 +31,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.Factory;
+import org.stt.config.ReportWindowConfig;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.model.ReportingItem;
@@ -56,25 +52,31 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.stt.time.DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs;
 
 public class ReportWindowBuilder {
-    private static final Paint[] GROUP_FILL = {Color.BLUE, Color.DARKCYAN, Color.GREEN, Color.DARKGREEN, Color.BROWN};
-
     private final ItemReaderProvider readerProvider;
     private final ItemSearcher itemSearcher;
 
     private final Factory<Stage> stageFactory;
     private final DurationRounder rounder;
     private final ItemGrouper itemGrouper;
-    private boolean groupItems;
+    private final Color[] groupColors;
+    private ReportWindowConfig config;
+
 
     public ReportWindowBuilder(Factory<Stage> stageFactory,
                                ItemReaderProvider readerProvider, ItemSearcher searcher,
-                               DurationRounder rounder, ItemGrouper itemGrouper, boolean groupItems) {
-        this.groupItems = groupItems;
+                               DurationRounder rounder, ItemGrouper itemGrouper, ReportWindowConfig config) {
+        this.config = config;
         this.stageFactory = checkNotNull(stageFactory);
         this.itemSearcher = checkNotNull(searcher);
         this.readerProvider = checkNotNull(readerProvider);
         this.rounder = checkNotNull(rounder);
         this.itemGrouper = checkNotNull(itemGrouper);
+
+        List<String> colorStrings = config.getGroupColors();
+        groupColors = new Color[colorStrings.size()];
+        for (int i = 0; i < colorStrings.size(); i++) {
+            groupColors[i] = Color.web(colorStrings.get(i));
+        }
     }
 
     public void setupStage() throws IOException {
@@ -197,8 +199,8 @@ public class ReportWindowBuilder {
         public void initialize() {
             final ObservableValue<DateTime> selectedDateTimeProperty = addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty();
             final ObservableValue<Report> reportModel = createReportModel(selectedDateTimeProperty);
-            StringBinding startBinding = createBindingForStartOfReport(reportModel);
-            StringBinding endBinding = createBindingForEndOfReport(reportModel);
+            final StringBinding startBinding = createBindingForStartOfReport(reportModel);
+            final StringBinding endBinding = createBindingForEndOfReport(reportModel);
             final ObjectBinding<Duration> uncoveredTimeBinding = createBindingForUncoveredTimeOfReport(reportModel);
             ObservableStringValue formattedUncoveredTimeBinding = STTBindings
                     .formattedDuration(uncoveredTimeBinding);
@@ -210,9 +212,22 @@ public class ReportWindowBuilder {
             endOfReport.textProperty().bind(endBinding);
             uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding);
             uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding);
+            startOfReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    setClipboard(startBinding.get());
+                }
+            });
+            endOfReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    setClipboard(endBinding.get());
+                }
+            });
 
             ListBinding<ListItem> reportListModel = createReportingItemsListModel(reportModel);
             tableForReport.setItems(reportListModel);
+            tableForReport.getSelectionModel().setCellSelectionEnabled(true);
 
             roundedDurationSum
                     .textProperty()
@@ -334,7 +349,7 @@ public class ReportWindowBuilder {
             columnForComment
                     .setCellValueFactory(new PropertyValueFactory<ListItem, String>(
                             "comment"));
-            if (groupItems) {
+            if (config.isGroupItems()) {
                 setItemGroupingCellFactory();
             }
         }
@@ -343,42 +358,7 @@ public class ReportWindowBuilder {
             columnForComment.setCellFactory(new Callback<TableColumn<ListItem, String>, TableCell<ListItem, String>>() {
                 @Override
                 public TableCell<ListItem, String> call(TableColumn<ListItem, String> param) {
-                    return new TableCell<ListItem, String>() {
-                        private FlowPane flowPane = new FlowPane();
-
-                        @Override
-                        protected void updateItem(String item, boolean empty) {
-                            super.updateItem(item, empty);
-                            ObservableList<Node> flowPaneChildren = flowPane.getChildren();
-                            flowPaneChildren.clear();
-                            if (!empty) {
-                                final List<String> itemGroups = itemGrouper.getGroupsOf(item);
-                                for (int i = 0; i < itemGroups.size(); i++) {
-                                    String partToShow;
-                                    String part = itemGroups.get(i);
-                                    if (i > 0) {
-                                        partToShow = " " + part;
-                                    } else {
-                                        partToShow = part;
-                                    }
-                                    final int finalIndex = i;
-                                    final Label partLabel = new Label(partToShow);
-                                    partLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
-                                        @Override
-                                        public void handle(MouseEvent event) {
-                                            String commentRemainder = Joiner.on(" ").join(itemGroups.subList(finalIndex, itemGroups.size()));
-                                            setClipboard(commentRemainder);
-                                        }
-                                    });
-                                    if (i < GROUP_FILL.length) {
-                                        partLabel.setTextFill(GROUP_FILL[i]);
-                                    }
-                                    flowPaneChildren.add(partLabel);
-                                }
-                            }
-                            setGraphic(flowPane);
-                        }
-                    };
+                    return new CommentTableCell();
                 }
             });
         }
@@ -423,13 +403,12 @@ public class ReportWindowBuilder {
         }
 
         private void setClipBoard(Duration duration) {
-            ClipboardContent content = new ClipboardContent();
+            System.out.println(duration);
             PeriodFormatter formatter = new PeriodFormatterBuilder()
                     .printZeroIfSupported().minimumPrintedDigits(2)
                     .appendHours().appendSeparator(":").appendMinutes()
                     .toFormatter();
-            content.putString(formatter.print(duration.toPeriod()));
-            setClipboardContentTo(content);
+            setClipboard(formatter.print(duration.toPeriod()));
         }
 
         private void setClipboardContentTo(ClipboardContent content) {
@@ -490,6 +469,51 @@ public class ReportWindowBuilder {
             reportControlsPane.getChildren().add(comboBox);
 
             return comboBox.getSelectionModel().selectedItemProperty();
+        }
+
+        private class CommentTableCell extends TableCell<ListItem, String> {
+            private FlowPane flowPane = new FlowPane();
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                ObservableList<Node> flowPaneChildren = flowPane.getChildren();
+                flowPaneChildren.clear();
+                if (!empty) {
+                    final List<String> itemGroups = itemGrouper.getGroupsOf(item);
+                    for (int i = 0; i < itemGroups.size(); i++) {
+                        String partToShow;
+                        String part = itemGroups.get(i);
+                        if (i > 0) {
+                            partToShow = " " + part;
+                        } else {
+                            partToShow = part;
+                        }
+                        final Label partLabel = new Label(partToShow);
+                        final int fromIndex = i;
+                        addClickListener(itemGroups, partLabel, fromIndex);
+                        if (i < groupColors.length) {
+                            Color color = groupColors[i];
+                            Color selected = color.deriveColor(0, 1, 3, 1);
+                            BooleanBinding selectedRow = Bindings.equal(tableForReport.getSelectionModel().selectedIndexProperty(), indexProperty());
+                            ObjectBinding<Color> colorObjectBinding = new When(selectedRow).then(selected).otherwise(color);
+                            partLabel.textFillProperty().bind(colorObjectBinding);
+                        }
+                        flowPaneChildren.add(partLabel);
+                    }
+                }
+                setGraphic(flowPane);
+            }
+
+            private void addClickListener(final List<String> itemGroups, Label partLabel, final int fromIndex) {
+                partLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        String commentRemainder = Joiner.on(" ").join(itemGroups.subList(fromIndex, itemGroups.size()));
+                        setClipboard(commentRemainder);
+                    }
+                });
+            }
         }
     }
 }

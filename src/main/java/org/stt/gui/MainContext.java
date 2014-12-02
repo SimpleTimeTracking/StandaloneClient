@@ -269,7 +269,7 @@ public class MainContext {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
                 stageFactory, itemReaderProvider.create(),
-                itemSearcher.create(), durationRounder.create(), commonPrefixGrouper.create(), yamlConfig.getConfig().getReportWindowConfig().isGroupItems());
+                itemSearcher.create(), durationRounder.create(), commonPrefixGrouper.create(), yamlConfig.getConfig().getReportWindowConfig());
         Builder builder = new STTApplication.Builder();
         builder.commandHandler(commandHandler.create())
                 .historySourceProvider(itemReaderProvider.create())

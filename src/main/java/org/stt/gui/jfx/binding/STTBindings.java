@@ -1,8 +1,11 @@
 package org.stt.gui.jfx.binding;
 
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.Property;
 import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import org.joda.time.Duration;
 import org.stt.time.DateTimeHelper;
 
@@ -24,4 +27,15 @@ public class STTBindings {
 			}
 		};
 	}
+
+	public static <T extends Event, E> EventHandler<T> createAssignWhenTriggeredHandler(final Property<E> target, final ObservableValue<E> src) {
+		return new EventHandler<T>() {
+			@Override
+			public void handle(T event) {
+				target.setValue(src.getValue());
+			}
+		};
+	}
+
+
 }

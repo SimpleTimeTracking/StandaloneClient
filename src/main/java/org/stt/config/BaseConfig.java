@@ -1,43 +1,48 @@
 package org.stt.config;
 
-import org.stt.reporting.CommonPrefixGrouper;
-
 public class BaseConfig implements Config {
-	private TimeTrackingItemListConfig timeTrackingItemListConfig;
-	private ReportWindowConfig reportWindowConfig;
-	private CommonPrefixGrouperConfig prefixGrouper;
+    private TimeTrackingItemListConfig timeTrackingItemListConfig;
+    private ReportWindowConfig reportWindowConfig;
+    private CommonPrefixGrouperConfig prefixGrouper;
 
-	public void setTimeTrackingItemListConfig(
-			TimeTrackingItemListConfig timeTrackingItemListConfig) {
-		this.timeTrackingItemListConfig = timeTrackingItemListConfig;
-	}
+    public TimeTrackingItemListConfig getTimeTrackingItemListConfig() {
+        return timeTrackingItemListConfig;
+    }
 
-	public TimeTrackingItemListConfig getTimeTrackingItemListConfig() {
-		return timeTrackingItemListConfig;
-	}
-	public ReportWindowConfig getReportWindowConfig() { return  reportWindowConfig; }
+    public void setTimeTrackingItemListConfig(
+            TimeTrackingItemListConfig timeTrackingItemListConfig) {
+        this.timeTrackingItemListConfig = timeTrackingItemListConfig;
+    }
 
-	public CommonPrefixGrouperConfig getPrefixGrouper() {
-		return prefixGrouper;
-	}
+    public ReportWindowConfig getReportWindowConfig() {
+        return reportWindowConfig;
+    }
 
-	public void setPrefixGrouper(CommonPrefixGrouperConfig prefixGrouper) {
-		this.prefixGrouper = prefixGrouper;
-	}
+    public void setReportWindowConfig(ReportWindowConfig reportWindowConfig) {
+        this.reportWindowConfig = reportWindowConfig;
+    }
 
-	@Override
-	public void applyDefaults() {
-		if (timeTrackingItemListConfig == null) {
-			timeTrackingItemListConfig = new TimeTrackingItemListConfig();
-		}
-		timeTrackingItemListConfig.applyDefaults();
-		if (reportWindowConfig == null) {
-			reportWindowConfig = new ReportWindowConfig();
-		}
-		reportWindowConfig.applyDefaults();
-		if (prefixGrouper == null) {
-			prefixGrouper = new CommonPrefixGrouperConfig();
-		}
-		prefixGrouper.applyDefaults();
-	}
+    public CommonPrefixGrouperConfig getPrefixGrouper() {
+        return prefixGrouper;
+    }
+
+    public void setPrefixGrouper(CommonPrefixGrouperConfig prefixGrouper) {
+        this.prefixGrouper = prefixGrouper;
+    }
+
+    @Override
+    public void applyDefaults() {
+        if (timeTrackingItemListConfig == null) {
+            timeTrackingItemListConfig = new TimeTrackingItemListConfig();
+        }
+        timeTrackingItemListConfig.applyDefaults();
+        if (reportWindowConfig == null) {
+            reportWindowConfig = new ReportWindowConfig();
+        }
+        reportWindowConfig.applyDefaults();
+        if (prefixGrouper == null) {
+            prefixGrouper = new CommonPrefixGrouperConfig();
+        }
+        prefixGrouper.applyDefaults();
+    }
 }
