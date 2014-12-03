@@ -1,5 +1,6 @@
 package org.stt;
 
+import com.google.inject.Inject;
 import org.stt.time.DateTimeHelper;
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -38,6 +39,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 	private final ItemPersister itemWriter;
 	private final ItemSearcher itemSearcher;
 
+	@Inject
 	public ToItemWriterCommandHandler(ItemPersister itemWriter,
 			ItemSearcher itemSearcher) {
 		this.itemWriter = checkNotNull(itemWriter);

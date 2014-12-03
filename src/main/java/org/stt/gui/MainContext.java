@@ -1,12 +1,20 @@
 package org.stt.gui;
 
 import com.google.common.base.Optional;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.*;
+import org.stt.event.EventBusModule;
+import org.stt.event.messages.ReadItemsRequest;
+import org.stt.event.subscribers.ItemReaderAndPublisher;
 import org.stt.fun.*;
 import org.stt.gui.jfx.ReportWindowBuilder;
 import org.stt.gui.jfx.STTApplication;
@@ -18,9 +26,11 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.CommonPrefixGrouper;
 import org.stt.searching.DefaultItemSearcher;
+import org.stt.searching.ExpansionProvider;
 import org.stt.searching.ItemSearcher;
 import org.stt.stt.importer.STTItemPersister;
 import org.stt.stt.importer.STTItemReader;
+import org.stt.stt.importer.STTPersistenceModule;
 import org.stt.stt.importer.StreamResourceProvider;
 import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
@@ -207,14 +217,6 @@ public class MainContext {
             return new STTItemPersister(streamResourceProvider.create());
         }
     };
-    private final Factory<CommandHandler> commandHandler = new Singleton<CommandHandler>() {
-
-        @Override
-        protected CommandHandler createInstance() {
-            return new ToItemWriterCommandHandler(itemWriter.create(),
-                    itemSearcher.create());
-        }
-    };
 
     public MainContext() {
         configuration = new Configuration();
@@ -252,10 +254,29 @@ public class MainContext {
 
     void start() {
         setupLogging();
+        final ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
+                stageFactory, itemReaderProvider.create(),
+                itemSearcher.create(), durationRounder.create(), commonPrefixGrouper.create(), yamlConfig.getConfig().getReportWindowConfig());
+        Injector injector = Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(CommandHandler.class).to(ToItemWriterCommandHandler.class);
+                bind(ExecutorService.class).toInstance(Executors.newSingleThreadExecutor());
+                bind(ExpansionProvider.class).toInstance(commonPrefixGrouper.create());
+                bind(Achievements.class).toInstance(achievements.create());
+                bind(ItemPersister.class).toInstance(itemWriter.create());
+                bind(ReportWindowBuilder.class).toInstance(reportWindowBuilder);
+                bind(File.class).toInstance(getSTTFile());
+            }
+        }, new STTPersistenceModule(), new I18NModule(), new EventBusModule());
+        injector.getInstance(ItemReaderAndPublisher.class);
 
-        STTApplication application = createSTTApplication();
+        STTApplication application = createSTTApplication(injector);
         Stage stage = stageFactory.create();
         application.start(stage);
+
+        EventBus eventBus = injector.getInstance(EventBus.class);
+        eventBus.post(new ReadItemsRequest());
     }
 
     private void setupLogging() {
@@ -265,21 +286,9 @@ public class MainContext {
         LOG.addHandler(handler);
     }
 
-    STTApplication createSTTApplication() {
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
-                stageFactory, itemReaderProvider.create(),
-                itemSearcher.create(), durationRounder.create(), commonPrefixGrouper.create(), yamlConfig.getConfig().getReportWindowConfig());
-        Builder builder = new STTApplication.Builder();
-        builder.commandHandler(commandHandler.create())
-                .historySourceProvider(itemReaderProvider.create())
-                .executorService(executorService)
-                .reportWindowBuilder(reportWindowBuilder)
-                .expansionProvider(commonPrefixGrouper.create())
-                .resourceBundle(resourceBundle.create())
-                .achievements(achievements.create())
-                .timeTrackingItemListConfig(
-                        yamlConfig.getConfig().getTimeTrackingItemListConfig());
-        return builder.build();
+    STTApplication createSTTApplication(Injector injector) {
+        Builder builder;
+        builder = injector.getInstance(Builder.class);
+        return new STTApplication(injector.getInstance(EventBus.class), builder);
     }
 }

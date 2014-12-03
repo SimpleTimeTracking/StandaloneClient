@@ -1,6 +1,7 @@
 package org.stt.gui.jfx;
 
 import com.google.common.base.Joiner;
+import com.google.inject.Inject;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
@@ -62,6 +63,7 @@ public class ReportWindowBuilder {
     private ReportWindowConfig config;
 
 
+    @Inject
     public ReportWindowBuilder(Factory<Stage> stageFactory,
                                ItemReaderProvider readerProvider, ItemSearcher searcher,
                                DurationRounder rounder, ItemGrouper itemGrouper, ReportWindowConfig config) {

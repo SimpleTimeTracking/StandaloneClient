@@ -2,6 +2,7 @@ package org.stt.stt.importer;
 
 import java.io.Reader;
 
+import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.stt.model.TimeTrackingItem;
@@ -18,6 +19,7 @@ public class STTItemReader implements ItemReader {
 
 	private final STTItemConverter converter = new STTItemConverter();
 
+	@Inject
 	public STTItemReader(Reader input) {
 		lineIter = IOUtils.lineIterator(input);
 	}

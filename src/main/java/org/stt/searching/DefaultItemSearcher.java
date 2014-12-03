@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.ReadableInstant;
 import org.stt.model.TimeTrackingItem;
@@ -23,6 +24,7 @@ public class DefaultItemSearcher implements ItemSearcher {
 	 * @param reader
 	 *            where to search for items
 	 */
+	@Inject
 	public DefaultItemSearcher(ItemReaderProvider provider) {
 		this.provider = checkNotNull(provider);
 	}

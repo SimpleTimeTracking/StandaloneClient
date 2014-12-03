@@ -57,6 +57,7 @@ dependencies {
 		compile files("$javaHome/lib/jfxrt.jar")
 	}
 	compile 'com.google.guava:guava:18.0'
+	compile 'com.google.inject:guice:3.0'
 	compile 'commons-io:commons-io:2.4'
 	compile 'joda-time:joda-time:2.5'
 	compile 'org.yaml:snakeyaml:1.15-SNAPSHOT'

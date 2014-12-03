@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -16,6 +17,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import com.google.inject.Inject;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -52,6 +56,8 @@ import javafx.stage.WindowEvent;
 
 import org.stt.CommandHandler;
 import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.event.messages.ReadItemsEvent;
+import org.stt.event.messages.ReadItemsRequest;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
@@ -91,8 +97,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 	// Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
 
 	ViewAdapter viewAdapter;
+	private final EventBus eventBus;
 
-	private STTApplication(Builder builder) {
+	@Inject
+	public STTApplication(EventBus eventBus, Builder builder) {
+		this.eventBus = checkNotNull(eventBus);
+		eventBus.register(this);
 		this.expansionProvider = checkNotNull(builder.expansionProvider);
 		this.reportWindowBuilder = checkNotNull(builder.reportWindowBuilder);
 		this.commandHandler = checkNotNull(builder.commandHandler);
@@ -106,29 +116,25 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 				timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
 
 	}
+	private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
+
+	@Subscribe
+	public void receiveItems(ReadItemsEvent event) {
+		if (event.type == ReadItemsEvent.Type.START) {
+			tmpItems.clear();
+		}
+		tmpItems.addAll(event.timeTrackingItems);
+		if (event.type == ReadItemsEvent.Type.DONE) {
+			viewAdapter.updateAllItems(tmpItems);
+//			tmpItems.clear();
+		}
+	}
 
 	protected void resultItemSelected(TimeTrackingItem item) {
 		if (item != null && item.getComment().isPresent()) {
 			String textToSet = item.getComment().get();
 			textOfSelectedItem(textToSet);
 		}
-	}
-
-	void readHistoryFrom(final ItemReader reader) {
-		executorService.execute(new FutureTask<Void>(new Runnable() {
-
-			@Override
-			public void run() {
-				Collection<TimeTrackingItem> allItems;
-				try {
-					allItems = IOUtil.readAll(reader);
-				} catch (IOException ex) {
-					LOG.log(Level.SEVERE, null, ex);
-					throw new RuntimeException(ex);
-				}
-				viewAdapter.updateAllItems(allItems);
-			}
-		}, null));
 	}
 
 	public void textOfSelectedItem(String textToSet) {
@@ -188,12 +194,11 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 	}
 
 	public void start(final Stage stage) {
-		Platform.runLater(new Runnable() {
+		PlatformImpl.runAndWait(new Runnable() {
 			@Override
 			public void run() {
 				try {
 					show(stage);
-					readHistoryFrom(historySourceProvider.provideReader());
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE, "Couldn't start", e);
 				}
@@ -233,51 +238,55 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 		private Achievements achievements;
 		private TimeTrackingItemListConfig timeTrackingItemListConfig;
 
+		@Inject
 		public Builder executorService(ExecutorService executorService) {
 			this.executorService = executorService;
 			return this;
 		}
 
+		@Inject
 		public Builder commandHandler(CommandHandler commandHandler) {
 			this.commandHandler = commandHandler;
 			return this;
 		}
 
+		@Inject
 		public Builder historySourceProvider(
 				ItemReaderProvider historySourceProvider) {
 			this.historySourceProvider = historySourceProvider;
 			return this;
 		}
 
+		@Inject
 		public Builder reportWindowBuilder(
 				ReportWindowBuilder reportWindowBuilder) {
 			this.reportWindowBuilder = reportWindowBuilder;
 			return this;
 		}
 
+		@Inject
 		public Builder expansionProvider(ExpansionProvider expansionProvider) {
 			this.expansionProvider = expansionProvider;
 			return this;
 		}
 
+		@Inject
 		public Builder resourceBundle(ResourceBundle resourceBundle) {
 			this.resourceBundle = resourceBundle;
 			return this;
 		}
 
+		@Inject
 		public Builder achievements(Achievements achievements) {
 			this.achievements = achievements;
 			return this;
 		}
 
+		@Inject
 		public Builder timeTrackingItemListConfig(
 				TimeTrackingItemListConfig timeTrackingItemListConfig) {
 			this.timeTrackingItemListConfig = timeTrackingItemListConfig;
 			return this;
-		}
-
-		public STTApplication build() {
-			return new STTApplication(this);
 		}
 
 	}
@@ -478,7 +487,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 		void insert() {
 			Optional<TimeTrackingItem> item = executeCommand();
 			if (item.isPresent()) {
-				readHistoryFrom(historySourceProvider.provideReader());
+				eventBus.post(new ReadItemsRequest());
 			}
 		}
 
