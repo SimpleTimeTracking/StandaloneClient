@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.searching.ItemSearcher;
+import org.stt.search.ItemSearcher;
 
 @RunWith(Theories.class)
 public class ToItemWriterCommandHandlerTest {

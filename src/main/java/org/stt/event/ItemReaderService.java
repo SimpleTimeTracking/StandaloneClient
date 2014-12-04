@@ -1,4 +1,4 @@
-package org.stt.event.subscribers;
+package org.stt.event;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -18,12 +18,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Created by dante on 03.12.14.
  */
-public class ItemReaderAndPublisher {
+public class ItemReaderService {
     private Provider<ItemReader> itemReaderProvider;
     private EventBus eventBus;
 
     @Inject
-    public ItemReaderAndPublisher(EventBus eventBus, Provider<ItemReader> itemReaderProvider) {
+    public ItemReaderService(EventBus eventBus, Provider<ItemReader> itemReaderProvider) {
         this.eventBus = checkNotNull(eventBus);
         this.itemReaderProvider = checkNotNull(itemReaderProvider);
         eventBus.register(this);

@@ -1,4 +1,4 @@
-package org.stt.reporting;
+package org.stt.analysis;
 
 public interface ItemCategorizer {
 

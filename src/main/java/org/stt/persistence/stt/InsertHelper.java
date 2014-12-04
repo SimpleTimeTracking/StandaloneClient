@@ -1,4 +1,4 @@
-package org.stt.persistence;
+package org.stt.persistence.stt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,8 +7,10 @@ import java.io.IOException;
 import org.stt.model.TimeTrackingItem;
 
 import com.google.common.base.Optional;
+import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemWriter;
 
-public class InsertHelper {
+class InsertHelper {
 	private final ItemReader reader;
 	private final ItemWriter writer;
 	private final TimeTrackingItem itemToInsert;

@@ -1,4 +1,4 @@
-package org.stt.searching;
+package org.stt.search;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -49,29 +49,6 @@ public class DefaultItemSearcherTest {
 			}
 		};
 		sut = new DefaultItemSearcher(provider);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Test
-	public void searchByExactStartTime() {
-
-		// GIVEN
-		DateTime expected = DateTime.now();
-		TimeTrackingItem expectedItem = new TimeTrackingItem(
-				"the expected one", expected);
-
-		Mockito.when(reader.read()).thenReturn(
-				Optional.of(expectedItem),
-				Optional.of(new TimeTrackingItem("", DateTime.now()
-						.minus(10000))), Optional.<TimeTrackingItem> absent());
-
-		// WHEN
-		Collection<TimeTrackingItem> foundElements = sut.searchByStart(
-				expected, expected);
-
-		// THEN
-		assertThat(foundElements, Matchers.hasItem(expectedItem));
-		assertThat(foundElements, Matchers.hasSize(1));
 	}
 
 	@Test

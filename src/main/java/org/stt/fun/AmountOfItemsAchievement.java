@@ -11,7 +11,7 @@ import org.stt.model.TimeTrackingItem;
  *
  * @author dante
  */
-public class AmountOfItemsAchievement extends LocalizedAchievement {
+class AmountOfItemsAchievement extends LocalizedAchievement {
 
 	private static final DateTimeComparator DATE_COMPARATOR = DateTimeComparator.getDateOnlyInstance();
 	private final int amountOfItems;

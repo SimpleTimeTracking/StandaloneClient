@@ -1,45 +1,30 @@
 package org.stt.gui;
 
-import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
-import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.*;
+import org.stt.analysis.AnalysisModule;
 import org.stt.event.EventBusModule;
+import org.stt.event.ItemReaderService;
 import org.stt.event.messages.ReadItemsRequest;
-import org.stt.event.subscribers.ItemReaderAndPublisher;
-import org.stt.fun.*;
-import org.stt.gui.jfx.ReportWindowBuilder;
+import org.stt.fun.AchievementModule;
+import org.stt.gui.jfx.JFXModule;
 import org.stt.gui.jfx.STTApplication;
-import org.stt.gui.jfx.STTApplication.Builder;
-import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.BackupCreator;
-import org.stt.persistence.ItemPersister;
-import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.CommonPrefixGrouper;
-import org.stt.searching.DefaultItemSearcher;
-import org.stt.searching.ExpansionProvider;
-import org.stt.searching.ItemSearcher;
-import org.stt.stt.importer.STTItemPersister;
-import org.stt.stt.importer.STTItemReader;
-import org.stt.stt.importer.STTPersistenceModule;
-import org.stt.stt.importer.StreamResourceProvider;
+import org.stt.persistence.stt.STTFile;
+import org.stt.persistence.stt.STTPersistenceModule;
 import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.ResourceBundle;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.ConsoleHandler;
@@ -51,176 +36,9 @@ public class MainContext {
     private static final Logger LOG = Logger.getLogger(MainContext.class
             .getName());
     private final Configuration configuration;
-    private final YamlConfig yamlConfig;
-
-    private final Factory<Stage> stageFactory = new Factory<Stage>() {
-
-        @Override
-        public Stage create() {
-            return new Stage();
-        }
-    };
-    private final Factory<ItemReader> persistenceReader = new Factory<ItemReader>() {
-        @Override
-        public ItemReader create() {
-            File file = getSTTFile();
-            if (file.exists()) {
-                try {
-                    return new STTItemReader(new InputStreamReader(
-                            new FileInputStream(file), "UTF-8"));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                return new ItemReader() {
-                    @Override
-                    public void close() throws IOException {
-                    }
-
-                    @Override
-                    public Optional<TimeTrackingItem> read() {
-                        return Optional.<TimeTrackingItem>absent();
-                    }
-                };
-            }
-        }
-    };
-    private final Factory<CommonPrefixGrouper> commonPrefixGrouper = new Singleton<CommonPrefixGrouper>() {
-
-        @Override
-        public CommonPrefixGrouper createInstance() {
-            CommonPrefixGrouper commonPrefixGrouper = new CommonPrefixGrouper();
-            try (ItemReader itemReader = persistenceReader.create()) {
-                commonPrefixGrouper.scanForGroups(itemReader);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            for (String item : yamlConfig.getConfig().getPrefixGrouper().getBaseLine()) {
-                LOG.info("Adding baseline item '" + item + "'");
-                commonPrefixGrouper.learnLine(item);
-            }
-
-            return commonPrefixGrouper;
-        }
-    };
-    private final Factory<ItemReaderProvider> itemReaderProvider = new Singleton<ItemReaderProvider>() {
-        @Override
-        protected ItemReaderProvider createInstance() {
-            return new ItemReaderProvider() {
-
-                @Override
-                public ItemReader provideReader() {
-                    return persistenceReader.create();
-                }
-            };
-        }
-    };
-
-    private final Factory<ItemSearcher> itemSearcher = new Singleton<ItemSearcher>() {
-        @Override
-        protected ItemSearcher createInstance() {
-            return new DefaultItemSearcher(itemReaderProvider.create());
-        }
-    };
-
-    private final Factory<StreamResourceProvider> streamResourceProvider = new Singleton<StreamResourceProvider>() {
-        @Override
-        protected StreamResourceProvider createInstance() {
-            return new StreamResourceProvider() {
-                private OutputStreamWriter outputStreamWriter;
-                private InputStreamReader inReader;
-                private OutputStreamWriter appendingOutWriter;
-
-                @Override
-                public Writer provideTruncatingWriter() throws IOException {
-                    outputStreamWriter = new OutputStreamWriter(
-                            new FileOutputStream(getSTTFile(), false), "UTF-8");
-                    return outputStreamWriter;
-                }
-
-                @Override
-                public Reader provideReader() throws IOException {
-                    inReader = new InputStreamReader(new FileInputStream(
-                            getSTTFile()), "UTF-8");
-                    return inReader;
-                }
-
-                @Override
-                public Writer provideAppendingWriter() throws IOException {
-                    appendingOutWriter = new OutputStreamWriter(
-                            new FileOutputStream(getSTTFile(), true), "UTF-8");
-                    return appendingOutWriter;
-                }
-
-                @Override
-                public void close() {
-                    IOUtils.closeQuietly(outputStreamWriter);
-                    IOUtils.closeQuietly(inReader);
-                    IOUtils.closeQuietly(appendingOutWriter);
-                }
-            };
-
-        }
-    };
-    private final Factory<ResourceBundle> resourceBundle = new Singleton<ResourceBundle>() {
-
-        @Override
-        protected ResourceBundle createInstance() {
-            return ResourceBundle.getBundle("org.stt.gui.Application");
-        }
-    };
-    private final Factory<DurationRounder> durationRounder = new Singleton<DurationRounder>() {
-        @Override
-        protected DurationRounder createInstance() {
-            DurationRounder rounder = new DurationRounder();
-            final Duration durationToRoundTo = configuration
-                    .getDurationToRoundTo();
-            rounder.setInterval(durationToRoundTo);
-            LOG.info("Rounding to "
-                    + DateTimeHelper.FORMATTER_PERIOD_H_M_S
-                    .print(durationToRoundTo.toPeriod()));
-            return rounder;
-        }
-    };
-    private final Factory<BackupCreator> backupCreator = new Singleton<BackupCreator>() {
-
-        @Override
-        protected BackupCreator createInstance() {
-            return new BackupCreator(configuration);
-        }
-    };
-    private final Factory<Achievements> achievements = new Singleton<Achievements>() {
-
-        @Override
-        protected Achievements createInstance() {
-            Collection<Achievement> listOfAchievments = new ArrayList<>();
-            for (int i : Arrays.asList(11, 31, 61, 101)) {
-                listOfAchievments.add(new DaysTrackedAchievement(resourceBundle
-                        .create(), i));
-            }
-            listOfAchievments.add(new LongComments(resourceBundle.create(), 7,
-                    200));
-            listOfAchievments.add(new HoursTrackedAchievement(resourceBundle
-                    .create(), 1009));
-            listOfAchievments.add(new AmountOfItemsAchievement(resourceBundle
-                    .create(), 41));
-            Achievements achievements = new Achievements(listOfAchievments);
-            achievements.determineAchievementsFrom(itemReaderProvider.create()
-                    .provideReader());
-            return achievements;
-        }
-    };
-    protected Factory<ItemPersister> itemWriter = new Factory<ItemPersister>() {
-
-        @Override
-        public ItemPersister create() {
-            return new STTItemPersister(streamResourceProvider.create());
-        }
-    };
 
     public MainContext() {
         configuration = new Configuration();
-        yamlConfig = new YamlConfig();
     }
 
     public static void main(String[] args) {
@@ -232,13 +50,6 @@ public class MainContext {
             public void run() {
                 MainContext main = new MainContext();
                 main.start();
-                // perform backup
-                try {
-                    main.backupCreator.create().performBackup();
-                } catch (IOException e) {
-                    LOG.log(Level.SEVERE, e.getMessage(), e);
-                    throw new RuntimeException(e);
-                }
             }
         });
     }
@@ -254,25 +65,40 @@ public class MainContext {
 
     void start() {
         setupLogging();
-        final ReportWindowBuilder reportWindowBuilder = new ReportWindowBuilder(
-                stageFactory, itemReaderProvider.create(),
-                itemSearcher.create(), durationRounder.create(), commonPrefixGrouper.create(), yamlConfig.getConfig().getReportWindowConfig());
         Injector injector = Guice.createInjector(new AbstractModule() {
-            @Override
-            protected void configure() {
-                bind(CommandHandler.class).to(ToItemWriterCommandHandler.class);
-                bind(ExecutorService.class).toInstance(Executors.newSingleThreadExecutor());
-                bind(ExpansionProvider.class).toInstance(commonPrefixGrouper.create());
-                bind(Achievements.class).toInstance(achievements.create());
-                bind(ItemPersister.class).toInstance(itemWriter.create());
-                bind(ReportWindowBuilder.class).toInstance(reportWindowBuilder);
-                bind(File.class).toInstance(getSTTFile());
-            }
-        }, new STTPersistenceModule(), new I18NModule(), new EventBusModule());
-        injector.getInstance(ItemReaderAndPublisher.class);
+                                                     @Override
+                                                     protected void configure() {
+                                                         bind(CommandHandler.class).to(ToItemWriterCommandHandler.class);
+                                                         bind(ExecutorService.class).toInstance(Executors.newSingleThreadExecutor());
+                                                         bind(File.class).annotatedWith(STTFile.class).toInstance(getSTTFile());
+                                                     }
 
-        STTApplication application = createSTTApplication(injector);
-        Stage stage = stageFactory.create();
+                                                     @Provides
+                                                     DurationRounder provideDurationRounder() {
+                                                         DurationRounder rounder = new DurationRounder();
+                                                         final Duration durationToRoundTo = configuration
+                                                                 .getDurationToRoundTo();
+                                                         rounder.setInterval(durationToRoundTo);
+                                                         LOG.info("Rounding to "
+                                                                 + DateTimeHelper.FORMATTER_PERIOD_H_M_S
+                                                                 .print(durationToRoundTo.toPeriod()));
+                                                         return rounder;
+                                                     }
+                                                 }, new STTPersistenceModule(), new I18NModule(), new EventBusModule(), new AchievementModule(), new AnalysisModule(),
+                new JFXModule());
+        // perform backup
+        try {
+            BackupCreator backupCreator = injector.getInstance(BackupCreator.class);
+            backupCreator.performBackup();
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+
+        injector.getInstance(ItemReaderService.class);
+
+        STTApplication application = injector.getInstance(STTApplication.class);
+        Stage stage = injector.getInstance(Stage.class);
         application.start(stage);
 
         EventBus eventBus = injector.getInstance(EventBus.class);
@@ -284,11 +110,5 @@ public class MainContext {
         handler.setLevel(Level.FINEST);
         LOG.setLevel(Level.FINEST);
         LOG.addHandler(handler);
-    }
-
-    STTApplication createSTTApplication(Injector injector) {
-        Builder builder;
-        builder = injector.getInstance(Builder.class);
-        return new STTApplication(injector.getInstance(EventBus.class), builder);
     }
 }

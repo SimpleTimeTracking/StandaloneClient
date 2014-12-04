@@ -1,4 +1,4 @@
-package org.stt.stt.importer;
+package org.stt.persistence.stt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 
+import com.google.inject.Inject;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 
@@ -13,7 +14,8 @@ public class STTItemWriter implements ItemWriter {
 	private final PrintWriter out;
 	private final STTItemConverter converter = new STTItemConverter();
 
-	public STTItemWriter(Writer out) {
+	@Inject
+	public STTItemWriter(@STTFile Writer out) {
 		this.out = new PrintWriter(checkNotNull(out));
 	}
 

@@ -1,16 +1,6 @@
 package org.stt.cli;
 
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,7 +12,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-import org.apache.commons.io.IOUtils;
+import com.google.inject.Provider;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.filter.SubstringReaderFilter;
@@ -33,13 +23,12 @@ import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.reporting.WorktimeCategorizer;
-import org.stt.searching.DefaultItemSearcher;
-import org.stt.searching.ItemSearcher;
-import org.stt.stt.importer.CachingItemReader;
-import org.stt.stt.importer.STTItemPersister;
-import org.stt.stt.importer.STTItemReader;
-import org.stt.stt.importer.StreamResourceProvider;
+import org.stt.analysis.WorktimeCategorizer;
+import org.stt.search.DefaultItemSearcher;
+import org.stt.search.ItemSearcher;
+import org.stt.persistence.stt.CachingItemReader;
+import org.stt.persistence.stt.STTItemPersister;
+import org.stt.persistence.stt.STTItemReader;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -202,7 +191,7 @@ public class Main {
 		}
 
 		try (STTItemPersister itemPersister = new STTItemPersister(
-				createStreamResourceProvider());) {
+				createReaderProvider(), createWriterProvider())) {
 
 			DefaultItemSearcher searcher = createNewSearcher();
 
@@ -291,42 +280,32 @@ public class Main {
 		return provider;
 	}
 
-	private StreamResourceProvider createStreamResourceProvider()
-			throws IOException {
-		StreamResourceProvider srp = new StreamResourceProvider() {
-			private OutputStreamWriter outputStreamWriter;
-			private InputStreamReader inReader;
-			private OutputStreamWriter appendingOutWriter;
-
+	private Provider<Reader> createReaderProvider() {
+		return new Provider<Reader>() {
 			@Override
-			public Writer provideTruncatingWriter() throws IOException {
-				outputStreamWriter = new OutputStreamWriter(
-						new FileOutputStream(timeFile, false), "UTF-8");
-				return outputStreamWriter;
-			}
-
-			@Override
-			public Reader provideReader() throws IOException {
-				inReader = new InputStreamReader(new FileInputStream(timeFile),
-						"UTF-8");
-				return inReader;
-			}
-
-			@Override
-			public Writer provideAppendingWriter() throws IOException {
-				appendingOutWriter = new OutputStreamWriter(
-						new FileOutputStream(timeFile, true), "UTF-8");
-				return appendingOutWriter;
-			}
-
-			@Override
-			public void close() {
-				IOUtils.closeQuietly(outputStreamWriter);
-				IOUtils.closeQuietly(inReader);
-				IOUtils.closeQuietly(appendingOutWriter);
+			public Reader get() {
+				try {
+					return new InputStreamReader(new FileInputStream(timeFile),
+							"UTF-8");
+				} catch (UnsupportedEncodingException | FileNotFoundException e) {
+					throw new RuntimeException(e);
+				}
 			}
 		};
-		return srp;
+	}
+
+	private Provider<Writer> createWriterProvider() {
+		return new Provider<Writer>() {
+			@Override
+			public Writer get() {
+				try {
+					return new OutputStreamWriter(
+                            new FileOutputStream(timeFile, false), "UTF-8");
+				} catch (UnsupportedEncodingException | FileNotFoundException e) {
+					throw new RuntimeException(e);
+				}
+			}
+		};
 	}
 
 	private BackupCreator createNewBackupCreator(Configuration config) {

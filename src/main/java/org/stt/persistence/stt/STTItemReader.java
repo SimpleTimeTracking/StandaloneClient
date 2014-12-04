@@ -1,4 +1,4 @@
-package org.stt.stt.importer;
+package org.stt.persistence.stt;
 
 import java.io.Reader;
 
@@ -20,7 +20,7 @@ public class STTItemReader implements ItemReader {
 	private final STTItemConverter converter = new STTItemConverter();
 
 	@Inject
-	public STTItemReader(Reader input) {
+	public STTItemReader(@STTFile Reader input) {
 		lineIter = IOUtils.lineIterator(input);
 	}
 

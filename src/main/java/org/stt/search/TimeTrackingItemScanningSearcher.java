@@ -1,4 +1,4 @@
-package org.stt.searching;
+package org.stt.search;
 
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;

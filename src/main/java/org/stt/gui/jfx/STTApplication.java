@@ -1,36 +1,17 @@
 package org.stt.gui.jfx;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.awt.Desktop;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
+import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
@@ -39,11 +20,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.SelectionMode;
+import javafx.scene.control.*;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -53,7 +31,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-
 import org.stt.CommandHandler;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.messages.ReadItemsEvent;
@@ -67,456 +44,407 @@ import org.stt.gui.jfx.binding.FirstItemOfDaySet;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
-import org.stt.persistence.IOUtil;
-import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.searching.ExpansionProvider;
+import org.stt.search.ExpansionProvider;
 
-import com.google.common.base.Optional;
-import com.sun.javafx.application.PlatformImpl;
+import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class STTApplication implements DeleteActionHandler, EditActionHandler,
-		ContinueActionHandler {
+        ContinueActionHandler {
 
-	private static final Logger LOG = Logger.getLogger(STTApplication.class
-			.getName());
+    private static final Logger LOG = Logger.getLogger(STTApplication.class
+            .getName());
+    final ObservableList<TimeTrackingItem> allItems = FXCollections
+            .observableArrayList();
+    final StringProperty currentCommand = new SimpleStringProperty("");
+    final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
+    private final ExecutorService executorService;
+    private final CommandHandler commandHandler;
+    private final ItemReaderProvider historySourceProvider;
+    private final ReportWindowBuilder reportWindowBuilder;
+    private final ExpansionProvider expansionProvider;
+    private final ResourceBundle localization;
+    private final Achievements achievements;
+    private final EventBus eventBus;
+    // Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
+    ObservableList<TimeTrackingItem> filteredList;
+    ViewAdapter viewAdapter;
+    private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
 
-	private final ExecutorService executorService;
-	private final CommandHandler commandHandler;
-	private final ItemReaderProvider historySourceProvider;
-	private final ReportWindowBuilder reportWindowBuilder;
-	private final ExpansionProvider expansionProvider;
-	private final ResourceBundle localization;
-	private final Achievements achievements;
+    @Inject
+    STTApplication(EventBus eventBus, ExecutorService executorService,
+                          CommandHandler commandHandler,
+                          ItemReaderProvider historySourceProvider,
+                          ReportWindowBuilder reportWindowBuilder,
+                          ExpansionProvider expansionProvider,
+                          ResourceBundle resourceBundle,
+                          Achievements achievements,
+                          TimeTrackingItemListConfig timeTrackingItemListConfig) {
+        this.eventBus = checkNotNull(eventBus);
+        eventBus.register(this);
+        this.expansionProvider = checkNotNull(expansionProvider);
+        this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
+        this.commandHandler = checkNotNull(commandHandler);
+        this.historySourceProvider = checkNotNull(historySourceProvider);
+        this.executorService = checkNotNull(executorService);
+        this.localization = checkNotNull(resourceBundle);
+        this.achievements = checkNotNull(achievements);
+        checkNotNull(timeTrackingItemListConfig);
 
-	final ObservableList<TimeTrackingItem> allItems = FXCollections
-			.observableArrayList();
-	ObservableList<TimeTrackingItem> filteredList;
-	final StringProperty currentCommand = new SimpleStringProperty("");
-	final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
-	// Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
+        filteredList = new TimeTrackingListFilter(allItems, currentCommand,
+                timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
 
-	ViewAdapter viewAdapter;
-	private final EventBus eventBus;
+    }
 
-	@Inject
-	public STTApplication(EventBus eventBus, Builder builder) {
-		this.eventBus = checkNotNull(eventBus);
-		eventBus.register(this);
-		this.expansionProvider = checkNotNull(builder.expansionProvider);
-		this.reportWindowBuilder = checkNotNull(builder.reportWindowBuilder);
-		this.commandHandler = checkNotNull(builder.commandHandler);
-		this.historySourceProvider = checkNotNull(builder.historySourceProvider);
-		this.executorService = checkNotNull(builder.executorService);
-		this.localization = checkNotNull(builder.resourceBundle);
-		this.achievements = checkNotNull(builder.achievements);
-		TimeTrackingItemListConfig timeTrackingItemListConfig = checkNotNull(builder.timeTrackingItemListConfig);
-
-		filteredList = new TimeTrackingListFilter(allItems, currentCommand,
-				timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
-
-	}
-	private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
-
-	@Subscribe
-	public void receiveItems(ReadItemsEvent event) {
-		if (event.type == ReadItemsEvent.Type.START) {
-			tmpItems.clear();
-		}
-		tmpItems.addAll(event.timeTrackingItems);
-		if (event.type == ReadItemsEvent.Type.DONE) {
-			viewAdapter.updateAllItems(tmpItems);
+    @Subscribe
+    public void receiveItems(ReadItemsEvent event) {
+        if (event.type == ReadItemsEvent.Type.START) {
+            tmpItems.clear();
+        }
+        tmpItems.addAll(event.timeTrackingItems);
+        if (event.type == ReadItemsEvent.Type.DONE) {
+            viewAdapter.updateAllItems(tmpItems);
 //			tmpItems.clear();
-		}
-	}
+        }
+    }
 
-	protected void resultItemSelected(TimeTrackingItem item) {
-		if (item != null && item.getComment().isPresent()) {
-			String textToSet = item.getComment().get();
-			textOfSelectedItem(textToSet);
-		}
-	}
+    protected void resultItemSelected(TimeTrackingItem item) {
+        if (item != null && item.getComment().isPresent()) {
+            String textToSet = item.getComment().get();
+            textOfSelectedItem(textToSet);
+        }
+    }
 
-	public void textOfSelectedItem(String textToSet) {
-		setCommandText(textToSet);
-		viewAdapter.requestFocusOnCommandText();
-	}
+    public void textOfSelectedItem(String textToSet) {
+        setCommandText(textToSet);
+        viewAdapter.requestFocusOnCommandText();
+    }
 
-	private void setCommandText(String textToSet) {
-		currentCommand.set(textToSet);
-		commandCaretPosition.set(currentCommand.get().length());
-	}
+    private void setCommandText(String textToSet) {
+        currentCommand.set(textToSet);
+        commandCaretPosition.set(currentCommand.get().length());
+    }
 
-	void expandCurrentCommand() {
-		int caretPosition = commandCaretPosition.get();
-		String textToExpand = currentCommand.get().substring(0, caretPosition);
-		List<String> expansions = expansionProvider
-				.getPossibleExpansions(textToExpand);
-		if (!expansions.isEmpty()) {
-			String maxExpansion = expansions.get(0);
-			for (String exp : expansions) {
-				maxExpansion = commonPrefix(maxExpansion, exp);
-			}
-			String tail = currentCommand.get().substring(caretPosition);
-			String expandedText = textToExpand + maxExpansion;
-			currentCommand.set(expandedText + tail);
-			commandCaretPosition.set(expandedText.length());
-		}
-	}
+    void expandCurrentCommand() {
+        int caretPosition = commandCaretPosition.get();
+        String textToExpand = currentCommand.get().substring(0, caretPosition);
+        List<String> expansions = expansionProvider
+                .getPossibleExpansions(textToExpand);
+        if (!expansions.isEmpty()) {
+            String maxExpansion = expansions.get(0);
+            for (String exp : expansions) {
+                maxExpansion = commonPrefix(maxExpansion, exp);
+            }
+            String tail = currentCommand.get().substring(caretPosition);
+            String expandedText = textToExpand + maxExpansion;
+            currentCommand.set(expandedText + tail);
+            commandCaretPosition.set(expandedText.length());
+        }
+    }
 
-	String commonPrefix(String a, String b) {
-		for (int i = 0; i < a.length() && i < b.length(); i++) {
-			if (a.charAt(i) != b.charAt(i)) {
-				return a.substring(0, i);
-			}
-		}
-		return a;
-	}
+    String commonPrefix(String a, String b) {
+        for (int i = 0; i < a.length() && i < b.length(); i++) {
+            if (a.charAt(i) != b.charAt(i)) {
+                return a.substring(0, i);
+            }
+        }
+        return a;
+    }
 
-	protected Optional<TimeTrackingItem> executeCommand() {
-		final String text = currentCommand.get();
-		if (!text.trim().isEmpty()) {
-			Optional<TimeTrackingItem> result = commandHandler
-					.executeCommand(text);
-			clearCommand();
-			return result;
-		}
-		return Optional.<TimeTrackingItem> absent();
-	}
+    protected Optional<TimeTrackingItem> executeCommand() {
+        final String text = currentCommand.get();
+        if (!text.trim().isEmpty()) {
+            Optional<TimeTrackingItem> result = commandHandler
+                    .executeCommand(text);
+            clearCommand();
+            return result;
+        }
+        return Optional.<TimeTrackingItem>absent();
+    }
 
-	private void clearCommand() {
-		currentCommand.set("");
-	}
+    private void clearCommand() {
+        currentCommand.set("");
+    }
 
-	public void show(Stage stage) {
-		viewAdapter = new ViewAdapter(stage);
-		viewAdapter.show();
-	}
+    public void show(Stage stage) {
+        viewAdapter = new ViewAdapter(stage);
+        viewAdapter.show();
+    }
 
-	public void start(final Stage stage) {
-		PlatformImpl.runAndWait(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					show(stage);
-				} catch (Exception e) {
-					LOG.log(Level.SEVERE, "Couldn't start", e);
-				}
-			}
-		});
-	}
+    public void start(final Stage stage) {
+        PlatformImpl.runAndWait(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    show(stage);
+                } catch (Exception e) {
+                    LOG.log(Level.SEVERE, "Couldn't start", e);
+                }
+            }
+        });
+    }
 
-	@Override
-	public void continueItem(TimeTrackingItem item) {
-		commandHandler.resumeGivenItem(item);
-		viewAdapter.shutdown();
-	}
+    @Override
+    public void continueItem(TimeTrackingItem item) {
+        commandHandler.resumeGivenItem(item);
+        viewAdapter.shutdown();
+    }
 
-	@Override
-	public void edit(TimeTrackingItem item) {
-		setCommandText(commandHandler.itemToCommand(item));
-	}
+    @Override
+    public void edit(TimeTrackingItem item) {
+        setCommandText(commandHandler.itemToCommand(item));
+    }
 
-	@Override
-	public void delete(TimeTrackingItem item) {
-		try {
-			commandHandler.delete(checkNotNull(item));
-			allItems.remove(item);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public void delete(TimeTrackingItem item) {
+        try {
+            commandHandler.delete(checkNotNull(item));
+            allItems.remove(item);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	public static class Builder {
+    public class ViewAdapter {
 
-		private ExecutorService executorService;
-		private CommandHandler commandHandler;
-		private ItemReaderProvider historySourceProvider;
-		private ReportWindowBuilder reportWindowBuilder;
-		private ExpansionProvider expansionProvider;
-		private ResourceBundle resourceBundle;
-		private Achievements achievements;
-		private TimeTrackingItemListConfig timeTrackingItemListConfig;
+        private final Stage stage;
 
-		@Inject
-		public Builder executorService(ExecutorService executorService) {
-			this.executorService = executorService;
-			return this;
-		}
+        @FXML
+        TextArea commandText;
 
-		@Inject
-		public Builder commandHandler(CommandHandler commandHandler) {
-			this.commandHandler = commandHandler;
-			return this;
-		}
+        @FXML
+        Button finButton;
 
-		@Inject
-		public Builder historySourceProvider(
-				ItemReaderProvider historySourceProvider) {
-			this.historySourceProvider = historySourceProvider;
-			return this;
-		}
+        @FXML
+        Button insertButton;
 
-		@Inject
-		public Builder reportWindowBuilder(
-				ReportWindowBuilder reportWindowBuilder) {
-			this.reportWindowBuilder = reportWindowBuilder;
-			return this;
-		}
+        @FXML
+        ListView<TimeTrackingItem> result;
 
-		@Inject
-		public Builder expansionProvider(ExpansionProvider expansionProvider) {
-			this.expansionProvider = expansionProvider;
-			return this;
-		}
+        @FXML
+        FlowPane achievements;
 
-		@Inject
-		public Builder resourceBundle(ResourceBundle resourceBundle) {
-			this.resourceBundle = resourceBundle;
-			return this;
-		}
+        ViewAdapter(Stage stage) {
+            this.stage = stage;
+        }
 
-		@Inject
-		public Builder achievements(Achievements achievements) {
-			this.achievements = achievements;
-			return this;
-		}
+        protected void show() throws RuntimeException {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                    "/org/stt/gui/jfx/MainWindow.fxml"), localization);
+            loader.setController(this);
 
-		@Inject
-		public Builder timeTrackingItemListConfig(
-				TimeTrackingItemListConfig timeTrackingItemListConfig) {
-			this.timeTrackingItemListConfig = timeTrackingItemListConfig;
-			return this;
-		}
+            BorderPane pane;
+            try {
+                pane = (BorderPane) loader.load();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
-	}
+            for (Achievement achievement : STTApplication.this.achievements
+                    .getReachedAchievements()) {
+                final String imageName = "/achievements/"
+                        + achievement.getCode() + ".png";
+                InputStream imageStream = getClass().getResourceAsStream(
+                        imageName);
+                if (imageStream != null) {
+                    final ImageView imageView = new ImageView(new Image(
+                            imageStream));
+                    String description = achievement.getDescription();
+                    if (description != null) {
+                        Tooltip.install(imageView, new Tooltip(description));
+                    }
+                    achievements.getChildren().add(imageView);
+                } else {
+                    LOG.severe("Image " + imageName + " not found!");
+                }
+            }
 
-	public class ViewAdapter {
+            Scene scene = new Scene(pane);
 
-		private final Stage stage;
+            stage.setScene(scene);
+            stage.setTitle(localization.getString("window.title"));
+            Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
+            stage.getIcons().add(applicationIcon);
 
-		@FXML
-		TextArea commandText;
+            stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+                @Override
+                public void handle(WindowEvent arg0) {
+                    Platform.runLater(new Runnable() {
 
-		@FXML
-		Button finButton;
+                        @Override
+                        public void run() {
+                            shutdown();
+                        }
+                    });
+                }
+            });
+            scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
 
-		@FXML
-		Button insertButton;
+                @Override
+                public void handle(KeyEvent event) {
+                    if (KeyCode.ESCAPE.equals(event.getCode())) {
+                        event.consume();
+                        shutdown();
+                    }
+                }
+            });
 
-		@FXML
-		ListView<TimeTrackingItem> result;
+            stage.show();
+            requestFocusOnCommandText();
+        }
 
-		@FXML
-		FlowPane achievements;
+        protected void shutdown() {
+            stage.close();
+            executorService.shutdown();
+            Platform.exit();
+            // Required because txExit() above is just swallowed...
+            PlatformImpl.tkExit();
+            try {
+                executorService.awaitTermination(1, TimeUnit.SECONDS);
+                commandHandler.close();
+            } catch (InterruptedException | IOException e) {
+                throw new RuntimeException(e);
+            }
+            // System.exit(0);
+        }
 
-		ViewAdapter(Stage stage) {
-			this.stage = stage;
-		}
+        public void initialize() {
+            setupCellFactory();
+            final MultipleSelectionModel<TimeTrackingItem> selectionModel = result
+                    .getSelectionModel();
+            selectionModel.setSelectionMode(SelectionMode.SINGLE);
 
-		protected void show() throws RuntimeException {
-			FXMLLoader loader = new FXMLLoader(getClass().getResource(
-					"/org/stt/gui/jfx/MainWindow.fxml"), localization);
-			loader.setController(this);
+            bindCaretPosition();
+            commandText.textProperty().bindBidirectional(currentCommand);
+            result.setItems(filteredList);
+            bindItemSelection();
+        }
 
-			BorderPane pane;
-			try {
-				pane = (BorderPane) loader.load();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+        private void bindItemSelection() {
+            result.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent event) {
+                    TimeTrackingItem selectedItem = result.getSelectionModel()
+                            .getSelectedItem();
+                    resultItemSelected(selectedItem);
+                }
+            });
+        }
 
-			for (Achievement achievement : STTApplication.this.achievements
-					.getReachedAchievements()) {
-				final String imageName = "/achievements/"
-						+ achievement.getCode() + ".png";
-				InputStream imageStream = getClass().getResourceAsStream(
-						imageName);
-				if (imageStream != null) {
-					final ImageView imageView = new ImageView(new Image(
-							imageStream));
-					String description = achievement.getDescription();
-					if (description != null) {
-						Tooltip.install(imageView, new Tooltip(description));
-					}
-					achievements.getChildren().add(imageView);
-				} else {
-					LOG.severe("Image " + imageName + " not found!");
-				}
-			}
+        private void setupCellFactory() {
+            result.setCellFactory(new TimeTrackingItemCellFactory(
+                    STTApplication.this, STTApplication.this,
+                    STTApplication.this, new TimeTrackingItemFilter() {
+                ObservableSet<TimeTrackingItem> firstItemOfDayBinding = new FirstItemOfDaySet(
+                        allItems);
 
-			Scene scene = new Scene(pane);
+                @Override
+                public boolean filter(TimeTrackingItem item) {
+                    return firstItemOfDayBinding.contains(item);
+                }
+            }, localization));
+        }
 
-			stage.setScene(scene);
-			stage.setTitle(localization.getString("window.title"));
-			Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
-			stage.getIcons().add(applicationIcon);
+        private void bindCaretPosition() {
+            commandCaretPosition.addListener(new InvalidationListener() {
+                @Override
+                public void invalidated(Observable observable) {
+                    commandText.positionCaret(commandCaretPosition.get());
+                }
+            });
+            commandText.caretPositionProperty().addListener(
+                    new InvalidationListener() {
+                        @Override
+                        public void invalidated(Observable observable) {
+                            commandCaretPosition.set(commandText
+                                    .getCaretPosition());
+                        }
+                    });
+        }
 
-			stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-				@Override
-				public void handle(WindowEvent arg0) {
-					Platform.runLater(new Runnable() {
+        protected void requestFocusOnCommandText() {
+            PlatformImpl.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    commandText.requestFocus();
+                }
+            });
+        }
 
-						@Override
-						public void run() {
-							shutdown();
-						}
-					});
-				}
-			});
-			scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+        protected void updateAllItems(
+                final Collection<TimeTrackingItem> updateWith) {
+            PlatformImpl.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    allItems.setAll(updateWith);
+                    viewAdapter.requestFocusOnCommandText();
+                }
+            });
+        }
 
-				@Override
-				public void handle(KeyEvent event) {
-					if (KeyCode.ESCAPE.equals(event.getCode())) {
-						event.consume();
-						shutdown();
-					}
-				}
-			});
+        @FXML
+        void showReportWindow() {
+            try {
+                reportWindowBuilder.setupStage();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-			stage.show();
-			requestFocusOnCommandText();
-		}
+        @FXML
+        private void done() {
+            executeCommand();
+            shutdown();
+        }
 
-		protected void shutdown() {
-			stage.close();
-			executorService.shutdown();
-			Platform.exit();
-			// Required because txExit() above is just swallowed...
-			PlatformImpl.tkExit();
-			try {
-				executorService.awaitTermination(1, TimeUnit.SECONDS);
-				commandHandler.close();
-			} catch (InterruptedException | IOException e) {
-				throw new RuntimeException(e);
-			}
-			// System.exit(0);
-		}
+        @FXML
+        void insert() {
+            Optional<TimeTrackingItem> item = executeCommand();
+            if (item.isPresent()) {
+                eventBus.post(new ReadItemsRequest());
+            }
+        }
 
-		public void initialize() {
-			setupCellFactory();
-			final MultipleSelectionModel<TimeTrackingItem> selectionModel = result
-					.getSelectionModel();
-			selectionModel.setSelectionMode(SelectionMode.SINGLE);
+        @FXML
+        private void fin() {
+            commandHandler.endCurrentItem();
+            shutdown();
+        }
 
-			bindCaretPosition();
-			commandText.textProperty().bindBidirectional(currentCommand);
-			result.setItems(filteredList);
-			bindItemSelection();
-		}
+        @FXML
+        private void onKeyPressed(KeyEvent event) {
+            if (KeyCode.ENTER.equals(event.getCode()) && event.isControlDown()) {
+                event.consume();
+                done();
+            }
+            if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
+                expandCurrentCommand();
+                event.consume();
+            }
+            if (KeyCode.F1.equals(event.getCode())) {
+                try {
+                    Desktop.getDesktop()
+                            .browse(new URI(
+                                    "https://github.com/Bytekeeper/STT/wiki/CLI"));
+                } catch (IOException | URISyntaxException ex) {
+                    LOG.log(Level.SEVERE, null, ex);
+                }
+            }
+        }
 
-		private void bindItemSelection() {
-			result.setOnMouseClicked(new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent event) {
-					TimeTrackingItem selectedItem = result.getSelectionModel()
-							.getSelectedItem();
-					resultItemSelected(selectedItem);
-				}
-			});
-		}
-
-		private void setupCellFactory() {
-			result.setCellFactory(new TimeTrackingItemCellFactory(
-					STTApplication.this, STTApplication.this,
-					STTApplication.this, new TimeTrackingItemFilter() {
-						ObservableSet<TimeTrackingItem> firstItemOfDayBinding = new FirstItemOfDaySet(
-								allItems);
-
-						@Override
-						public boolean filter(TimeTrackingItem item) {
-							return firstItemOfDayBinding.contains(item);
-						}
-					}, localization));
-		}
-
-		private void bindCaretPosition() {
-			commandCaretPosition.addListener(new InvalidationListener() {
-				@Override
-				public void invalidated(Observable observable) {
-					commandText.positionCaret(commandCaretPosition.get());
-				}
-			});
-			commandText.caretPositionProperty().addListener(
-					new InvalidationListener() {
-						@Override
-						public void invalidated(Observable observable) {
-							commandCaretPosition.set(commandText
-									.getCaretPosition());
-						}
-					});
-		}
-
-		protected void requestFocusOnCommandText() {
-			PlatformImpl.runLater(new Runnable() {
-				@Override
-				public void run() {
-					commandText.requestFocus();
-				}
-			});
-		}
-
-		protected void updateAllItems(
-				final Collection<TimeTrackingItem> updateWith) {
-			PlatformImpl.runLater(new Runnable() {
-				@Override
-				public void run() {
-					allItems.setAll(updateWith);
-					viewAdapter.requestFocusOnCommandText();
-				}
-			});
-		}
-
-		@FXML
-		void showReportWindow() {
-			try {
-				reportWindowBuilder.setupStage();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		@FXML
-		private void done() {
-			executeCommand();
-			shutdown();
-		}
-
-		@FXML
-		void insert() {
-			Optional<TimeTrackingItem> item = executeCommand();
-			if (item.isPresent()) {
-				eventBus.post(new ReadItemsRequest());
-			}
-		}
-
-		@FXML
-		private void fin() {
-			commandHandler.endCurrentItem();
-			shutdown();
-		}
-
-		@FXML
-		private void onKeyPressed(KeyEvent event) {
-			if (KeyCode.ENTER.equals(event.getCode()) && event.isControlDown()) {
-				event.consume();
-				done();
-			}
-			if (KeyCode.SPACE.equals(event.getCode()) && event.isControlDown()) {
-				expandCurrentCommand();
-				event.consume();
-			}
-			if (KeyCode.F1.equals(event.getCode())) {
-				try {
-					Desktop.getDesktop()
-							.browse(new URI(
-									"https://github.com/Bytekeeper/STT/wiki/CLI"));
-				} catch (IOException | URISyntaxException ex) {
-					LOG.log(Level.SEVERE, null, ex);
-				}
-			}
-		}
-
-	}
+    }
 }

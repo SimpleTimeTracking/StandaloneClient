@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.joda.time.DateTime;
@@ -18,12 +20,14 @@ import org.stt.time.DateTimeHelper;
  * creates backups of the .stt file in configurable intervals and locations.
  * Optionally deletes old backup files if configured.
  */
+@Singleton
 public class BackupCreator {
 
 	private static Logger LOG = Logger.getLogger(BackupCreator.class.getName());
 
 	private final Configuration configuration;
 
+	@Inject
 	public BackupCreator(Configuration configuration) {
 		this.configuration = configuration;
 	}

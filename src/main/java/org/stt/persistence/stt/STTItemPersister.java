@@ -1,4 +1,4 @@
-package org.stt.stt.importer;
+package org.stt.persistence.stt;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,9 +7,12 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.inject.internal.util.$Preconditions;
 import org.apache.commons.io.IOUtils;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.InsertHelper;
 import org.stt.persistence.ItemPersister;
 
 import com.google.common.base.Preconditions;
@@ -20,14 +23,18 @@ import com.google.common.base.Preconditions;
  * respectively.
  * 
  */
+@Singleton
 public class STTItemPersister implements ItemPersister {
 
-	private final StreamResourceProvider support;
-
 	private final STTItemConverter converter = new STTItemConverter();
+	private Provider<Reader> readerProvider;
+	private Provider<Writer> writerProvider;
 
-	public STTItemPersister(StreamResourceProvider support) {
-		this.support = support;
+	@Inject
+	public STTItemPersister(@STTFile Provider<Reader> readerProvider, @STTFile Provider<Writer> writerProvider) {
+
+		this.readerProvider = Preconditions.checkNotNull(readerProvider);
+		this.writerProvider = Preconditions.checkNotNull(writerProvider);
 	}
 
 	@Override
@@ -35,7 +42,7 @@ public class STTItemPersister implements ItemPersister {
 		Preconditions.checkNotNull(itemToInsert);
 		StringWriter stringWriter = new StringWriter();
 		Reader providedReader;
-		providedReader = support.provideReader();
+		providedReader = readerProvider.get();
 		try (STTItemReader in = new STTItemReader(providedReader);
 				STTItemWriter out = new STTItemWriter(stringWriter)) {
 			new InsertHelper(in, out, itemToInsert).performInsert();
@@ -53,31 +60,30 @@ public class STTItemPersister implements ItemPersister {
 	@Override
 	public void delete(TimeTrackingItem item) throws IOException {
 
-		BufferedReader reader = new BufferedReader(support.provideReader());
-		StringWriter stringWriter = new StringWriter();
-		PrintWriter printWriter = new PrintWriter(stringWriter);
-		String lineOfItemToDelete = converter.timeTrackingItemToLine(item);
-		String currentLine = null;
-		while ((currentLine = reader.readLine()) != null) {
-			// only write lines which should not be deleted
-			if (!currentLine.equals(lineOfItemToDelete)) {
-				printWriter.println(currentLine);
+		try (BufferedReader reader = new BufferedReader(readerProvider.get())) {
+			StringWriter stringWriter = new StringWriter();
+			PrintWriter printWriter = new PrintWriter(stringWriter);
+			String lineOfItemToDelete = converter.timeTrackingItemToLine(item);
+			String currentLine = null;
+			while ((currentLine = reader.readLine()) != null) {
+				// only write lines which should not be deleted
+				if (!currentLine.equals(lineOfItemToDelete)) {
+					printWriter.println(currentLine);
+				}
 			}
-		}
 
-		reader.close();
-		printWriter.flush();
-		rewriteFileWith(stringWriter.toString());
+			printWriter.flush();
+			rewriteFileWith(stringWriter.toString());
+		}
 	}
 
 	private void rewriteFileWith(String content) throws IOException {
-		Writer truncatingWriter = support.provideTruncatingWriter();
+		Writer truncatingWriter = writerProvider.get();
 		truncatingWriter.write(content.toString());
 		truncatingWriter.close();
 	}
 
 	@Override
 	public void close() {
-		IOUtils.closeQuietly(support);
 	}
 }

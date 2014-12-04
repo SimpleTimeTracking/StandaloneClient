@@ -10,7 +10,7 @@ import org.stt.model.TimeTrackingItem;
  *
  * @author dante
  */
-public class HoursTrackedAchievement extends LocalizedAchievement {
+class HoursTrackedAchievement extends LocalizedAchievement {
 
 	private final int thresholdHours;
 	private Duration timeTracked;

@@ -1,4 +1,4 @@
-package org.stt.searching;
+package org.stt.search;
 
 import java.util.List;
 

@@ -22,7 +22,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 
-public class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
+class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final HBox cellPane = new HBox(10);
 

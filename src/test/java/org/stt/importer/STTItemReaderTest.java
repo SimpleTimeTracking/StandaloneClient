@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.stt.importer.STTItemReader;
+import org.stt.persistence.stt.STTItemReader;
 
 import com.google.common.base.Optional;
 

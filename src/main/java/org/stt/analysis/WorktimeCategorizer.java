@@ -1,7 +1,8 @@
-package org.stt.reporting;
+package org.stt.analysis;
 
 import java.util.Collection;
 import org.stt.Configuration;
+import org.stt.analysis.ItemCategorizer;
 
 public class WorktimeCategorizer implements ItemCategorizer {
 

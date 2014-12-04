@@ -16,8 +16,8 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.ItemCategorizer;
-import org.stt.reporting.ItemCategorizer.ItemCategory;
+import org.stt.analysis.ItemCategorizer;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider;
 
 import static org.hamcrest.CoreMatchers.containsString;

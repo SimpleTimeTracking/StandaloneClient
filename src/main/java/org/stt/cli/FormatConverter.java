@@ -13,8 +13,8 @@ import org.stt.csv.importer.CsvImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemWriter;
-import org.stt.stt.importer.STTItemReader;
-import org.stt.stt.importer.STTItemWriter;
+import org.stt.persistence.stt.STTItemReader;
+import org.stt.persistence.stt.STTItemWriter;
 import org.stt.ti.importer.TiImporter;
 
 import com.google.common.base.Optional;

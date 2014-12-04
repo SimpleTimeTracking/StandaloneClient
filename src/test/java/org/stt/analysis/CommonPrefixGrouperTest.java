@@ -1,4 +1,4 @@
-package org.stt.reporting;
+package org.stt.analysis;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.ItemReaderTestHelper;
+import org.stt.analysis.CommonPrefixGrouper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 

@@ -6,10 +6,11 @@ import java.util.TreeMap;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.stt.analysis.ItemCategorizer;
 import org.stt.time.DateTimeHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.reporting.ItemCategorizer.ItemCategory;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import com.google.common.base.Optional;

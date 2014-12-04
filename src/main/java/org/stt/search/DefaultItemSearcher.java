@@ -1,4 +1,4 @@
-package org.stt.searching;
+package org.stt.search;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -21,32 +21,12 @@ public class DefaultItemSearcher implements ItemSearcher {
 	private final ItemReaderProvider provider;
 
 	/**
-	 * @param reader
+	 * @param provider
 	 *            where to search for items
 	 */
 	@Inject
 	public DefaultItemSearcher(ItemReaderProvider provider) {
 		this.provider = checkNotNull(provider);
-	}
-
-	@Override
-	public Collection<TimeTrackingItem> searchByStart(ReadableInstant from,
-			ReadableInstant to) {
-
-		Collection<TimeTrackingItem> foundElements = new LinkedList<>();
-		Optional<TimeTrackingItem> item;
-		try (ItemReader reader = provider.provideReader()) {
-			while ((item = reader.read()).isPresent()) {
-				TimeTrackingItem currentItem = item.get();
-				if (!currentItem.getStart().isBefore(from)
-						&& !currentItem.getStart().isAfter(to)) {
-					foundElements.add(currentItem);
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		return foundElements;
 	}
 
 	@Override

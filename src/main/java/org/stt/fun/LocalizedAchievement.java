@@ -7,7 +7,7 @@ import java.util.ResourceBundle;
  *
  * @author dante
  */
-public class LocalizedAchievement extends Achievement {
+class LocalizedAchievement extends Achievement {
 
 	private ResourceBundle resourceBundle;
 

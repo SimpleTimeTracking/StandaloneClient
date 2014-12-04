@@ -8,7 +8,7 @@ import org.mockito.Mockito;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.stt.importer.CachingItemReader;
+import org.stt.persistence.stt.CachingItemReader;
 
 import com.google.common.base.Optional;
 

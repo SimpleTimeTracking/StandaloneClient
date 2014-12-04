@@ -1,4 +1,4 @@
-package org.stt.stt.importer;
+package org.stt.persistence.stt;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -10,7 +10,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 
-public class STTItemConverter {
+class STTItemConverter {
 	private final DateTimeFormatter dateFormat = DateTimeFormat
 			.forPattern("yyyy-MM-dd_HH:mm:ss");
 

@@ -1,4 +1,4 @@
-package org.stt.stt.importer;
+package org.stt.persistence.stt;
 
 import java.io.IOException;
 import java.util.ArrayList;

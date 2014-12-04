@@ -17,7 +17,7 @@ import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsParser.CommandContext;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.searching.ItemSearcher;
+import org.stt.search.ItemSearcher;
 
 import com.google.common.base.Optional;
 

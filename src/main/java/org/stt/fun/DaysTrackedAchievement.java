@@ -7,7 +7,7 @@ import org.stt.model.TimeTrackingItem;
  *
  * @author dante
  */
-public class DaysTrackedAchievement extends LocalizedAchievement {
+class DaysTrackedAchievement extends LocalizedAchievement {
 
 	private int daysTracked;
 	private TimeTrackingItem lastItem;

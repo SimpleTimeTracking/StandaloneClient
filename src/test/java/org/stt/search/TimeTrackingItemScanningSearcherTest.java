@@ -1,4 +1,4 @@
-package org.stt.searching;
+package org.stt.search;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;

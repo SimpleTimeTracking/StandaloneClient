@@ -4,7 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.MultipleSelectionModel;
 
-public class NoSelectionModel<T> extends MultipleSelectionModel<T> {
+class NoSelectionModel<T> extends MultipleSelectionModel<T> {
 
 	@Override
 	public void clearAndSelect(int arg0) {

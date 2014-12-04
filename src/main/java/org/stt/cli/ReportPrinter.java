@@ -21,13 +21,13 @@ import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.ItemCategorizer;
-import org.stt.reporting.ItemCategorizer.ItemCategory;
+import org.stt.analysis.ItemCategorizer;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.stt.importer.CachingItemReader;
+import org.stt.persistence.stt.CachingItemReader;
 import org.stt.time.DateTimeHelper;
 
 /**

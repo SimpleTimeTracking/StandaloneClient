@@ -1,4 +1,4 @@
-package org.stt.reporting;
+package org.stt.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.searching.ExpansionProvider;
+import org.stt.search.ExpansionProvider;
 
 import com.google.common.base.Optional;
 
@@ -18,7 +18,7 @@ import com.google.common.base.Optional;
  * Note that items are split at 'space' unless the resulting subgroup would have less than
  * 3 characters, in which case the group gets expanded.
  */
-public class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
+class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 	private final RadixTreeNode root = new RadixTreeNode();
 
 	@Override

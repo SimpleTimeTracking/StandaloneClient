@@ -12,7 +12,7 @@ import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 
-public class TimeTrackingItemCellFactory implements
+class TimeTrackingItemCellFactory implements
 		Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>> {
 	private final Image deleteImage = new Image("/Delete.png", 25, 25, true,
 			true);

@@ -2,7 +2,7 @@ package org.stt.gui.jfx;
 
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
-import javafx.animation.PauseTransition;
+import com.google.inject.Provider;
 import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableStringValue;
@@ -10,7 +10,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -31,15 +30,14 @@ import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-import org.stt.Factory;
 import org.stt.config.ReportWindowConfig;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.ItemGrouper;
+import org.stt.analysis.ItemGrouper;
 import org.stt.reporting.SummingReportGenerator.Report;
-import org.stt.searching.ItemSearcher;
+import org.stt.search.ItemSearcher;
 import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
 
@@ -56,7 +54,7 @@ public class ReportWindowBuilder {
     private final ItemReaderProvider readerProvider;
     private final ItemSearcher itemSearcher;
 
-    private final Factory<Stage> stageFactory;
+    private final Provider<Stage> stageProvider;
     private final DurationRounder rounder;
     private final ItemGrouper itemGrouper;
     private final Color[] groupColors;
@@ -64,11 +62,11 @@ public class ReportWindowBuilder {
 
 
     @Inject
-    public ReportWindowBuilder(Factory<Stage> stageFactory,
+    ReportWindowBuilder(Provider<Stage> stageProvider,
                                ItemReaderProvider readerProvider, ItemSearcher searcher,
                                DurationRounder rounder, ItemGrouper itemGrouper, ReportWindowConfig config) {
-        this.config = config;
-        this.stageFactory = checkNotNull(stageFactory);
+        this.config = checkNotNull(config);
+        this.stageProvider = checkNotNull(stageProvider);
         this.itemSearcher = checkNotNull(searcher);
         this.readerProvider = checkNotNull(readerProvider);
         this.rounder = checkNotNull(rounder);
@@ -82,7 +80,7 @@ public class ReportWindowBuilder {
     }
 
     public void setupStage() throws IOException {
-        Stage stage = stageFactory.create();
+        Stage stage = stageProvider.get();
 
         ReportWindowController controller = new ReportWindowController(stage);
 

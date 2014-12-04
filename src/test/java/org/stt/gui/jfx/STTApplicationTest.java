@@ -1,24 +1,7 @@
 package org.stt.gui.jfx;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
-
+import com.google.common.base.Optional;
+import com.google.common.eventbus.EventBus;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,261 +10,238 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
+import org.stt.analysis.ItemGrouper;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
-import org.stt.gui.jfx.STTApplication.Builder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.ItemGrouper;
-import org.stt.searching.CommentSearcher;
-import org.stt.searching.ExpansionProvider;
+import org.stt.search.CommentSearcher;
+import org.stt.search.ExpansionProvider;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class STTApplicationTest {
 
-	private STTApplication sut;
+    private final Achievements achievements = new Achievements(
+            Collections.<Achievement>emptyList());
+    @Mock
+    protected CommentSearcher commentSearcher;
+    private STTApplication sut;
+    @Mock
+    private CommandHandler commandHandler;
+    @Mock
+    private ExecutorService executorService;
+    @Mock
+    private ReportWindowBuilder reportWindowBuilder;
+    @Mock
+    private ItemGrouper grouper;
+    @Mock
+    private ExpansionProvider expansionProvider;
+    @Mock
+    private ResourceBundle resourceBundle;
+    private boolean shutdownCalled;
 
-	@Mock
-	private CommandHandler commandHandler;
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
 
-	@Mock
-	private ExecutorService executorService;
+        ItemReaderProvider historySourceProvider = mock(ItemReaderProvider.class);
+        sut = new STTApplication(new EventBus(), executorService, commandHandler, historySourceProvider, reportWindowBuilder, expansionProvider, resourceBundle, achievements, new TimeTrackingItemListConfig());
+        sut.viewAdapter = sut.new ViewAdapter(
 
-	@Mock
-	private ReportWindowBuilder reportWindowBuilder;
+                null) {
 
-	@Mock
-	protected CommentSearcher commentSearcher;
+            @Override
+            protected void show() throws RuntimeException {
+            }
 
-	@Mock
-	private ItemGrouper grouper;
+            @Override
+            protected void requestFocusOnCommandText() {
+            }
 
-	@Mock
-	private ExpansionProvider expansionProvider;
+            @Override
+            protected void updateAllItems(
+                    Collection<TimeTrackingItem> updateWith) {
+                sut.allItems.setAll(updateWith);
+            }
 
-	@Mock
-	private ResourceBundle resourceBundle;
+            @Override
+            protected void shutdown() {
+                shutdownCalled = true;
+            }
+        };
+    }
 
-	private boolean shutdownCalled;
-	private final Achievements achievements = new Achievements(
-			Collections.<Achievement> emptyList());
+    @Test
+    public void shouldDelegateToExpansionProvider() {
+        // GIVEN
 
-	@Before
-	public void setup() {
-		MockitoAnnotations.initMocks(this);
+        setTextAndPositionCaretAtEnd("test");
 
-		ItemReaderProvider historySourceProvider = mock(ItemReaderProvider.class);
-		Builder builder = new Builder();
-		builder.commandHandler(commandHandler)
-				.historySourceProvider(historySourceProvider)
-				.executorService(executorService)
-				.reportWindowBuilder(reportWindowBuilder)
-				.expansionProvider(expansionProvider)
-				.resourceBundle(resourceBundle).achievements(achievements)
-				.timeTrackingItemListConfig(new TimeTrackingItemListConfig());
-		sut = builder.build();
-		sut.viewAdapter = sut.new ViewAdapter(
+        given(expansionProvider.getPossibleExpansions("test")).willReturn(
+                Arrays.asList("blub"));
 
-		null) {
+        // WHEN
+        sut.expandCurrentCommand();
 
-			@Override
-			protected void show() throws RuntimeException {
-			}
+        // THEN
+        assertThat(sut.currentCommand.get(), is("testblub"));
+    }
 
-			@Override
-			protected void requestFocusOnCommandText() {
-			}
+    @Test
+    public void shouldExpandWithinText() {
+        // GIVEN
 
-			@Override
-			protected void updateAllItems(
-					Collection<TimeTrackingItem> updateWith) {
-				sut.allItems.setAll(updateWith);
-			}
+        sut.currentCommand.set("al beta");
+        sut.commandCaretPosition.set(2);
 
-			@Override
-			protected void shutdown() {
-				shutdownCalled = true;
-			}
-		};
-	}
+        given(expansionProvider.getPossibleExpansions("al")).willReturn(
+                Arrays.asList("pha"));
 
-	@Test
-	public void shouldDelegateToExpansionProvider() {
-		// GIVEN
+        // WHEN
+        sut.expandCurrentCommand();
 
-		setTextAndPositionCaretAtEnd("test");
+        // THEN
+        assertThat(sut.currentCommand.get(), is("alpha beta"));
+        assertThat(sut.commandCaretPosition.get(), is(5));
+    }
 
-		given(expansionProvider.getPossibleExpansions("test")).willReturn(
-				Arrays.asList("blub"));
+    @Test
+    public void shouldExpandToCommonPrefix() {
+        // GIVEN
 
-		// WHEN
-		sut.expandCurrentCommand();
+        String currentText = "test";
+        setTextAndPositionCaretAtEnd(currentText);
 
-		// THEN
-		assertThat(sut.currentCommand.get(), is("testblub"));
-	}
+        given(expansionProvider.getPossibleExpansions(currentText)).willReturn(
+                Arrays.asList("aaa", "aab"));
 
-	@Test
-	public void shouldExpandWithinText() {
-		// GIVEN
+        // WHEN
+        sut.expandCurrentCommand();
 
-		sut.currentCommand.set("al beta");
-		sut.commandCaretPosition.set(2);
+        // THEN
+        assertThat(sut.currentCommand.get(), is("testaa"));
+    }
 
-		given(expansionProvider.getPossibleExpansions("al")).willReturn(
-				Arrays.asList("pha"));
+    private void setTextAndPositionCaretAtEnd(String currentText) {
+        sut.currentCommand.set(currentText);
+        sut.commandCaretPosition.set(currentText.length());
+    }
 
-		// WHEN
-		sut.expandCurrentCommand();
+    @Test
+    public void shouldDeleteItemIfRequested() throws IOException {
+        // GIVEN
+        TimeTrackingItem item = new TimeTrackingItem(null, DateTime.now());
 
-		// THEN
-		assertThat(sut.currentCommand.get(), is("alpha beta"));
-		assertThat(sut.commandCaretPosition.get(), is(5));
-	}
+        // WHEN
+        sut.delete(item);
 
-	@Test
-	public void shouldExpandToCommonPrefix() {
-		// GIVEN
+        // THEN
+        verify(commandHandler).delete(item);
+    }
 
-		String currentText = "test";
-		setTextAndPositionCaretAtEnd(currentText);
+    @Test
+    public void deletedItemShouldBeRemoved() {
+        // GIVEN
+        givenExecutorService();
+        final TimeTrackingItem item = new TimeTrackingItem("comment",
+                DateTime.now());
 
-		given(expansionProvider.getPossibleExpansions(currentText)).willReturn(
-				Arrays.asList("aaa", "aab"));
+        sut.allItems.setAll(item);
 
-		// WHEN
-		sut.expandCurrentCommand();
+        // WHEN
+        sut.delete(item);
 
-		// THEN
-		assertThat(sut.currentCommand.get(), is("testaa"));
-	}
+        // THEN
+        assertThat(sut.filteredList, not(hasItem(item)));
+    }
 
-	private void setTextAndPositionCaretAtEnd(String currentText) {
-		sut.currentCommand.set(currentText);
-		sut.commandCaretPosition.set(currentText.length());
-	}
+    @Test
+    public void shouldShowReportWindow() throws IOException {
+        // GIVEN
 
-	@Test
-	public void shouldDeleteItemIfRequested() throws IOException {
-		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem(null, DateTime.now());
+        // WHEN
+        sut.viewAdapter.showReportWindow();
 
-		// WHEN
-		sut.delete(item);
+        // THEN
+        verify(reportWindowBuilder).setupStage();
+    }
 
-		// THEN
-		verify(commandHandler).delete(item);
-	}
+    @Test
+    public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
+        // GIVEN
+        givenCommand("test");
 
-	@Test
-	public void deletedItemShouldBeRemoved() {
-		// GIVEN
-		givenExecutorService();
-		final TimeTrackingItem item = new TimeTrackingItem("comment",
-				DateTime.now());
+        // WHEN
+        sut.executeCommand();
 
-		sut.allItems.setAll(item);
+        // THEN
+        assertThat(sut.currentCommand.get(), equalTo(""));
+    }
 
-		// WHEN
-		sut.delete(item);
+    @Test
+    public void shouldDelegateCommandExecutionToCommandHandler()
+            throws Exception {
+        // GIVEN
+        String testCommand = "test";
 
-		// THEN
-		assertThat(sut.filteredList, not(hasItem(item)));
-	}
+        givenCommand(testCommand);
 
-	@Test
-	public void shouldShowReportWindow() throws IOException {
-		// GIVEN
+        // WHEN
+        sut.executeCommand();
 
-		// WHEN
-		sut.viewAdapter.showReportWindow();
+        // THEN
+        verify(commandHandler).executeCommand(testCommand);
+    }
 
-		// THEN
-		verify(reportWindowBuilder).setupStage();
-	}
+    @Test
+    public void shouldNotCloseWindowOnInsert() {
+        // GIVEN
+        givenCommand("Hello World");
+        given(commandHandler.executeCommand(anyString())).willReturn(
+                Optional.<TimeTrackingItem>absent());
 
-	@Test
-	public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
-		// GIVEN
-		givenCommand("test");
+        // WHEN
+        sut.viewAdapter.insert();
 
-		// WHEN
-		sut.executeCommand();
+        // THEN
+        assertThat(shutdownCalled, is(false));
+    }
 
-		// THEN
-		assertThat(sut.currentCommand.get(), equalTo(""));
-	}
+    private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
+        ItemReader reader = mock(ItemReader.class);
+        given(reader.read()).willReturn(Optional.of(item),
+                Optional.<TimeTrackingItem>absent());
+        return reader;
+    }
 
-	@Test
-	public void shouldDelegateCommandExecutionToCommandHandler()
-			throws Exception {
-		// GIVEN
-		String testCommand = "test";
+    private void givenExecutorService() {
+        willAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ((Runnable) invocation.getArguments()[0]).run();
+                return null;
+            }
+        }).given(executorService).execute(any(Runnable.class));
+    }
 
-		givenCommand(testCommand);
-
-		// WHEN
-		sut.executeCommand();
-
-		// THEN
-		verify(commandHandler).executeCommand(testCommand);
-	}
-
-	@Test
-	public void shouldNotCloseWindowOnInsert() {
-		// GIVEN
-		givenCommand("Hello World");
-		given(commandHandler.executeCommand(anyString())).willReturn(
-				Optional.<TimeTrackingItem> absent());
-
-		// WHEN
-		sut.viewAdapter.insert();
-
-		// THEN
-		assertThat(shutdownCalled, is(false));
-	}
-
-	@SuppressWarnings("unchecked")
-	@Test
-	public void shouldReadHistoryItemsFromReader() throws Exception {
-		// GIVEN
-		givenExecutorService();
-
-		final TimeTrackingItem item = new TimeTrackingItem("comment",
-				DateTime.now());
-
-		ItemReader reader = givenReaderThatReturns(item);
-
-		// WHEN
-		sut.readHistoryFrom(reader);
-
-		// THEN
-		verify(executorService).execute(any(Runnable.class));
-		assertThat(sut.filteredList.toArray(new TimeTrackingItem[0]),
-				is(new TimeTrackingItem[] { item }));
-	}
-
-	private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
-		ItemReader reader = mock(ItemReader.class);
-		given(reader.read()).willReturn(Optional.of(item),
-				Optional.<TimeTrackingItem> absent());
-		return reader;
-	}
-
-	private void givenExecutorService() {
-		willAnswer(new Answer<Void>() {
-			@Override
-			public Void answer(InvocationOnMock invocation) throws Throwable {
-				((Runnable) invocation.getArguments()[0]).run();
-				return null;
-			}
-		}).given(executorService).execute(any(Runnable.class));
-	}
-
-	private void givenCommand(String command) {
-		sut.currentCommand.set(command);
-	}
+    private void givenCommand(String command) {
+        sut.currentCommand.set(command);
+    }
 }
