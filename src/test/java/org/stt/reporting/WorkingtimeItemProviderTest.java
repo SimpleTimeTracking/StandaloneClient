@@ -1,8 +1,5 @@
 package org.stt.reporting;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
@@ -16,10 +13,11 @@ import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
+import java.io.File;
+import java.io.IOException;
+
 import static org.hamcrest.CoreMatchers.is;
-
 import static org.junit.Assert.assertThat;
-
 import static org.mockito.BDDMockito.given;
 
 public class WorkingtimeItemProviderTest {

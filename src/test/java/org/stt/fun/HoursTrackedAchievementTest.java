@@ -5,12 +5,13 @@
  */
 package org.stt.fun;
 
-import static org.hamcrest.CoreMatchers.is;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
+
+import static org.hamcrest.CoreMatchers.is;
 
 /**
  *

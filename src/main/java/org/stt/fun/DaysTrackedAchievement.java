@@ -1,7 +1,8 @@
 package org.stt.fun;
 
-import java.util.ResourceBundle;
 import org.stt.model.TimeTrackingItem;
+
+import java.util.ResourceBundle;
 
 /**
  *

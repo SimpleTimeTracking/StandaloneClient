@@ -8,20 +8,21 @@ package org.stt.gui.jfx.binding;
 import com.google.common.base.Optional;
 import javafx.beans.property.SimpleObjectProperty;
 import org.hamcrest.CoreMatchers;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import org.hamcrest.collection.IsEmptyCollection;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.SummingReportGenerator;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 /**
  *

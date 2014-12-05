@@ -1,17 +1,6 @@
 package org.stt.search;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-
-import org.hamcrest.Matchers;
+import com.google.common.base.Optional;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -21,14 +10,20 @@ import org.junit.experimental.theories.Theory;
 import org.junit.experimental.theories.suppliers.TestedOn;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 
-import com.google.common.base.Optional;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
 
 @RunWith(Theories.class)
 public class DefaultItemSearcherTest {

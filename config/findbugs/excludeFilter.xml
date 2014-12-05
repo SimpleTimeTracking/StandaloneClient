@@ -3,4 +3,8 @@
   <Match>
     <Package name="org.stt.g4"/>
   </Match>
+  <Match>
+    <Class name="org.stt.gui.UIMain" />
+    <Bug code="Dm" />
+  </Match>
 </FindBugsFilter>

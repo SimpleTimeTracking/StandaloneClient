@@ -1,14 +1,13 @@
 package org.stt.persistence.stt;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Optional;
+import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemWriter;
 
 import java.io.IOException;
 
-import org.stt.model.TimeTrackingItem;
-
-import com.google.common.base.Optional;
-import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemWriter;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 class InsertHelper {
 	private final ItemReader reader;

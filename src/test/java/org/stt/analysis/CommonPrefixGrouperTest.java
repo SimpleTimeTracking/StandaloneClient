@@ -1,21 +1,19 @@
 package org.stt.analysis;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.ItemReaderTestHelper;
-import org.stt.analysis.CommonPrefixGrouper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
-
 import static org.junit.Assert.assertThat;
 
 public class CommonPrefixGrouperTest {

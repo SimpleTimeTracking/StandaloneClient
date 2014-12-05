@@ -1,9 +1,6 @@
 package org.stt.csv.importer;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.logging.Logger;
-
+import com.google.common.base.Optional;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.joda.time.DateTime;
@@ -12,11 +9,13 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-import org.stt.time.DateTimeHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.time.DateTimeHelper;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.logging.Logger;
 
 /**
  * Imports from .csv files

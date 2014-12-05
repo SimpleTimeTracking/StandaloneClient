@@ -1,12 +1,10 @@
 package org.stt.search;
 
-import java.util.Collection;
-
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
-import org.joda.time.ReadableInstant;
 import org.stt.model.TimeTrackingItem;
 
-import com.google.common.base.Optional;
+import java.util.Collection;
 
 public interface ItemSearcher {
 	/**

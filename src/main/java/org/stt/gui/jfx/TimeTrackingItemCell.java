@@ -1,16 +1,9 @@
 package org.stt.gui.jfx;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.Separator;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -22,15 +15,15 @@ import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 
+import java.util.ResourceBundle;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
 	private final HBox cellPane = new HBox(10);
 
-	private final HBox actionsPane = new HBox();
-
 	private final Label labelForComment = new Label();
-
-	private final Pane space = new Pane();
 
 	private final HBox timePane = new HBox();
 
@@ -72,9 +65,11 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		setupListenersForCallbacks(continueActionHandler, editActionHandler,
 				deleteActionHandler);
 
+		HBox actionsPane = new HBox();
 		actionsPane.getChildren().addAll(deleteButton, continueButton,
 				editButton);
 
+		Pane space = new Pane();
 		HBox.setHgrow(space, Priority.ALWAYS);
 		labelForComment.setWrapText(true);
 		labelForComment.setPrefWidth(400);

@@ -1,7 +1,6 @@
 package org.stt.filter;
 
-import java.io.IOException;
-
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
@@ -10,7 +9,7 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
 
 public class SubstringReaderFilterTest {
 

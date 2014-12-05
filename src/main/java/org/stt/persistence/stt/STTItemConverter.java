@@ -1,14 +1,14 @@
 package org.stt.persistence.stt;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 class STTItemConverter {
 	private final DateTimeFormatter dateFormat = DateTimeFormat

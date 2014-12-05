@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -33,6 +34,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.stt.CommandHandler;
 import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.event.ShutdownRequest;
 import org.stt.event.messages.ReadItemsEvent;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.fun.Achievement;
@@ -44,8 +46,7 @@ import org.stt.gui.jfx.binding.FirstItemOfDaySet;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
-import org.stt.persistence.ItemReaderProvider;
-import org.stt.search.ExpansionProvider;
+import org.stt.analysis.ExpansionProvider;
 
 import java.awt.*;
 import java.io.IOException;
@@ -56,8 +57,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,35 +71,32 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             .observableArrayList();
     final StringProperty currentCommand = new SimpleStringProperty("");
     final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
-    private final ExecutorService executorService;
     private final CommandHandler commandHandler;
-    private final ItemReaderProvider historySourceProvider;
     private final ReportWindowBuilder reportWindowBuilder;
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
     private final Achievements achievements;
     private final EventBus eventBus;
-    // Property<TimeTrackingItem> selectedItem = new SimpleObjectProperty<>();
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
     private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
+    private Provider<Stage> stageProvider;
 
     @Inject
-    STTApplication(EventBus eventBus, ExecutorService executorService,
-                          CommandHandler commandHandler,
-                          ItemReaderProvider historySourceProvider,
-                          ReportWindowBuilder reportWindowBuilder,
-                          ExpansionProvider expansionProvider,
-                          ResourceBundle resourceBundle,
-                          Achievements achievements,
-                          TimeTrackingItemListConfig timeTrackingItemListConfig) {
+    STTApplication(Provider<Stage> stageProvider,
+                   EventBus eventBus,
+                   CommandHandler commandHandler,
+                   ReportWindowBuilder reportWindowBuilder,
+                   ExpansionProvider expansionProvider,
+                   ResourceBundle resourceBundle,
+                   Achievements achievements,
+                   TimeTrackingItemListConfig timeTrackingItemListConfig) {
+        this.stageProvider = checkNotNull(stageProvider);
         this.eventBus = checkNotNull(eventBus);
         eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
         this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
         this.commandHandler = checkNotNull(commandHandler);
-        this.historySourceProvider = checkNotNull(historySourceProvider);
-        this.executorService = checkNotNull(executorService);
         this.localization = checkNotNull(resourceBundle);
         this.achievements = checkNotNull(achievements);
         checkNotNull(timeTrackingItemListConfig);
@@ -180,20 +176,17 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         currentCommand.set("");
     }
 
-    public void show(Stage stage) {
-        viewAdapter = new ViewAdapter(stage);
+    public void show() {
+        viewAdapter = new ViewAdapter(stageProvider.get());
         viewAdapter.show();
     }
 
-    public void start(final Stage stage) {
+    public void start() {
         PlatformImpl.runAndWait(new Runnable() {
             @Override
             public void run() {
-                try {
-                    show(stage);
-                } catch (Exception e) {
-                    LOG.log(Level.SEVERE, "Couldn't start", e);
-                }
+                show();
+
             }
         });
     }
@@ -309,17 +302,16 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         protected void shutdown() {
             stage.close();
-            executorService.shutdown();
             Platform.exit();
             // Required because txExit() above is just swallowed...
             PlatformImpl.tkExit();
             try {
-                executorService.awaitTermination(1, TimeUnit.SECONDS);
                 commandHandler.close();
-            } catch (InterruptedException | IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
+            } finally {
+                eventBus.post(new ShutdownRequest());
             }
-            // System.exit(0);
         }
 
         public void initialize() {

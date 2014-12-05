@@ -1,21 +1,13 @@
 package org.stt.persistence.stt;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import com.google.inject.internal.util.$Preconditions;
-import org.apache.commons.io.IOUtils;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 
-import com.google.common.base.Preconditions;
+import java.io.*;
 
 /**
  * Writes {@link TimeTrackingItem}s to a new line. Multiline comments get joined

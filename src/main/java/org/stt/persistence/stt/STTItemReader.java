@@ -1,14 +1,13 @@
 package org.stt.persistence.stt;
 
-import java.io.Reader;
-
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import java.io.Reader;
 
 /**
  * Imports all time tracking records written by {@link STTItemPersister}

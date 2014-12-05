@@ -1,12 +1,11 @@
 package org.stt;
 
-import static org.mockito.BDDMockito.given;
-
+import com.google.common.base.Optional;
 import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import static org.mockito.BDDMockito.given;
 
 public class ItemReaderTestHelper {
 

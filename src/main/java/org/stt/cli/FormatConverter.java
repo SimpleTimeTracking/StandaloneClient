@@ -1,13 +1,7 @@
 package org.stt.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.util.List;
-
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.stt.csv.importer.CsvImporter;
 import org.stt.model.TimeTrackingItem;
@@ -17,8 +11,8 @@ import org.stt.persistence.stt.STTItemReader;
 import org.stt.persistence.stt.STTItemWriter;
 import org.stt.ti.importer.TiImporter;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
+import java.io.*;
+import java.util.List;
 
 /**
  * Converts different supported time tracking formats. Currently these are:

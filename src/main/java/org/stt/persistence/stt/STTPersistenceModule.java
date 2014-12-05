@@ -3,8 +3,6 @@ package org.stt.persistence.stt;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;

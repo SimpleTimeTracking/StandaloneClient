@@ -1,10 +1,5 @@
 package org.stt.reporting;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-
-import java.util.List;
-
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -18,6 +13,11 @@ import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.reporting.SummingReportGenerator.Report;
+
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 public class SummingReportGeneratorTest {
 

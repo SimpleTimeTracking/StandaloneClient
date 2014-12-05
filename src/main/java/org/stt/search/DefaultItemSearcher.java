@@ -1,20 +1,17 @@
 package org.stt.search;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
-import org.joda.time.ReadableInstant;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DefaultItemSearcher implements ItemSearcher {
 

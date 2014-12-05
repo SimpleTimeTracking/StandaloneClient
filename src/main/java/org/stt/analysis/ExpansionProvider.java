@@ -1,4 +1,4 @@
-package org.stt.search;
+package org.stt.analysis;
 
 import java.util.List;
 

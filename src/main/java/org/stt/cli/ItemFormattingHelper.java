@@ -1,11 +1,10 @@
 package org.stt.cli;
 
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.stt.time.DateTimeHelper;
 import org.stt.model.TimeTrackingItem;
-
-import com.google.common.base.Optional;
+import org.stt.time.DateTimeHelper;
 
 public class ItemFormattingHelper {
 

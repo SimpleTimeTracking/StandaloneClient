@@ -59,10 +59,7 @@ public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 	}
 
 	private boolean matchesFilter(TimeTrackingItem item, String filter) {
-		if (item.getComment().isPresent()
-				&& item.getComment().get().toLowerCase().contains(filter)) {
-			return true;
-		}
-		return false;
+		return item.getComment().isPresent()
+				&& item.getComment().get().toLowerCase().contains(filter);
 	}
 }

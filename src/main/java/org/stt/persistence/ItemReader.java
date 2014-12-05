@@ -1,11 +1,10 @@
 package org.stt.persistence;
 
-import java.io.Closeable;
-import java.io.IOException;
-
+import com.google.common.base.Optional;
 import org.stt.model.TimeTrackingItem;
 
-import com.google.common.base.Optional;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * <p>

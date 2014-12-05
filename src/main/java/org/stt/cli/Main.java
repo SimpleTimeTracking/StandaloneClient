@@ -1,37 +1,24 @@
 package org.stt.cli;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.logging.Logger;
-
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.inject.Provider;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
+import org.stt.analysis.WorktimeCategorizer;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.BackupCreator;
-import org.stt.persistence.IOUtil;
-import org.stt.persistence.ItemPersister;
-import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemReaderProvider;
-import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.analysis.WorktimeCategorizer;
-import org.stt.search.DefaultItemSearcher;
-import org.stt.search.ItemSearcher;
+import org.stt.persistence.*;
 import org.stt.persistence.stt.CachingItemReader;
 import org.stt.persistence.stt.STTItemPersister;
 import org.stt.persistence.stt.STTItemReader;
+import org.stt.reporting.WorkingtimeItemProvider;
+import org.stt.search.DefaultItemSearcher;
+import org.stt.search.ItemSearcher;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
+import java.io.*;
+import java.util.*;
+import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -181,7 +168,7 @@ public class Main {
 		main.executeCommand(argsList, System.out);
 
 		// perform backup
-		main.createNewBackupCreator(configuration).performBackup();
+		main.createNewBackupCreator(configuration).start();
 	}
 
 	void executeCommand(List<String> args, PrintStream printTo) {

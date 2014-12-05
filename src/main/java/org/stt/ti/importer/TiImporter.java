@@ -1,7 +1,7 @@
 package org.stt.ti.importer;
 
-import java.io.Reader;
-
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.joda.time.DateTime;
@@ -10,8 +10,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
+import java.io.Reader;
 
 /**
  * Imports all time tracking records of an existing (modified) ti installation.

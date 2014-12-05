@@ -5,7 +5,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 
 import java.util.concurrent.Executors;
 

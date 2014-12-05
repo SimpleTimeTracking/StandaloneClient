@@ -1,13 +1,6 @@
 package org.stt.importer;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Collection;
-
+import com.google.common.base.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
@@ -15,7 +8,11 @@ import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.ti.importer.TiImporter;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Collection;
+
+import static org.hamcrest.Matchers.*;
 
 public class TiImporterTest {
 

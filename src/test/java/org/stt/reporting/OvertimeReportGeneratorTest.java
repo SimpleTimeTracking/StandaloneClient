@@ -1,8 +1,5 @@
 package org.stt.reporting;
 
-import java.util.Arrays;
-import java.util.Map;
-
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
@@ -14,15 +11,16 @@ import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
 import org.stt.ItemReaderTestHelper;
 import org.stt.analysis.ItemCategorizer;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
+import java.util.Arrays;
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.is;
-
 import static org.junit.Assert.assertThat;
-
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyString;
 

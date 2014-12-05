@@ -1,19 +1,16 @@
 package org.stt.reporting;
 
 import com.google.common.base.Optional;
-import static com.google.common.base.Preconditions.checkNotNull;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Reads all elements from the given reader and groups by the comment of the

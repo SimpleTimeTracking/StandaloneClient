@@ -2,9 +2,8 @@ package org.stt.analysis;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import org.stt.YamlConfig;
+import org.stt.YamlConfigService;
 import org.stt.persistence.ItemReader;
-import org.stt.search.ExpansionProvider;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -22,7 +21,7 @@ public class AnalysisModule extends AbstractModule {
     }
 
     @Provides
-    CommonPrefixGrouper provideCommonPrefixGrouper(ItemReader reader, YamlConfig yamlConfig) {
+    CommonPrefixGrouper provideCommonPrefixGrouper(ItemReader reader, YamlConfigService yamlConfig) {
         CommonPrefixGrouper commonPrefixGrouper = new CommonPrefixGrouper();
         try (ItemReader itemReader=reader) {
             commonPrefixGrouper.scanForGroups(itemReader);

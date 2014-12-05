@@ -1,9 +1,10 @@
 package org.stt.filter;
 
 import com.google.common.base.Optional;
-import java.io.IOException;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+
+import java.io.IOException;
 
 /**
  * Reads from the given reader but only returns items where the comment contains

@@ -1,19 +1,15 @@
 package org.stt.reporting;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
-
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Duration;
 import org.stt.Configuration;
 import org.stt.time.DateTimeHelper;
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Reads information about working times from the configured workingTimes file

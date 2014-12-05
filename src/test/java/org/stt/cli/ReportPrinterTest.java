@@ -64,10 +64,11 @@ public class ReportPrinterTest {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		PrintStream printStream = new PrintStream(out, true, "UTF8");
 
-		DateTime twoDaysAgo = DateTime.now().minusDays(2);
+		DateTime dateTime = DateTime.now().withTimeAtStartOfDay();
+		DateTime twoDaysAgo = dateTime.minusDays(2);
 		ItemReaderTestHelper.givenReaderReturns(itemReader,
-				new TimeTrackingItem("comment", DateTime.now().minusHours(2),
-						DateTime.now().minusHours(1)));
+				new TimeTrackingItem("comment", dateTime,
+						dateTime.plusHours(2)));
 		new TimeTrackingItem("comment yesterday", twoDaysAgo,
 				twoDaysAgo.plusHours(1));
 

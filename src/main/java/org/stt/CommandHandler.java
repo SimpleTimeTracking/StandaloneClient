@@ -1,12 +1,11 @@
 package org.stt;
 
-import java.io.Closeable;
-import java.io.IOException;
-
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
 
-import com.google.common.base.Optional;
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * @author bytekeeper

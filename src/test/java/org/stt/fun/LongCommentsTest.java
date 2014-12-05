@@ -5,11 +5,12 @@
  */
 package org.stt.fun;
 
-import static org.hamcrest.CoreMatchers.is;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
+
+import static org.hamcrest.CoreMatchers.is;
 
 /**
  *

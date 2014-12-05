@@ -1,7 +1,5 @@
 package org.stt.config;
 
-import javafx.scene.paint.Color;
-
 import java.util.List;
 
 import static java.util.Arrays.asList;

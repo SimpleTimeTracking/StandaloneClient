@@ -1,5 +1,17 @@
 package org.stt.persistence;
 
+import com.google.common.base.Preconditions;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.joda.time.DateTime;
+import org.stt.Configuration;
+import org.stt.Service;
+import org.stt.persistence.stt.STTFile;
+import org.stt.time.DateTimeHelper;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,43 +20,41 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.joda.time.DateTime;
-import org.stt.Configuration;
-import org.stt.time.DateTimeHelper;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * creates backups of the .stt file in configurable intervals and locations.
  * Optionally deletes old backup files if configured.
  */
 @Singleton
-public class BackupCreator {
+public class BackupCreator implements Service {
 
 	private static Logger LOG = Logger.getLogger(BackupCreator.class.getName());
 
 	private final Configuration configuration;
 
 	@Inject
-	public BackupCreator(Configuration configuration) {
-		this.configuration = configuration;
+	public BackupCreator( Configuration configuration) {
+		this.configuration = checkNotNull(configuration);
+	}
+
+	@Override
+	public void stop() {
 	}
 
 	/**
 	 * Perform the backup:
-	 * 
+	 *
 	 * <li>check if backup is needed
-	 * 
+	 *
 	 * <li>if so, copy the current .stt file to the backup location
 	 */
-	public void performBackup() throws IOException {
-
+	@Override
+	public void start() throws IOException {
 		int backupInterval = configuration.getBackupInterval();
 
 		if (backupInterval < 1) {
-			// no backup desired by configuration
+			LOG.info("Backup is disabled (see backupInterval setting).");
 			return;
 		}
 

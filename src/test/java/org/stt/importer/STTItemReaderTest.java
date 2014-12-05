@@ -1,7 +1,6 @@
 package org.stt.importer;
 
-import java.io.StringReader;
-
+import com.google.common.base.Optional;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -10,7 +9,7 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.stt.STTItemReader;
 
-import com.google.common.base.Optional;
+import java.io.StringReader;
 
 public class STTItemReaderTest {
 

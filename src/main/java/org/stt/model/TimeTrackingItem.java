@@ -1,13 +1,12 @@
 package org.stt.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 
 import java.util.Comparator;
 
-import org.joda.time.DateTime;
-
-import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class TimeTrackingItem {
 	public static final Comparator<TimeTrackingItem> BY_START_COMPARATOR = new Comparator<TimeTrackingItem>() {

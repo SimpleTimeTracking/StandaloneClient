@@ -1,8 +1,8 @@
 package org.stt.analysis;
 
-import java.util.Collection;
 import org.stt.Configuration;
-import org.stt.analysis.ItemCategorizer;
+
+import java.util.Collection;
 
 public class WorktimeCategorizer implements ItemCategorizer {
 

@@ -1,9 +1,10 @@
 package org.stt.fun;
 
-import java.util.ResourceBundle;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.model.TimeTrackingItem;
+
+import java.util.ResourceBundle;
 
 /**
  * Achieved when the sum of tracked (and ended) items is >= threshold.

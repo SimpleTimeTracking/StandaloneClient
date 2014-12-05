@@ -1,17 +1,15 @@
 package org.stt.analysis;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Optional;
+import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.ItemReader;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
-import org.stt.search.ExpansionProvider;
-
-import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Learns common prefixes and uses them to determine groups.

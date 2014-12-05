@@ -4,6 +4,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.stt.Service;
 import org.stt.event.messages.ReadItemsEvent;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.model.TimeTrackingItem;
@@ -18,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Created by dante on 03.12.14.
  */
-public class ItemReaderService {
+public class ItemReaderService implements Service {
     private Provider<ItemReader> itemReaderProvider;
     private EventBus eventBus;
 
@@ -26,7 +27,6 @@ public class ItemReaderService {
     public ItemReaderService(EventBus eventBus, Provider<ItemReader> itemReaderProvider) {
         this.eventBus = checkNotNull(eventBus);
         this.itemReaderProvider = checkNotNull(itemReaderProvider);
-        eventBus.register(this);
     }
 
     @Subscribe
@@ -39,5 +39,15 @@ public class ItemReaderService {
         } catch (IOException e) {
             eventBus.post(e);
         }
+    }
+
+    @Override
+    public void start() throws Exception {
+        eventBus.register(this);
+    }
+
+    @Override
+    public void stop() {
+        eventBus.unregister(this);
     }
 }

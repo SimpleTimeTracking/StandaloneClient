@@ -2,6 +2,8 @@ package org.stt.gui.jfx;
 
 import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
+import com.google.inject.Provider;
+import javafx.stage.Stage;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
+import org.stt.analysis.ExpansionProvider;
 import org.stt.analysis.ItemGrouper;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
@@ -17,8 +20,6 @@ import org.stt.fun.Achievements;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.search.CommentSearcher;
-import org.stt.search.ExpansionProvider;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,8 +41,6 @@ public class STTApplicationTest {
 
     private final Achievements achievements = new Achievements(
             Collections.<Achievement>emptyList());
-    @Mock
-    protected CommentSearcher commentSearcher;
     private STTApplication sut;
     @Mock
     private CommandHandler commandHandler;
@@ -61,11 +60,13 @@ public class STTApplicationTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        ItemReaderProvider historySourceProvider = mock(ItemReaderProvider.class);
-        sut = new STTApplication(new EventBus(), executorService, commandHandler, historySourceProvider, reportWindowBuilder, expansionProvider, resourceBundle, achievements, new TimeTrackingItemListConfig());
-        sut.viewAdapter = sut.new ViewAdapter(
-
-                null) {
+        sut = new STTApplication(new Provider<Stage>() {
+            @Override
+            public Stage get() {
+                return null;
+            }
+        }, new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, achievements, new TimeTrackingItemListConfig());
+        sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override
             protected void show() throws RuntimeException {

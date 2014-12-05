@@ -1,11 +1,12 @@
 package org.stt.gui.jfx;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 class ImageButton extends Button {
 	private static final String STYLE_HOVER = "-fx-background-color: transparent; -fx-padding: 5;  -fx-effect: innershadow(gaussian, rgba(128, 255, 220, 0.5), 10, 0.5, 2, 2);";

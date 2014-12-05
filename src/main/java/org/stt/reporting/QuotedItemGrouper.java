@@ -2,10 +2,10 @@ package org.stt.reporting;
 
 import org.stt.analysis.ItemGrouper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Matches groups of quoted text. The quotes can be any non-alphabetic

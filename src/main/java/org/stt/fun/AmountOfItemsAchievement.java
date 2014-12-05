@@ -1,9 +1,10 @@
 package org.stt.fun;
 
-import java.util.ResourceBundle;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeComparator;
 import org.stt.model.TimeTrackingItem;
+
+import java.util.ResourceBundle;
 
 /**
  * Achieved, when the threshold amount of items was reached for at least one

@@ -1,12 +1,11 @@
 package org.stt.persistence.stt;
 
-import java.io.IOException;
-import java.util.ArrayList;
-
+import com.google.common.base.Optional;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class CachingItemReader implements ItemReader {
 

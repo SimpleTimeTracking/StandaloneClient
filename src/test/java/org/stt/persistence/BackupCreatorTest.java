@@ -1,25 +1,27 @@
 package org.stt.persistence;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Collection;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
-import static org.hamcrest.CoreMatchers.is;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import static org.mockito.BDDMockito.given;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
 import org.stt.time.DateTimeHelper;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.mockito.BDDMockito.given;
 
 public class BackupCreatorTest {
 
@@ -64,7 +66,7 @@ public class BackupCreatorTest {
 		createNewFile(backedUp);
 
 		// WHEN
-		sut.performBackup();
+		sut.start();
 
 		// THEN
 		Collection<File> files = FileUtils.listFiles(currentTempFolder,
@@ -94,7 +96,7 @@ public class BackupCreatorTest {
 		createNewFile(oldFile);
 
 		// WHEN
-		sut.performBackup();
+		sut.start();
 
 		// THEN
 		Assert.assertFalse("Old backup file should have been deleted",
@@ -110,7 +112,7 @@ public class BackupCreatorTest {
 				+ currentDate);
 
 		// WHEN
-		sut.performBackup();
+		sut.start();
 
 		// THEN
 		Assert.assertTrue(
@@ -128,7 +130,7 @@ public class BackupCreatorTest {
 		createNewFile(existingFile);
 
 		// WHEN
-		sut.performBackup();
+		sut.start();
 
 		// THEN
 		Assert.assertFalse(

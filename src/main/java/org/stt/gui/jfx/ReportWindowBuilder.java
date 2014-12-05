@@ -20,9 +20,12 @@ import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
-import javafx.stage.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.joda.time.DateTime;
@@ -30,12 +33,12 @@ import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
+import org.stt.analysis.ItemGrouper;
 import org.stt.config.ReportWindowConfig;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.analysis.ItemGrouper;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.search.ItemSearcher;
 import org.stt.time.DateTimeHelper;
@@ -288,7 +291,7 @@ public class ReportWindowBuilder {
 
         private StringBinding createBindingForEndOfReport(
                 final ObservableValue<Report> reportModel) {
-            StringBinding endBinding = new StringBinding() {
+            return new StringBinding() {
                 @Override
                 protected String computeValue() {
                     return DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS
@@ -301,12 +304,11 @@ public class ReportWindowBuilder {
 
 
             };
-            return endBinding;
         }
 
         private StringBinding createBindingForStartOfReport(
                 final ObservableValue<Report> reportModel) {
-            StringBinding startBinding = new StringBinding() {
+            return new StringBinding() {
                 @Override
                 protected String computeValue() {
                     return DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS
@@ -319,7 +321,6 @@ public class ReportWindowBuilder {
 
 
             };
-            return startBinding;
         }
 
         private void addSceneToStageAndSetStageToModal() {
@@ -490,8 +491,7 @@ public class ReportWindowBuilder {
                             partToShow = part;
                         }
                         final Label partLabel = new Label(partToShow);
-                        final int fromIndex = i;
-                        addClickListener(itemGroups, partLabel, fromIndex);
+                        addClickListener(itemGroups, partLabel, i);
                         if (i < groupColors.length) {
                             Color color = groupColors[i];
                             Color selected = color.deriveColor(0, 1, 3, 1);

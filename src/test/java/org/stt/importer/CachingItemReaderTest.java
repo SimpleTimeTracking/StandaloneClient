@@ -1,5 +1,6 @@
 package org.stt.importer;
 
+import com.google.common.base.Optional;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -9,8 +10,6 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.stt.CachingItemReader;
-
-import com.google.common.base.Optional;
 
 import static org.hamcrest.Matchers.is;
 

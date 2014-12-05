@@ -1,12 +1,6 @@
 package org.stt.filter;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-
-import java.io.IOException;
-import java.util.Collection;
-
+import com.google.common.base.Optional;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -18,7 +12,12 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.Collection;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
 
 public class StartDateReaderFilterTest {
 	private StartDateReaderFilter sut;

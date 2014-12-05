@@ -2,6 +2,8 @@ package org.stt.gui.jfx;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ResourceBundle;
+
+import com.google.inject.Inject;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
@@ -14,22 +16,10 @@ import org.stt.model.TimeTrackingItemFilter;
 
 class TimeTrackingItemCellFactory implements
 		Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>> {
-	private final Image deleteImage = new Image("/Delete.png", 25, 25, true,
-			true);
 
-	private final Image continueImage = new Image("/Continue.png", 25, 25,
-			true, true);
+    private final TimeTrackingItemCell.Builder timeTrackingItemCellBuilder;
 
-	private final Image editImage = new Image("/Edit.png", 25, 25, true, true);
-
-	private final Image fromToImage = new Image("/FromTo.png", 32, 12, true,
-			true);
-
-	private final Image runningImage = new Image("/Running.png", 32, 8, true,
-			true);
-
-	private final TimeTrackingItemCell.Builder timeTrackingItemCellBuilder;
-
+	@Inject
 	public TimeTrackingItemCellFactory(
 			ContinueActionHandler continueActionHandler,
 			DeleteActionHandler deleteActionHandler,
@@ -41,7 +31,16 @@ class TimeTrackingItemCellFactory implements
 		checkNotNull(editActionHandler);
 		checkNotNull(resourceBundle);
 
-		timeTrackingItemCellBuilder = new TimeTrackingItemCell.Builder()
+        Image deleteImage = new Image("/Delete.png", 25, 25, true,
+                true);
+        Image continueImage = new Image("/Continue.png", 25, 25,
+                true, true);
+        Image editImage = new Image("/Edit.png", 25, 25, true, true);
+        Image fromToImage = new Image("/FromTo.png", 32, 12, true,
+                true);
+        Image runningImage = new Image("/Running.png", 32, 8, true,
+                true);
+        timeTrackingItemCellBuilder = new TimeTrackingItemCell.Builder()
 				.continueActionHandler(continueActionHandler)
 				.deleteActionHandler(deleteActionHandler)
 				.editActionHandler(editActionHandler)

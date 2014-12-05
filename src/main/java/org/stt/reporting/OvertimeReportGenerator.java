@@ -1,19 +1,18 @@
 package org.stt.reporting;
 
-import java.util.Map;
-import java.util.TreeMap;
-
+import com.google.common.base.Optional;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.analysis.ItemCategorizer;
-import org.stt.time.DateTimeHelper;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
+import org.stt.time.DateTimeHelper;
 
-import com.google.common.base.Optional;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Calculates overtime information

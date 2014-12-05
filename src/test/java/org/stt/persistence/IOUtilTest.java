@@ -1,15 +1,6 @@
 package org.stt.persistence;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -18,7 +9,15 @@ import org.junit.runner.RunWith;
 import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.stt.model.TimeTrackingItem;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @RunWith(Theories.class)
 public class IOUtilTest {

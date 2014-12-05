@@ -1,12 +1,11 @@
 package org.stt.persistence;
 
+import com.google.common.base.Optional;
+import org.stt.model.TimeTrackingItem;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.stt.model.TimeTrackingItem;
-
-import com.google.common.base.Optional;
 
 public class IOUtil {
 

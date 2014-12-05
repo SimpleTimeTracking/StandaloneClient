@@ -5,12 +5,9 @@
  */
 package org.stt.gui.jfx.binding;
 
-import java.io.IOException;
-import java.util.Collections;
-
+import com.google.common.base.Preconditions;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ObservableValue;
-
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.filter.StartDateReaderFilter;
@@ -20,7 +17,8 @@ import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 
-import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.util.Collections;
 
 /**
  *

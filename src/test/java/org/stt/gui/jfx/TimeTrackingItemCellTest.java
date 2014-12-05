@@ -1,21 +1,15 @@
 package org.stt.gui.jfx;
 
-import java.util.ResourceBundle;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
 import org.hamcrest.Matchers;
-import static org.hamcrest.Matchers.hasProperty;
 import org.joda.time.DateTime;
-import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import static org.mockito.Mockito.verify;
 import org.mockito.MockitoAnnotations;
 import org.stt.gui.jfx.TimeTrackingItemCell.Builder;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
@@ -23,6 +17,14 @@ import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
+
+import java.util.ResourceBundle;
+
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.verify;
 
 public class TimeTrackingItemCellTest {
 

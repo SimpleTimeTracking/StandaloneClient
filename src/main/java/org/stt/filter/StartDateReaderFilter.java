@@ -1,14 +1,13 @@
 package org.stt.filter;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.IOException;
-
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Reads from the given reader but only returns items where from <= start date <

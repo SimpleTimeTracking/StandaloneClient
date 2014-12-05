@@ -1,10 +1,7 @@
 package org.stt;
 
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
-import org.stt.time.DateTimeHelper;
-import java.io.IOException;
-import java.util.logging.Logger;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -18,8 +15,10 @@ import org.stt.g4.EnglishCommandsParser.CommandContext;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 import org.stt.search.ItemSearcher;
+import org.stt.time.DateTimeHelper;
 
-import com.google.common.base.Optional;
+import java.io.IOException;
+import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

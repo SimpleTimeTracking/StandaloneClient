@@ -1,12 +1,14 @@
 package org.stt.time;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.Singleton;
 import org.joda.time.Duration;
 
 /**
  *
  * @author dante
  */
+@Singleton
 public class DurationRounder {
 
 	private long intervalMillis;

@@ -1,6 +1,6 @@
 package org.stt;
 
-import com.google.inject.*;
+import com.google.inject.Singleton;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.stt.time.DateTimeHelper;
