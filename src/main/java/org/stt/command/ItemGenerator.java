@@ -43,11 +43,12 @@ public class ItemGenerator {
         public Object visitAgoFormat(@NotNull EnglishCommandsParser.AgoFormatContext ctx) {
             Duration duration;
             int amount = ctx.amount;
-            if (ctx.HOURS() != null) {
+            EnglishCommandsParser.TimeUnitContext timeUnit = ctx.timeUnit();
+            if (timeUnit.HOURS() != null) {
                 duration = Duration.standardHours(amount);
-            } else if (ctx.MINUTES() != null) {
+            } else if (timeUnit.MINUTES() != null) {
                 duration = Duration.standardMinutes(amount);
-            } else if (ctx.SECONDS() != null) {
+            } else if (timeUnit.SECONDS() != null) {
                 duration = Duration.standardSeconds(amount);
             } else {
                 throw new IllegalStateException("Unknown ago unit: " + ctx.getText());

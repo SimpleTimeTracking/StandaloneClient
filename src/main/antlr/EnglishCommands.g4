@@ -9,11 +9,15 @@ import org.stt.model.*;
 anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL;
 comment: anyToken*?;
 
-agoFormat returns [int amount] : SINCE? a=NUMBER (
-	 	HOURS
+timeUnit:
+	HOURS
 	| 	MINUTES
-	| 	SECONDS
-	) AGO? { $amount = $a.int; };
+	| 	SECONDS;
+
+
+agoFormat returns [int amount] :
+	SINCE a=NUMBER timeUnit AGO? { $amount = $a.int; }
+	| a=NUMBER timeUnit AGO { $amount = $a.int; };
 
 date returns [int year, int month, int day]: y=NUMBER (DOT|MINUS) m=NUMBER (DOT|MINUS) d=NUMBER
 	{ $year = $y.int; $month = $m.int; $day = $d.int; };
@@ -24,7 +28,10 @@ dateTime returns [ int hour, int minute, int second]: date? h=NUMBER COLON m=NUM
 sinceFormat: (SINCE|AT) start=dateTime
 	(UNTIL end=dateTime)?;
 
-fromToFormat: FROM? start=dateTime (TO end=dateTime)?;
+fromToFormat:
+	FROM start=dateTime (TO end=dateTime)?
+	| 	start=dateTime TO end=dateTime;
+
 
 timeFormat:
 		ago=agoFormat

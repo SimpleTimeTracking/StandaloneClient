@@ -67,7 +67,7 @@ public class YamlConfigService implements Service {
             config.applyDefaults();
         } catch (FileNotFoundException e) {
             createNewConfig();
-        } catch (IOException | ClassCastException ex) {
+        } catch (IOException | ClassCastException | NullPointerException ex) {
             LOG.log(Level.SEVERE, null, ex);
             createNewConfig();
         }

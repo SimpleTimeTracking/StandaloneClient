@@ -47,6 +47,10 @@ import javafx.scene.shape.*;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
 import org.stt.CommandHandler;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
@@ -54,11 +58,14 @@ import org.stt.event.messages.ReadItemsEvent;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.fun.Achievement;
 import org.stt.fun.Achievements;
+import org.stt.g4.EnglishCommandsLexer;
+import org.stt.g4.EnglishCommandsParser;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.gui.jfx.binding.FirstItemOfDaySet;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
+import org.stt.gui.jfx.text.CommandHighlighter;
 import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
@@ -256,6 +263,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         private HighlightingOverlay overlay;
 
+        private CommandHighlighter commandHighlighter;
+
         ViewAdapter(Stage stage) {
             this.stage = stage;
         }
@@ -292,6 +301,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             }
 
             overlay = new HighlightingOverlay(commandText);
+            commandHighlighter = new CommandHighlighter(overlay);
 
             Scene scene = new Scene(pane);
 
@@ -330,6 +340,11 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                 @Override
                 public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                     overlay.clearHighlights();
+                    CharStream input = new ANTLRInputStream(currentCommand.get());
+                    EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
+                    TokenStream tokenStream = new CommonTokenStream(lexer);
+                    EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
+                    commandHighlighter.addHighlights(parser.command());
                 }
             });
         }
