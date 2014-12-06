@@ -88,12 +88,12 @@ timeFormat[String _comment] returns [TimeTrackingItem item]:
 		}
 |	fromTo=fromToFormat { $item = new TimeTrackingItem($_comment, $fromTo.start, $fromTo.end); }
 	|	{ $item = new TimeTrackingItem($_comment, DateTime.now()); };
-	
+
 command returns [TimeTrackingItem newItem, DateTime fin]:
-	( 
-			FIN (AT? at=dateTime { $fin = $at.result; })? { 
+	(
+			FIN (AT? at=dateTime { $fin = $at.result; })? {
 		 		if ($fin == null)
-		 			$fin = DateTime.now(); 
+		 			$fin = DateTime.now();
 		 	}
  		|	c=comment result=timeFormat[$c.text] { $newItem = $result.item; }
 			

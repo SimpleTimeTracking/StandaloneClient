@@ -6,6 +6,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.javafx.application.PlatformImpl;
+import com.sun.javafx.scene.control.skin.TextAreaSkin;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -13,23 +14,37 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
 import javafx.scene.control.TextArea;
+import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.InputMethodTextRun;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.*;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.stt.CommandHandler;
@@ -44,13 +59,17 @@ import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.gui.jfx.binding.FirstItemOfDaySet;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
+import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 import org.stt.analysis.ExpansionProvider;
+import org.w3c.dom.css.Rect;
 
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -131,8 +150,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     private void setCommandText(String textToSet) {
+        setCommandText(textToSet, currentCommand.get().length());
+    }
+
+    private void setCommandText(String textToSet, int caretPosition) {
         currentCommand.set(textToSet);
-        commandCaretPosition.set(currentCommand.get().length());
+        commandCaretPosition.set(caretPosition);
     }
 
     void expandCurrentCommand() {
@@ -199,7 +222,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Override
     public void edit(TimeTrackingItem item) {
-        setCommandText(commandHandler.itemToCommand(item));
+        setCommandText(commandHandler.itemToCommand(item), item.getComment().or("").length());
     }
 
     @Override
@@ -230,6 +253,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         @FXML
         FlowPane achievements;
+
+        private HighlightingOverlay overlay;
 
         ViewAdapter(Stage stage) {
             this.stage = stage;
@@ -266,6 +291,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                 }
             }
 
+            overlay = new HighlightingOverlay(commandText);
+
             Scene scene = new Scene(pane);
 
             stage.setScene(scene);
@@ -298,6 +325,13 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
             stage.show();
             requestFocusOnCommandText();
+
+            commandText.textProperty().addListener(new ChangeListener<String>() {
+                @Override
+                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                    overlay.clearHighlights();
+                }
+            });
         }
 
         protected void shutdown() {

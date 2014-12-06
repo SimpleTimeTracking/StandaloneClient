@@ -102,8 +102,7 @@ task genAntlrSources(dependsOn: mkAntlrOutputDir, type: JavaExec) {
 	def pkg = antlr.antlrDestPkg.replaceAll("\\.", "/")
 	args = [ "-o",
               "${antlr.antlrGenDir}/${pkg}",
-		/*"-atn", */
-              "-no-listener",
+			  "-atn",
               "-visitor",
               "-package", antlr.antlrDestPkg,
 		grammars.files
