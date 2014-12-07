@@ -21,7 +21,7 @@ public class AchievementModule extends AbstractModule {
     @Provides
     AchievementService provideAchievements(ResourceBundle resourceBundle, EventBus eventBus) {
         Collection<Achievement> listOfAchievements = new ArrayList<>();
-        for (int i : Arrays.asList(11, 31, 61, 101)) {
+        for (int i : Arrays.asList(11, 31, 101)) {
             listOfAchievements.add(new DaysTrackedAchievement(resourceBundle, i));
         }
         listOfAchievements.add(new LongComments(resourceBundle, 7,
