@@ -1,8 +1,8 @@
 package org.stt.fun;
 
+import com.google.common.eventbus.EventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import org.stt.persistence.ItemReader;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ public class AchievementModule extends AbstractModule {
     }
 
     @Provides
-    Achievements provideAchievements(ResourceBundle resourceBundle, ItemReader itemReader) {
+    AchievementService provideAchievements(ResourceBundle resourceBundle, EventBus eventBus) {
         Collection<Achievement> listOfAchievements = new ArrayList<>();
         for (int i : Arrays.asList(11, 31, 61, 101)) {
             listOfAchievements.add(new DaysTrackedAchievement(resourceBundle, i));
@@ -28,8 +28,7 @@ public class AchievementModule extends AbstractModule {
                 200));
         listOfAchievements.add(new HoursTrackedAchievement(resourceBundle, 1009));
         listOfAchievements.add(new AmountOfItemsAchievement(resourceBundle, 41));
-        Achievements achievements = new Achievements(listOfAchievements);
-        achievements.determineAchievementsFrom(itemReader);
-        return achievements;
+        AchievementService achievementService = new AchievementService(listOfAchievements, eventBus);
+        return achievementService;
     }
 }

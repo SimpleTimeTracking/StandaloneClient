@@ -6,7 +6,6 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.javafx.application.PlatformImpl;
-import com.sun.javafx.scene.control.skin.TextAreaSkin;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -22,29 +21,17 @@ import javafx.collections.ObservableSet;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Point2D;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.Group;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
 import javafx.scene.control.TextArea;
-import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.InputMethodTextRun;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.Region;
-import javafx.scene.paint.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.*;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -56,8 +43,9 @@ import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
 import org.stt.event.messages.ReadItemsEvent;
 import org.stt.event.messages.ReadItemsRequest;
+import org.stt.event.messages.RefreshedAchievements;
 import org.stt.fun.Achievement;
-import org.stt.fun.Achievements;
+import org.stt.fun.AchievementService;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
@@ -70,13 +58,10 @@ import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 import org.stt.analysis.ExpansionProvider;
-import org.w3c.dom.css.Rect;
 
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -101,7 +86,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private final ReportWindowBuilder reportWindowBuilder;
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
-    private final Achievements achievements;
+    private final AchievementService achievementService;
     private final EventBus eventBus;
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
@@ -115,7 +100,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    ReportWindowBuilder reportWindowBuilder,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
-                   Achievements achievements,
+                   AchievementService achievementService,
                    TimeTrackingItemListConfig timeTrackingItemListConfig) {
         this.stageProvider = checkNotNull(stageProvider);
         this.eventBus = checkNotNull(eventBus);
@@ -124,7 +109,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
         this.commandHandler = checkNotNull(commandHandler);
         this.localization = checkNotNull(resourceBundle);
-        this.achievements = checkNotNull(achievements);
+        this.achievementService = checkNotNull(achievementService);
         checkNotNull(timeTrackingItemListConfig);
 
         filteredList = new TimeTrackingListFilter(allItems, currentCommand,
@@ -140,9 +125,15 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         tmpItems.addAll(event.timeTrackingItems);
         if (event.type == ReadItemsEvent.Type.DONE) {
             viewAdapter.updateAllItems(tmpItems);
-//			tmpItems.clear();
+			tmpItems = new ArrayList<>();
         }
     }
+
+    @Subscribe
+    public void onAchievementsRefresh(RefreshedAchievements refreshedAchievements) {
+        viewAdapter.updateAchievements(refreshedAchievements.reachedAchievements);
+    }
+
 
     protected void resultItemSelected(TimeTrackingItem item) {
         if (item != null && item.getComment().isPresent()) {
@@ -281,25 +272,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                 throw new RuntimeException(e);
             }
 
-            for (Achievement achievement : STTApplication.this.achievements
-                    .getReachedAchievements()) {
-                final String imageName = "/achievements/"
-                        + achievement.getCode() + ".png";
-                InputStream imageStream = getClass().getResourceAsStream(
-                        imageName);
-                if (imageStream != null) {
-                    final ImageView imageView = new ImageView(new Image(
-                            imageStream));
-                    String description = achievement.getDescription();
-                    if (description != null) {
-                        Tooltip.install(imageView, new Tooltip(description));
-                    }
-                    achievements.getChildren().add(imageView);
-                } else {
-                    LOG.severe("Image " + imageName + " not found!");
-                }
-            }
-
             overlay = new HighlightingOverlay(commandText);
             commandHighlighter = new CommandHighlighter(overlay);
 
@@ -345,6 +317,32 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                     TokenStream tokenStream = new CommonTokenStream(lexer);
                     EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
                     commandHighlighter.addHighlights(parser.command());
+                }
+            });
+        }
+
+        protected void updateAchievements(final Collection<Achievement> newAchievements) {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    achievements.getChildren().clear();
+                    for (Achievement achievement : newAchievements) {
+                        final String imageName = "/achievements/"
+                                + achievement.getCode() + ".png";
+                        InputStream imageStream = getClass().getResourceAsStream(
+                                imageName);
+                        if (imageStream != null) {
+                            final ImageView imageView = new ImageView(new Image(
+                                    imageStream));
+                            String description = achievement.getDescription();
+                            if (description != null) {
+                                Tooltip.install(imageView, new Tooltip(description));
+                            }
+                            achievements.getChildren().add(imageView);
+                        } else {
+                            LOG.severe("Image " + imageName + " not found!");
+                        }
+                    }
                 }
             });
         }

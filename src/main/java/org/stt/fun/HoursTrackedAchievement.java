@@ -25,6 +25,7 @@ class HoursTrackedAchievement extends LocalizedAchievement {
 	@Override
 	void start() {
 		timeTracked = Duration.ZERO;
+		achieved = false;
 	}
 
 	@Override

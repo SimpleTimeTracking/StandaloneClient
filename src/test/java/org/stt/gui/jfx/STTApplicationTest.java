@@ -16,10 +16,9 @@ import org.stt.analysis.ExpansionProvider;
 import org.stt.analysis.ItemGrouper;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
-import org.stt.fun.Achievements;
+import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemReaderProvider;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -39,8 +38,8 @@ import static org.mockito.Mockito.verify;
 
 public class STTApplicationTest {
 
-    private final Achievements achievements = new Achievements(
-            Collections.<Achievement>emptyList());
+    private final AchievementService achievementService = new AchievementService(
+            Collections.<Achievement>emptyList(), new EventBus());
     private STTApplication sut;
     @Mock
     private CommandHandler commandHandler;
@@ -65,7 +64,7 @@ public class STTApplicationTest {
             public Stage get() {
                 return null;
             }
-        }, new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, achievements, new TimeTrackingItemListConfig());
+        }, new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, achievementService, new TimeTrackingItemListConfig());
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override

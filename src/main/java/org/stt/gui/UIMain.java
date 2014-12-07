@@ -16,6 +16,7 @@ import org.stt.event.ItemReaderService;
 import org.stt.event.ShutdownRequest;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.fun.AchievementModule;
+import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.JFXModule;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.persistence.BackupCreator;
@@ -60,6 +61,7 @@ public class UIMain {
         startService(injector, YamlConfigService.class);
         startService(injector, BackupCreator.class);
         startService(injector, ItemReaderService.class);
+        startService(injector, AchievementService.class);
 
         final STTApplication application = injector.getInstance(STTApplication.class);
         LOG.info("Starting main application window");
