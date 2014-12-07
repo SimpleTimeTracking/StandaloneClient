@@ -404,7 +404,6 @@ public class ReportWindowBuilder {
         }
 
         private void setClipBoard(Duration duration) {
-            System.out.println(duration);
             PeriodFormatter formatter = new PeriodFormatterBuilder()
                     .printZeroIfSupported().minimumPrintedDigits(2)
                     .appendHours().appendSeparator(":").appendMinutes()
