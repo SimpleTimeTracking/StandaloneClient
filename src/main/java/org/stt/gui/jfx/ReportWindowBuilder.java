@@ -3,6 +3,7 @@ package org.stt.gui.jfx;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableStringValue;
@@ -10,12 +11,14 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -23,9 +26,7 @@ import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.joda.time.DateTime;
@@ -44,6 +45,7 @@ import org.stt.search.ItemSearcher;
 import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -414,6 +416,23 @@ public class ReportWindowBuilder {
         private void setClipboardContentTo(ClipboardContent content) {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             clipboard.setContent(content);
+            Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+            final Popup popup = new Popup();
+            Label label = new Label("Copied to clipboard");
+            label.setStyle("-fx-border-color:black; -fx-border-insets:2;");
+            popup.getContent().add(label);
+            popup.setX(mouseLocation.getX());
+            popup.setY(mouseLocation.getY());
+            popup.setAnchorLocation(PopupWindow.AnchorLocation.WINDOW_BOTTOM_LEFT);
+            popup.show(stage);
+            PauseTransition pauseTransition = new PauseTransition(javafx.util.Duration.seconds(1));
+            pauseTransition.setOnFinished(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    popup.hide();
+                }
+            });
+            pauseTransition.play();
         }
 
         private void setDurationColumnCellFactoryToConvertDurationToString() {
