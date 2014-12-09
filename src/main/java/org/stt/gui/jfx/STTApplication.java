@@ -148,7 +148,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     private void setCommandText(String textToSet) {
-        setCommandText(textToSet, currentCommand.get().length());
+        setCommandText(textToSet, textToSet.length());
     }
 
     private void setCommandText(String textToSet, int caretPosition) {
