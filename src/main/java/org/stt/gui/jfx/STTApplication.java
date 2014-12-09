@@ -207,7 +207,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             @Override
             public void run() {
                 show();
-
+                // Post initial request to load all items
+                eventBus.post(new ReadItemsRequest());
             }
         });
     }

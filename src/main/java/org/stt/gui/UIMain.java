@@ -69,9 +69,6 @@ public class UIMain {
         initializeJFXToolkit();
         LOG.info("Showing window");
         application.start();
-
-        // Post initial request to load all items
-        eventBus.post(new ReadItemsRequest());
     }
 
     @Subscribe

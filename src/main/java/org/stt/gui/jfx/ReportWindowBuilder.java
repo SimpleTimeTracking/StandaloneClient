@@ -416,23 +416,6 @@ public class ReportWindowBuilder {
         private void setClipboardContentTo(ClipboardContent content) {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             clipboard.setContent(content);
-            Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
-            final Popup popup = new Popup();
-            Label label = new Label("Copied to clipboard");
-            label.setStyle("-fx-border-color:black; -fx-border-insets:2;");
-            popup.getContent().add(label);
-            popup.setX(mouseLocation.getX());
-            popup.setY(mouseLocation.getY());
-            popup.setAnchorLocation(PopupWindow.AnchorLocation.WINDOW_BOTTOM_LEFT);
-            popup.show(stage);
-            PauseTransition pauseTransition = new PauseTransition(javafx.util.Duration.seconds(1));
-            pauseTransition.setOnFinished(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    popup.hide();
-                }
-            });
-            pauseTransition.play();
         }
 
         private void setDurationColumnCellFactoryToConvertDurationToString() {
