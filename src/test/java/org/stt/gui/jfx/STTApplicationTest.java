@@ -38,8 +38,6 @@ import static org.mockito.Mockito.verify;
 
 public class STTApplicationTest {
 
-    private final AchievementService achievementService = new AchievementService(
-            Collections.<Achievement>emptyList(), new EventBus());
     private STTApplication sut;
     @Mock
     private CommandHandler commandHandler;
@@ -64,7 +62,7 @@ public class STTApplicationTest {
             public Stage get() {
                 return null;
             }
-        }, new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, achievementService, new TimeTrackingItemListConfig());
+        }, new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig());
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override

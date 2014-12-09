@@ -39,13 +39,13 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.stt.CommandHandler;
+import org.stt.analysis.ExpansionProvider;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
 import org.stt.event.messages.ReadItemsEvent;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.event.messages.RefreshedAchievements;
 import org.stt.fun.Achievement;
-import org.stt.fun.AchievementService;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
@@ -57,7 +57,6 @@ import org.stt.gui.jfx.text.CommandHighlighter;
 import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
-import org.stt.analysis.ExpansionProvider;
 
 import java.awt.*;
 import java.io.IOException;
@@ -86,7 +85,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private final ReportWindowBuilder reportWindowBuilder;
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
-    private final AchievementService achievementService;
     private final EventBus eventBus;
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
@@ -100,7 +98,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    ReportWindowBuilder reportWindowBuilder,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
-                   AchievementService achievementService,
                    TimeTrackingItemListConfig timeTrackingItemListConfig) {
         this.stageProvider = checkNotNull(stageProvider);
         this.eventBus = checkNotNull(eventBus);
@@ -109,7 +106,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
         this.commandHandler = checkNotNull(commandHandler);
         this.localization = checkNotNull(resourceBundle);
-        this.achievementService = checkNotNull(achievementService);
         checkNotNull(timeTrackingItemListConfig);
 
         filteredList = new TimeTrackingListFilter(allItems, currentCommand,
@@ -125,7 +121,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         tmpItems.addAll(event.timeTrackingItems);
         if (event.type == ReadItemsEvent.Type.DONE) {
             viewAdapter.updateAllItems(tmpItems);
-			tmpItems = new ArrayList<>();
+            tmpItems = new ArrayList<>();
         }
     }
 
