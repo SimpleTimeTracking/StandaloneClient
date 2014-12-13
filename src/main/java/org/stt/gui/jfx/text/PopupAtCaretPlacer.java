@@ -32,9 +32,11 @@ public class PopupAtCaretPlacer {
 
     private void updatePopupLocation(Bounds bounds) {
         if (popup.isShowing()) {
-            Bounds caretPosition = path.localToScreen(bounds);
-            popup.setX(caretPosition.getMaxX());
-            popup.setY(caretPosition.getMaxY());
+            Bounds caretPosition = path.localToScene(bounds);
+            double x = popup.getScene().getX();
+            double y = popup.getScene().getY();
+            popup.setX(caretPosition.getMaxX() + x);
+            popup.setY(caretPosition.getMaxY() + y);
         }
     }
 }
