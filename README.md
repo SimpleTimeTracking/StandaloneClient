@@ -65,4 +65,4 @@ The created fat jar can be found in build/libs
 
 # License
 
-STT is licensed under the GPLv2. See LICENSE.txt for the license itself.
+STT is licensed under the GPLv3. See LICENSE.txt for the license itself.
