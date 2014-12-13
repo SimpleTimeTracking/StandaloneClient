@@ -22,6 +22,7 @@ public class AchievementService implements Service {
 
 	private Collection<Achievement> achievements = new ArrayList<>();
 	private EventBus eventBus;
+	private boolean startedReceiving = false;
 
 	public AchievementService(Collection<Achievement> achievements, EventBus eventBus) {
 		this.eventBus = checkNotNull(eventBus);
@@ -51,9 +52,10 @@ public class AchievementService implements Service {
 	}
 
 	@Subscribe
-	public void onItemsRead(ReadItemsEvent event) {
+	public synchronized void onItemsRead(ReadItemsEvent event) {
 		if (event.type == ReadItemsEvent.Type.START) {
 			resetAchievements();
+			startedReceiving = true;
 		}
 
 		for (TimeTrackingItem item: event.timeTrackingItems) {
@@ -62,10 +64,11 @@ public class AchievementService implements Service {
 			}
 		}
 
-		if (event.type == ReadItemsEvent.Type.DONE) {
+		if (event.type == ReadItemsEvent.Type.DONE && startedReceiving) {
 			finishAchievements();
 
 			dispatchSuccessfulAchievements();
+			startedReceiving = false;
 		}
 	}
 

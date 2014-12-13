@@ -4,6 +4,7 @@ public class BaseConfig implements Config {
     private TimeTrackingItemListConfig timeTrackingItemListConfig;
     private ReportWindowConfig reportWindowConfig;
     private CommonPrefixGrouperConfig prefixGrouper;
+    private CommandTextConfig commandText;
 
     public TimeTrackingItemListConfig getTimeTrackingItemListConfig() {
         return timeTrackingItemListConfig;
@@ -30,6 +31,14 @@ public class BaseConfig implements Config {
         this.prefixGrouper = prefixGrouper;
     }
 
+    public CommandTextConfig getCommandText() {
+        return commandText;
+    }
+
+    public void setCommandText(CommandTextConfig commandText) {
+        this.commandText = commandText;
+    }
+
     @Override
     public void applyDefaults() {
         if (timeTrackingItemListConfig == null) {
@@ -44,5 +53,9 @@ public class BaseConfig implements Config {
             prefixGrouper = new CommonPrefixGrouperConfig();
         }
         prefixGrouper.applyDefaults();
+        if (commandText == null) {
+            commandText = new CommandTextConfig();
+        }
+        commandText.applyDefaults();
     }
 }

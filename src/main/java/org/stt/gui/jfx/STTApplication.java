@@ -9,6 +9,7 @@ import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.ListBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,6 +17,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.event.EventHandler;
@@ -32,6 +34,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -54,7 +57,9 @@ import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.gui.jfx.binding.FirstItemOfDaySet;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.gui.jfx.text.CommandHighlighter;
+import org.stt.gui.jfx.text.ContextPopupCreator;
 import org.stt.gui.jfx.text.HighlightingOverlay;
+import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 
@@ -63,10 +68,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -153,21 +156,35 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         commandCaretPosition.set(caretPosition);
     }
 
-    void expandCurrentCommand() {
+    protected void insertAtCaret(String text) {
         int caretPosition = commandCaretPosition.get();
-        String textToExpand = currentCommand.get().substring(0, caretPosition);
-        List<String> expansions = expansionProvider
-                .getPossibleExpansions(textToExpand);
+        String currentText = currentCommand.get();
+        String prefix = getTextFromStartToCaret() + text;
+        currentCommand.setValue(prefix + currentText.substring(caretPosition));
+        commandCaretPosition.set(prefix.length());
+    }
+
+    void expandCurrentCommand() {
+        List<String> expansions = getSuggestedContinuations();
         if (!expansions.isEmpty()) {
             String maxExpansion = expansions.get(0);
             for (String exp : expansions) {
                 maxExpansion = commonPrefix(maxExpansion, exp);
             }
-            String tail = currentCommand.get().substring(caretPosition);
-            String expandedText = textToExpand + maxExpansion;
-            currentCommand.set(expandedText + tail);
-            commandCaretPosition.set(expandedText.length());
+            insertAtCaret(maxExpansion);
         }
+    }
+
+    private List<String> getSuggestedContinuations() {
+        String textToExpand = getTextFromStartToCaret();
+        return expansionProvider
+                .getPossibleExpansions(textToExpand);
+    }
+
+    private String getTextFromStartToCaret() {
+        int caretPosition = commandCaretPosition.get();
+        String currentCommandText = currentCommand.get();
+        return currentCommandText.substring(0, Math.min(caretPosition, currentCommandText.length()));
     }
 
     String commonPrefix(String a, String b) {
@@ -317,6 +334,44 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                     commandHighlighter.addHighlights(parser.command());
                 }
             });
+
+            ObservableList<String> suggestionsForContinuationList = createSuggestionsForContinuationList();
+            ListView<String> contentOfAutocompletionPopup = new ListView<>(suggestionsForContinuationList);
+            final Popup popup = ContextPopupCreator.createPopupForContextMenu(contentOfAutocompletionPopup, new ContextPopupCreator.ItemSelectionCallback<String>() {
+                @Override
+                public void selected(String item) {
+                    insertAtCaret(item.endsWith(" ") ? item : item + " ");
+                }
+            });
+            suggestionsForContinuationList.addListener(new ListChangeListener<String>() {
+                @Override
+                public void onChanged(Change<? extends String> c) {
+                    if (c.getList().isEmpty()) {
+                        popup.hide();
+                    } else {
+                        popup.show(stage);
+                    }
+                }
+            });
+            popup.show(stage);
+            new PopupAtCaretPlacer(commandText, popup);
+        }
+
+        private ObservableList<String> createSuggestionsForContinuationList() {
+            return new ListBinding<String>() {
+                {
+                    bind(commandCaretPosition);
+                    bind(currentCommand);
+                }
+
+                @Override
+                protected ObservableList<String> computeValue() {
+                    List<String> suggestedContinuations = getSuggestedContinuations();
+                    Collections.sort(suggestedContinuations);
+                    return FXCollections.observableList(suggestedContinuations);
+                }
+
+            };
         }
 
         protected void updateAchievements(final Collection<Achievement> newAchievements) {

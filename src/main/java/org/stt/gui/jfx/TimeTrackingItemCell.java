@@ -72,7 +72,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		Pane space = new Pane();
 		HBox.setHgrow(space, Priority.ALWAYS);
 		labelForComment.setWrapText(true);
-		labelForComment.setPrefWidth(400);
+		labelForComment.setPrefWidth(350);
 
 		timePane.setPrefWidth(250);
 		timePane.setSpacing(5);
