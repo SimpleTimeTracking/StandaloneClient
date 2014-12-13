@@ -115,6 +115,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Subscribe
     public void receiveItems(ReadItemsEvent event) {
+        LOG.info("Received item event " + event);
         if (event.type == ReadItemsEvent.Type.START) {
             tmpItems.clear();
         }

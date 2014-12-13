@@ -28,7 +28,7 @@ public class ReadItemsEvent {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("type", type).add("items", timeTrackingItems).toString();
+        return MoreObjects.toStringHelper(this).add("type", type).add("items", timeTrackingItems.size()).toString();
     }
 
     public enum Type {

@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<BorderPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+
+<BorderPane prefHeight="400.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
    </padding>
    <center>
-      <VBox spacing="10.0" BorderPane.alignment="CENTER">
+      <VBox spacing="15.0" BorderPane.alignment="CENTER">
          <children>
-            <HBox spacing="10.0">
+            <HBox spacing="15.0">
                <children>
-                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" prefHeight="178.0" prefWidth="624.0" wrapText="true" HBox.hgrow="SOMETIMES">
+                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" prefHeight="100.0" prefWidth="624.0" wrapText="true" HBox.hgrow="SOMETIMES">
                      <tooltip>
                         <Tooltip text="%command.tooltip" />
                      </tooltip></TextArea>
@@ -24,6 +27,11 @@
                            </FlowPane.margin>
                         </Button>
                         <Button fx:id="finButton" mnemonicParsing="true" onAction="#fin" text="%fin" />
+                        <Button mnemonicParsing="true" onAction="#showReportWindow" text="%show_report">
+                           <FlowPane.margin>
+                              <Insets />
+                           </FlowPane.margin>
+                        </Button>
                      </children>
                   </FlowPane>
                </children>
@@ -33,15 +41,6 @@
                   <Insets />
                </VBox.margin>
             </ListView>
-            <FlowPane>
-               <children>
-                  <Button mnemonicParsing="true" onAction="#showReportWindow" text="%show_report">
-                     <FlowPane.margin>
-                        <Insets />
-                     </FlowPane.margin>
-                  </Button>
-               </children>
-            </FlowPane>
             <FlowPane fx:id="achievements" style="-fx-background-color: lightgray;" />
          </children>
       </VBox>

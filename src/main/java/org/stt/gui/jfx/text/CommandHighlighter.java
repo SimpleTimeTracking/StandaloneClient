@@ -29,7 +29,7 @@ public class CommandHighlighter {
     private class Highlighter extends EnglishCommandsBaseVisitor<Void> {
         @Override
         public Void visitDateTime(@NotNull EnglishCommandsParser.DateTimeContext ctx) {
-            addHighlight(ctx.getStart(), ctx.getStop(), Color.RED);
+            markKeyWords(ctx);
             return null;
         }
 
@@ -46,18 +46,22 @@ public class CommandHighlighter {
                 switch (token.getType()) {
                     case EnglishCommandsParser.SINCE:
                     case EnglishCommandsParser.FROM:
-                        case EnglishCommandsParser.AGO:
+                    case EnglishCommandsParser.AGO:
                     case EnglishCommandsParser.AT:
                     case EnglishCommandsParser.TO:
                     case EnglishCommandsParser.UNTIL:
                     case EnglishCommandsParser.FIN:
-                        addHighlight(token, token, Color.DARKGREEN);
+                        addHighlight(token, token, Color.BLUE);
                         break;
                     case EnglishCommandsParser.DAYS:
                     case EnglishCommandsParser.HOURS:
                     case EnglishCommandsParser.MINUTES:
                     case EnglishCommandsParser.SECONDS:
-                        addHighlight(token, token, Color.PURPLE);
+                        addHighlight(token, token, Color.BROWN);
+                        break;
+                    case EnglishCommandsParser.NUMBER:
+                    case EnglishCommandsParser.COLON:
+                        addHighlight(token, token, Color.DARKGREEN);
                         break;
                     default:
                         break;

@@ -92,7 +92,7 @@ public class HighlightingOverlay {
             for (int i = 0; i < rectangle.length; i++) {
                 Rectangle rec = new Rectangle();
                 rec.setDisable(true);
-                rec.setBlendMode(BlendMode.ADD);
+                rec.setBlendMode(BlendMode.SCREEN);
                 rec.setFill(color);
                 rectangle[i] = rec;
             }

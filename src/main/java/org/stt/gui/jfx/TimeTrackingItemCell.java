@@ -74,7 +74,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 		labelForComment.setWrapText(true);
 		labelForComment.setPrefWidth(400);
 
-		timePane.setPrefWidth(200);
+		timePane.setPrefWidth(250);
 		timePane.setSpacing(5);
 		timePane.setAlignment(Pos.CENTER_LEFT);
 
