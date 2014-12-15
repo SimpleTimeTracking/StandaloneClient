@@ -16,9 +16,9 @@ import javafx.stage.PopupWindow;
 public class ContextPopupCreator {
     public static <T> Popup createPopupForContextMenu(final ListView<T> content, final ItemSelectionCallback<T> callback) {
         final Popup popup = new Popup();
-        popup.setAnchorLocation(PopupWindow.AnchorLocation.WINDOW_TOP_LEFT);
+//        popup.setAnchorLocation(PopupWindow.AnchorLocation.WINDOW_TOP_LEFT);
         popup.getContent().add(content);
-        content.setFixedCellSize(24);
+//        content.setFixedCellSize(24);
         content.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
