@@ -6,6 +6,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.control.TextArea;
 import javafx.stage.Popup;
+import javafx.stage.Window;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -15,11 +16,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class PopupAtCaretPlacer {
     private final Node path;
     private final Popup popup;
+    private final Window window;
 
     public PopupAtCaretPlacer(final TextArea textArea, final Popup popup) {
         checkNotNull(textArea);
         this.popup = checkNotNull(popup);
         path = textArea.lookup("Path");
+        this.window = textArea.getScene().getWindow();
 
         path.boundsInLocalProperty().addListener(new ChangeListener<Bounds>() {
             @Override
@@ -32,9 +35,11 @@ public class PopupAtCaretPlacer {
 
     private void updatePopupLocation(Bounds bounds) {
         if (popup.isShowing()) {
-            Bounds caretPosition = path.localToScreen(bounds);
-            popup.setX(caretPosition.getMaxX());
-            popup.setY(caretPosition.getMaxY());
+            Bounds caretPosition = path.localToScene(bounds);
+            double x = window.getX() + window.getScene().getX();
+            double y = window.getY() + window.getScene().getY();
+            popup.setX(caretPosition.getMaxX() + x);
+            popup.setY(caretPosition.getMaxY() + y);
         }
     }
 }
