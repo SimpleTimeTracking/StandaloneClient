@@ -57,7 +57,6 @@ public class UIMain extends Application {
         startService(injector, AchievementService.class);
 
         application = injector.getInstance(STTApplication.class);
-        LOG.info("Showing window");
     }
 
     @Subscribe
@@ -80,6 +79,7 @@ public class UIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        LOG.info("Showing window");
         application.start( primaryStage );
     }
 }

@@ -91,18 +91,22 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private final ResourceBundle localization;
     private final EventBus eventBus;
     private final boolean autoCompletionPopup;
+    private final boolean askBeforeDeleting;
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
     private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
+    private DeleteOrKeepDialog deleteOrKeepDialog;
 
     @Inject
-    STTApplication(EventBus eventBus,
+    STTApplication(DeleteOrKeepDialog deleteOrKeepDialog,
+                   EventBus eventBus,
                    CommandHandler commandHandler,
                    ReportWindowBuilder reportWindowBuilder,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
                    CommandTextConfig commandTextConfig) {
+        this.deleteOrKeepDialog = deleteOrKeepDialog;
         this.eventBus = checkNotNull(eventBus);
         eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
@@ -114,6 +118,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         filteredList = new TimeTrackingListFilter(allItems, currentCommand,
                 timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
+        askBeforeDeleting = timeTrackingItemListConfig.isAskBeforeDeleting();
     }
 
     @Subscribe
@@ -212,7 +217,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     public void show(Stage primaryStage) {
-        viewAdapter = new ViewAdapter( primaryStage );
+        viewAdapter = new ViewAdapter(primaryStage);
         viewAdapter.show();
     }
 
@@ -235,9 +240,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Override
     public void delete(TimeTrackingItem item) {
+        checkNotNull(item);
         try {
-            commandHandler.delete(checkNotNull(item));
-            allItems.remove(item);
+            if (!askBeforeDeleting || deleteOrKeepDialog.show(viewAdapter.stage, item) == DeleteOrKeepDialog.Result.DELETE) {
+                commandHandler.delete(item);
+                allItems.remove(item);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -245,7 +253,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     public class ViewAdapter {
 
-        private final Stage stage;
+        final Stage stage;
 
         @FXML
         TextArea commandText;
@@ -361,17 +369,17 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         private ObservableList<String> createSuggestionsForContinuationList() {
             return new ListBinding<String>() {
-                {
-                    bind(commandCaretPosition);
-                    bind(currentCommand);
-                }
-
                 @Override
                 protected ObservableList<String> computeValue() {
                     List<String> suggestedContinuations = getSuggestedContinuations();
                     Collections.sort(suggestedContinuations);
                     return FXCollections.observableList(suggestedContinuations);
+                }                {
+                    bind(commandCaretPosition);
+                    bind(currentCommand);
                 }
+
+
 
             };
         }

@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 public class EventBusModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(EventBus.class).toInstance(new AsyncEventBus(Executors.newCachedThreadPool(), new SubscriberExceptionHandler() {
+        bind(EventBus.class).toInstance(new EventBus(new SubscriberExceptionHandler() {
 
             @Override
             public void handleException(Throwable exception, SubscriberExceptionContext context) {
