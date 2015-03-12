@@ -8,7 +8,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Popup;
-import javafx.stage.PopupWindow;
 
 /**
  * Created by dante on 13.12.14.

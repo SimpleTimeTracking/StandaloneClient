@@ -30,7 +30,7 @@ public class ReportWindowConfig implements Config {
     @Override
     public void applyDefaults() {
         if (groupColors == null)  {
-            groupColors = asList(new String[]{"BLUE", "DARKCYAN", "GREEN", "DARKGREEN", "BROWN"});
+            groupColors = asList("BLUE", "DARKCYAN", "GREEN", "DARKGREEN", "BROWN");
         }
     }
 }

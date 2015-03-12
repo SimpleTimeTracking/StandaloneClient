@@ -42,7 +42,7 @@ public class OvertimeReportGeneratorTest {
 		MockitoAnnotations.initMocks(this);
 
 		given(configuration.getBreakTimeComments()).willReturn(
-				Arrays.asList(new String[] { "pause" }));
+				Arrays.asList("pause"));
 		given(categorizer.getCategory(anyString())).willReturn(
 				ItemCategory.WORKTIME);
 		given(categorizer.getCategory("pause")).willReturn(ItemCategory.BREAK);

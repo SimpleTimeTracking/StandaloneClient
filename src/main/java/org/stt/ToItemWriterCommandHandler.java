@@ -64,7 +64,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
         if (result instanceof DateTime) {
             return endCurrentItem((DateTime) result);
         }
-        return Optional.<TimeTrackingItem>absent();
+        return Optional.absent();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
             }
             return Optional.of(nowFinishedItem);
         }
-        return Optional.<TimeTrackingItem>absent();
+        return Optional.absent();
     }
 
     @Override

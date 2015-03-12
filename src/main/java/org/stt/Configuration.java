@@ -104,14 +104,12 @@ public class Configuration {
     }
 
     public String getSystemOutEncoding() {
-        String encoding = getPropertiesReplaced("sysoutEncoding", "UTF-8");
-        return encoding;
+        return getPropertiesReplaced("sysoutEncoding", "UTF-8");
     }
 
     public int getCliReportingWidth() {
-        int reportingWidth = Integer.parseInt(getPropertiesReplaced(
+        return Integer.parseInt(getPropertiesReplaced(
                 "cliReportingWidth", "80"));
-        return reportingWidth;
     }
 
     public File getWorkingTimesFile() {
@@ -159,14 +157,12 @@ public class Configuration {
     }
 
     public int getBackupInterval() {
-        int backupInterval = Integer.parseInt(getPropertiesReplaced(
+        return Integer.parseInt(getPropertiesReplaced(
                 "backupInterval", "7"));
-        return backupInterval;
     }
 
     public int getBackupRetentionCount() {
-        int retentionCount = Integer.parseInt(getPropertiesReplaced(
+        return Integer.parseInt(getPropertiesReplaced(
                 "backupRetention", "0"));
-        return retentionCount;
     }
 }

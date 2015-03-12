@@ -5,8 +5,6 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
 import javafx.stage.Stage;
 import org.stt.BaseModule;
 import org.stt.I18NModule;
@@ -16,7 +14,6 @@ import org.stt.analysis.AnalysisModule;
 import org.stt.event.EventBusModule;
 import org.stt.event.ItemReaderService;
 import org.stt.event.ShutdownRequest;
-import org.stt.event.messages.ReadItemsRequest;
 import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.JFXModule;
@@ -28,7 +25,6 @@ import org.stt.time.TimeUtilModule;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UIMain extends Application {

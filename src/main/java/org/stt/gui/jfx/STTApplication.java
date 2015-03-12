@@ -4,7 +4,6 @@ import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -205,7 +204,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             clearCommand();
             return result;
         }
-        return Optional.<TimeTrackingItem>absent();
+        return Optional.absent();
     }
 
     private void clearCommand() {
@@ -278,7 +277,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
             BorderPane pane;
             try {
-                pane = (BorderPane) loader.load();
+                pane = loader.load();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

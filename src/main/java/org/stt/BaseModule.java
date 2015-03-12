@@ -17,7 +17,7 @@ public class BaseModule extends AbstractModule {
     }
 
     @Provides @Singleton @STTFile
-    private File provideDatabasefile(Configuration configuration) {
+    private File provideDatabaseFile(Configuration configuration) {
         return configuration.getSttFile();
     }
 }

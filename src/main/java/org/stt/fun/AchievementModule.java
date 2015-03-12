@@ -28,7 +28,6 @@ public class AchievementModule extends AbstractModule {
                 200));
         listOfAchievements.add(new HoursTrackedAchievement(resourceBundle, 1009));
         listOfAchievements.add(new AmountOfItemsAchievement(resourceBundle, 41));
-        AchievementService achievementService = new AchievementService(listOfAchievements, eventBus);
-        return achievementService;
+        return new AchievementService(listOfAchievements, eventBus);
     }
 }

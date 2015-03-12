@@ -39,6 +39,7 @@ public class HighlightingOverlay {
         updateInternalAccess();
     }
 
+    @SuppressWarnings("unchecked")
     private boolean updateInternalAccess() {
         textAreaSkin = (TextAreaSkin) target.getSkin();
         if (textAreaSkin == null) {

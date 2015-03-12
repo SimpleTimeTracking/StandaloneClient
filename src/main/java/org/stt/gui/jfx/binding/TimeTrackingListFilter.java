@@ -42,7 +42,7 @@ public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 		if (filter.isEmpty()) {
 			result = new ArrayList<>(allItems);
 		} else {
-			result = new ArrayList<TimeTrackingItem>();
+			result = new ArrayList<>();
 			Set<String> itemsInResult = new HashSet<>();
 			for (TimeTrackingItem item : allItems) {
 				if (item.getComment().isPresent()

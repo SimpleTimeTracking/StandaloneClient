@@ -54,7 +54,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 	}
 
 	private static class RadixTreeNode {
-		private final Set<RadixTreeNode> children = new HashSet<CommonPrefixGrouper.RadixTreeNode>();
+		private final Set<RadixTreeNode> children = new HashSet<>();
 		private String prefix = "";
 
 		public void insert(String comment) {

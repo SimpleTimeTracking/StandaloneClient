@@ -48,7 +48,7 @@ public class SubstringReaderFilterTest {
 		filter.close();
 
 		// THEN
-		Assert.assertEquals(Optional.absent(), read);
+		Assert.assertEquals(Optional.<TimeTrackingItem>absent(), read);
 	}
 
 	@Test

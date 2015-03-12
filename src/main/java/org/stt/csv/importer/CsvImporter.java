@@ -84,10 +84,9 @@ public class CsvImporter implements ItemReader {
 					itemStartTime = parsedDateTime.withTimeAtStartOfDay();
 				}
 				DateTime itemEndTime = itemStartTime.plus(period);
-				TimeTrackingItem theItem = new TimeTrackingItem(comment,
-						itemStartTime, itemEndTime);
 
-				return theItem;
+                return new TimeTrackingItem(comment,
+                        itemStartTime, itemEndTime);
 			} catch (IllegalArgumentException i) {
 				LOG.info("not parseable line: " + line);
 			}

@@ -266,9 +266,8 @@ public class ReportPrinter {
 	 */
 	private StartDateReaderFilter createStartDateFilterForDays(
 			ItemReader readerToFilter, DateTime start, DateTime end) {
-		StartDateReaderFilter dateFilter = new StartDateReaderFilter(
-				readerToFilter, start, end);
-		return dateFilter;
+        return new StartDateReaderFilter(
+                readerToFilter, start, end);
 	}
 
 	private void printTruncatedString(StringBuilder toPrint,

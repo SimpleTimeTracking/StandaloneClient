@@ -71,7 +71,7 @@ public class STTItemPersister implements ItemPersister {
 
 	private void rewriteFileWith(String content) throws IOException {
 		Writer truncatingWriter = writerProvider.get();
-		truncatingWriter.write(content.toString());
+		truncatingWriter.write(content);
 		truncatingWriter.close();
 	}
 

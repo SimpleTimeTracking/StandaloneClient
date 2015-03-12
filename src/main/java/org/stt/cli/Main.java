@@ -74,7 +74,7 @@ public class Main {
 	private void search(Collection<String> args, PrintStream printTo)
 			throws IOException {
 
-		SortedSet<TimeTrackingItem> sortedItems = new TreeSet<TimeTrackingItem>(
+		SortedSet<TimeTrackingItem> sortedItems = new TreeSet<>(
 				new Comparator<TimeTrackingItem>() {
 
 					@Override
@@ -238,33 +238,32 @@ public class Main {
 	 */
 	private ItemReaderProvider createNewReaderProvider(final File source) {
 
-		ItemReaderProvider provider = new ItemReaderProvider() {
-			CachingItemReader cachingReader;
+        return new ItemReaderProvider() {
+            CachingItemReader cachingReader;
 
-			@Override
-			public ItemReader provideReader() {
-				try {
-					InputStream inStream;
-					if (source == null) {
-						inStream = System.in;
-					} else {
-						inStream = new FileInputStream(source);
-					}
-					ItemReader itemReader = new STTItemReader(
-							new InputStreamReader(inStream, "UTF-8"));
-					if (source == null) {
-						if (cachingReader == null) {
-							cachingReader = new CachingItemReader(itemReader);
-						}
-						return cachingReader;
-					}
-					return itemReader;
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		};
-		return provider;
+            @Override
+            public ItemReader provideReader() {
+                try {
+                    InputStream inStream;
+                    if (source == null) {
+                        inStream = System.in;
+                    } else {
+                        inStream = new FileInputStream(source);
+                    }
+                    ItemReader itemReader = new STTItemReader(
+                            new InputStreamReader(inStream, "UTF-8"));
+                    if (source == null) {
+                        if (cachingReader == null) {
+                            cachingReader = new CachingItemReader(itemReader);
+                        }
+                        return cachingReader;
+                    }
+                    return itemReader;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
 	}
 
 	private Provider<Reader> createReaderProvider() {

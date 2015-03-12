@@ -1,15 +1,12 @@
 package org.stt.persistence;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.joda.time.DateTime;
 import org.stt.Configuration;
 import org.stt.Service;
-import org.stt.persistence.stt.STTFile;
 import org.stt.time.DateTimeHelper;
 
 import java.io.File;

@@ -5,7 +5,6 @@ import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
 
 import java.util.Collection;
-import java.util.Date;
 
 public interface ItemSearcher {
 	/**

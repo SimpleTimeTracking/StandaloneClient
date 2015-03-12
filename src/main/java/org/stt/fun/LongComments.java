@@ -27,7 +27,7 @@ class LongComments extends LocalizedAchievement {
 
     @Override
     void start() {
-        matches = new HashSet<String>();
+        matches = new HashSet<>();
         achieved = false;
     }
 
