@@ -285,7 +285,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
             BorderPane pane;
             try {
-                pane = loader. <BorderPane> load();
+                pane = (BorderPane) loader.load();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
