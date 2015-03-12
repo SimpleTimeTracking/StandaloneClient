@@ -36,6 +36,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
@@ -43,6 +44,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.stt.CommandHandler;
 import org.stt.analysis.ExpansionProvider;
+import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
 import org.stt.event.messages.ReadItemsEvent;
@@ -89,20 +91,19 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
     private final EventBus eventBus;
+    private final boolean autoCompletionPopup;
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
     private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
-    private Provider<Stage> stageProvider;
 
     @Inject
-    STTApplication(Provider<Stage> stageProvider,
-                   EventBus eventBus,
+    STTApplication(EventBus eventBus,
                    CommandHandler commandHandler,
                    ReportWindowBuilder reportWindowBuilder,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
-                   TimeTrackingItemListConfig timeTrackingItemListConfig) {
-        this.stageProvider = checkNotNull(stageProvider);
+                   TimeTrackingItemListConfig timeTrackingItemListConfig,
+                   CommandTextConfig commandTextConfig) {
         this.eventBus = checkNotNull(eventBus);
         eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
@@ -110,10 +111,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         this.commandHandler = checkNotNull(commandHandler);
         this.localization = checkNotNull(resourceBundle);
         checkNotNull(timeTrackingItemListConfig);
+        autoCompletionPopup = checkNotNull(commandTextConfig).isAutoCompletionPopup();
 
         filteredList = new TimeTrackingListFilter(allItems, currentCommand,
                 timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
-
     }
 
     @Subscribe
@@ -211,20 +212,15 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         currentCommand.set("");
     }
 
-    public void show() {
-        viewAdapter = new ViewAdapter(stageProvider.get());
+    public void show(Stage primaryStage) {
+        viewAdapter = new ViewAdapter( primaryStage );
         viewAdapter.show();
     }
 
-    public void start() {
-        PlatformImpl.runAndWait(new Runnable() {
-            @Override
-            public void run() {
-                show();
-                // Post initial request to load all items
-                eventBus.post(new ReadItemsRequest());
-            }
-        });
+    public void start(Stage primaryStage) {
+        show(primaryStage);
+        // Post initial request to load all items
+        eventBus.post(new ReadItemsRequest());
     }
 
     @Override
@@ -293,6 +289,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             Scene scene = new Scene(pane);
 
             stage.setScene(scene);
+            stage.initStyle(StageStyle.UTILITY);
             stage.setTitle(localization.getString("window.title"));
             Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
             stage.getIcons().add(applicationIcon);
@@ -335,6 +332,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                 }
             });
 
+            if (autoCompletionPopup) {
+                setupAutoCompletionPopup();
+            }
+        }
+
+        private void setupAutoCompletionPopup() {
             ObservableList<String> suggestionsForContinuationList = createSuggestionsForContinuationList();
             ListView<String> contentOfAutocompletionPopup = new ListView<>(suggestionsForContinuationList);
             final Popup popup = ContextPopupCreator.createPopupForContextMenu(contentOfAutocompletionPopup, new ContextPopupCreator.ItemSelectionCallback<String>() {
@@ -402,9 +405,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         protected void shutdown() {
             stage.close();
-            Platform.exit();
-            // Required because txExit() above is just swallowed...
-            PlatformImpl.tkExit();
             try {
                 commandHandler.close();
             } catch (IOException e) {

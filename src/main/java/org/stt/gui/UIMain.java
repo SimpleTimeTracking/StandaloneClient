@@ -4,8 +4,10 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.stage.Stage;
 import org.stt.BaseModule;
 import org.stt.I18NModule;
 import org.stt.Service;
@@ -29,29 +31,24 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class UIMain {
+public class UIMain extends Application {
 
     private static final Logger LOG = Logger.getLogger(UIMain.class
             .getName());
 
     private List<Service> servicesToShutdown = new ArrayList<>();
+    private STTApplication application;
 
     public static void main(String[] args) {
         LOG.info("START");
-        try {
-            new UIMain().start();
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        Application.launch( UIMain.class, args );
     }
 
-    private static void initializeJFXToolkit() {
-        // Hack to initialize Toolkit:
-        new JFXPanel();
-    }
+    @Override
+    public void init() throws Exception {
+        super.init();
+        LOG.info("Starting main application window");
 
-    void start() throws Exception {
         final Injector injector = Guice.createInjector(new TimeUtilModule(), new STTPersistenceModule(), new I18NModule(), new EventBusModule(), new AchievementModule(), new AnalysisModule(),
                 new JFXModule(), new BaseModule());
 
@@ -63,12 +60,8 @@ public class UIMain {
         startService(injector, ItemReaderService.class);
         startService(injector, AchievementService.class);
 
-        final STTApplication application = injector.getInstance(STTApplication.class);
-        LOG.info("Starting main application window");
-        Platform.setImplicitExit(false);
-        initializeJFXToolkit();
+        application = injector.getInstance(STTApplication.class);
         LOG.info("Showing window");
-        application.start();
     }
 
     @Subscribe
@@ -87,5 +80,10 @@ public class UIMain {
         LOG.info("Starting " + serviceInstance.getClass().getSimpleName());
         serviceInstance.start();
         servicesToShutdown.add(serviceInstance);
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        application.start( primaryStage );
     }
 }

@@ -14,6 +14,7 @@ import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
 import org.stt.analysis.ExpansionProvider;
 import org.stt.analysis.ItemGrouper;
+import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
 import org.stt.fun.AchievementService;
@@ -57,12 +58,7 @@ public class STTApplicationTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        sut = new STTApplication(new Provider<Stage>() {
-            @Override
-            public Stage get() {
-                return null;
-            }
-        }, new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig());
+        sut = new STTApplication(new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig());
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override

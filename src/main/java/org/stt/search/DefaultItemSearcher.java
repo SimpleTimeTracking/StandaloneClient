@@ -10,6 +10,7 @@ import org.stt.persistence.ItemReaderProvider;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -53,6 +54,26 @@ public class DefaultItemSearcher implements ItemSearcher {
 				if (lastDay == null || !lastDay.equals(currentDay)) {
 					result.add(currentDay);
 					lastDay = currentDay;
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return result;
+	}
+
+	@Override
+	public Collection<TimeTrackingItem> getFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems) {
+		List<TimeTrackingItem> result = new ArrayList<>();
+		try (ItemReader reader = provider.provideReader()) {
+			Optional<TimeTrackingItem> read;
+			while ((!maxItems.isPresent() || result.size() < maxItems.get()) && (read = reader.read()).isPresent()) {
+				TimeTrackingItem item = read.get();
+				boolean afterStart = !start.isPresent() || !item.getStart().isBefore(start.get());
+                boolean itemDoesntEndAfterQuery = item.getEnd().isPresent() && !item.getEnd().get().isAfter(end.get());
+                boolean beforeEnd = !end.isPresent() || itemDoesntEndAfterQuery;
+				if (afterStart && beforeEnd) {
+					result.add(item);
 				}
 			}
 		} catch (IOException e) {

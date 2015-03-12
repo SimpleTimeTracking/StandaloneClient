@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 import org.stt.model.TimeTrackingItem;
 
 import java.util.Collection;
+import java.util.Date;
 
 public interface ItemSearcher {
 	/**
@@ -17,4 +18,11 @@ public interface ItemSearcher {
 	 * Returns a list with all days that have tracking items.
 	 */
 	Collection<DateTime> getAllTrackedDays();
+
+	/**
+	 * Returns the first maxItems (if absent, all) items that are within the interval [start,end].
+	 * If start is absent, -&infin; is assumed, if end is absent, +&infin; is assumed.
+	 * @return
+	 */
+	Collection<TimeTrackingItem> getFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems);
 }

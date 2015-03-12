@@ -1,6 +1,7 @@
 package org.stt.search;
 
 import com.google.common.base.Optional;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -9,6 +10,7 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.experimental.theories.suppliers.TestedOn;
 import org.junit.runner.RunWith;
+import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.ItemReaderTestHelper;
@@ -17,6 +19,7 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -44,6 +47,47 @@ public class DefaultItemSearcherTest {
 			}
 		};
 		sut = new DefaultItemSearcher(provider);
+	}
+
+	@Test
+	public void shouldFindFirstItemsWithinInterval() {
+		// GIVEN
+		DateTime startOfRequest = new DateTime(2000, 1, 1, 1, 0);
+		DateTime end = new DateTime(2000, 1, 1, 9, 1);
+		TimeTrackingItem[] timeTrackingItems = givenOneTTIPerHourStartingWith(new DateTime(2000, 1, 1, 0, 0), 10);
+
+		// WHEN
+		Collection<TimeTrackingItem> result = sut.getFirstNItems(Optional.of(startOfRequest), Optional.of(end), Optional.of(2));
+
+		// THEN
+		assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Arrays.asList(timeTrackingItems[1], timeTrackingItems[2])));
+	}
+
+	@Test
+	public void shouldFindAllItemsWithinInterval() {
+		// GIVEN
+		DateTime startOfRequest = new DateTime(2000, 1, 1, 1, 0);
+		DateTime end = new DateTime(2000, 1, 1, 5, 1);
+		TimeTrackingItem[] timeTrackingItems = givenOneTTIPerHourStartingWith(new DateTime(2000, 1, 1, 0, 0), 6);
+
+		// WHEN
+		Collection<TimeTrackingItem> result = sut.getFirstNItems(Optional.of(startOfRequest), Optional.of(end), Optional.<Integer>absent());
+
+		// THEN
+		assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Arrays.asList(timeTrackingItems[1], timeTrackingItems[2], timeTrackingItems[3],
+				timeTrackingItems[4])));
+	}
+
+	private TimeTrackingItem[] givenOneTTIPerHourStartingWith(DateTime start, int amount) {
+		TimeTrackingItem[] items = new TimeTrackingItem[amount];
+		DateTime lastTime = start;
+		for (int i = 0; i < items.length; i++) {
+			DateTime next =  lastTime.plusHours(1);
+			items[i] = new TimeTrackingItem("", lastTime, next);
+			lastTime = next;
+		}
+		givenReaderReturns(items);
+		return items;
 	}
 
 	@Test
@@ -95,15 +139,22 @@ public class DefaultItemSearcherTest {
 				DateTime.now(), DateTime.now().plusMillis(1));
 		TimeTrackingItem unfinishedItem = new TimeTrackingItem(null,
 				DateTime.now());
-		given(reader.read()).willReturn(Optional.of(finishedItem))
-				.willReturn(Optional.of(unfinishedItem))
-				.willReturn(Optional.<TimeTrackingItem> absent());
+		givenReaderReturns(finishedItem, unfinishedItem);
 
 		// WHEN
 		Optional<TimeTrackingItem> result = sut.getCurrentTimeTrackingitem();
 
 		// THEN
 		assertThat(result.get(), is(unfinishedItem));
+	}
+
+	private void givenReaderReturns(TimeTrackingItem... items) {
+
+		BDDMockito.BDDMyOngoingStubbing<Optional<TimeTrackingItem>> ongoingStubbing = given(reader.read());
+		for (TimeTrackingItem item: items) {
+			ongoingStubbing = ongoingStubbing.willReturn(Optional.of(item));
+		}
+		ongoingStubbing.willReturn(Optional.<TimeTrackingItem>absent());
 	}
 
 	@Test
