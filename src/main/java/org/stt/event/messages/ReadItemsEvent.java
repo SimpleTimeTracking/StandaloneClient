@@ -32,6 +32,6 @@ public class ReadItemsEvent {
     }
 
     public enum Type {
-        START, CONTINUE, DONE
+        START, DONE
     }
 }
