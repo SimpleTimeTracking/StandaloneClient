@@ -75,6 +75,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.stt.gui.jfx.STTOptionDialogs.*;
 
 public class STTApplication implements DeleteActionHandler, EditActionHandler,
         ContinueActionHandler {
@@ -95,10 +96,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
     private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
-    private DeleteOrKeepDialog deleteOrKeepDialog;
+    private STTOptionDialogs STTOptionDialogs;
 
     @Inject
-    STTApplication(DeleteOrKeepDialog deleteOrKeepDialog,
+    STTApplication(STTOptionDialogs STTOptionDialogs,
                    EventBus eventBus,
                    CommandHandler commandHandler,
                    ReportWindowBuilder reportWindowBuilder,
@@ -106,7 +107,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    ResourceBundle resourceBundle,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
                    CommandTextConfig commandTextConfig) {
-        this.deleteOrKeepDialog = deleteOrKeepDialog;
+        this.STTOptionDialogs = STTOptionDialogs;
         this.eventBus = checkNotNull(eventBus);
         eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
@@ -242,7 +243,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     public void delete(TimeTrackingItem item) {
         checkNotNull(item);
         try {
-            if (!askBeforeDeleting || deleteOrKeepDialog.show(viewAdapter.stage, item) == DeleteOrKeepDialog.Result.DELETE) {
+            if (!askBeforeDeleting || STTOptionDialogs.showDeleteOrKeepDialog(viewAdapter.stage, item) == Result.DELETE) {
                 commandHandler.delete(item);
                 allItems.remove(item);
             }

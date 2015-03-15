@@ -57,7 +57,7 @@ public class STTApplicationTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        sut = new STTApplication(new DeleteOrKeepDialog(resourceBundle), new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig());
+        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig());
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override
