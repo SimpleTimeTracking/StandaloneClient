@@ -1,6 +1,5 @@
 package org.stt.gui.jfx;
 
-import com.google.common.base.Optional;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
@@ -41,8 +40,12 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
-import org.stt.CommandHandler;
+import org.joda.time.DateTime;
 import org.stt.analysis.ExpansionProvider;
+import org.stt.command.Command;
+import org.stt.command.CommandParser;
+import org.stt.command.NewItemCommand;
+import org.stt.command.NothingCommand;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
@@ -63,6 +66,7 @@ import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
+import org.stt.time.DateTimeHelper;
 
 import java.awt.*;
 import java.io.IOException;
@@ -75,7 +79,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.stt.gui.jfx.STTOptionDialogs.*;
+import static org.stt.gui.jfx.STTOptionDialogs.Result;
 
 public class STTApplication implements DeleteActionHandler, EditActionHandler,
         ContinueActionHandler {
@@ -86,7 +90,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             .observableArrayList();
     final StringProperty currentCommand = new SimpleStringProperty("");
     final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
-    private final CommandHandler commandHandler;
+    private final CommandParser commandParser;
     private final ReportWindowBuilder reportWindowBuilder;
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
@@ -96,23 +100,23 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
     private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
-    private STTOptionDialogs STTOptionDialogs;
+    private STTOptionDialogs sttOptionDialogs;
 
     @Inject
     STTApplication(STTOptionDialogs STTOptionDialogs,
                    EventBus eventBus,
-                   CommandHandler commandHandler,
+                   CommandParser commandParser,
                    ReportWindowBuilder reportWindowBuilder,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
                    CommandTextConfig commandTextConfig) {
-        this.STTOptionDialogs = STTOptionDialogs;
+        this.sttOptionDialogs = STTOptionDialogs;
         this.eventBus = checkNotNull(eventBus);
         eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
         this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
-        this.commandHandler = checkNotNull(commandHandler);
+        this.commandParser = checkNotNull(commandParser);
         this.localization = checkNotNull(resourceBundle);
         checkNotNull(timeTrackingItemListConfig);
         autoCompletionPopup = checkNotNull(commandTextConfig).isAutoCompletionPopup();
@@ -202,15 +206,50 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         return a;
     }
 
-    protected Optional<TimeTrackingItem> executeCommand() {
+    protected boolean executeCommand() {
         final String text = currentCommand.get();
         if (!text.trim().isEmpty()) {
-            Optional<TimeTrackingItem> result = commandHandler
-                    .executeCommand(text);
-            clearCommand();
-            return result;
+            Command command = commandParser
+                    .executeCommand(text).or(NothingCommand.INSTANCE);
+            if (command instanceof NewItemCommand) {
+                TimeTrackingItem newItem = ((NewItemCommand) command).newItem;
+                DateTime start = newItem.getStart();
+                if (!validateItemIsFirstItemAndLater(start) || !validateItemWouldCoverOtherItems(newItem)) {
+                    command = NothingCommand.INSTANCE;
+                }
+            }
+            if (!NothingCommand.INSTANCE.equals(command)) {
+                command.execute();
+                clearCommand();
+                return true;
+            }
         }
-        return Optional.absent();
+        return false;
+    }
+
+    private boolean validateItemIsFirstItemAndLater(DateTime start) {
+        boolean hasEarlierItem = false;
+        for (TimeTrackingItem item : allItems) {
+            if (DateTimeHelper.isOnSameDay(item.getStart(), start)) {
+                hasEarlierItem = item.getStart().isBefore(start);
+                break;
+            }
+        }
+        return !(DateTimeHelper.isToday(start) && DateTime.now().plusMinutes(5).isBefore(start)
+                && !hasEarlierItem) || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(viewAdapter.stage) == Result.PERFORM_ACTION;
+    }
+
+    private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
+        int numberOfCoveredItems = 0;
+        for (TimeTrackingItem item: allItems) {
+            if (newItem.getStart().isAfter(item.getStart()) || newItem.getStart().equals(item.getStart()) && newItem.getEnd().equals(item.getEnd())) {
+                continue;
+            }
+            if (!newItem.getEnd().isPresent() || item.getEnd().isPresent() && !item.getEnd().get().isAfter(newItem.getEnd().get())) {
+                numberOfCoveredItems++;
+            }
+        }
+        return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(viewAdapter.stage, numberOfCoveredItems) == Result.PERFORM_ACTION;
     }
 
     private void clearCommand() {
@@ -230,25 +269,21 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Override
     public void continueItem(TimeTrackingItem item) {
-        commandHandler.resumeGivenItem(item);
+        commandParser.resumeItem(item).execute();
         viewAdapter.shutdown();
     }
 
     @Override
     public void edit(TimeTrackingItem item) {
-        setCommandText(commandHandler.itemToCommand(item), item.getComment().or("").length());
+        setCommandText(commandParser.itemToCommand(item), item.getComment().or("").length());
     }
 
     @Override
     public void delete(TimeTrackingItem item) {
         checkNotNull(item);
-        try {
-            if (!askBeforeDeleting || STTOptionDialogs.showDeleteOrKeepDialog(viewAdapter.stage, item) == Result.DELETE) {
-                commandHandler.delete(item);
-                allItems.remove(item);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (!askBeforeDeleting || sttOptionDialogs.showDeleteOrKeepDialog(viewAdapter.stage, item) == Result.PERFORM_ACTION) {
+            commandParser.deleteCommandFor(item).execute();
+            allItems.remove(item);
         }
     }
 
@@ -375,11 +410,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                     List<String> suggestedContinuations = getSuggestedContinuations();
                     Collections.sort(suggestedContinuations);
                     return FXCollections.observableList(suggestedContinuations);
-                }                {
+                }
+
+                {
                     bind(commandCaretPosition);
                     bind(currentCommand);
                 }
-
 
 
             };
@@ -412,11 +448,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         }
 
         protected void shutdown() {
-            stage.close();
             try {
-                commandHandler.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                stage.close();
             } finally {
                 eventBus.post(new ShutdownRequest());
             }
@@ -513,15 +546,15 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         @FXML
         void insert() {
-            Optional<TimeTrackingItem> item = executeCommand();
-            if (item.isPresent()) {
+            boolean executedCommand = executeCommand();
+            if (executedCommand) {
                 eventBus.post(new ReadItemsRequest());
             }
         }
 
         @FXML
         private void fin() {
-            commandHandler.endCurrentItem();
+            commandParser.endCurrentItem(new DateTime()).or(NothingCommand.INSTANCE).execute();
             shutdown();
         }
 

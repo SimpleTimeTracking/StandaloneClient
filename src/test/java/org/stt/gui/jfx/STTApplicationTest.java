@@ -14,6 +14,9 @@ import org.mockito.stubbing.Answer;
 import org.stt.CommandHandler;
 import org.stt.analysis.ExpansionProvider;
 import org.stt.analysis.ItemGrouper;
+import org.stt.command.Command;
+import org.stt.command.CommandParser;
+import org.stt.command.NothingCommand;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.Achievement;
@@ -22,6 +25,7 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
 import java.io.IOException;
+import java.sql.Time;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.ResourceBundle;
@@ -40,7 +44,7 @@ public class STTApplicationTest {
 
     private STTApplication sut;
     @Mock
-    private CommandHandler commandHandler;
+    private CommandParser commandParser;
     @Mock
     private ExecutorService executorService;
     @Mock
@@ -57,7 +61,11 @@ public class STTApplicationTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandHandler, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig());
+        given(commandParser.executeCommand(anyString())).willReturn(Optional.<Command>absent());
+        given(commandParser.endCurrentItem(any(DateTime.class))).willReturn(Optional.<Command>absent());
+        given(commandParser.deleteCommandFor(any(TimeTrackingItem.class))).willReturn(NothingCommand.INSTANCE);
+
+        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandParser, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig());
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override
@@ -146,7 +154,7 @@ public class STTApplicationTest {
         sut.delete(item);
 
         // THEN
-        verify(commandHandler).delete(item);
+        verify(commandParser).deleteCommandFor(item);
     }
 
     @Test
@@ -180,6 +188,7 @@ public class STTApplicationTest {
     public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
         // GIVEN
         givenCommand("test");
+        given(commandParser.executeCommand(anyString())).willReturn(Optional.<Command>of(mock(Command.class)));
 
         // WHEN
         sut.executeCommand();
@@ -200,15 +209,15 @@ public class STTApplicationTest {
         sut.executeCommand();
 
         // THEN
-        verify(commandHandler).executeCommand(testCommand);
+        verify(commandParser).executeCommand(testCommand);
     }
 
     @Test
     public void shouldNotCloseWindowOnInsert() {
         // GIVEN
         givenCommand("Hello World");
-        given(commandHandler.executeCommand(anyString())).willReturn(
-                Optional.<TimeTrackingItem>absent());
+        given(commandParser.executeCommand(anyString())).willReturn(
+                Optional.<Command> absent());
 
         // WHEN
         sut.viewAdapter.insert();

@@ -30,7 +30,5 @@ public interface CommandHandler extends Closeable {
 	 */
 	Optional<TimeTrackingItem> endCurrentItem(DateTime startTimeOfNewItem);
 
-	String itemToCommand(TimeTrackingItem item);
-
 	void delete(TimeTrackingItem item) throws IOException;
 }

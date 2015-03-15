@@ -33,12 +33,8 @@ public class DateTimeHelper {
 		return isOnSameDay(date, DateTime.now());
 	}
 
-	public static boolean isOnSameDay(DateTime d1, DateTime d2) {
-		if (d1 == null || d2 == null) {
-			return false;
-		}
-		return d1.getYear() == d2.getYear()
-				&& d1.getDayOfYear() == d2.getDayOfYear();
+	public static boolean isOnSameDay(DateTime a, DateTime b) {
+        return a.withTimeAtStartOfDay().equals(b.withTimeAtStartOfDay());
 	}
 
 	/**
@@ -77,5 +73,4 @@ public class DateTimeHelper {
 			return " " + FORMATTER_PERIOD_HHh_MMm_SSs.print(duration.toPeriod());
 		}
 	}
-
 }

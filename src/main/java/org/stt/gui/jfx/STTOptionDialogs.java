@@ -1,11 +1,9 @@
 package org.stt.gui.jfx;
 
 import com.google.inject.Inject;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -17,6 +15,8 @@ import javafx.stage.Window;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -34,62 +34,89 @@ public class STTOptionDialogs {
     }
 
     public Result showDeleteOrKeepDialog(Window parent, TimeTrackingItem item) {
-        Stage deleteCancelStage = new Stage();
-
-        final SimpleObjectProperty<Result> resultProperty = new SimpleObjectProperty<>(null);
-
+        OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
         Button deleteButton = new Button(localization.getString("delete"));
-        setupButton(deleteButton, resultProperty, Result.DELETE);
         final Button keepButton = new Button(localization.getString("keep"));
-        setupDefaultButton(keepButton, resultProperty, Result.KEEP);
+        dialogBuilder.addButton(deleteButton, Result.PERFORM_ACTION);
+        dialogBuilder.addDefaultButton(keepButton, Result.ABORT);
 
-        showOptionDialog(parent, deleteCancelStage, localization.getString("delete.item.title"),
-                String.format(localization.getString("delete.item.text"), item.getComment().or("")), deleteButton, keepButton);
-        return resultProperty.getValue();
+        return dialogBuilder.showAndGetResult(parent, localization.getString("deleteItem.title"),
+                String.format(localization.getString("deleteItem.text"), item.getComment().or("")));
     }
 
-    private void showOptionDialog(Window parent, final Stage stage, String title, String message, Button... buttons) {
-        VBox vbox;
-        Label messageLabel;
-        HBox buttonContainer;
-        try {
-            vbox = FXMLLoader.load(getClass().getResource("/org/stt/gui/jfx/OptionDialog.fxml"));
-            messageLabel = (Label) vbox.lookup("#message");
-            buttonContainer = (HBox) vbox.lookup("#buttonContainer");
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
+    public Result showNoCurrentItemAndItemIsLaterDialog(Window parent) {
+        OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
+        Button addButton = new Button(localization.getString("add"));
+        final Button abortButton = new Button(localization.getString("abort"));
+        dialogBuilder.addButton(addButton, Result.PERFORM_ACTION);
+        dialogBuilder.addDefaultButton(abortButton, Result.ABORT);
+
+        return dialogBuilder.showAndGetResult(parent, localization.getString("strangeItem.title"),
+                localization.getString("noCurrentItemWithLateItem.text"));
+    }
+
+    public Result showItemCoversOtherItemsDialog(Stage parent, int numberOfCoveredItems) {
+        OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
+        Button addButton = new Button(localization.getString("add"));
+        final Button abortButton = new Button(localization.getString("abort"));
+        dialogBuilder.addButton(addButton, Result.PERFORM_ACTION);
+        dialogBuilder.addDefaultButton(abortButton, Result.ABORT);
+
+        return dialogBuilder.showAndGetResult(parent, localization.getString("strangeItem.title"),
+                String.format(localization.getString("itemCoversOtherItems.text"), numberOfCoveredItems));
+    }
+
+
+    private static class OptionDialogBuilder<T> {
+        private Stage stage = new Stage();
+        private List<Button> buttons = new ArrayList<>();
+        public T result;
+
+        public void addDefaultButton(Button button, final T value) {
+            addButton(button, value);
+            button.setCancelButton(true);
+            button.setDefaultButton(true);
         }
 
-        stage.setTitle(title);
-        messageLabel.setText(message);
+        public void addButton(final Button button, final T value) {
+            button.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                stage.close();
+                result = value;
+                }
+            });
+            button.setMnemonicParsing(true);
+            buttons.add(button);
+        }
 
-        buttonContainer.getChildren().addAll(buttons);
-
-        Scene scene = new Scene(vbox);
-        stage.initModality(Modality.WINDOW_MODAL);
-        stage.initOwner(parent);
-        stage.setScene(scene);
-        stage.showAndWait();
-    }
-
-    private <T> void setupDefaultButton(Button button, final SimpleObjectProperty<T> resultProperty, final T value) {
-        setupButton(button, resultProperty, value);
-        button.setCancelButton(true);
-        button.setDefaultButton(true);
-    }
-
-    private <T> void setupButton(final Button button, final SimpleObjectProperty<T> resultProperty, final T value) {
-        button.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                ((Stage) button.getScene().getWindow()).close();
-                resultProperty.setValue(value);
+        public T showAndGetResult(Window parent, String title, String message) {
+            VBox vbox;
+            Label messageLabel;
+            HBox buttonContainer;
+            try {
+                vbox = FXMLLoader.load(getClass().getResource("/org/stt/gui/jfx/OptionDialog.fxml"));
+                messageLabel = (Label) vbox.lookup("#message");
+                buttonContainer = (HBox) vbox.lookup("#buttonContainer");
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
             }
-        });
-        button.setMnemonicParsing(true);
+
+            stage.setTitle(title);
+            messageLabel.setText(message);
+
+            buttonContainer.getChildren().addAll(buttons);
+
+            Scene scene = new Scene(vbox);
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(parent);
+            stage.setScene(scene);
+            stage.showAndWait();
+            return result;
+        }
     }
 
     public enum Result {
-        DELETE, KEEP;
+        PERFORM_ACTION, ABORT;
     }
 }
