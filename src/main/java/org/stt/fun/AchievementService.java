@@ -3,7 +3,7 @@ package org.stt.fun;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import org.stt.Service;
-import org.stt.event.messages.ReadItemsEvent;
+import org.stt.event.messages.ReadItemsResult;
 import org.stt.event.messages.RefreshedAchievements;
 import org.stt.model.TimeTrackingItem;
 
@@ -22,7 +22,6 @@ public class AchievementService implements Service {
 
 	private Collection<Achievement> achievements = new ArrayList<>();
 	private EventBus eventBus;
-	private boolean startedReceiving = false;
 
 	public AchievementService(Collection<Achievement> achievements, EventBus eventBus) {
 		this.eventBus = checkNotNull(eventBus);
@@ -52,11 +51,8 @@ public class AchievementService implements Service {
 	}
 
 	@Subscribe
-	public synchronized void onItemsRead(ReadItemsEvent event) {
-		if (event.type == ReadItemsEvent.Type.START) {
-			resetAchievements();
-			startedReceiving = true;
-		}
+	public synchronized void onItemsRead(ReadItemsResult event) {
+        resetAchievements();
 
 		for (TimeTrackingItem item: event.timeTrackingItems) {
 			for (Achievement achievement: achievements) {
@@ -64,12 +60,8 @@ public class AchievementService implements Service {
 			}
 		}
 
-		if (event.type == ReadItemsEvent.Type.DONE && startedReceiving) {
-			finishAchievements();
-
-			dispatchSuccessfulAchievements();
-			startedReceiving = false;
-		}
+        finishAchievements();
+        dispatchSuccessfulAchievements();
 	}
 
 	private void dispatchSuccessfulAchievements() {

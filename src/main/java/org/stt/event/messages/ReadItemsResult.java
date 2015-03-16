@@ -12,26 +12,15 @@ import static java.util.Collections.emptyList;
 /**
  * Created by dante on 03.12.14.
  */
-public class ReadItemsEvent {
-    public final Type type;
+public class ReadItemsResult {
     public final Collection<TimeTrackingItem> timeTrackingItems;
 
-    public ReadItemsEvent(Type type, Collection<TimeTrackingItem> timeTrackingItems) {
-        this.type = checkNotNull(type);
+    public ReadItemsResult(Collection<TimeTrackingItem> timeTrackingItems) {
         this.timeTrackingItems = Collections.unmodifiableCollection(checkNotNull(timeTrackingItems));
-    }
-
-    public ReadItemsEvent(Type type) {
-        this.type = type;
-        timeTrackingItems = emptyList();
     }
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("type", type).add("items", timeTrackingItems.size()).toString();
-    }
-
-    public enum Type {
-        START, DONE
+        return MoreObjects.toStringHelper(this).add("items", timeTrackingItems.size()).toString();
     }
 }

@@ -5,7 +5,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.stt.Service;
-import org.stt.event.messages.ReadItemsEvent;
+import org.stt.event.messages.ReadItemsResult;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
@@ -34,8 +34,7 @@ public class ItemReaderService implements Service {
         ItemReader itemReader = itemReaderProvider.get();
         try {
             Collection<TimeTrackingItem> timeTrackingItems = IOUtil.readAll(itemReader);
-            eventBus.post(new ReadItemsEvent(ReadItemsEvent.Type.START, timeTrackingItems));
-            eventBus.post(new ReadItemsEvent(ReadItemsEvent.Type.DONE));
+            eventBus.post(new ReadItemsResult(timeTrackingItems));
         } catch (IOException e) {
             eventBus.post(e);
         }

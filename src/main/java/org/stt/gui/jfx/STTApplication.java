@@ -49,7 +49,7 @@ import org.stt.command.NothingCommand;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
-import org.stt.event.messages.ReadItemsEvent;
+import org.stt.event.messages.ReadItemsResult;
 import org.stt.event.messages.ReadItemsRequest;
 import org.stt.event.messages.RefreshedAchievements;
 import org.stt.fun.Achievement;
@@ -66,7 +66,6 @@ import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
-import org.stt.time.DateTimeHelper;
 import org.stt.validation.ItemAndDateValidator;
 
 import java.awt.*;
@@ -100,7 +99,6 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private final boolean askBeforeDeleting;
     ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
-    private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
 
@@ -131,16 +129,9 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     @Subscribe
-    public void receiveItems(ReadItemsEvent event) {
+    public void receiveItems(ReadItemsResult event) {
         LOG.info("Received item event " + event);
-        if (event.type == ReadItemsEvent.Type.START) {
-            tmpItems.clear();
-        }
-        tmpItems.addAll(event.timeTrackingItems);
-        if (event.type == ReadItemsEvent.Type.DONE) {
-            viewAdapter.updateAllItems(tmpItems);
-            tmpItems = new ArrayList<>();
-        }
+        viewAdapter.updateAllItems(event.timeTrackingItems);
     }
 
     @Subscribe
