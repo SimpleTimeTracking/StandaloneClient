@@ -9,7 +9,6 @@ import org.stt.analysis.WorktimeCategorizer;
 import org.stt.filter.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.*;
-import org.stt.persistence.stt.CachingItemReader;
 import org.stt.persistence.stt.STTItemPersister;
 import org.stt.persistence.stt.STTItemReader;
 import org.stt.reporting.WorkingtimeItemProvider;
@@ -205,7 +204,7 @@ public class Main {
 				usage(printTo);
 			}
 		} catch (IOException e) {
-			LOG.throwing(Main.class.getName(), "executeCommand", e);
+			LOG.throwing(Main.class.getName(), "parseCommandString", e);
 		}
 	}
 
@@ -237,34 +236,21 @@ public class Main {
 	 * creates a new ItemReaderProvider for timeFile
 	 */
 	private ItemReaderProvider createNewReaderProvider(final File source) {
-
-        return new ItemReaderProvider() {
-            CachingItemReader cachingReader;
-
-            @Override
-            public ItemReader provideReader() {
-                try {
-                    InputStream inStream;
-                    if (source == null) {
-                        inStream = System.in;
-                    } else {
-                        inStream = new FileInputStream(source);
-                    }
-                    ItemReader itemReader = new STTItemReader(
-                            new InputStreamReader(inStream, "UTF-8"));
-                    if (source == null) {
-                        if (cachingReader == null) {
-                            cachingReader = new CachingItemReader(itemReader);
-                        }
-                        return cachingReader;
-                    }
-                    return itemReader;
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        try {
+            InputStream inStream;
+            if (source == null) {
+                inStream = System.in;
+            } else {
+                inStream = new FileInputStream(source);
             }
-        };
-	}
+            InputStreamReader in = new InputStreamReader(inStream, "UTF-8");
+            try (ItemReader reader = new STTItemReader(in)) {
+                return new PreCachingItemReaderProvider(reader);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	private Provider<Reader> createReaderProvider() {
 		return new Provider<Reader>() {

@@ -2,6 +2,7 @@ package org.stt.search;
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
 
 import java.util.Collection;
@@ -24,4 +25,6 @@ public interface ItemSearcher {
 	 * @return
 	 */
 	Collection<TimeTrackingItem> getFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems);
+
+    Collection<TimeTrackingItem> queryItems(Query query);
 }

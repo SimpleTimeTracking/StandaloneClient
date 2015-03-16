@@ -13,7 +13,6 @@ import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.persistence.ItemWriter;
 import org.stt.search.ItemSearcher;
 import org.stt.time.DateTimeHelper;
 
@@ -39,7 +38,7 @@ public class CommandParser {
         this.itemSearcher = checkNotNull(itemSearcher);
     }
 
-    public Optional<Command> executeCommand(String command) {
+    public Optional<Command> parseCommandString(String command) {
         checkNotNull(command);
         CharStream inputStream;
         inputStream = new CaseInsensitiveInputStream(command);
@@ -52,12 +51,12 @@ public class CommandParser {
             return Optional.<Command>of(new NewItemCommand(persister, parsedItem));
         }
         if (result instanceof DateTime) {
-            return endCurrentItem((DateTime) result);
+            return endCurrentItemCommand((DateTime) result);
         }
         return Optional.absent();
     }
 
-    public Optional<Command> endCurrentItem(DateTime endTime) {
+    public Optional<Command> endCurrentItemCommand(DateTime endTime) {
         Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
                 .getCurrentTimeTrackingitem();
         if (currentTimeTrackingitem.isPresent()) {
@@ -68,7 +67,7 @@ public class CommandParser {
         return Optional.absent();
     }
 
-    public Command resumeItem(final TimeTrackingItem item) {
+    public Command resumeItemCommand(final TimeTrackingItem item) {
         return new ResumeCommand(persister, item);
     }
 

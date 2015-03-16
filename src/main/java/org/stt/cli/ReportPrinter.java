@@ -27,7 +27,6 @@ import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.persistence.stt.CachingItemReader;
 import org.stt.time.DateTimeHelper;
 
 /**
@@ -253,10 +252,7 @@ public class ReportPrinter {
 	}
 
 	private OvertimeReportGenerator createOvertimeReportGenerator() {
-
-		CachingItemReader cacher = new CachingItemReader(
-				readFrom.provideReader());
-		return new OvertimeReportGenerator(cacher, categorizer,
+		return new OvertimeReportGenerator(readFrom.provideReader(), categorizer,
 				workingtimeItemProvider);
 	}
 

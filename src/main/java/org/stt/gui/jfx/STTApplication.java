@@ -67,6 +67,7 @@ import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
 import org.stt.time.DateTimeHelper;
+import org.stt.validation.ItemAndDateValidator;
 
 import java.awt.*;
 import java.io.IOException;
@@ -101,6 +102,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     ViewAdapter viewAdapter;
     private Collection<TimeTrackingItem> tmpItems = new ArrayList<>();
     private STTOptionDialogs sttOptionDialogs;
+    private ItemAndDateValidator validator;
 
     @Inject
     STTApplication(STTOptionDialogs STTOptionDialogs,
@@ -110,8 +112,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
-                   CommandTextConfig commandTextConfig) {
-        this.sttOptionDialogs = STTOptionDialogs;
+                   CommandTextConfig commandTextConfig,
+                   ItemAndDateValidator validator) {
+        this.sttOptionDialogs = checkNotNull(STTOptionDialogs);
+        this.validator = checkNotNull(validator);
         this.eventBus = checkNotNull(eventBus);
         eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
@@ -210,7 +214,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         final String text = currentCommand.get();
         if (!text.trim().isEmpty()) {
             Command command = commandParser
-                    .executeCommand(text).or(NothingCommand.INSTANCE);
+                    .parseCommandString(text).or(NothingCommand.INSTANCE);
             if (command instanceof NewItemCommand) {
                 TimeTrackingItem newItem = ((NewItemCommand) command).newItem;
                 DateTime start = newItem.getStart();
@@ -228,27 +232,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     private boolean validateItemIsFirstItemAndLater(DateTime start) {
-        boolean hasEarlierItem = false;
-        for (TimeTrackingItem item : allItems) {
-            if (DateTimeHelper.isOnSameDay(item.getStart(), start)) {
-                hasEarlierItem = item.getStart().isBefore(start);
-                break;
-            }
-        }
-        return !(DateTimeHelper.isToday(start) && DateTime.now().plusMinutes(5).isBefore(start)
-                && !hasEarlierItem) || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(viewAdapter.stage) == Result.PERFORM_ACTION;
+        return validator.validateItemIsFirstItemAndLater(start)
+                || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(viewAdapter.stage) == Result.PERFORM_ACTION;
     }
 
     private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
-        int numberOfCoveredItems = 0;
-        for (TimeTrackingItem item: allItems) {
-            if (newItem.getStart().isAfter(item.getStart()) || newItem.getStart().equals(item.getStart()) && newItem.getEnd().equals(item.getEnd())) {
-                continue;
-            }
-            if (!newItem.getEnd().isPresent() || item.getEnd().isPresent() && !item.getEnd().get().isAfter(newItem.getEnd().get())) {
-                numberOfCoveredItems++;
-            }
-        }
+        int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
         return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(viewAdapter.stage, numberOfCoveredItems) == Result.PERFORM_ACTION;
     }
 
@@ -269,7 +258,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Override
     public void continueItem(TimeTrackingItem item) {
-        commandParser.resumeItem(item).execute();
+        commandParser.resumeItemCommand(item).execute();
         viewAdapter.shutdown();
     }
 
@@ -554,7 +543,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         @FXML
         private void fin() {
-            commandParser.endCurrentItem(new DateTime()).or(NothingCommand.INSTANCE).execute();
+            commandParser.endCurrentItemCommand(new DateTime()).or(NothingCommand.INSTANCE).execute();
             shutdown();
         }
 

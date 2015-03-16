@@ -3,6 +3,7 @@ package org.stt.search;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
@@ -81,4 +82,28 @@ public class DefaultItemSearcher implements ItemSearcher {
 		}
 		return result;
 	}
+
+    @Override
+    public Collection<TimeTrackingItem> queryItems(Query query) {
+        Collection<TimeTrackingItem> result = new ArrayList<>();
+        try (ItemReader reader = provider.provideReader()) {
+            Optional<TimeTrackingItem> read;
+            while ((read = reader.read()).isPresent()) {
+                TimeTrackingItem item = read.get();
+                if (query.startBefore.isPresent() && !item.getStart().isBefore(query.startBefore.get())) {
+                    continue;
+                }
+                if (query.startNotBefore.isPresent() && item.getStart().isBefore(query.startNotBefore.get())) {
+                    continue;
+                }
+                if (query.endNotAfter.isPresent() && (!item.getEnd().isPresent() || item.getEnd().get().isAfter(query.endNotAfter.get()))) {
+                    continue;
+                }
+                result.add(item);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
 }

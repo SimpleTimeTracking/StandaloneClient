@@ -4,14 +4,11 @@ import com.google.common.base.Optional;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.stt.command.*;
 import org.stt.event.ShutdownRequest;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 import org.stt.search.ItemSearcher;
-import org.stt.time.DateTimeHelper;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -39,7 +36,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
     @Override
     public Optional<TimeTrackingItem> executeCommand(String command) {
         checkNotNull(command);
-        Command parsedCommand = parser.executeCommand(command).or(NothingCommand.INSTANCE);
+        Command parsedCommand = parser.parseCommandString(command).or(NothingCommand.INSTANCE);
         parsedCommand.execute();
         if (parsedCommand instanceof NewItemCommand) {
             return Optional.of(((NewItemCommand) parsedCommand).newItem);
@@ -56,7 +53,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 
     @Override
     public Optional<TimeTrackingItem> endCurrentItem(DateTime endTime) {
-        Command endCurrentItemCommand = parser.endCurrentItem(endTime).or(NothingCommand.INSTANCE);
+        Command endCurrentItemCommand = parser.endCurrentItemCommand(endTime).or(NothingCommand.INSTANCE);
         endCurrentItemCommand.execute();
         if (endCurrentItemCommand instanceof EndCurrentItemCommand) {
             return Optional.of(((EndCurrentItemCommand) endCurrentItemCommand).endedItem);
@@ -68,7 +65,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
     public void resumeGivenItem(TimeTrackingItem item) {
         TimeTrackingItem newItem = new TimeTrackingItem(
                 item.getComment().get(), DateTime.now());
-        parser.resumeItem(newItem).execute();
+        parser.resumeItemCommand(newItem).execute();
     }
 
     @Override
