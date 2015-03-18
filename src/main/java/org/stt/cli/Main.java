@@ -236,20 +236,24 @@ public class Main {
 	 * creates a new ItemReaderProvider for timeFile
 	 */
 	private ItemReaderProvider createNewReaderProvider(final File source) {
-        try {
-            InputStream inStream;
-            if (source == null) {
-                inStream = System.in;
-            } else {
-                inStream = new FileInputStream(source);
+        ItemReaderProvider provider = new ItemReaderProvider() {
+            @Override
+            public ItemReader provideReader() {
+                try {
+                    InputStream inStream;
+                    if (source == null) {
+                        inStream = System.in;
+                    } else {
+                        inStream = new FileInputStream(source);
+                    }
+                    InputStreamReader in = new InputStreamReader(inStream, "UTF-8");
+                    return new STTItemReader(in);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
-            InputStreamReader in = new InputStreamReader(inStream, "UTF-8");
-            try (ItemReader reader = new STTItemReader(in)) {
-                return new PreCachingItemReaderProvider(reader);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        };
+        return new PreCachingItemReaderProvider(provider);
     }
 
 	private Provider<Reader> createReaderProvider() {

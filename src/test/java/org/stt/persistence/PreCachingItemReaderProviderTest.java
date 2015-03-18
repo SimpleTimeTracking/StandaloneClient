@@ -20,10 +20,15 @@ public class PreCachingItemReaderProviderTest {
                 DateTime.now());
         TimeTrackingItem expected2 = new TimeTrackingItem("second",
                 DateTime.now());
-        ItemReader readerMock = Mockito.mock(ItemReader.class);
+        final ItemReader readerMock = Mockito.mock(ItemReader.class);
         ItemReaderTestHelper.givenReaderReturns(readerMock, expected1,
                 expected2);
-        PreCachingItemReaderProvider sut = new PreCachingItemReaderProvider(readerMock);
+        PreCachingItemReaderProvider sut = new PreCachingItemReaderProvider(new ItemReaderProvider() {
+            @Override
+            public ItemReader provideReader() {
+                return readerMock;
+            }
+        });
         ItemReader cacher = sut.provideReader();
 
         // WHEN

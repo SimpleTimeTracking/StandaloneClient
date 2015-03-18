@@ -16,8 +16,10 @@ import org.stt.command.CommandParser;
 import org.stt.command.NothingCommand;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.search.ItemSearcher;
 import org.stt.validation.ItemAndDateValidator;
 
 import java.io.IOException;
@@ -53,6 +55,10 @@ public class STTApplicationTest {
     private boolean shutdownCalled;
     @Mock
     private ItemAndDateValidator itemValidator;
+    @Mock
+    private ItemSearcher itemSearcher;
+    @Mock
+    private AchievementService achievementService;
 
     @Before
     public void setup() {
@@ -62,7 +68,7 @@ public class STTApplicationTest {
         given(commandParser.endCurrentItemCommand(any(DateTime.class))).willReturn(Optional.<Command>absent());
         given(commandParser.deleteCommandFor(any(TimeTrackingItem.class))).willReturn(NothingCommand.INSTANCE);
 
-        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandParser, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator);
+        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandParser, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, itemSearcher, achievementService);
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override

@@ -5,6 +5,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 import com.google.inject.AbstractModule;
+import org.stt.persistence.ItemPersister;
 
 import java.util.concurrent.Executors;
 
@@ -21,5 +22,6 @@ public class EventBusModule extends AbstractModule {
                 exception.printStackTrace();
             }
         }));
+        bind(ItemPersister.class).annotatedWith(EventBusAware.class).to(EventDispatchingItemPersister.class);
     }
 }

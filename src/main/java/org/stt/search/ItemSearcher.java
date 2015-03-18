@@ -24,7 +24,9 @@ public interface ItemSearcher {
 	 * If start is absent, -&infin; is assumed, if end is absent, +&infin; is assumed.
 	 * @return
 	 */
-	Collection<TimeTrackingItem> getFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems);
+	Collection<TimeTrackingItem> queryFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems);
 
     Collection<TimeTrackingItem> queryItems(Query query);
+
+    Collection<TimeTrackingItem> queryAllItems();
 }

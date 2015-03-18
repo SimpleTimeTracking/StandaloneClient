@@ -12,13 +12,13 @@ import org.stt.Service;
 import org.stt.YamlConfigService;
 import org.stt.analysis.AnalysisModule;
 import org.stt.event.EventBusModule;
-import org.stt.event.ItemReaderService;
 import org.stt.event.ShutdownRequest;
 import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.JFXModule;
 import org.stt.gui.jfx.STTApplication;
 import org.stt.persistence.BackupCreator;
+import org.stt.persistence.PreCachingItemReaderProvider;
 import org.stt.persistence.stt.STTPersistenceModule;
 import org.stt.time.TimeUtilModule;
 
@@ -50,10 +50,10 @@ public class UIMain extends Application {
 
         EventBus eventBus = injector.getInstance(EventBus.class);
         eventBus.register(this);
+        eventBus.register(injector.getInstance(PreCachingItemReaderProvider.class));
 
         startService(injector, YamlConfigService.class);
         startService(injector, BackupCreator.class);
-        startService(injector, ItemReaderService.class);
         startService(injector, AchievementService.class);
 
         application = injector.getInstance(STTApplication.class);

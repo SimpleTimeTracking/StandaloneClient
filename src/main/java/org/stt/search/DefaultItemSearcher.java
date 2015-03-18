@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
+import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 
@@ -64,7 +65,7 @@ public class DefaultItemSearcher implements ItemSearcher {
 	}
 
 	@Override
-	public Collection<TimeTrackingItem> getFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems) {
+	public Collection<TimeTrackingItem> queryFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems) {
 		List<TimeTrackingItem> result = new ArrayList<>();
 		try (ItemReader reader = provider.provideReader()) {
 			Optional<TimeTrackingItem> read;
@@ -105,5 +106,14 @@ public class DefaultItemSearcher implements ItemSearcher {
             throw new RuntimeException(e);
         }
         return result;
+    }
+
+    @Override
+    public Collection<TimeTrackingItem> queryAllItems() {
+        try {
+            return IOUtil.readAll(provider.provideReader());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

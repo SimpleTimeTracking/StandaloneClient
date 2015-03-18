@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.TokenStream;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.stt.event.EventBusAware;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
@@ -33,7 +34,7 @@ public class CommandParser {
     private ItemSearcher itemSearcher;
 
     @Inject
-    public CommandParser(ItemPersister persister, ItemSearcher itemSearcher) {
+    public CommandParser(@EventBusAware ItemPersister persister, ItemSearcher itemSearcher) {
         this.persister = checkNotNull(persister);
         this.itemSearcher = checkNotNull(itemSearcher);
     }

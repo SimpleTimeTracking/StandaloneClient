@@ -1,6 +1,13 @@
 package org.stt.persistence;
 
 import com.google.common.base.Optional;
+import com.google.common.eventbus.Subscribe;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import org.stt.event.events.ItemDeletedEvent;
+import org.stt.event.events.ItemInsertedEvent;
+import org.stt.event.events.ItemReplacedEvent;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.IOException;
@@ -13,20 +20,50 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Created by dante on 16.03.15.
  */
+@Singleton
 public class PreCachingItemReaderProvider implements ItemReaderProvider {
     private Collection<Optional<TimeTrackingItem>> cachedItems = new ArrayList<>();
+    private ItemReaderProvider itemReaderProvider;
 
-    public PreCachingItemReaderProvider(ItemReader delegate) {
-        Optional<TimeTrackingItem> read;
-        do {
-            read = delegate.read();
-            cachedItems.add(read);
+    @Inject
+    public PreCachingItemReaderProvider(@Named("uncached") ItemReaderProvider itemReaderProvider) {
+        this.itemReaderProvider = checkNotNull(itemReaderProvider);
+    }
+
+    @Subscribe
+    public void sourceChanged(ItemDeletedEvent event) {
+        rereadSource();
+    }
+
+    @Subscribe
+    public void sourceChanged(ItemReplacedEvent event) {
+        rereadSource();
+    }
+
+    @Subscribe
+    public void sourceChanged(ItemInsertedEvent event) {
+        rereadSource();
+    }
+
+    private void rereadSource() {
+        try (ItemReader reader = itemReaderProvider.provideReader()) {
+            cachedItems.clear();
+            Optional<TimeTrackingItem> read;
+            do {
+                read = reader.read();
+                cachedItems.add(read);
+            }
+            while (read.isPresent());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        while (read.isPresent());
     }
 
     @Override
     public ItemReader provideReader() {
+        if (cachedItems.isEmpty()) {
+            rereadSource();
+        }
         return new ItemReader() {
             Iterator<Optional<TimeTrackingItem>> itemIterator = cachedItems.iterator();
 

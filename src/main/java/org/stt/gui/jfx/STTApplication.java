@@ -49,10 +49,9 @@ import org.stt.command.NothingCommand;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShutdownRequest;
-import org.stt.event.messages.ReadItemsResult;
-import org.stt.event.messages.ReadItemsRequest;
-import org.stt.event.messages.RefreshedAchievements;
+import org.stt.event.events.AchievementsUpdated;
 import org.stt.fun.Achievement;
+import org.stt.fun.AchievementService;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
@@ -66,6 +65,7 @@ import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
+import org.stt.search.ItemSearcher;
 import org.stt.validation.ItemAndDateValidator;
 
 import java.awt.*;
@@ -101,6 +101,8 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     ViewAdapter viewAdapter;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
+    private ItemSearcher searcher;
+    private AchievementService achievementService;
 
     @Inject
     STTApplication(STTOptionDialogs STTOptionDialogs,
@@ -111,7 +113,11 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    ResourceBundle resourceBundle,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
                    CommandTextConfig commandTextConfig,
-                   ItemAndDateValidator validator) {
+                   ItemAndDateValidator validator,
+                   ItemSearcher searcher,
+                   AchievementService achievementService) {
+        this.achievementService = checkNotNull(achievementService);
+        this.searcher = checkNotNull(searcher);
         this.sttOptionDialogs = checkNotNull(STTOptionDialogs);
         this.validator = checkNotNull(validator);
         this.eventBus = checkNotNull(eventBus);
@@ -129,14 +135,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     @Subscribe
-    public void receiveItems(ReadItemsResult event) {
-        LOG.info("Received item event " + event);
-        viewAdapter.updateAllItems(event.timeTrackingItems);
+    public void onAchievementsRefresh(AchievementsUpdated refreshedAchievements) {
+        updateAchievements();
     }
 
-    @Subscribe
-    public void onAchievementsRefresh(RefreshedAchievements refreshedAchievements) {
-        viewAdapter.updateAchievements(refreshedAchievements.reachedAchievements);
+    private void updateAchievements() {
+        viewAdapter.updateAchievements(achievementService.getReachedAchievments());
     }
 
 
@@ -244,7 +248,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     public void start(Stage primaryStage) {
         show(primaryStage);
         // Post initial request to load all items
-        eventBus.post(new ReadItemsRequest());
+        updateItems();
+        updateAchievements();
+    }
+
+    private void updateItems() {
+        viewAdapter.updateAllItems(searcher.queryAllItems());
     }
 
     @Override
@@ -528,7 +537,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         void insert() {
             boolean executedCommand = executeCommand();
             if (executedCommand) {
-                eventBus.post(new ReadItemsRequest());
+                updateItems();
             }
         }
 

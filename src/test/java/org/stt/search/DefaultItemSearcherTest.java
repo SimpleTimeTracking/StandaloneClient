@@ -21,7 +21,6 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
 
 import java.util.*;
-import java.util.regex.Matcher;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.nullValue;
@@ -57,7 +56,7 @@ public class DefaultItemSearcherTest {
         TimeTrackingItem[] timeTrackingItems = givenOneTTIPerHourStartingWith(new DateTime(2000, 1, 1, 0, 0), 10);
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.getFirstNItems(Optional.of(startOfRequest), Optional.of(end), Optional.of(2));
+        Collection<TimeTrackingItem> result = sut.queryFirstNItems(Optional.of(startOfRequest), Optional.of(end), Optional.of(2));
 
         // THEN
         assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Arrays.asList(timeTrackingItems[1], timeTrackingItems[2])));
@@ -71,7 +70,7 @@ public class DefaultItemSearcherTest {
         TimeTrackingItem[] timeTrackingItems = givenOneTTIPerHourStartingWith(new DateTime(2000, 1, 1, 0, 0), 6);
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.getFirstNItems(Optional.of(startOfRequest), Optional.of(end), Optional.<Integer>absent());
+        Collection<TimeTrackingItem> result = sut.queryFirstNItems(Optional.of(startOfRequest), Optional.of(end), Optional.<Integer>absent());
 
         // THEN
         assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Arrays.asList(timeTrackingItems[1], timeTrackingItems[2], timeTrackingItems[3],
