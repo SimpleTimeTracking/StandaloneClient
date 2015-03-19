@@ -2,6 +2,7 @@ package org.stt.validation;
 
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
 import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
 import org.stt.search.ItemSearcher;
@@ -35,7 +36,14 @@ public class ItemAndDateValidator {
         if (newItem.getEnd().isPresent()) {
             query.withEndNotAfter(newItem.getEnd().get());
         }
-        return itemSearcher.queryItems(query).size();
+        int numberOfCoveredItems = 0;
+        for (TimeTrackingItem item: itemSearcher.queryItems(query)) {
+            if (!newItem.getStart().equals(item.getStart())
+                    || !newItem.getEnd().equals(item.getEnd())) {
+                numberOfCoveredItems++;
+            }
+        }
+        return numberOfCoveredItems;
     }
 
 }
