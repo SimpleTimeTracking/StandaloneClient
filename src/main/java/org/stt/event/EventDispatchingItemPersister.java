@@ -31,19 +31,19 @@ public class EventDispatchingItemPersister implements ItemPersister {
     @Override
     public void insert(TimeTrackingItem item) throws IOException {
         delegate.insert(item);
-        eventBus.post(new ItemInsertedEvent());
+        eventBus.post(new ItemInsertedEvent(item));
     }
 
     @Override
     public void replace(TimeTrackingItem item, TimeTrackingItem with) throws IOException {
         delegate.replace(item, with);
-        eventBus.post(new ItemReplacedEvent());
+        eventBus.post(new ItemReplacedEvent(item, with));
     }
 
     @Override
     public void delete(TimeTrackingItem item) throws IOException {
         delegate.delete(item);
-        eventBus.post(new ItemDeletedEvent());
+        eventBus.post(new ItemDeletedEvent(item));
     }
 
     @Override

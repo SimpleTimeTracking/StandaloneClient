@@ -103,6 +103,11 @@ public class Configuration {
         return new File(tiFile);
     }
 
+    public File getItemLogFile() {
+        String itemLogFile = getPropertiesReplaced("itemLogFile", "$HOME$/.stt_/itemlog");
+        return new File(itemLogFile);
+    }
+
     public String getSystemOutEncoding() {
         return getPropertiesReplaced("sysoutEncoding", "UTF-8");
     }

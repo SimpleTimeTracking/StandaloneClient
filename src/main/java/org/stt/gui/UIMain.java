@@ -12,6 +12,7 @@ import org.stt.Service;
 import org.stt.YamlConfigService;
 import org.stt.analysis.AnalysisModule;
 import org.stt.event.EventBusModule;
+import org.stt.event.ItemLogService;
 import org.stt.event.ShutdownRequest;
 import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
@@ -55,6 +56,7 @@ public class UIMain extends Application {
         startService(injector, YamlConfigService.class);
         startService(injector, BackupCreator.class);
         startService(injector, AchievementService.class);
+        startService(injector, ItemLogService.class);
 
         application = injector.getInstance(STTApplication.class);
     }

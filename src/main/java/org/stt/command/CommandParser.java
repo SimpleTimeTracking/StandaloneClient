@@ -76,7 +76,7 @@ public class CommandParser {
         return new DeleteCommand(persister, item);
     }
 
-    public String itemToCommand(TimeTrackingItem item) {
+    public static String itemToCommand(TimeTrackingItem item) {
         checkNotNull(item);
         DateTimeFormatter formatForStart = getShortFormatForTodayAndLongOtherwise(item
                 .getStart());
@@ -84,11 +84,11 @@ public class CommandParser {
         StringBuilder builder = new StringBuilder(item.getComment().or(""));
         builder.append(' ');
         if (item.getEnd().isPresent()) {
+            DateTimeFormatter formatForEnd = getShortFormatForTodayAndLongOtherwise(item
+                    .getEnd().get());
             builder.append("from ");
             builder.append(formatForStart.print(item.getStart()));
             builder.append(" to ");
-            DateTimeFormatter formatForEnd = getShortFormatForTodayAndLongOtherwise(item
-                    .getEnd().get());
             builder.append(formatForEnd.print(item.getEnd().get()));
         } else {
             builder.append("since ");
@@ -97,10 +97,28 @@ public class CommandParser {
         return builder.toString();
     }
 
+    public static String itemToCommandWithFullDates(TimeTrackingItem item) {
+        checkNotNull(item);
+        DateTimeFormatter format = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
+
+        StringBuilder builder = new StringBuilder(item.getComment().or(""));
+        builder.append(' ');
+        if (item.getEnd().isPresent()) {
+            builder.append("from ");
+            builder.append(format.print(item.getStart()));
+            builder.append(" to ");
+            builder.append(format.print(item.getEnd().get()));
+        } else {
+            builder.append("since ");
+            builder.append(format.print(item.getStart()));
+        }
+        return builder.toString();
+    }
+
     /**
      * @return short time format for today and long format otherwise
      */
-    private DateTimeFormatter getShortFormatForTodayAndLongOtherwise(
+    private static DateTimeFormatter getShortFormatForTodayAndLongOtherwise(
             DateTime dateTime) {
         DateTimeFormatter formatForStart = FORMAT_YEAR_MONTH_HOUR_MINUTES_SECONDS;
         if (DateTimeHelper.isToday(dateTime)) {
