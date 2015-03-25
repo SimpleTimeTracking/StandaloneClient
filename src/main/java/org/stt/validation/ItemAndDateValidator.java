@@ -38,8 +38,8 @@ public class ItemAndDateValidator {
         }
         int numberOfCoveredItems = 0;
         for (TimeTrackingItem item: itemSearcher.queryItems(query)) {
-            if (!newItem.getStart().equals(item.getStart())
-                    || !newItem.getEnd().equals(item.getEnd())) {
+            if (!newItem.getComment().equals(item.getComment()) && (!newItem.getStart().equals(item.getStart())
+                    || !newItem.getEnd().equals(item.getEnd()))) {
                 numberOfCoveredItems++;
             }
         }
