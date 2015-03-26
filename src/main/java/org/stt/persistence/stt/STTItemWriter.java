@@ -1,6 +1,7 @@
 package org.stt.persistence.stt;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 

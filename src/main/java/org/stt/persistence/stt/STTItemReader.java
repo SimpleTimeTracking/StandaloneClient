@@ -2,6 +2,7 @@ package org.stt.persistence.stt;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.stt.model.TimeTrackingItem;

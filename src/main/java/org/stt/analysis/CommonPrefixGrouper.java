@@ -1,6 +1,7 @@
 package org.stt.analysis;
 
 import com.google.common.base.Optional;
+import com.google.inject.Singleton;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
@@ -16,6 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Note that items are split at 'space' unless the resulting subgroup would have less than
  * 3 characters, in which case the group gets expanded.
  */
+@Singleton
 class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 	private final RadixTreeNode root = new RadixTreeNode();
 
