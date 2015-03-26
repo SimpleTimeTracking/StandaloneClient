@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Singleton
 public class PreCachingItemReaderProvider implements ItemReaderProvider {
+    private Object lock = new Object();
     private Collection<Optional<TimeTrackingItem>> cachedItems = new ArrayList<>();
     private ItemReaderProvider itemReaderProvider;
 
@@ -46,23 +47,27 @@ public class PreCachingItemReaderProvider implements ItemReaderProvider {
     }
 
     private void rereadSource() {
-        try (ItemReader reader = itemReaderProvider.provideReader()) {
-            cachedItems.clear();
-            Optional<TimeTrackingItem> read;
-            do {
-                read = reader.read();
-                cachedItems.add(read);
+        synchronized (lock) {
+            try (ItemReader reader = itemReaderProvider.provideReader()) {
+                cachedItems = new ArrayList<>();
+                Optional<TimeTrackingItem> read;
+                do {
+                    read = reader.read();
+                    cachedItems.add(read);
+                }
+                while (read.isPresent());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            while (read.isPresent());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
     @Override
     public ItemReader provideReader() {
-        if (cachedItems.isEmpty()) {
-            rereadSource();
+        synchronized (lock) {
+            if (cachedItems.isEmpty()) {
+                rereadSource();
+            }
         }
         return new ItemReader() {
             Iterator<Optional<TimeTrackingItem>> itemIterator = cachedItems.iterator();

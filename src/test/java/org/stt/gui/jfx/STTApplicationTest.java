@@ -68,7 +68,8 @@ public class STTApplicationTest {
         given(commandParser.endCurrentItemCommand(any(DateTime.class))).willReturn(Optional.<Command>absent());
         given(commandParser.deleteCommandFor(any(TimeTrackingItem.class))).willReturn(NothingCommand.INSTANCE);
 
-        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandParser, reportWindowBuilder, expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, itemSearcher, achievementService);
+        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandParser, reportWindowBuilder,
+                expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, itemSearcher, achievementService, executorService);
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override
@@ -220,7 +221,7 @@ public class STTApplicationTest {
         // GIVEN
         givenCommand("Hello World");
         given(commandParser.parseCommandString(anyString())).willReturn(
-                Optional.<Command> absent());
+                Optional.<Command>absent());
 
         // WHEN
         sut.viewAdapter.insert();

@@ -64,12 +64,15 @@ public class UIMain extends Application {
     @Subscribe
     public void shutdown(ShutdownRequest request) {
         LOG.info("Shutting down");
-        Collections.reverse(servicesToShutdown);
-        for (Service service : servicesToShutdown) {
-            LOG.info("Stopping " + service.getClass().getSimpleName());
-            service.stop();
+        try {
+            Collections.reverse(servicesToShutdown);
+            for (Service service : servicesToShutdown) {
+                LOG.info("Stopping " + service.getClass().getSimpleName());
+                service.stop();
+            }
+        } finally {
+            System.exit(0);
         }
-        System.exit(0);
     }
 
     private void startService(Injector injector, Class<? extends Service> service) throws Exception {

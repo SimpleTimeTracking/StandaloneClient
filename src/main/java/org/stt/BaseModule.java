@@ -10,6 +10,8 @@ import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.persistence.stt.STTFile;
 
 import java.io.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 /**
@@ -21,6 +23,7 @@ public class BaseModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CommandHandler.class).to(ToItemWriterCommandHandler.class);
+        bind(ExecutorService.class).toInstance(Executors.newSingleThreadExecutor());
     }
 
     @Provides

@@ -75,6 +75,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -103,6 +104,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private ItemAndDateValidator validator;
     private ItemSearcher searcher;
     private AchievementService achievementService;
+    private ExecutorService executorService;
 
     @Inject
     STTApplication(STTOptionDialogs STTOptionDialogs,
@@ -115,7 +117,9 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    CommandTextConfig commandTextConfig,
                    ItemAndDateValidator validator,
                    ItemSearcher searcher,
-                   AchievementService achievementService) {
+                   AchievementService achievementService,
+                   ExecutorService executorService) {
+        this.executorService = checkNotNull(executorService);
         this.achievementService = checkNotNull(achievementService);
         this.searcher = checkNotNull(searcher);
         this.sttOptionDialogs = checkNotNull(STTOptionDialogs);
@@ -247,9 +251,14 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     public void start(Stage primaryStage) {
         show(primaryStage);
-        // Post initial request to load all items
-        updateItems();
-        updateAchievements();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                // Post initial request to load all items
+                updateItems();
+                updateAchievements();
+            }
+        });
     }
 
     private void updateItems() {
