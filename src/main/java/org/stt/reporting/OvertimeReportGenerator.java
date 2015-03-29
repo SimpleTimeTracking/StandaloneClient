@@ -8,9 +8,11 @@ import org.stt.analysis.ItemCategorizer;
 import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 import org.stt.time.DateTimeHelper;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -20,13 +22,13 @@ import java.util.TreeMap;
 public class OvertimeReportGenerator {
 
 	private final ItemCategorizer categorizer;
-	private final ItemReader reader;
+	private final ItemReaderProvider readerProvider;
 	private WorkingtimeItemProvider workingtimeItemProvider;
 
-	public OvertimeReportGenerator(ItemReader reader,
+	public OvertimeReportGenerator(ItemReaderProvider readerProvider,
 			ItemCategorizer categorizer,
 			WorkingtimeItemProvider workingtimeItemProvider) {
-		this.reader = reader;
+		this.readerProvider = readerProvider;
 		this.categorizer = categorizer;
 		this.workingtimeItemProvider = workingtimeItemProvider;
 	}
@@ -61,34 +63,37 @@ public class OvertimeReportGenerator {
 
 		Optional<TimeTrackingItem> optionalItem = null;
 
-		Map<DateTime, Duration> dateToOvertime = new TreeMap<>();
-		while ((optionalItem = reader.read()).isPresent()) {
-			TimeTrackingItem item = optionalItem.get();
+		try (ItemReader reader = readerProvider.provideReader()) {
+			Map<DateTime, Duration> dateToOvertime = new TreeMap<>();
+			while ((optionalItem = reader.read()).isPresent()) {
+				TimeTrackingItem item = optionalItem.get();
 
-			ItemCategory category = categorizer.getCategory(item.getComment()
-					.orNull());
-			if (category.equals(ItemCategory.WORKTIME)) {
-				DateTime currentDay = item.getStart().withTimeAtStartOfDay();
-				Duration currentDuration = dateToOvertime.get(currentDay);
-				Duration itemDuration = new Duration(item.getStart(), item
-						.getEnd().or(DateTime.now()));
-				if (currentDuration != null) {
-					dateToOvertime.put(currentDay,
-							currentDuration.plus(itemDuration));
-				} else {
-					dateToOvertime.put(currentDay, itemDuration);
+				ItemCategory category = categorizer.getCategory(item.getComment()
+						.orNull());
+				if (category.equals(ItemCategory.WORKTIME)) {
+					DateTime currentDay = item.getStart().withTimeAtStartOfDay();
+					Duration currentDuration = dateToOvertime.get(currentDay);
+					Duration itemDuration = new Duration(item.getStart(), item
+							.getEnd().or(DateTime.now()));
+					if (currentDuration != null) {
+						dateToOvertime.put(currentDay,
+								currentDuration.plus(itemDuration));
+					} else {
+						dateToOvertime.put(currentDay, itemDuration);
+					}
 				}
 			}
-		}
 
-		for (Map.Entry<DateTime, Duration> e : dateToOvertime.entrySet()) {
-			dateToOvertime.put(e.getKey(),
-					getOvertime(e.getKey(), e.getValue()));
-		}
-		IOUtils.closeQuietly(reader);
+			for (Map.Entry<DateTime, Duration> e : dateToOvertime.entrySet()) {
+				dateToOvertime.put(e.getKey(),
+						getOvertime(e.getKey(), e.getValue()));
+			}
 
-		dateToOvertime.putAll(getAbsencesMap());
-		return dateToOvertime;
+			dateToOvertime.putAll(getAbsencesMap());
+			return dateToOvertime;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**

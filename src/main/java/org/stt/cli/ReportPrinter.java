@@ -252,7 +252,7 @@ public class ReportPrinter {
 	}
 
 	private OvertimeReportGenerator createOvertimeReportGenerator() {
-		return new OvertimeReportGenerator(readFrom.provideReader(), categorizer,
+		return new OvertimeReportGenerator(readFrom, categorizer,
 				workingtimeItemProvider);
 	}
 

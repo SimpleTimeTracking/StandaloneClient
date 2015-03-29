@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Created by dante on 16.03.15.
@@ -74,6 +75,7 @@ public class PreCachingItemReaderProvider implements ItemReaderProvider {
 
             @Override
             public Optional<TimeTrackingItem> read() {
+                checkState(itemIterator != null, "ItemReader already closed!");
                 return itemIterator.next();
             }
 

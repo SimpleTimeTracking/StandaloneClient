@@ -14,6 +14,7 @@ import org.stt.analysis.ItemCategorizer;
 import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import java.util.Arrays;
@@ -33,6 +34,8 @@ public class OvertimeReportGeneratorTest {
 	@Mock
 	private ItemReader reader;
 	@Mock
+	private ItemReaderProvider itemReaderProvider;
+	@Mock
 	private WorkingtimeItemProvider workingtimeItemProvider;
 
 	private OvertimeReportGenerator sut;
@@ -46,8 +49,9 @@ public class OvertimeReportGeneratorTest {
 		given(categorizer.getCategory(anyString())).willReturn(
 				ItemCategory.WORKTIME);
 		given(categorizer.getCategory("pause")).willReturn(ItemCategory.BREAK);
+		given(itemReaderProvider.provideReader()).willReturn(reader);
 
-		sut = new OvertimeReportGenerator(reader, categorizer,
+		sut = new OvertimeReportGenerator(itemReaderProvider, categorizer,
 				workingtimeItemProvider);
 	}
 
