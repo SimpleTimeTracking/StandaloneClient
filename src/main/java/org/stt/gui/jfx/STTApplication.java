@@ -8,10 +8,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.ListBinding;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -24,6 +21,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -32,6 +30,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -65,6 +65,7 @@ import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
+import org.stt.reporting.QuickTimeReportGenerator;
 import org.stt.search.ItemSearcher;
 import org.stt.validation.ItemAndDateValidator;
 
@@ -73,8 +74,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -304,6 +307,9 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         @FXML
         FlowPane achievements;
 
+        @FXML
+        VBox additionals;
+
         private HighlightingOverlay overlay;
 
         private CommandHighlighter commandHighlighter;
@@ -324,13 +330,14 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                 throw new RuntimeException(e);
             }
 
+            Pane panel = new QuickTimeReportViewBuilder( localization, new SimpleObjectProperty<QuickTimeReportGenerator.QuickTimeReport>(new QuickTimeReportGenerator.QuickTimeReport())).build();
+            additionals.getChildren().add(panel);
             overlay = new HighlightingOverlay(commandText);
             commandHighlighter = new CommandHighlighter(overlay);
 
             Scene scene = new Scene(pane);
 
             stage.setScene(scene);
-            stage.initStyle(StageStyle.UTILITY);
             stage.setTitle(localization.getString("window.title"));
             Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
             stage.getIcons().add(applicationIcon);

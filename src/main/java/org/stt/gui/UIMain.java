@@ -40,6 +40,7 @@ public class UIMain extends Application {
 
     private List<Service> servicesToShutdown = new CopyOnWriteArrayList<>();
     private STTApplication application;
+    private EventBus eventBus;
 
     public static void main(String[] args) {
         LOG.info("START");
@@ -56,7 +57,7 @@ public class UIMain extends Application {
                 new JFXModule(), new BaseModule());
 
         LOG.info("Setting up event bus");
-        EventBus eventBus = injector.getInstance(EventBus.class);
+        eventBus = injector.getInstance(EventBus.class);
         eventBus.register(this);
         eventBus.register(injector.getInstance(PreCachingItemReaderProvider.class));
 
@@ -105,6 +106,12 @@ public class UIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        Thread.currentThread().setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                eventBus.post(e);
+            }
+        });
         LOG.info("Showing window");
         application.start(primaryStage);
     }

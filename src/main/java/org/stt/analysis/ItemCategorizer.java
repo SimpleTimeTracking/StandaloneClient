@@ -2,7 +2,7 @@ package org.stt.analysis;
 
 public interface ItemCategorizer {
 
-	public enum ItemCategory {
+	enum ItemCategory {
 
 		BREAK, WORKTIME
 	}

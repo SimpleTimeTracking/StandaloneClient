@@ -41,7 +41,11 @@
                   <Insets />
                </VBox.margin>
             </ListView>
-            <FlowPane fx:id="achievements" style="-fx-background-color: lightgray;" />
+            <VBox fx:id="additionals">
+               <children>
+                  <FlowPane fx:id="achievements" style="-fx-background-color: lightgray;" />
+               </children>
+            </VBox>
          </children>
       </VBox>
    </center>
