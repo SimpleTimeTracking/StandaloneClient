@@ -102,6 +102,9 @@ public class DefaultItemSearcher implements ItemSearcher {
                 if (query.endNotAfter.isPresent() && (!item.getEnd().isPresent() || item.getEnd().get().isAfter(query.endNotAfter.get()))) {
                     continue;
                 }
+				if (query.endBefore.isPresent() && (!item.getEnd().isPresent() || !item.getEnd().get().isBefore(query.endBefore.get()))) {
+					continue;
+				}
                 result.add(item);
             }
         } catch (IOException e) {

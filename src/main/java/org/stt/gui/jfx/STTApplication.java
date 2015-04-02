@@ -21,7 +21,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -34,7 +33,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
@@ -330,7 +328,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                 throw new RuntimeException(e);
             }
 
-            Pane panel = new QuickTimeReportViewBuilder( localization, new SimpleObjectProperty<QuickTimeReportGenerator.QuickTimeReport>(new QuickTimeReportGenerator.QuickTimeReport())).build();
+            Pane panel = new QuickTimeReportViewBuilder(localization, new SimpleObjectProperty<QuickTimeReportGenerator.QuickTimeReport>(new QuickTimeReportGenerator.QuickTimeReport())).build();
             additionals.getChildren().add(panel);
             overlay = new HighlightingOverlay(commandText);
             commandHighlighter = new CommandHighlighter(overlay);

@@ -1,9 +1,6 @@
 package org.stt.gui.jfx;
 
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.binding.StringBinding;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -32,17 +29,11 @@ public class QuickTimeReportViewBuilder {
         FlowPane flowPane = new FlowPane();
         flowPane.setVgap(8);
         ObservableList<Node> elements = flowPane.getChildren();
-        elements.add(new Label(i18n.getString("remainingWorktimeToday")));
         Label remainingWorktimeToday = new Label();
-        remainingWorktimeToday.textProperty().bind(new StringBinding() {
-            {
-                bind(reportValue);
-            }
-            @Override
-            protected String computeValue() {
-                return reportValue.getValue().toString();
-            }
-        });
+        remainingWorktimeToday.textProperty().bind(Bindings.selectString(reportValue, "remainingDuration"));
+
+        elements.addAll(new Label(i18n.getString("remainingWorktimeToday")), remainingWorktimeToday);
+
         return flowPane;
     }
 }

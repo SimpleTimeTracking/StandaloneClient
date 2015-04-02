@@ -3,9 +3,7 @@ package org.stt.search;
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-
-import javax.swing.text.html.Option;
-import java.util.Date;
+import org.joda.time.LocalDate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -16,6 +14,7 @@ public class Query {
     Optional<DateTime> startNotBefore = Optional.absent();
     Optional<DateTime> startBefore = Optional.absent();
     Optional<DateTime> endNotAfter = Optional.absent();
+    Optional<DateTime> endBefore = Optional.absent();
 
     public Query withStartBetween(Interval interval) {
         checkNotNull(interval);
@@ -36,6 +35,18 @@ public class Query {
 
     public Query withEndNotAfter(DateTime time) {
         endNotAfter = Optional.of(time);
+        return this;
+    }
+
+    public Query withPeriodAtDay(LocalDate date) {
+        DateTime startOfDayAtDate = date.toDateTimeAtStartOfDay();
+        withStartNotBefore(startOfDayAtDate);
+        withEndBefore(startOfDayAtDate.plusDays(1));
+        return this;
+    }
+
+    public Query withEndBefore(DateTime time) {
+        endBefore = Optional.of(time);
         return this;
     }
 }

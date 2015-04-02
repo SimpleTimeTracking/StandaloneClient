@@ -116,7 +116,7 @@ public class OvertimeReportGenerator {
 	 */
 	private Duration getOvertime(DateTime date, Duration duration) {
 		WorkingtimeItem workingTimeForDate = workingtimeItemProvider
-				.getWorkingTimeFor(date);
+				.getWorkingTimeFor(date.toLocalDate());
 		if (duration.isLongerThan(workingTimeForDate.getMax())) {
 			return duration.minus(workingTimeForDate.getMax());
 		} else if (duration.isShorterThan(workingTimeForDate.getMin())) {

@@ -3,6 +3,7 @@ package org.stt.reporting;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Duration;
+import org.joda.time.LocalDate;
 import org.stt.Configuration;
 import org.stt.time.DateTimeHelper;
 
@@ -26,7 +27,6 @@ public class WorkingtimeItemProvider {
 
 	/**
 	 * 
-	 * @param date
 	 * @return the dates and corresponding absence times
 	 */
 	public Map<DateTime, WorkingtimeItem> getOvertimeAbsences() {
@@ -48,9 +48,9 @@ public class WorkingtimeItemProvider {
 	 * @return the configured duration to be worked without producing positive
 	 *         or negative overtime
 	 */
-	public WorkingtimeItem getWorkingTimeFor(DateTime date) {
+	public WorkingtimeItem getWorkingTimeFor(LocalDate date) {
 		WorkingtimeItem workingHours = workingHoursPerDay.get(date
-				.withTimeAtStartOfDay());
+				.toDateTimeAtStartOfDay());
 		if (workingHours == null) {
 			workingHours = defaultWorkingHours.get(date.getDayOfWeek());
 		}

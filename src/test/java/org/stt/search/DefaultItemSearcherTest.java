@@ -6,6 +6,7 @@ import org.hamcrest.Matchers;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.theories.Theories;
@@ -287,6 +288,38 @@ public class DefaultItemSearcherTest {
         // THEN
         assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Collections.singletonList(expectedResult)));
     }
+
+    @Test
+    public void shouldReturnItemWithEndBefore() {
+        // GIVEN
+        TimeTrackingItem expectedResult = new TimeTrackingItem(null, new DateTime(800), new DateTime(999));
+        givenReaderReturns(expectedResult, new TimeTrackingItem(null, new DateTime(800), new DateTime(1000)));
+        Query query = new Query();
+        query.withEndBefore(new DateTime(1000));
+
+        // WHEN
+        Collection<TimeTrackingItem> result = sut.queryItems(query);
+
+        // THEN
+        assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Collections.singletonList(expectedResult)));
+    }
+
+    @Test
+    public void shouldReturnItemOnDay() {
+        // GIVEN
+        TimeTrackingItem expectedResult = new TimeTrackingItem(null, new DateTime(2015, 1, 3, 1, 1), new DateTime(2015, 1, 3, 3, 3));
+        givenReaderReturns(expectedResult, new TimeTrackingItem(null, new DateTime(800), new DateTime(1000)));
+        Query query = new Query();
+        query.withPeriodAtDay(new LocalDate(2015, 1, 3));
+
+        // WHEN
+        Collection<TimeTrackingItem> result = sut.queryItems(query);
+
+
+        // THEN
+        assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Collections.singletonList(expectedResult)));
+    }
+
 
     private Collection<DateTime> mapItemToStartDateTime(Collection<TimeTrackingItem> items) {
         ArrayList<DateTime> result = new ArrayList<>();
