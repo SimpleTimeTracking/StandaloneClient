@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.stt.BaseModule;
 import org.stt.I18NModule;
@@ -16,6 +17,7 @@ import org.stt.analysis.AnalysisModule;
 import org.stt.event.EventBusModule;
 import org.stt.event.ItemLogService;
 import org.stt.event.ShutdownRequest;
+import org.stt.event.TimePassedEvent;
 import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.JFXModule;
@@ -28,8 +30,11 @@ import org.stt.time.TimeUtilModule;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,6 +66,17 @@ public class UIMain extends Application {
         eventBus = injector.getInstance(EventBus.class);
         eventBus.register(this);
         eventBus.register(injector.getInstance(PreCachingItemReaderProvider.class));
+        new Timer(true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        eventBus.post(new TimePassedEvent());
+                    }
+                });
+            }
+        }, 0, 1000);
 
         startService(injector, YamlConfigService.class);
         startService(injector, BackupCreator.class);
@@ -68,7 +84,9 @@ public class UIMain extends Application {
         startService(injector, ItemLogService.class);
 
         application = injector.getInstance(STTApplication.class);
-        application.addAdditional(injector.getInstance(WorktimePaneBuilder.class));
+        WorktimePaneBuilder worktimePaneBuilder = injector.getInstance(WorktimePaneBuilder.class);
+        eventBus.register(worktimePaneBuilder);
+        application.addAdditional(worktimePaneBuilder);
     }
 
     @Subscribe

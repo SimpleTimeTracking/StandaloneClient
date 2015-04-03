@@ -1,22 +1,27 @@
 package org.stt.query;
 
 import com.google.inject.Inject;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.joda.time.LocalDate;
+import com.google.inject.Singleton;
+import org.joda.time.*;
 import org.stt.analysis.ItemCategorizer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.query.Query;
 import org.stt.reporting.WorkingtimeItemProvider;
+import org.stt.time.DateTimeHelper;
+
+
+import javax.activation.DataHandler;
+import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by dante on 29.03.15.
  */
+@Singleton
 public class WorkTimeQueries {
-
+    private static final Logger LOG = Logger.getLogger(WorkTimeQueries.class.getName());
     private WorkingtimeItemProvider workingtimeItemProvider;
     private ItemCategorizer itemCategorizer;
     private TimeTrackingItemQueries timeTrackingItemQueries;
@@ -30,22 +35,34 @@ public class WorkTimeQueries {
     }
 
     public Duration queryRemainingWorktimeToday() {
-        Duration workedTime = Duration.ZERO;
         DateTime now = new DateTime();
-        LocalDate today = new LocalDate(now);
-        Query query = new Query();
-        query.withPeriodAtDay(today);
-        for (TimeTrackingItem item: timeTrackingItemQueries.queryItems(query)) {
-            if (itemCategorizer.getCategory(item.getComment().or("")) == ItemCategorizer.ItemCategory.WORKTIME) {
-                DateTime end = item.getEnd().or(now);
-                workedTime = workedTime.plus(new Duration(item.getStart(), end));
-            }
-        }
-
+        LocalDate today = now.toLocalDate();
+        Duration workedTime = queryWorktime(today.toInterval().withEnd(now));
         Duration remainingDuration = workingtimeItemProvider.getWorkingTimeFor(today).getMin().minus(workedTime);
         if (remainingDuration.isShorterThan(Duration.ZERO)) {
             remainingDuration = Duration.ZERO;
         }
         return remainingDuration;
+    }
+
+    public Duration queryWeekWorktime() {
+        DateTime now = new DateTime();
+        LocalDate monday = now.toLocalDate().withDayOfWeek(DateTimeConstants.MONDAY);
+        Interval currentWeek = monday.toInterval().withEnd(now);
+        return queryWorktime(currentWeek);
+    }
+
+    public Duration queryWorktime(Interval interval) {
+        Duration workedTime = Duration.ZERO;
+        Query query = new Query();
+        query.withStartNotBefore(interval.getStart());
+        query.withStartBefore(interval.getEnd());
+        for (TimeTrackingItem item: timeTrackingItemQueries.queryItems(query)) {
+            if (itemCategorizer.getCategory(item.getComment().or("")) == ItemCategorizer.ItemCategory.WORKTIME) {
+                DateTime end = item.getEnd().or(interval.getEnd());
+                workedTime = workedTime.plus(new Duration(item.getStart(), end));
+            }
+        }
+        return workedTime;
     }
 }

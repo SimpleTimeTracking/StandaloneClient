@@ -41,7 +41,7 @@ public class Query {
     public Query withPeriodAtDay(LocalDate date) {
         DateTime startOfDayAtDate = date.toDateTimeAtStartOfDay();
         withStartNotBefore(startOfDayAtDate);
-        withEndBefore(startOfDayAtDate.plusDays(1));
+        withStartBefore(startOfDayAtDate.plusDays(1));
         return this;
     }
 

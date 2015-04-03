@@ -7,6 +7,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.stt.event.events.ItemDeletedEvent;
 import org.stt.event.events.ItemInsertedEvent;
+import org.stt.event.events.ItemModificationEvent;
 import org.stt.event.events.ItemReplacedEvent;
 import org.stt.model.TimeTrackingItem;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -23,6 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 @Singleton
 public class PreCachingItemReaderProvider implements ItemReaderProvider {
+    private static final Logger LOG = Logger.getLogger(PreCachingItemReaderProvider.class.getName());
     private Object lock = new Object();
     private Collection<Optional<TimeTrackingItem>> cachedItems = new ArrayList<>();
     private ItemReaderProvider itemReaderProvider;
@@ -33,21 +36,12 @@ public class PreCachingItemReaderProvider implements ItemReaderProvider {
     }
 
     @Subscribe
-    public void sourceChanged(ItemDeletedEvent event) {
-        rereadSource();
-    }
-
-    @Subscribe
-    public void sourceChanged(ItemReplacedEvent event) {
-        rereadSource();
-    }
-
-    @Subscribe
-    public void sourceChanged(ItemInsertedEvent event) {
+    public void sourceChanged(ItemModificationEvent event) {
         rereadSource();
     }
 
     private void rereadSource() {
+        LOG.finest("Precaching items");
         synchronized (lock) {
             try (ItemReader reader = itemReaderProvider.provideReader()) {
                 cachedItems = new ArrayList<>();
