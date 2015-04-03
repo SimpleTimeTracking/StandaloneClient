@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 
 import java.io.IOException;
 
@@ -36,7 +36,7 @@ public class ToItemWriterCommandHandlerTest {
 	ItemPersister itemWriter;
 
 	@Mock
-	ItemSearcher itemSearcher;
+	TimeTrackingItemQueries timeTrackingItemQueries;
 
 	private ToItemWriterCommandHandler sut;
 
@@ -60,7 +60,7 @@ public class ToItemWriterCommandHandlerTest {
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
-		sut = new ToItemWriterCommandHandler(itemWriter, itemSearcher);
+		sut = new ToItemWriterCommandHandler(itemWriter, timeTrackingItemQueries);
 	}
 
 	@Test
@@ -387,12 +387,12 @@ public class ToItemWriterCommandHandlerTest {
 	}
 
 	private void givenNoCurrentItemIsAvailable() {
-		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
+		given(timeTrackingItemQueries.getCurrentTimeTrackingitem()).willReturn(
 				Optional.<TimeTrackingItem> absent());
 	}
 
 	private void givenCurrentTimeTrackingItem(TimeTrackingItem item) {
-		given(itemSearcher.getCurrentTimeTrackingitem()).willReturn(
+		given(timeTrackingItemQueries.getCurrentTimeTrackingitem()).willReturn(
 				Optional.of(item));
 	}
 

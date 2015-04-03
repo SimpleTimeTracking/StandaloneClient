@@ -4,10 +4,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import org.stt.persistence.*;
-import org.stt.search.DefaultItemSearcher;
-import org.stt.search.ItemSearcher;
+import org.stt.query.DefaultTimeTrackingItemQueries;
+import org.stt.query.TimeTrackingItemQueries;
 
 import java.io.*;
 
@@ -20,7 +19,7 @@ public class STTPersistenceModule extends AbstractModule {
         bind(ItemReader.class).to(STTItemReader.class);
         bind(ItemWriter.class).to(STTItemWriter.class);
         bind(ItemReaderProvider.class).to(PreCachingItemReaderProvider.class);
-        bind(ItemSearcher.class).to(DefaultItemSearcher.class);
+        bind(TimeTrackingItemQueries.class).to(DefaultTimeTrackingItemQueries.class);
         bind(ItemPersister.class).to(STTItemPersister.class);
     }
 

@@ -14,7 +14,7 @@ import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.time.DateTimeHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,12 +31,12 @@ public class CommandParser {
 
     private final ItemPersister persister;
     private ItemGenerator itemGenerator = new ItemGenerator();
-    private ItemSearcher itemSearcher;
+    private TimeTrackingItemQueries timeTrackingItemQueries;
 
     @Inject
-    public CommandParser(@EventBusAware ItemPersister persister, ItemSearcher itemSearcher) {
+    public CommandParser(@EventBusAware ItemPersister persister, TimeTrackingItemQueries timeTrackingItemQueries) {
         this.persister = checkNotNull(persister);
-        this.itemSearcher = checkNotNull(itemSearcher);
+        this.timeTrackingItemQueries = checkNotNull(timeTrackingItemQueries);
     }
 
     public Optional<Command> parseCommandString(String command) {
@@ -58,7 +58,7 @@ public class CommandParser {
     }
 
     public Optional<Command> endCurrentItemCommand(DateTime endTime) {
-        Optional<TimeTrackingItem> currentTimeTrackingitem = itemSearcher
+        Optional<TimeTrackingItem> currentTimeTrackingitem = timeTrackingItemQueries
                 .getCurrentTimeTrackingitem();
         if (currentTimeTrackingitem.isPresent()) {
             TimeTrackingItem unfinisheditem = currentTimeTrackingitem.get();

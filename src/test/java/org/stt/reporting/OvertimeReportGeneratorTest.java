@@ -65,7 +65,7 @@ public class OvertimeReportGeneratorTest {
 				"working", startTime, endTime));
 
 		Duration toReturn = new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR);
-		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
+		given(workingtimeItemProvider.getWorkingTimeFor(startTime.toLocalDate())).willReturn(
 				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
@@ -88,7 +88,7 @@ public class OvertimeReportGeneratorTest {
 				breakStartTime, breakStartTime.plusHours(3)));
 
 		Duration toReturn = new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR);
-		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
+		given(workingtimeItemProvider.getWorkingTimeFor(startTime.toLocalDate())).willReturn(
 				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
@@ -111,7 +111,7 @@ public class OvertimeReportGeneratorTest {
 				breakStartTime, breakStartTime.plusHours(1)));
 
 		Duration toReturn = new Duration(0);
-		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
+		given(workingtimeItemProvider.getWorkingTimeFor(startTime.toLocalDate())).willReturn(
 				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN
@@ -134,7 +134,7 @@ public class OvertimeReportGeneratorTest {
 				breakStartTime, breakStartTime.plusHours(1)));
 
 		Duration toReturn = new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR);
-		given(workingtimeItemProvider.getWorkingTimeFor(startTime)).willReturn(
+		given(workingtimeItemProvider.getWorkingTimeFor(startTime.toLocalDate())).willReturn(
 				new WorkingtimeItem(toReturn, toReturn));
 
 		// WHEN

@@ -20,6 +20,7 @@ import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.JFXModule;
 import org.stt.gui.jfx.STTApplication;
+import org.stt.gui.jfx.WorktimePaneBuilder;
 import org.stt.persistence.BackupCreator;
 import org.stt.persistence.PreCachingItemReaderProvider;
 import org.stt.persistence.stt.STTPersistenceModule;
@@ -67,6 +68,7 @@ public class UIMain extends Application {
         startService(injector, ItemLogService.class);
 
         application = injector.getInstance(STTApplication.class);
+        application.addAdditional(injector.getInstance(WorktimePaneBuilder.class));
     }
 
     @Subscribe

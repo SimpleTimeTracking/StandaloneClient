@@ -18,6 +18,7 @@ public class AnalysisModule extends AbstractModule {
     protected void configure() {
         bind(ItemGrouper.class).to(CommonPrefixGrouper.class);
         bind(ExpansionProvider.class).to(CommonPrefixGrouper.class);
+        bind(ItemCategorizer.class).to(WorktimeCategorizer.class);
     }
 
     @Provides

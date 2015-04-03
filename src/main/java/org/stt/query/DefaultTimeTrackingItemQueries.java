@@ -1,10 +1,9 @@
-package org.stt.search;
+package org.stt.query;
 
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
@@ -18,7 +17,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Singleton
-public class DefaultItemSearcher implements ItemSearcher {
+public class DefaultTimeTrackingItemQueries implements TimeTrackingItemQueries {
 
 	private final ItemReaderProvider provider;
 
@@ -27,7 +26,7 @@ public class DefaultItemSearcher implements ItemSearcher {
 	 *            where to search for items
 	 */
 	@Inject
-	public DefaultItemSearcher(ItemReaderProvider provider) {
+	public DefaultTimeTrackingItemQueries(ItemReaderProvider provider) {
 		this.provider = checkNotNull(provider);
 	}
 

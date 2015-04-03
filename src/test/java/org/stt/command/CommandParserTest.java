@@ -5,11 +5,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.internal.configuration.MockAnnotationProcessor;
-import org.stt.ToItemWriterCommandHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
@@ -17,14 +15,14 @@ import static org.junit.Assert.*;
 public class CommandParserTest {
     private CommandParser sut;
     @Mock
-    private ItemSearcher itemSearcher;
+    private TimeTrackingItemQueries timeTrackingItemQueries;
     @Mock
     private ItemPersister itemPersister;
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        sut = new CommandParser(itemPersister, itemSearcher);
+        sut = new CommandParser(itemPersister, timeTrackingItemQueries);
     }
 
     @Test

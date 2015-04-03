@@ -39,7 +39,7 @@ import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReaderProvider;
 import org.stt.reporting.SummingReportGenerator.Report;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.time.DateTimeHelper;
 import org.stt.time.DurationRounder;
 
@@ -54,7 +54,7 @@ import static org.stt.time.DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs;
 
 public class ReportWindowBuilder {
     private final ItemReaderProvider readerProvider;
-    private final ItemSearcher itemSearcher;
+    private final TimeTrackingItemQueries timeTrackingItemQueries;
 
     private final Provider<Stage> stageProvider;
     private final DurationRounder rounder;
@@ -65,11 +65,11 @@ public class ReportWindowBuilder {
 
     @Inject
     ReportWindowBuilder(Provider<Stage> stageProvider,
-                               ItemReaderProvider readerProvider, ItemSearcher searcher,
+                               ItemReaderProvider readerProvider, TimeTrackingItemQueries searcher,
                                DurationRounder rounder, ItemGrouper itemGrouper, ReportWindowConfig config) {
         this.config = checkNotNull(config);
         this.stageProvider = checkNotNull(stageProvider);
-        this.itemSearcher = checkNotNull(searcher);
+        this.timeTrackingItemQueries = checkNotNull(searcher);
         this.readerProvider = checkNotNull(readerProvider);
         this.rounder = checkNotNull(rounder);
         this.itemGrouper = checkNotNull(itemGrouper);
@@ -448,7 +448,7 @@ public class ReportWindowBuilder {
         private ObservableValue<DateTime> addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty() {
             final ComboBox<DateTime> comboBox = new ComboBox<>();
             ObservableList<DateTime> availableDays = FXCollections
-                    .observableArrayList(itemSearcher.getAllTrackedDays());
+                    .observableArrayList(timeTrackingItemQueries.getAllTrackedDays());
             Collections.reverse(availableDays);
             comboBox.setItems(availableDays);
             if (!availableDays.isEmpty()) {

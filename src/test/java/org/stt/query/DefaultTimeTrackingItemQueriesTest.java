@@ -1,4 +1,4 @@
-package org.stt.search;
+package org.stt.query;
 
 import com.google.common.base.Optional;
 import org.hamcrest.CoreMatchers;
@@ -29,12 +29,12 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 
 @RunWith(Theories.class)
-public class DefaultItemSearcherTest {
+public class DefaultTimeTrackingItemQueriesTest {
 
     @Mock
     private ItemReader reader;
     private ItemReaderProvider provider;
-    private ItemSearcher sut;
+    private TimeTrackingItemQueries sut;
 
     @Before
     public void setup() {
@@ -46,7 +46,7 @@ public class DefaultItemSearcherTest {
                 return reader;
             }
         };
-        sut = new DefaultItemSearcher(provider);
+        sut = new DefaultTimeTrackingItemQueries(provider);
     }
 
     @Test

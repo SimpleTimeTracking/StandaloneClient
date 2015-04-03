@@ -1,13 +1,17 @@
 package org.stt.analysis;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.stt.Configuration;
 
 import java.util.Collection;
 
+@Singleton
 public class WorktimeCategorizer implements ItemCategorizer {
 
 	private Configuration configuration;
 
+	@Inject
 	public WorktimeCategorizer(Configuration configuration) {
 		this.configuration = configuration;
 	}

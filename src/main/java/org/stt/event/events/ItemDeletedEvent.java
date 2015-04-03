@@ -7,7 +7,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Created by dante on 18.03.15.
  */
-public class ItemDeletedEvent {
+public class ItemDeletedEvent implements ItemModificationEvent {
     public final TimeTrackingItem deletedItem;
 
     public ItemDeletedEvent(TimeTrackingItem deletedItem) {

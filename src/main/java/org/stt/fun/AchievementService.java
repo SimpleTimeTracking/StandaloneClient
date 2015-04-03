@@ -4,7 +4,7 @@ import com.google.common.eventbus.EventBus;
 import org.stt.Service;
 import org.stt.event.events.AchievementsUpdated;
 import org.stt.model.TimeTrackingItem;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,9 +21,9 @@ public class AchievementService implements Service {
 
 	private Collection<Achievement> achievements = new ArrayList<>();
 	private EventBus eventBus;
-    private ItemSearcher searcher;
+    private TimeTrackingItemQueries searcher;
 
-    public AchievementService(Collection<Achievement> achievements, EventBus eventBus, ItemSearcher searcher) {
+    public AchievementService(Collection<Achievement> achievements, EventBus eventBus, TimeTrackingItemQueries searcher) {
         this.searcher = checkNotNull(searcher);
         this.eventBus = checkNotNull(eventBus);
 		this.achievements.addAll(checkNotNull(achievements));

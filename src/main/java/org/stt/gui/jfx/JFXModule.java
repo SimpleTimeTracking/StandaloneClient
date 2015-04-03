@@ -6,12 +6,8 @@ import com.google.inject.Provides;
 import javafx.stage.Stage;
 import org.stt.YamlConfigService;
 import org.stt.analysis.ItemGrouper;
-import org.stt.config.BaseConfig;
-import org.stt.config.CommandTextConfig;
-import org.stt.config.TimeTrackingItemListConfig;
-import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.time.DurationRounder;
 
 /**
@@ -23,11 +19,11 @@ public class JFXModule extends AbstractModule {
     }
 
     @Provides
-    private ReportWindowBuilder createReportWindowBuilder(ItemSearcher itemSearcher, ItemReaderProvider itemReaderProvider,
+    private ReportWindowBuilder createReportWindowBuilder(TimeTrackingItemQueries timeTrackingItemQueries, ItemReaderProvider itemReaderProvider,
                                                           DurationRounder durationRounder, ItemGrouper itemGrouper, Provider<Stage> stageProvider,
                                                           YamlConfigService yamlConfig) {
         return new ReportWindowBuilder(
                 stageProvider, itemReaderProvider,
-                itemSearcher, durationRounder, itemGrouper, yamlConfig.getConfig().getReportWindowConfig());
+                timeTrackingItemQueries, durationRounder, itemGrouper, yamlConfig.getConfig().getReportWindowConfig());
     }
 }

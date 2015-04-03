@@ -8,7 +8,7 @@ import org.stt.command.*;
 import org.stt.event.ShutdownRequest;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -21,16 +21,16 @@ public class ToItemWriterCommandHandler implements CommandHandler {
     private static Logger LOG = Logger
             .getLogger(ToItemWriterCommandHandler.class.getName());
     private final ItemPersister itemWriter;
-    private final ItemSearcher itemSearcher;
+    private final TimeTrackingItemQueries timeTrackingItemQueries;
     private ItemGenerator itemGenerator = new ItemGenerator();
     private CommandParser parser;
 
     @Inject
     public ToItemWriterCommandHandler(ItemPersister itemWriter,
-                                      ItemSearcher itemSearcher) {
+                                      TimeTrackingItemQueries timeTrackingItemQueries) {
         this.itemWriter = checkNotNull(itemWriter);
-        this.itemSearcher = checkNotNull(itemSearcher);
-        this.parser = new CommandParser(itemWriter, itemSearcher);
+        this.timeTrackingItemQueries = checkNotNull(timeTrackingItemQueries);
+        this.parser = new CommandParser(itemWriter, timeTrackingItemQueries);
     }
 
     @Override

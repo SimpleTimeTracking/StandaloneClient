@@ -18,6 +18,7 @@ import javafx.collections.ObservableSet;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
@@ -63,8 +64,7 @@ import org.stt.gui.jfx.text.HighlightingOverlay;
 import org.stt.gui.jfx.text.PopupAtCaretPlacer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
-import org.stt.reporting.QuickTimeReportGenerator;
-import org.stt.search.ItemSearcher;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.validation.ItemAndDateValidator;
 
 import java.awt.*;
@@ -103,9 +103,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     ViewAdapter viewAdapter;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
-    private ItemSearcher searcher;
+    private TimeTrackingItemQueries searcher;
     private AchievementService achievementService;
     private ExecutorService executorService;
+    private ObservableList<AdditionalPaneBuilder> additionals = FXCollections.observableArrayList();
 
     @Inject
     STTApplication(STTOptionDialogs STTOptionDialogs,
@@ -117,7 +118,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
                    CommandTextConfig commandTextConfig,
                    ItemAndDateValidator validator,
-                   ItemSearcher searcher,
+                   TimeTrackingItemQueries searcher,
                    AchievementService achievementService,
                    ExecutorService executorService) {
         this.executorService = checkNotNull(executorService);
@@ -286,6 +287,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         }
     }
 
+    public void addAdditional(AdditionalPaneBuilder builder) {
+        additionals.add(builder);
+    }
+
     public class ViewAdapter {
 
         final Stage stage;
@@ -327,9 +332,12 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            ObservableList<Node> additionalPanels = additionals.getChildren();
+            for (AdditionalPaneBuilder builder: STTApplication.this.additionals) {
+                additionalPanels.add(builder.build());
+            }
+            STTApplication.this.additionals.clear();
 
-            Pane panel = new QuickTimeReportViewBuilder(localization, new SimpleObjectProperty<QuickTimeReportGenerator.QuickTimeReport>(new QuickTimeReportGenerator.QuickTimeReport())).build();
-            additionals.getChildren().add(panel);
             overlay = new HighlightingOverlay(commandText);
             commandHighlighter = new CommandHighlighter(overlay);
 

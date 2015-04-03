@@ -1,5 +1,7 @@
 package org.stt.reporting;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Duration;
@@ -16,11 +18,13 @@ import java.util.TreeMap;
  * Reads information about working times from the configured workingTimes file
  * and aggregates them into {@link WorkingtimeItem}s
  */
+@Singleton
 public class WorkingtimeItemProvider {
 
 	private Map<Integer, WorkingtimeItem> defaultWorkingHours = new HashMap<>();
 	private Map<DateTime, WorkingtimeItem> workingHoursPerDay = new HashMap<>();
 
+	@Inject
 	public WorkingtimeItemProvider(Configuration configuration) {
 		populateHoursMapsFromFile(configuration.getWorkingTimesFile());
 	}

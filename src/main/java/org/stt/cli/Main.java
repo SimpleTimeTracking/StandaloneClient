@@ -12,8 +12,8 @@ import org.stt.persistence.*;
 import org.stt.persistence.stt.STTItemPersister;
 import org.stt.persistence.stt.STTItemReader;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.search.DefaultItemSearcher;
-import org.stt.search.ItemSearcher;
+import org.stt.query.DefaultTimeTrackingItemQueries;
+import org.stt.query.TimeTrackingItemQueries;
 
 import java.io.*;
 import java.util.*;
@@ -33,7 +33,7 @@ public class Main {
 	private final File timeFile;
 
 	private ItemPersister itemPersister;
-	private ItemSearcher itemSearcher;
+	private TimeTrackingItemQueries timeTrackingItemQueries;
 
 	public Main(Configuration configuration) {
 		this.configuration = checkNotNull(configuration);
@@ -45,11 +45,11 @@ public class Main {
 			throws IOException {
 		String comment = Joiner.on(" ").join(args);
 
-		Optional<TimeTrackingItem> currentItem = itemSearcher
+		Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
 				.getCurrentTimeTrackingitem();
 
 		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
-				itemPersister, itemSearcher);
+				itemPersister, timeTrackingItemQueries);
 		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
 
 		if (currentItem.isPresent()) {
@@ -119,7 +119,7 @@ public class Main {
 	private void fin(Collection<String> args, PrintStream printTo)
 			throws IOException {
 		try (ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
-				itemPersister, itemSearcher)) {
+				itemPersister, timeTrackingItemQueries)) {
 			Optional<TimeTrackingItem> updatedItem = tiw
 					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN
 							+ " " + Joiner.on(" ").join(args));
@@ -179,10 +179,10 @@ public class Main {
 		try (STTItemPersister itemPersister = new STTItemPersister(
 				createReaderProvider(), createWriterProvider())) {
 
-			DefaultItemSearcher searcher = createNewSearcher();
+			DefaultTimeTrackingItemQueries searcher = createNewSearcher();
 
 			this.itemPersister = itemPersister;
-			itemSearcher = searcher;
+			timeTrackingItemQueries = searcher;
 
 			String mainOperator = args.remove(0);
 			if (mainOperator.startsWith("o")) {
@@ -221,8 +221,8 @@ public class Main {
 		printTo.println(usage);
 	}
 
-	private DefaultItemSearcher createNewSearcher() {
-		return new DefaultItemSearcher(createNewReaderProvider(timeFile));
+	private DefaultTimeTrackingItemQueries createNewSearcher() {
+		return new DefaultTimeTrackingItemQueries(createNewReaderProvider(timeFile));
 	}
 
 	private ReportPrinter createNewReportPrinter(File source) {

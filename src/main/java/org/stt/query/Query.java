@@ -1,4 +1,4 @@
-package org.stt.search;
+package org.stt.query;
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;

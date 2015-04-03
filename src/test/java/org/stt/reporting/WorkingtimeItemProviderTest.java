@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Duration;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,8 +51,8 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new DateTime(
-				2014, 7, 1, 0, 0, 0));
+		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
+				2014, 7, 1));
 
 		// THEN
 		assertThat(new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR),
@@ -63,8 +64,8 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new DateTime(
-				2014, 7, 7, 0, 0, 0));
+		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
+				2014, 7, 7));
 
 		// THEN
 
@@ -77,8 +78,8 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new DateTime(
-				2014, 1, 1, 0, 0, 0));
+		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
+				2014, 1, 1));
 
 		// THEN
 		assertThat(new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR),
@@ -90,8 +91,8 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new DateTime(
-				2014, 2, 2, 0, 0, 0));
+		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
+				2014, 2, 2));
 
 		// THEN
 		Duration min = new Duration(10 * DateTimeConstants.MILLIS_PER_HOUR);

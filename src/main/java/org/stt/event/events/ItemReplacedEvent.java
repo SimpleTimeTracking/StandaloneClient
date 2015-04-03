@@ -7,7 +7,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Created by dante on 18.03.15.
  */
-public class ItemReplacedEvent {
+public class ItemReplacedEvent implements ItemModificationEvent {
     public final TimeTrackingItem beforeUpdate;
     public final TimeTrackingItem afterUpdate;
 

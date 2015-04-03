@@ -1,13 +1,12 @@
-package org.stt.search;
+package org.stt.query;
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
 
 import java.util.Collection;
 
-public interface ItemSearcher {
+public interface TimeTrackingItemQueries {
 	/**
 	 * Returns the current item that is being tracked or <i>absent</i> if none
 	 * is active or available.
