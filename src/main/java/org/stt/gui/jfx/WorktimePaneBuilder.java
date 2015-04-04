@@ -69,9 +69,15 @@ public class WorktimePaneBuilder implements AdditionalPaneBuilder {
         Label weekWorktimeLabel = new Label();
         weekWorktimeLabel.textProperty().bind(STTBindings.formattedDuration(weekWorktime));
 
-        elements.add(new HBox(4, new Label(i18n.getString("remainingWorktimeToday")), remainingWorktimeToday));
-        elements.add(new HBox(4, new Label(i18n.getString("weekWorktime")), weekWorktimeLabel));
+        elements.add(hbox(4, new Label(i18n.getString("remainingWorktimeToday")), remainingWorktimeToday));
+        elements.add(hbox(4, new Label(i18n.getString("weekWorktime")), weekWorktimeLabel));
 
         return flowPane;
+    }
+
+    private HBox hbox(double spacing, Node... nodes) {
+        HBox hBox = new HBox(spacing);
+        hBox.getChildren().addAll(nodes);
+        return hBox;
     }
 }
