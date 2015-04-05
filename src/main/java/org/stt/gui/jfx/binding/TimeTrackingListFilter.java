@@ -1,19 +1,13 @@
 package org.stt.gui.jfx.binding;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.google.common.base.Preconditions;
 import javafx.beans.binding.ListBinding;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import org.stt.model.TimeTrackingItem;
 
-import com.google.common.base.Preconditions;
+import java.util.*;
 
 public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 

@@ -5,10 +5,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.stt.event.events.ItemDeletedEvent;
-import org.stt.event.events.ItemInsertedEvent;
 import org.stt.event.events.ItemModificationEvent;
-import org.stt.event.events.ItemReplacedEvent;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.IOException;

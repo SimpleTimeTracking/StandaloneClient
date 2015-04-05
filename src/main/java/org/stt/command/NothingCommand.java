@@ -1,7 +1,5 @@
 package org.stt.command;
 
-import org.stt.persistence.ItemPersister;
-
 /**
  * Created by dante on 14.03.15.
  */

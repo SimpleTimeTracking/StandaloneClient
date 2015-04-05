@@ -1,8 +1,6 @@
 package org.stt.gui.jfx;
 
 import com.google.inject.Inject;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -28,7 +26,7 @@ public class DeleteOrKeepDialog {
     private ResourceBundle localization;
 
     public enum Result {
-        DELETE, KEEP;
+        DELETE, KEEP
     }
 
     @Inject

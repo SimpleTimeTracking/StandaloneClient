@@ -6,14 +6,15 @@ import com.google.inject.Provider;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.analysis.WorktimeCategorizer;
-import org.stt.query.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.*;
 import org.stt.persistence.stt.STTItemPersister;
 import org.stt.persistence.stt.STTItemReader;
-import org.stt.reporting.WorkingtimeItemProvider;
+import org.stt.query.DNFClause;
 import org.stt.query.DefaultTimeTrackingItemQueries;
+import org.stt.query.FilteredItemReader;
 import org.stt.query.TimeTrackingItemQueries;
+import org.stt.reporting.WorkingtimeItemProvider;
 
 import java.io.*;
 import java.util.*;
@@ -84,8 +85,10 @@ public class Main {
 
 		ItemReader readFrom = createNewReaderProvider(timeFile).provideReader();
 
-		ItemReader reader = new SubstringReaderFilter(readFrom, Joiner.on(" ")
+		DNFClause searchFilter = new DNFClause();
+		searchFilter.withCommentContains(Joiner.on(" ")
 				.join(args));
+		ItemReader reader = new FilteredItemReader(readFrom, searchFilter);
 		sortedItems.addAll(IOUtil.readAll(reader));
 
 		Set<String> sortedUniqueComments = new HashSet<>(sortedItems.size());

@@ -1,18 +1,16 @@
 package org.stt.gui.jfx.binding;
 
-import java.util.Iterator;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
+import com.google.common.base.Preconditions;
 import javafx.beans.binding.SetBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
-
 import org.stt.model.TimeTrackingItem;
 
-import com.google.common.base.Preconditions;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class FirstItemOfDaySet extends SetBinding<TimeTrackingItem> {
 

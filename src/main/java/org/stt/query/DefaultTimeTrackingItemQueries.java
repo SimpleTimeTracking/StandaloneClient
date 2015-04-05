@@ -86,14 +86,14 @@ public class DefaultTimeTrackingItemQueries implements TimeTrackingItemQueries {
 	}
 
     @Override
-    public Collection<TimeTrackingItem> queryItems(Query query) {
+    public Collection<TimeTrackingItem> queryItems(DNFClause dnfClause) {
         Collection<TimeTrackingItem> result = new ArrayList<>();
         try (ItemReader reader = provider.provideReader()) {
-			QueryMatcher queryMatcher = new QueryMatcher(query);
+			DNFClauseMatcher DNFClauseMatcher = new DNFClauseMatcher(dnfClause);
 			Optional<TimeTrackingItem> read;
             while ((read = reader.read()).isPresent()) {
                 TimeTrackingItem item = read.get();
-				if (queryMatcher.matches(item)) {
+				if (DNFClauseMatcher.matches(item)) {
 					result.add(item);
 				}
             }

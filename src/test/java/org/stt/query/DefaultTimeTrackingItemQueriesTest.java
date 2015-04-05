@@ -235,10 +235,10 @@ public class DefaultTimeTrackingItemQueriesTest {
         Interval queryInterval = new Interval(500, 1000);
         givenReaderReturnsTrackingTimesForStartDates(new DateTime[]{new DateTime(100), new DateTime(500), new DateTime(1000), new DateTime(1500)});
 
-        Query query = new Query();
-        query.withStartBetween(queryInterval);
+        DNFClause dnfClause = new DNFClause();
+        dnfClause.withStartBetween(queryInterval);
         // WHEN
-        Collection<TimeTrackingItem> result = sut.queryItems(query);
+        Collection<TimeTrackingItem> result = sut.queryItems(dnfClause);
 
         // THEN
         assertThat(mapItemToStartDateTime(result), Matchers.<Collection<DateTime>>is(Arrays.asList(new DateTime[]{new DateTime(500)})));
@@ -249,11 +249,11 @@ public class DefaultTimeTrackingItemQueriesTest {
         // GIVEN
         givenReaderReturnsTrackingTimesForStartDates(new DateTime[]{new DateTime(100), new DateTime(500), new DateTime(1000), new DateTime(1500)});
 
-        Query query = new Query();
-        query.withStartBefore(new DateTime(500));
+        DNFClause dnfClause = new DNFClause();
+        dnfClause.withStartBefore(new DateTime(500));
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.queryItems(query);
+        Collection<TimeTrackingItem> result = sut.queryItems(dnfClause);
 
         // THEN
         assertThat(mapItemToStartDateTime(result), Matchers.<Collection<DateTime>>is(Arrays.asList(new DateTime[]{new DateTime(100)})));
@@ -264,11 +264,11 @@ public class DefaultTimeTrackingItemQueriesTest {
         // GIVEN
         givenReaderReturnsTrackingTimesForStartDates(new DateTime[]{new DateTime(100), new DateTime(500), new DateTime(1000), new DateTime(1500)});
 
-        Query query = new Query();
-        query.withStartNotBefore(new DateTime(1000));
+        DNFClause dnfClause = new DNFClause();
+        dnfClause.withStartNotBefore(new DateTime(1000));
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.queryItems(query);
+        Collection<TimeTrackingItem> result = sut.queryItems(dnfClause);
 
         // THEN
         assertThat(mapItemToStartDateTime(result), Matchers.<Collection<DateTime>>is(Arrays.asList(new DateTime[]{new DateTime(1000), new DateTime(1500)})));
@@ -279,11 +279,11 @@ public class DefaultTimeTrackingItemQueriesTest {
         // GIVEN
         TimeTrackingItem expectedResult = new TimeTrackingItem(null, new DateTime(800), new DateTime(1000));
         givenReaderReturns(expectedResult, new TimeTrackingItem(null, new DateTime(1000), new DateTime(1200)));
-        Query query = new Query();
-        query.withEndNotAfter(new DateTime(1000));
+        DNFClause DNFClause = new DNFClause();
+        DNFClause.withEndNotAfter(new DateTime(1000));
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.queryItems(query);
+        Collection<TimeTrackingItem> result = sut.queryItems(DNFClause);
 
         // THEN
         assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Collections.singletonList(expectedResult)));
@@ -294,11 +294,11 @@ public class DefaultTimeTrackingItemQueriesTest {
         // GIVEN
         TimeTrackingItem expectedResult = new TimeTrackingItem(null, new DateTime(800), new DateTime(999));
         givenReaderReturns(expectedResult, new TimeTrackingItem(null, new DateTime(800), new DateTime(1000)));
-        Query query = new Query();
-        query.withEndBefore(new DateTime(1000));
+        DNFClause dnfClause = new DNFClause();
+        dnfClause.withEndBefore(new DateTime(1000));
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.queryItems(query);
+        Collection<TimeTrackingItem> result = sut.queryItems(dnfClause);
 
         // THEN
         assertThat(result, CoreMatchers.<Collection<TimeTrackingItem>>is(Collections.singletonList(expectedResult)));
@@ -309,11 +309,11 @@ public class DefaultTimeTrackingItemQueriesTest {
         // GIVEN
         TimeTrackingItem expectedResult = new TimeTrackingItem(null, new DateTime(2015, 1, 3, 1, 1), new DateTime(2015, 1, 3, 3, 3));
         givenReaderReturns(expectedResult, new TimeTrackingItem(null, new DateTime(800), new DateTime(1000)));
-        Query query = new Query();
-        query.withPeriodAtDay(new LocalDate(2015, 1, 3));
+        DNFClause dnfClause = new DNFClause();
+        dnfClause.withPeriodAtDay(new LocalDate(2015, 1, 3));
 
         // WHEN
-        Collection<TimeTrackingItem> result = sut.queryItems(query);
+        Collection<TimeTrackingItem> result = sut.queryItems(dnfClause);
 
 
         // THEN

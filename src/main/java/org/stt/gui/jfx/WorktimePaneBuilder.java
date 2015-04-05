@@ -1,12 +1,9 @@
 package org.stt.gui.jfx;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -18,7 +15,6 @@ import org.stt.event.TimePassedEvent;
 import org.stt.event.events.ItemModificationEvent;
 import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.query.WorkTimeQueries;
-import org.stt.time.DateTimeHelper;
 
 import java.util.ResourceBundle;
 import java.util.logging.Logger;

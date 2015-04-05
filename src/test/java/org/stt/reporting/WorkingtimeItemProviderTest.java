@@ -1,7 +1,6 @@
 package org.stt.reporting;
 
 import org.apache.commons.io.FileUtils;
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;

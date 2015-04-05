@@ -5,13 +5,8 @@ import com.google.inject.Singleton;
 import org.joda.time.*;
 import org.stt.analysis.ItemCategorizer;
 import org.stt.model.TimeTrackingItem;
-import org.stt.query.TimeTrackingItemQueries;
-import org.stt.query.Query;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.time.DateTimeHelper;
 
-
-import javax.activation.DataHandler;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -54,10 +49,10 @@ public class WorkTimeQueries {
 
     public Duration queryWorktime(Interval interval) {
         Duration workedTime = Duration.ZERO;
-        Query query = new Query();
-        query.withStartNotBefore(interval.getStart());
-        query.withStartBefore(interval.getEnd());
-        for (TimeTrackingItem item: timeTrackingItemQueries.queryItems(query)) {
+        DNFClause dnfClause = new DNFClause();
+        dnfClause.withStartNotBefore(interval.getStart());
+        dnfClause.withStartBefore(interval.getEnd());
+        for (TimeTrackingItem item: timeTrackingItemQueries.queryItems(dnfClause)) {
             if (itemCategorizer.getCategory(item.getComment().or("")) == ItemCategorizer.ItemCategory.WORKTIME) {
                 DateTime end = item.getEnd().or(interval.getEnd());
                 workedTime = workedTime.plus(new Duration(item.getStart(), end));

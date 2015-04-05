@@ -117,6 +117,6 @@ public class STTOptionDialogs {
     }
 
     public enum Result {
-        PERFORM_ACTION, ABORT;
+        PERFORM_ACTION, ABORT
     }
 }

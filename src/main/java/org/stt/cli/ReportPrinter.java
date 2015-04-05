@@ -2,10 +2,6 @@ package org.stt.cli;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import java.io.PrintStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.io.IOUtils;
@@ -13,9 +9,8 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.Interval;
 import org.stt.Configuration;
-import org.stt.query.Query;
-import org.stt.query.StartDateReaderFilter;
-import org.stt.query.SubstringReaderFilter;
+import org.stt.analysis.ItemCategorizer;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsParser.ReportStartContext;
@@ -23,13 +18,18 @@ import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.analysis.ItemCategorizer;
-import org.stt.analysis.ItemCategorizer.ItemCategory;
+import org.stt.query.DNFClause;
+import org.stt.query.FilteredItemReader;
 import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
 import org.stt.time.DateTimeHelper;
+
+import java.io.PrintStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Prints a nicely formatted report of {@link TimeTrackingItem}s
@@ -156,10 +156,13 @@ public class ReportPrinter {
 			DateTime reportStart, DateTime reportEnd, boolean truncateLongLines) {
 		ItemReader reportReader = readFrom.provideReader();
 
-		SubstringReaderFilter substFilter = new SubstringReaderFilter(
-				reportReader, searchString);
+		DNFClause searchStringClause = new DNFClause();
+		if (searchString != null) {
+			searchStringClause.withCommentContains(searchString);
+		}
+		FilteredItemReader substFilter = new FilteredItemReader(reportReader, searchStringClause);
 
-		StartDateReaderFilter dateFilter = createStartDateFilterForDays(
+		FilteredItemReader dateFilter = createStartDateFilterForDays(
 				substFilter, reportStart, reportEnd);
 
 		SummingReportGenerator reporter = new SummingReportGenerator(dateFilter);
@@ -262,12 +265,12 @@ public class ReportPrinter {
 	 * Creates a filter which only accepts items with start date of "today minus
 	 * the given days" to "today"
 	 */
-	private StartDateReaderFilter createStartDateFilterForDays(
+	private FilteredItemReader createStartDateFilterForDays(
 			ItemReader readerToFilter, DateTime start, DateTime end) {
-		Query query = new Query();
-		query.withStartBetween(new Interval(start, end));
-		return new StartDateReaderFilter(
-                readerToFilter, query);
+		DNFClause dnfClause = new DNFClause();
+		dnfClause.withStartBetween(new Interval(start, end));
+		return new FilteredItemReader(
+                readerToFilter, dnfClause);
 	}
 
 	private void printTruncatedString(StringBuilder toPrint,

@@ -25,7 +25,7 @@ public interface TimeTrackingItemQueries {
 	 */
 	Collection<TimeTrackingItem> queryFirstNItems(Optional<DateTime> start, Optional<DateTime> end, Optional<Integer> maxItems);
 
-    Collection<TimeTrackingItem> queryItems(Query query);
+    Collection<TimeTrackingItem> queryItems(DNFClause dnfClause);
 
     Collection<TimeTrackingItem> queryAllItems();
 }

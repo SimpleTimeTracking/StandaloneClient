@@ -10,7 +10,7 @@ import org.stt.persistence.ItemPersister;
 import org.stt.query.TimeTrackingItemQueries;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class CommandParserTest {
     private CommandParser sut;

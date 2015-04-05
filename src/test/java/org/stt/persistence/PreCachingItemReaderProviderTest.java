@@ -10,7 +10,6 @@ import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
 
 public class PreCachingItemReaderProviderTest {
     @Test

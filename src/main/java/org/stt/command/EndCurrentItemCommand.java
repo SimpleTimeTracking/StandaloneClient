@@ -1,6 +1,5 @@
 package org.stt.command;
 
-import org.stt.command.Command;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 

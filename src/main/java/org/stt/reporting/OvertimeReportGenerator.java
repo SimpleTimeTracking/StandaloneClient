@@ -1,7 +1,6 @@
 package org.stt.reporting;
 
 import com.google.common.base.Optional;
-import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.stt.analysis.ItemCategorizer;

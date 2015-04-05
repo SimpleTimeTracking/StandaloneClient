@@ -1,8 +1,5 @@
 package org.stt.gui.jfx;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import java.util.ResourceBundle;
-
 import com.google.inject.Inject;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -13,6 +10,10 @@ import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
 import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.model.TimeTrackingItemFilter;
+
+import java.util.ResourceBundle;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 class TimeTrackingItemCellFactory implements
 		Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>> {

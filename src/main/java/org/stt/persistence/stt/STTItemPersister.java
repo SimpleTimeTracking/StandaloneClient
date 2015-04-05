@@ -56,7 +56,7 @@ public class STTItemPersister implements ItemPersister {
 			StringWriter stringWriter = new StringWriter();
 			PrintWriter printWriter = new PrintWriter(stringWriter);
 			String lineOfItemToDelete = converter.timeTrackingItemToLine(item);
-			String currentLine = null;
+			String currentLine;
 			while ((currentLine = reader.readLine()) != null) {
 				// only write lines which should not be deleted
 				if (!currentLine.equals(lineOfItemToDelete)) {

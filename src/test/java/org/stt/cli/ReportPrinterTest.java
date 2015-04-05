@@ -1,30 +1,28 @@
 package org.stt.cli;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
-import org.stt.time.DateTimeHelper;
 import org.stt.ItemReaderTestHelper;
+import org.stt.analysis.ItemCategorizer;
+import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
-import org.stt.analysis.ItemCategorizer;
-import org.stt.analysis.ItemCategorizer.ItemCategory;
 import org.stt.reporting.WorkingtimeItemProvider;
+import org.stt.time.DateTimeHelper;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
-
 import static org.junit.Assert.assertThat;
-
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.anyString;
 
