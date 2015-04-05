@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+import org.stt.query.SubstringReaderFilter;
 
 import java.io.IOException;
 

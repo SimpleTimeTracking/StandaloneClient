@@ -1,4 +1,4 @@
-package org.stt.filter;
+package org.stt.query;
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
@@ -16,13 +16,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class StartDateReaderFilter implements ItemReader {
 
 	private final ItemReader reader;
-	private final DateTime from;
-	private final DateTime to;
+	private final QueryMatcher queryMatcher;
 
-	public StartDateReaderFilter(ItemReader reader, DateTime from, DateTime to) {
+	public StartDateReaderFilter(ItemReader reader, Query query) {
 		this.reader = checkNotNull(reader);
-		this.from = checkNotNull(from);
-		this.to = checkNotNull(to);
+		this.queryMatcher = new QueryMatcher(checkNotNull(query));
 	}
 
 	@Override
@@ -30,8 +28,7 @@ public class StartDateReaderFilter implements ItemReader {
 
 		Optional<TimeTrackingItem> item;
 		while ((item = reader.read()).isPresent()) {
-			DateTime start = item.get().getStart();
-			if (to.isAfter(start) && !start.isBefore(from)) {
+			if (queryMatcher.matches(item.get())) {
 				return item;
 			}
 		}

@@ -3,6 +3,7 @@ package org.stt.filter;
 import com.google.common.base.Optional;
 import org.hamcrest.collection.IsCollectionWithSize;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.BDDMockito.BDDMyOngoingStubbing;
@@ -11,6 +12,8 @@ import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
+import org.stt.query.Query;
+import org.stt.query.StartDateReaderFilter;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -30,12 +33,14 @@ public class StartDateReaderFilterTest {
 	}
 
 	@Test
-	public void shouldContainStartInclusiveAndEndExclusive() throws IOException {
+	public void shouldFilterUsingQuery() throws IOException {
 		// GIVEN
 		DateTime from = new DateTime(2000, 1, 1, 0, 0);
 		DateTime to = new DateTime(2000, 1, 2, 0, 0);
 		givenReaderReturnsItemsFor(from, to);
-		sut = new StartDateReaderFilter(reader, from, to);
+		Query query = new Query();
+		query.withStartBetween(new Interval(from, to));
+		sut = new StartDateReaderFilter(reader, query);
 
 		// WHEN
 		Collection<TimeTrackingItem> result = IOUtil.readAll(sut);

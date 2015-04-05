@@ -10,7 +10,9 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ObservableValue;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.stt.filter.StartDateReaderFilter;
+import org.joda.time.Interval;
+import org.stt.query.Query;
+import org.stt.query.StartDateReaderFilter;
 import org.stt.model.ReportingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemReaderProvider;
@@ -57,10 +59,11 @@ public class ReportBinding extends ObjectBinding<Report> {
 	}
 
 	private Report createSummaryReportFor() {
+		Query query = new Query();
+		query.withStartBetween(new Interval(reportStart.getValue(), reportEnd.getValue()));
 		try (ItemReader itemReader = readerProvider.provideReader();
 				StartDateReaderFilter filter = new StartDateReaderFilter(
-						itemReader, reportStart.getValue(),
-						reportEnd.getValue())) {
+						itemReader, query)) {
 			SummingReportGenerator reportGenerator = new SummingReportGenerator(
 					filter);
 			return reportGenerator.createReport();

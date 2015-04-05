@@ -6,7 +6,7 @@ import com.google.inject.Provider;
 import org.stt.Configuration;
 import org.stt.ToItemWriterCommandHandler;
 import org.stt.analysis.WorktimeCategorizer;
-import org.stt.filter.SubstringReaderFilter;
+import org.stt.query.SubstringReaderFilter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.*;
 import org.stt.persistence.stt.STTItemPersister;

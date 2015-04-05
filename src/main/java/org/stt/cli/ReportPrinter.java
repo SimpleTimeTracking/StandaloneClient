@@ -11,9 +11,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.joda.time.Interval;
 import org.stt.Configuration;
-import org.stt.filter.StartDateReaderFilter;
-import org.stt.filter.SubstringReaderFilter;
+import org.stt.query.Query;
+import org.stt.query.StartDateReaderFilter;
+import org.stt.query.SubstringReaderFilter;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsParser.ReportStartContext;
@@ -262,8 +264,10 @@ public class ReportPrinter {
 	 */
 	private StartDateReaderFilter createStartDateFilterForDays(
 			ItemReader readerToFilter, DateTime start, DateTime end) {
-        return new StartDateReaderFilter(
-                readerToFilter, start, end);
+		Query query = new Query();
+		query.withStartBetween(new Interval(start, end));
+		return new StartDateReaderFilter(
+                readerToFilter, query);
 	}
 
 	private void printTruncatedString(StringBuilder toPrint,

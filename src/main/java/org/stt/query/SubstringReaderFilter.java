@@ -1,4 +1,4 @@
-package org.stt.filter;
+package org.stt.query;
 
 import com.google.common.base.Optional;
 import org.stt.model.TimeTrackingItem;

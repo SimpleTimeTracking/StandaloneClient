@@ -89,22 +89,13 @@ public class DefaultTimeTrackingItemQueries implements TimeTrackingItemQueries {
     public Collection<TimeTrackingItem> queryItems(Query query) {
         Collection<TimeTrackingItem> result = new ArrayList<>();
         try (ItemReader reader = provider.provideReader()) {
-            Optional<TimeTrackingItem> read;
+			QueryMatcher queryMatcher = new QueryMatcher(query);
+			Optional<TimeTrackingItem> read;
             while ((read = reader.read()).isPresent()) {
                 TimeTrackingItem item = read.get();
-                if (query.startBefore.isPresent() && !item.getStart().isBefore(query.startBefore.get())) {
-                    continue;
-                }
-                if (query.startNotBefore.isPresent() && item.getStart().isBefore(query.startNotBefore.get())) {
-                    continue;
-                }
-                if (query.endNotAfter.isPresent() && (!item.getEnd().isPresent() || item.getEnd().get().isAfter(query.endNotAfter.get()))) {
-                    continue;
-                }
-				if (query.endBefore.isPresent() && (!item.getEnd().isPresent() || !item.getEnd().get().isBefore(query.endBefore.get()))) {
-					continue;
+				if (queryMatcher.matches(item)) {
+					result.add(item);
 				}
-                result.add(item);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
