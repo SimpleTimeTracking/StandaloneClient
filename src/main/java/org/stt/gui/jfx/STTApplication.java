@@ -271,6 +271,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Override
     public void continueItem(TimeTrackingItem item) {
+        LOG.severe("Continuing item: " + item);
         commandParser.resumeItemCommand(item).execute();
         viewAdapter.shutdown();
     }

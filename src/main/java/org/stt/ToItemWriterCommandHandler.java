@@ -63,9 +63,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
 
     @Override
     public void resumeGivenItem(TimeTrackingItem item) {
-        TimeTrackingItem newItem = new TimeTrackingItem(
-                item.getComment().get(), DateTime.now());
-        parser.resumeItemCommand(newItem).execute();
+        parser.resumeItemCommand(item).execute();
     }
 
     @Override

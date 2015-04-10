@@ -69,7 +69,9 @@ public class CommandParser {
     }
 
     public Command resumeItemCommand(final TimeTrackingItem item) {
-        return new ResumeCommand(persister, item);
+        TimeTrackingItem newItem = new TimeTrackingItem(
+                item.getComment().get(), DateTime.now());
+        return new ResumeCommand(persister, newItem);
     }
 
     public Command deleteCommandFor(TimeTrackingItem item) {
