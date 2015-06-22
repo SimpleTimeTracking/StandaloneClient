@@ -12,7 +12,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.github.ben-manes:gradle-versions-plugin:0.8'
+    classpath 'com.github.ben-manes:gradle-versions-plugin:0.10.1'
     // classpath 'org.codehaus.groovy:groovy-backports-compat23:2.3.5' // uncomment if you're using Gradle 1.x
   }
 }
@@ -70,9 +70,9 @@ dependencies {
 		compile files("$javaHome/lib/jfxrt.jar")
 	}
 	compile 'com.google.guava:guava:18.0'
-	compile 'com.google.inject:guice:3.0'
+	compile 'com.google.inject:guice:4.0'
 	compile 'commons-io:commons-io:2.4'
-	compile 'joda-time:joda-time:2.7'
+	compile 'joda-time:joda-time:2.8.1'
 	compile 'org.yaml:snakeyaml:1.15'
 
 	testCompile 'junit:junit-dep:4.11'
