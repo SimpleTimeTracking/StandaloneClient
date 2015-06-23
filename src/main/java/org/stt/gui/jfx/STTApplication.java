@@ -148,7 +148,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     }
 
     private void updateAchievements() {
-        viewAdapter.updateAchievements(achievementService.getReachedAchievments());
+        viewAdapter.updateAchievements(achievementService.getReachedAchievements());
     }
 
 
@@ -278,7 +278,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     @Override
     public void edit(TimeTrackingItem item) {
-        setCommandText(commandParser.itemToCommand(item), item.getComment().or("").length());
+        setCommandText(CommandParser.itemToCommand(item), item.getComment().or("").length());
     }
 
     @Override

@@ -45,7 +45,7 @@ public class AchievementService implements Service {
 		eventBus.post(new AchievementsUpdated());
 	}
 
-    public Collection<Achievement> getReachedAchievments() {
+    public Collection<Achievement> getReachedAchievements() {
         ArrayList<Achievement> result = new ArrayList<>();
         for (Achievement achievement: achievements) {
             if (achievement.isAchieved()) {
