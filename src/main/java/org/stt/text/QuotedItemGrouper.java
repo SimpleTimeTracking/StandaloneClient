@@ -1,6 +1,4 @@
-package org.stt.reporting;
-
-import org.stt.analysis.ItemGrouper;
+package org.stt.text;
 
 import java.util.ArrayList;
 import java.util.List;

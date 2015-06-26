@@ -1,4 +1,4 @@
-package org.stt;
+package org.stt.cli;
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;

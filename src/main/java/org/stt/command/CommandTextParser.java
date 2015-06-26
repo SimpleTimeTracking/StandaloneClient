@@ -14,7 +14,7 @@ import static org.stt.g4.EnglishCommandsParser.CommandContext;
 /**
  * Created by dante on 06.12.14.
  */
-public class ItemGenerator {
+public class CommandTextParser {
     private EnglishCommandsVisitor<Object> parserVisitor = new MyEnglishCommandsBaseVisitor();
 
     public Object walk(final TokenStream stream, CommandContext commandContext) {

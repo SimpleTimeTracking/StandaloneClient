@@ -1,17 +1,15 @@
-package org.stt.event.events;
-
-import org.stt.model.TimeTrackingItem;
+package org.stt.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by dante on 18.03.15.
  */
-public class ItemReplacedEvent implements ItemModificationEvent {
+public class ItemReplaced implements ItemModification {
     public final TimeTrackingItem beforeUpdate;
     public final TimeTrackingItem afterUpdate;
 
-    public ItemReplacedEvent(TimeTrackingItem beforeUpdate, TimeTrackingItem afterUpdate) {
+    public ItemReplaced(TimeTrackingItem beforeUpdate, TimeTrackingItem afterUpdate) {
         this.beforeUpdate = checkNotNull(beforeUpdate);
         this.afterUpdate = checkNotNull(afterUpdate);
     }

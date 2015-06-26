@@ -1,4 +1,4 @@
-package org.stt.analysis;
+package org.stt.text;
 
 public interface ItemCategorizer {
 

@@ -1,4 +1,4 @@
-package org.stt.analysis;
+package org.stt.text;
 
 import com.google.common.base.Optional;
 import com.google.inject.Singleton;

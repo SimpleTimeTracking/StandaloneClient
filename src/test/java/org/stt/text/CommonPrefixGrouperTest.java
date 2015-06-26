@@ -1,4 +1,4 @@
-package org.stt.analysis;
+package org.stt.text;
 
 import org.joda.time.DateTime;
 import org.junit.Before;

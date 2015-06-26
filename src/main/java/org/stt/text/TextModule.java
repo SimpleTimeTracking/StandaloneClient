@@ -1,4 +1,4 @@
-package org.stt.analysis;
+package org.stt.text;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -11,8 +11,8 @@ import java.util.logging.Logger;
 /**
  * Created by dante on 04.12.14.
  */
-public class AnalysisModule extends AbstractModule {
-    private static final Logger LOG = Logger.getLogger(AnalysisModule.class.getName());
+public class TextModule extends AbstractModule {
+    private static final Logger LOG = Logger.getLogger(TextModule.class.getName());
 
     @Override
     protected void configure() {

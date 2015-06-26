@@ -1,6 +1,6 @@
-package org.stt;
+package org.stt.config;
 
-import org.stt.config.BaseConfig;
+import org.stt.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;

@@ -1,4 +1,4 @@
-package org.stt;
+package org.stt.cli;
 
 import com.google.common.base.Optional;
 import com.google.common.eventbus.Subscribe;
@@ -22,7 +22,6 @@ public class ToItemWriterCommandHandler implements CommandHandler {
             .getLogger(ToItemWriterCommandHandler.class.getName());
     private final ItemPersister itemWriter;
     private final TimeTrackingItemQueries timeTrackingItemQueries;
-    private ItemGenerator itemGenerator = new ItemGenerator();
     private CommandParser parser;
 
     @Inject
