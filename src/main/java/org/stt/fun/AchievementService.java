@@ -2,7 +2,6 @@ package org.stt.fun;
 
 import com.google.common.eventbus.EventBus;
 import org.stt.Service;
-import org.stt.event.events.AchievementsUpdated;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 

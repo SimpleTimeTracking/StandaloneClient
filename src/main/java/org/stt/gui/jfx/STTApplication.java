@@ -42,15 +42,15 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.joda.time.DateTime;
-import org.stt.analysis.ExpansionProvider;
+import org.stt.text.ExpansionProvider;
 import org.stt.command.Command;
 import org.stt.command.CommandParser;
 import org.stt.command.NewItemCommand;
 import org.stt.command.NothingCommand;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
-import org.stt.event.ShutdownRequest;
-import org.stt.event.events.AchievementsUpdated;
+import org.stt.event.ShuttingDown;
+import org.stt.fun.AchievementsUpdated;
 import org.stt.fun.Achievement;
 import org.stt.fun.AchievementService;
 import org.stt.g4.EnglishCommandsLexer;
@@ -123,20 +123,20 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    TimeTrackingItemQueries searcher,
                    AchievementService achievementService,
                    ExecutorService executorService) {
+        checkNotNull(timeTrackingItemListConfig);
         this.executorService = checkNotNull(executorService);
         this.achievementService = checkNotNull(achievementService);
         this.searcher = checkNotNull(searcher);
         this.sttOptionDialogs = checkNotNull(STTOptionDialogs);
         this.validator = checkNotNull(validator);
         this.eventBus = checkNotNull(eventBus);
-        eventBus.register(this);
         this.expansionProvider = checkNotNull(expansionProvider);
         this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
         this.commandParser = checkNotNull(commandParser);
         this.localization = checkNotNull(resourceBundle);
-        checkNotNull(timeTrackingItemListConfig);
         autoCompletionPopup = checkNotNull(commandTextConfig).isAutoCompletionPopup();
 
+        eventBus.register(this);
         filteredList = new TimeTrackingListFilter(allItems, currentCommand,
                 timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
         askBeforeDeleting = timeTrackingItemListConfig.isAskBeforeDeleting();
@@ -465,7 +465,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             try {
                 stage.close();
             } finally {
-                eventBus.post(new ShutdownRequest());
+                eventBus.post(new ShuttingDown());
             }
         }
 

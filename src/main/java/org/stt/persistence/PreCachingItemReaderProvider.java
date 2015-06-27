@@ -5,7 +5,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.stt.event.events.ItemModificationEvent;
+import org.stt.model.ItemModified;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class PreCachingItemReaderProvider implements ItemReaderProvider {
     }
 
     @Subscribe
-    public void sourceChanged(ItemModificationEvent event) {
+    public void sourceChanged(ItemModified event) {
         rereadSource();
     }
 

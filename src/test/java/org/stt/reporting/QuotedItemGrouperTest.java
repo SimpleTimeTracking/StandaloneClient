@@ -1,6 +1,7 @@
 package org.stt.reporting;
 
 import org.junit.Test;
+import org.stt.text.QuotedItemGrouper;
 
 import java.util.Arrays;
 import java.util.List;

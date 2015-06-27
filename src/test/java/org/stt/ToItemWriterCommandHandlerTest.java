@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.stt.cli.ToItemWriterCommandHandler;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 import org.stt.query.TimeTrackingItemQueries;

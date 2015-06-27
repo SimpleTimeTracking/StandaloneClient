@@ -11,11 +11,12 @@ import javafx.stage.Stage;
 import org.stt.BaseModule;
 import org.stt.I18NModule;
 import org.stt.Service;
-import org.stt.YamlConfigService;
-import org.stt.analysis.AnalysisModule;
+import org.stt.config.YamlConfigService;
+import org.stt.config.ConfigModule;
+import org.stt.text.TextModule;
 import org.stt.event.EventBusModule;
 import org.stt.event.ItemLogService;
-import org.stt.event.ShutdownRequest;
+import org.stt.event.ShuttingDown;
 import org.stt.event.TimePassedEvent;
 import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
@@ -57,8 +58,8 @@ public class UIMain extends Application {
         LOG.info("Starting STT in UI mode");
 
         LOG.info("Starting injector");
-        final Injector injector = Guice.createInjector(new TimeUtilModule(), new STTPersistenceModule(), new I18NModule(), new EventBusModule(), new AchievementModule(), new AnalysisModule(),
-                new JFXModule(), new BaseModule());
+        final Injector injector = Guice.createInjector(new TimeUtilModule(), new STTPersistenceModule(), new I18NModule(), new EventBusModule(), new AchievementModule(), new TextModule(),
+                new JFXModule(), new BaseModule(), new ConfigModule());
 
         LOG.info("Setting up event bus");
         eventBus = injector.getInstance(EventBus.class);
@@ -85,10 +86,11 @@ public class UIMain extends Application {
         WorktimePaneBuilder worktimePaneBuilder = injector.getInstance(WorktimePaneBuilder.class);
         eventBus.register(worktimePaneBuilder);
         application.addAdditional(worktimePaneBuilder);
+        LOG.info("init() done");
     }
 
     @Subscribe
-    public void shutdown(ShutdownRequest request) {
+    public void shutdown(ShuttingDown request) {
         LOG.info("Shutting down");
         try {
             Collections.reverse(servicesToShutdown);

@@ -7,9 +7,9 @@ import com.google.inject.name.Named;
 import org.joda.time.DateTime;
 import org.stt.Service;
 import org.stt.command.CommandParser;
-import org.stt.event.events.ItemDeletedEvent;
-import org.stt.event.events.ItemInsertedEvent;
-import org.stt.event.events.ItemReplacedEvent;
+import org.stt.model.ItemDeleted;
+import org.stt.model.ItemInserted;
+import org.stt.model.ItemReplaced;
 import org.stt.model.TimeTrackingItem;
 import org.stt.time.DateTimeHelper;
 
@@ -31,7 +31,7 @@ public class ItemLogService implements Service {
     }
 
     @Subscribe
-    public void itemInserted(ItemInsertedEvent event) {
+    public void itemInserted(ItemInserted event) {
         log("inserted", event.newItem);
     }
 
@@ -49,12 +49,12 @@ public class ItemLogService implements Service {
     }
 
     @Subscribe
-    public void itemDeleted(ItemDeletedEvent event) {
+    public void itemDeleted(ItemDeleted event) {
         log("deleted", event.deletedItem);
     }
 
     @Subscribe
-    public void itemReplaced(ItemReplacedEvent event) {
+    public void itemReplaced(ItemReplaced event) {
         log("before_update", event.beforeUpdate);
         log("after_update", event.afterUpdate);
     }

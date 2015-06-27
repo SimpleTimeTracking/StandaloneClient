@@ -2,7 +2,7 @@ package org.stt.text;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import org.stt.YamlConfigService;
+import org.stt.config.YamlConfigService;
 import org.stt.persistence.ItemReader;
 
 import java.io.IOException;

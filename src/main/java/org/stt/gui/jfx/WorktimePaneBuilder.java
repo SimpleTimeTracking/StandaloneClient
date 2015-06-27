@@ -12,7 +12,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import org.joda.time.Duration;
 import org.stt.event.TimePassedEvent;
-import org.stt.event.events.ItemModificationEvent;
+import org.stt.model.ItemModified;
 import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.query.WorkTimeQueries;
 
@@ -39,7 +39,7 @@ public class WorktimePaneBuilder implements AdditionalPaneBuilder {
     }
 
     @Subscribe
-    public void updateOnModification(ItemModificationEvent event) {
+    public void updateOnModification(ItemModified event) {
         updateItems();
     }
 

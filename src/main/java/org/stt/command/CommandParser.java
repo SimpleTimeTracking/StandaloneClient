@@ -30,7 +30,7 @@ public class CommandParser {
             .forPattern("yyyy.MM.dd HH:mm:ss");
 
     private final ItemPersister persister;
-    private ItemGenerator itemGenerator = new ItemGenerator();
+    private CommandTextParser commandTextParser = new CommandTextParser();
     private TimeTrackingItemQueries timeTrackingItemQueries;
 
     @Inject
@@ -46,7 +46,7 @@ public class CommandParser {
         EnglishCommandsLexer lexer = new EnglishCommandsLexer(inputStream);
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
-        Object result = itemGenerator.walk(tokenStream, parser.command());
+        Object result = commandTextParser.walk(tokenStream, parser.command());
         if (result instanceof TimeTrackingItem) {
             TimeTrackingItem parsedItem = (TimeTrackingItem) result;
             return Optional.<Command>of(new NewItemCommand(persister, parsedItem));

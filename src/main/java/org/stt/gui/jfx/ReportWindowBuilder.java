@@ -33,7 +33,7 @@ import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
-import org.stt.analysis.ItemGrouper;
+import org.stt.text.ItemGrouper;
 import org.stt.config.ReportWindowConfig;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;

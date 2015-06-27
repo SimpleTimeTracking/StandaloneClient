@@ -5,7 +5,7 @@ import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
 import org.stt.command.*;
-import org.stt.event.ShutdownRequest;
+import org.stt.event.ShuttingDown;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 import org.stt.query.TimeTrackingItemQueries;
@@ -71,7 +71,7 @@ public class ToItemWriterCommandHandler implements CommandHandler {
     }
 
     @Subscribe
-    public void closeOnShutdown(ShutdownRequest request) {
+    public void closeOnShutdown(ShuttingDown request) {
         try {
             close();
         } catch (IOException e) {

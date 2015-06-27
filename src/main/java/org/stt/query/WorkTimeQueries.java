@@ -3,7 +3,7 @@ package org.stt.query;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.joda.time.*;
-import org.stt.analysis.ItemCategorizer;
+import org.stt.text.ItemCategorizer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.reporting.WorkingtimeItemProvider;
 
