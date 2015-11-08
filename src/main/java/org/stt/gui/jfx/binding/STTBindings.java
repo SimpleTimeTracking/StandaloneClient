@@ -27,15 +27,4 @@ public class STTBindings {
 			}
 		};
 	}
-
-	public static <T extends Event, E> EventHandler<T> createAssignWhenTriggeredHandler(final Property<E> target, final ObservableValue<E> src) {
-		return new EventHandler<T>() {
-			@Override
-			public void handle(T event) {
-				target.setValue(src.getValue());
-			}
-		};
-	}
-
-
 }
