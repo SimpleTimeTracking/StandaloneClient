@@ -23,7 +23,7 @@ archivesBaseName = 'STT'
 
 def javaHome = System.properties['java.home']
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 mainClassName='org.stt.StartWithJFX'
 
 ext.mainClass = mainClassName
@@ -66,9 +66,6 @@ repositories {
 dependencies {
 	antlr4  group: "org.antlr", name: "antlr4", version: "4.5.1-1"
 	compile group: "org.antlr", name: "antlr4-runtime", version: "4.5.1-1"
-	if (file("$javaHome/lib/jfxrt.jar").exists()) {
-		compile files("$javaHome/lib/jfxrt.jar")
-	}
 	compile 'com.google.guava:guava:18.0'
 	compile 'com.google.inject:guice:4.0'
 	compile 'commons-io:commons-io:2.4'
@@ -82,7 +79,7 @@ dependencies {
 }
 
 jar {
-	from { configurations.compile.findAll { !it.name.contains("jfxrt.jar") } collect { it.isDirectory() ? it : zipTree(it) } }
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	manifest.attributes("Main-Class":"org.stt.StartWithJFX")
 	manifest.attributes("JavaFX-Feature-Proxy":"None")
 }
