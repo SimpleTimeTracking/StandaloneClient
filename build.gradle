@@ -12,7 +12,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.github.ben-manes:gradle-versions-plugin:0.10.1'
+    classpath 'com.github.ben-manes:gradle-versions-plugin:0.11.3'
     // classpath 'org.codehaus.groovy:groovy-backports-compat23:2.3.5' // uncomment if you're using Gradle 1.x
   }
 }
@@ -23,7 +23,7 @@ archivesBaseName = 'STT'
 
 def javaHome = System.properties['java.home']
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 mainClassName='org.stt.StartWithJFX'
 
 ext.mainClass = mainClassName
@@ -64,16 +64,13 @@ repositories {
 
 
 dependencies {
-	antlr4  group: "org.antlr", name: "antlr4", version: "4.5"
-	compile group: "org.antlr", name: "antlr4-runtime", version: "4.5"
-	if (file("$javaHome/lib/jfxrt.jar").exists()) {
-		compile files("$javaHome/lib/jfxrt.jar")
-	}
+	antlr4  group: "org.antlr", name: "antlr4", version: "4.5.1-1"
+	compile group: "org.antlr", name: "antlr4-runtime", version: "4.5.1-1"
 	compile 'com.google.guava:guava:18.0'
 	compile 'com.google.inject:guice:4.0'
 	compile 'commons-io:commons-io:2.4'
-	compile 'joda-time:joda-time:2.8.1'
-	compile 'org.yaml:snakeyaml:1.15'
+	compile 'joda-time:joda-time:2.9'
+	compile 'org.yaml:snakeyaml:1.16'
 
 	testCompile 'junit:junit-dep:4.11'
 	testCompile 'org.hamcrest:hamcrest-core:1.3'
@@ -82,7 +79,7 @@ dependencies {
 }
 
 jar {
-	from { configurations.compile.findAll { !it.name.contains("jfxrt.jar") } collect { it.isDirectory() ? it : zipTree(it) } }
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	manifest.attributes("Main-Class":"org.stt.StartWithJFX")
 	manifest.attributes("JavaFX-Feature-Proxy":"None")
 }
@@ -168,7 +165,7 @@ clean {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.4'
+	gradleVersion = '2.8'
 }
 
 task release(dependsOn: 'distZip') << {
