@@ -1,10 +1,10 @@
-package org.stt.cli;
+package org.stt.command;
 
 import com.google.common.base.Optional;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import org.joda.time.DateTime;
-import org.stt.command.*;
+import org.stt.cli.CommandHandler;
 import org.stt.event.ShuttingDown;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;

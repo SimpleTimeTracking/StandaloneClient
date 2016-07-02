@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.inject.Provider;
 import org.stt.Configuration;
+import org.stt.command.ToItemWriterCommandHandler;
 import org.stt.text.WorktimeCategorizer;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.*;

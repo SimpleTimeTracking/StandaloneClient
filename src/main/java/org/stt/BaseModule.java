@@ -5,9 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.stt.cli.CommandHandler;
-import org.stt.cli.ToItemWriterCommandHandler;
-import org.stt.config.CommandTextConfig;
-import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.command.ToItemWriterCommandHandler;
 import org.stt.persistence.stt.STTFile;
 
 import java.io.*;
