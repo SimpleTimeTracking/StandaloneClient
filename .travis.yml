@@ -21,3 +21,4 @@ deploy:
   file: build/libs/STT-1.3.jar
   on:
     repo: SimpleTimeTracking/StandaloneClient
+    tags: true
