@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/Bytekeeper/STT.svg)](https://travis-ci.org/Bytekeeper/STT) 
+[![Build Status](https://travis-ci.org/SimpleTimeTracking/StandaloneClient.svg)](https://travis-ci.org/SimpleTimeTracking/StandaloneClient) 
 
-![Main window](https://raw.githubusercontent.com/Bytekeeper/STT/master/doc/MainApp.png)
+![Main window](https://raw.githubusercontent.com/SimpleTimeTracking/StandaloneClient/master/doc/MainApp.png)
 
 # Mission statement 
 
@@ -31,7 +31,7 @@ To start STT UI, double click STT.jar or (if this does not work) start it by com
 java -jar path/to/STT.jar
 ```
 
-Also see https://github.com/Bytekeeper/STT/wiki/Intro for other options for launching.
+Also see https://github.com/SimpleTimeTracking/StandaloneClient/wiki/Intro for other options for launching.
 
 When starting work on a task, just enter a comment about what you are working on in the text field. Comments can span multiple lines. Then either press CTRL+ENTER or click on "Done". The window closes and the task is stored with the current time as start.
 
@@ -43,7 +43,7 @@ To avoid typing a long command every time you want to use STT, create a little s
 java -cp path/to/STT.jar org.stt.cli.Main $*
 ```
 
-See https://github.com/Bytekeeper/STT/wiki/CLI for additional information about the CLI and available commands
+See https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI for additional information about the CLI and available commands
 
 # Configuration
 
@@ -57,7 +57,7 @@ to start hacking on STT:
 - clone this repository 
 - build it
 ```bash
-git clone https://github.com/Bytekeeper/STT.git
+git clone https://github.com/SimpleTimeTracking/StandaloneClient.git
 cd STT
 gradlew build
 ```
