@@ -1,16 +1,15 @@
 package org.stt.text;
 
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
@@ -18,48 +17,46 @@ import static org.junit.Assert.assertThat;
 
 public class CommonPrefixGrouperTest {
 	private final CommonPrefixGrouper sut = new CommonPrefixGrouper();
+    private Stream<TimeTrackingItem> stream;
 
-	@Mock
-	private ItemReader itemReader;
-
-	@Before
-	public void setup() {
+    @Before
+    public void setup() {
 		MockitoAnnotations.initMocks(this);
 	}
 
 	@Test
 	public void shouldFindExpansion() {
 		// GIVEN
-		givenReaderReturnsItemsWithComment("group subgroup one",
-				"group subgroup two");
-		sut.scanForGroups(itemReader);
+        givenReaderReturnsItemsWithComment("group subgroup one",
+                "group subgroup two");
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> expansions = sut.getPossibleExpansions("gr");
 
 		// THEN
-		assertThat(expansions, is(Arrays.asList("oup subgroup")));
-	}
+        assertThat(expansions, is(Collections.singletonList("oup subgroup")));
+    }
 
 	@Test
 	public void shouldFindSubgroupExpansion() {
 		// GIVEN
-		givenReaderReturnsItemsWithComment("group subgroup one",
-				"group subgroup two");
-		sut.scanForGroups(itemReader);
+        givenReaderReturnsItemsWithComment("group subgroup one",
+                "group subgroup two");
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> expansions = sut.getPossibleExpansions("group subgroup o");
 
 		// THEN
-		assertThat(expansions, is(Arrays.asList("ne")));
-	}
+        assertThat(expansions, is(Collections.singletonList("ne")));
+    }
 
 	@Test
 	public void shouldFindMultipleExpansions() {
 		givenReaderReturnsItemsWithComment("group subgroup one",
 				"group subgroup two");
-		sut.scanForGroups(itemReader);
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> expansions = sut.getPossibleExpansions("group subgroup ");
@@ -72,21 +69,21 @@ public class CommonPrefixGrouperTest {
 	public void shouldHandleGroupsWithLongerTextThanGivenComment() {
 		// GIVEN
 		givenReaderReturnsItemsWithComment("test");
-		sut.scanForGroups(itemReader);
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> result = sut.getGroupsOf("t");
 
 		// THEN
-		assertThat(result, is(Arrays.asList("t")));
-	}
+        assertThat(result, is(Collections.singletonList("t")));
+    }
 
 	@Test
 	public void shouldFindGroupsWithSpaces() {
 		// GIVEN
 		String firstComment = "group subgroup one";
 		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two");
-		sut.scanForGroups(itemReader);
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> result = sut.getGroupsOf(firstComment);
@@ -103,7 +100,7 @@ public class CommonPrefixGrouperTest {
 		String thirdComment = "group subgroup2 one";
 		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two",
 				thirdComment);
-		sut.scanForGroups(itemReader);
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> withThreeGroups = sut.getGroupsOf(firstComment);
@@ -120,7 +117,7 @@ public class CommonPrefixGrouperTest {
 		// GIVEN
 		String firstComment = "group one";
 		givenReaderReturnsItemsWithComment(firstComment, "group two");
-		sut.scanForGroups(itemReader);
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> groups = sut.getGroupsOf(firstComment);
@@ -135,14 +132,14 @@ public class CommonPrefixGrouperTest {
 		// GIVEN
 		String firstComment = "group";
 		givenReaderReturnsItemsWithComment(firstComment, firstComment);
-		sut.scanForGroups(itemReader);
+        sut.scanForGroups(stream);
 
 		// WHEN
 		List<String> groups = sut.getGroupsOf(firstComment);
 
 		// THEN
-		assertThat(groups, is(Arrays.asList(firstComment)));
-	}
+        assertThat(groups, is(Collections.singletonList(firstComment)));
+    }
 
 	@Test
 	public void shouldCutGroupAtShorterItem()
@@ -159,14 +156,13 @@ public class CommonPrefixGrouperTest {
 		assertThat(result, is(Arrays.asList("aaaa", "bbbb", "cccc", "dddd")));
 	}
 
-	private TimeTrackingItem[] givenReaderReturnsItemsWithComment(
-			String... comments) {
+    private void givenReaderReturnsItemsWithComment(
+            String... comments) {
 		TimeTrackingItem items[] = new TimeTrackingItem[comments.length];
 		for (int i = 0; i < comments.length; i++) {
-			items[i] = new TimeTrackingItem(comments[i], DateTime.now());
-		}
-		ItemReaderTestHelper.givenReaderReturns(itemReader, items);
-		return items;
-	}
+            items[i] = new TimeTrackingItem(comments[i], LocalDateTime.now());
+        }
+        stream = Stream.of(items);
+    }
 
 }

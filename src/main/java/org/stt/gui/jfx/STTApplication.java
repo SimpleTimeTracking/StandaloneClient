@@ -1,92 +1,81 @@
 package org.stt.gui.jfx;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import com.google.inject.Inject;
-import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.binding.ListBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.*;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MultipleSelectionModel;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.TokenStream;
-import org.joda.time.DateTime;
-import org.stt.text.ExpansionProvider;
-import org.stt.command.Command;
-import org.stt.command.CommandParser;
-import org.stt.command.NewItemCommand;
-import org.stt.command.NothingCommand;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.StyleClassedTextArea;
+import org.stt.States;
+import org.stt.Streams;
+import org.stt.command.*;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.event.ShuttingDown;
-import org.stt.fun.AchievementsUpdated;
 import org.stt.fun.Achievement;
 import org.stt.fun.AchievementService;
-import org.stt.g4.EnglishCommandsLexer;
-import org.stt.g4.EnglishCommandsParser;
-import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
-import org.stt.gui.jfx.binding.FirstItemOfDaySet;
+import org.stt.fun.AchievementsUpdated;
+import org.stt.gui.jfx.TimeTrackingItemCell.ActionsHandler;
+import org.stt.gui.jfx.binding.MappedListBinding;
+import org.stt.gui.jfx.binding.MappedSetBinding;
+import org.stt.gui.jfx.binding.STTBindings;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.gui.jfx.text.CommandHighlighter;
 import org.stt.gui.jfx.text.ContextPopupCreator;
-import org.stt.gui.jfx.text.HighlightingOverlay;
-import org.stt.gui.jfx.text.PopupAtCaretPlacer;
+import org.stt.model.ItemModified;
 import org.stt.model.TimeTrackingItem;
-import org.stt.model.TimeTrackingItemFilter;
 import org.stt.query.TimeTrackingItemQueries;
+import org.stt.text.ExpansionProvider;
 import org.stt.validation.ItemAndDateValidator;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
+import static org.stt.Strings.commonPrefix;
 import static org.stt.gui.jfx.STTOptionDialogs.Result;
 
-public class STTApplication implements DeleteActionHandler, EditActionHandler,
-        ContinueActionHandler {
+public class STTApplication implements ActionsHandler {
 
     private static final Logger LOG = Logger.getLogger(STTApplication.class
             .getName());
@@ -94,14 +83,16 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             .observableArrayList();
     final StringProperty currentCommand = new SimpleStringProperty("");
     final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
-    private final CommandParser commandParser;
+    private final CommandFormatter commandFormatter;
     private final ReportWindowBuilder reportWindowBuilder;
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
-    private final EventBus eventBus;
+    private final MBassador<Object> eventBus;
     private final boolean autoCompletionPopup;
     private final boolean askBeforeDeleting;
-    ObservableList<TimeTrackingItem> filteredList;
+    private final CommandHandler activities;
+    private final Font fontAwesome;
+    final ObservableList<TimeTrackingItem> filteredList;
     ViewAdapter viewAdapter;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
@@ -111,9 +102,9 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private ObservableList<AdditionalPaneBuilder> additionals = FXCollections.observableArrayList();
 
     @Inject
-    STTApplication(STTOptionDialogs STTOptionDialogs,
-                   EventBus eventBus,
-                   CommandParser commandParser,
+    STTApplication(STTOptionDialogs sttOptionDialogs,
+                   MBassador<Object> eventBus,
+                   CommandFormatter commandFormatter,
                    ReportWindowBuilder reportWindowBuilder,
                    ExpansionProvider expansionProvider,
                    ResourceBundle resourceBundle,
@@ -122,47 +113,44 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    ItemAndDateValidator validator,
                    TimeTrackingItemQueries searcher,
                    AchievementService achievementService,
-                   ExecutorService executorService) {
-        checkNotNull(timeTrackingItemListConfig);
-        this.executorService = checkNotNull(executorService);
-        this.achievementService = checkNotNull(achievementService);
-        this.searcher = checkNotNull(searcher);
-        this.sttOptionDialogs = checkNotNull(STTOptionDialogs);
-        this.validator = checkNotNull(validator);
-        this.eventBus = checkNotNull(eventBus);
-        this.expansionProvider = checkNotNull(expansionProvider);
-        this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
-        this.commandParser = checkNotNull(commandParser);
-        this.localization = checkNotNull(resourceBundle);
-        autoCompletionPopup = checkNotNull(commandTextConfig).isAutoCompletionPopup();
+                   ExecutorService executorService,
+                   CommandHandler activities,
+                   @Named("glyph") Font fontAwesome) {
+        requireNonNull(timeTrackingItemListConfig);
+        this.executorService = requireNonNull(executorService);
+        this.achievementService = requireNonNull(achievementService);
+        this.searcher = requireNonNull(searcher);
+        this.sttOptionDialogs = requireNonNull(sttOptionDialogs);
+        this.validator = requireNonNull(validator);
+        this.eventBus = requireNonNull(eventBus);
+        this.expansionProvider = requireNonNull(expansionProvider);
+        this.reportWindowBuilder = requireNonNull(reportWindowBuilder);
+        this.commandFormatter = requireNonNull(commandFormatter);
+        this.localization = requireNonNull(resourceBundle);
+        this.activities = requireNonNull(activities);
+        this.fontAwesome = requireNonNull(fontAwesome);
+        autoCompletionPopup = requireNonNull(commandTextConfig).isAutoCompletionPopup();
 
-        eventBus.register(this);
+        eventBus.subscribe(this);
         filteredList = new TimeTrackingListFilter(allItems, currentCommand,
                 timeTrackingItemListConfig.isFilterDuplicatesWhenSearching());
         askBeforeDeleting = timeTrackingItemListConfig.isAskBeforeDeleting();
     }
 
-    @Subscribe
+    @Handler
     public void onAchievementsRefresh(AchievementsUpdated refreshedAchievements) {
         updateAchievements();
+    }
+
+    @Handler(priority = -1)
+    public void onItemChange(ItemModified event) {
+        updateItems();
     }
 
     private void updateAchievements() {
         viewAdapter.updateAchievements(achievementService.getReachedAchievements());
     }
 
-
-    protected void resultItemSelected(TimeTrackingItem item) {
-        if (item != null && item.getComment().isPresent()) {
-            String textToSet = item.getComment().get();
-            textOfSelectedItem(textToSet);
-        }
-    }
-
-    public void textOfSelectedItem(String textToSet) {
-        setCommandText(textToSet);
-        viewAdapter.requestFocusOnCommandText();
-    }
 
     private void setCommandText(String textToSet) {
         setCommandText(textToSet, textToSet.length());
@@ -171,9 +159,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     private void setCommandText(String textToSet, int caretPosition) {
         currentCommand.set(textToSet);
         commandCaretPosition.set(caretPosition);
+        viewAdapter.requestFocusOnCommandText();
     }
 
-    protected void insertAtCaret(String text) {
+    private void insertAtCaret(String text) {
         int caretPosition = commandCaretPosition.get();
         String currentText = currentCommand.get();
         String prefix = getTextFromStartToCaret() + text;
@@ -204,90 +193,63 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         return currentCommandText.substring(0, Math.min(caretPosition, currentCommandText.length()));
     }
 
-    String commonPrefix(String a, String b) {
-        for (int i = 0; i < a.length() && i < b.length(); i++) {
-            if (a.charAt(i) != b.charAt(i)) {
-                return a.substring(0, i);
-            }
-        }
-        return a;
-    }
-
-    protected boolean executeCommand() {
+    void executeCommand() {
         final String text = currentCommand.get();
-        if (!text.trim().isEmpty()) {
-            Command command = commandParser
-                    .parseCommandString(text).or(NothingCommand.INSTANCE);
-            if (command instanceof NewItemCommand) {
-                TimeTrackingItem newItem = ((NewItemCommand) command).newItem;
-                DateTime start = newItem.getStart();
-                if (!validateItemIsFirstItemAndLater(start) || !validateItemWouldCoverOtherItems(newItem)) {
-                    command = NothingCommand.INSTANCE;
-                }
-            }
-            if (!NothingCommand.INSTANCE.equals(command)) {
-                command.execute();
-                clearCommand();
-                return true;
-            }
+        if (text.trim().isEmpty()) {
+            return;
         }
-        return false;
+        commandFormatter
+                .parse(text)
+                .accept(new ValidatingCommandHandler());
     }
 
-    private boolean validateItemIsFirstItemAndLater(DateTime start) {
-        return validator.validateItemIsFirstItemAndLater(start)
-                || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(viewAdapter.stage) == Result.PERFORM_ACTION;
-    }
-
-    private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
-        int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
-        return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(viewAdapter.stage, numberOfCoveredItems) == Result.PERFORM_ACTION;
-    }
-
-    private void clearCommand() {
-        currentCommand.set("");
-    }
-
-    public void show(Stage primaryStage) {
+    private void show(Stage primaryStage) {
         viewAdapter = new ViewAdapter(primaryStage);
         viewAdapter.show();
     }
 
     public void start(Stage primaryStage) {
         show(primaryStage);
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                // Post initial request to load all items
-                updateItems();
-                updateAchievements();
-            }
+        executorService.execute(() -> {
+            // Post initial request to load all items
+            updateItems();
+            updateAchievements();
         });
     }
 
     private void updateItems() {
-        viewAdapter.updateAllItems(searcher.queryAllItems());
+        viewAdapter.updateAllItems(searcher.queryAllItems().collect(Collectors.toList()));
     }
 
     @Override
     public void continueItem(TimeTrackingItem item) {
-        LOG.severe("Continuing item: " + item);
-        commandParser.resumeItemCommand(item).execute();
+        LOG.fine(() -> "Continuing item: " + item);
+        activities.resumeActivity(new ResumeActivity(item, LocalDateTime.now()));
         viewAdapter.shutdown();
     }
 
     @Override
     public void edit(TimeTrackingItem item) {
-        setCommandText(CommandParser.itemToCommand(item), item.getComment().or("").length());
+        setCommandText(commandFormatter.asNewItemCommandText(item), item.getActivity().length());
     }
 
     @Override
     public void delete(TimeTrackingItem item) {
-        checkNotNull(item);
+        requireNonNull(item);
+        LOG.fine(() -> "Deleting item: " + item);
         if (!askBeforeDeleting || sttOptionDialogs.showDeleteOrKeepDialog(viewAdapter.stage, item) == Result.PERFORM_ACTION) {
-            commandParser.deleteCommandFor(item).execute();
+            activities.removeActivity(new RemoveActivity(item));
             allItems.remove(item);
         }
+    }
+
+    @Override
+    public void stop(TimeTrackingItem item) {
+        requireNonNull(item);
+        LOG.fine(() -> "Stopping item: " + item);
+        States.requireThat(!item.getEnd().isPresent(), "Item to finish is already finished");
+        activities.endCurrentActivity(new EndCurrentItem(LocalDateTime.now()));
+        viewAdapter.shutdown();
     }
 
     public void addAdditional(AdditionalPaneBuilder builder) {
@@ -298,17 +260,10 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
         final Stage stage;
 
-        @FXML
-        TextArea commandText;
+        StyleClassedTextArea commandText;
 
         @FXML
-        Button finButton;
-
-        @FXML
-        Button insertButton;
-
-        @FXML
-        ListView<TimeTrackingItem> result;
+        ListView<TimeTrackingItem> activityList;
 
         @FXML
         FlowPane achievements;
@@ -316,78 +271,53 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         @FXML
         VBox additionals;
 
-        private HighlightingOverlay overlay;
+        @FXML
+        BorderPane commandPane;
 
-        private CommandHighlighter commandHighlighter;
 
         ViewAdapter(Stage stage) {
             this.stage = stage;
         }
 
-        protected void show() throws RuntimeException {
+        protected void show() {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                    "/org/stt/gui/jfx/MainWindow.fxml"), localization);
+                    "/org/stt/gui/jfx/ActivitiesPanel.fxml"), localization);
             loader.setController(this);
 
             BorderPane pane;
             try {
-                pane = (BorderPane) loader.load();
+                pane = loader.load();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
             ObservableList<Node> additionalPanels = additionals.getChildren();
-            for (AdditionalPaneBuilder builder: STTApplication.this.additionals) {
+            for (AdditionalPaneBuilder builder : STTApplication.this.additionals) {
                 additionalPanels.add(builder.build());
             }
             STTApplication.this.additionals.clear();
 
-            overlay = new HighlightingOverlay(commandText);
-            commandHighlighter = new CommandHighlighter(overlay);
-
             Scene scene = new Scene(pane);
+            scene.getStylesheets().add("org/stt/gui/jfx/CommandText.css");
 
             stage.setScene(scene);
             stage.setTitle(localization.getString("window.title"));
             Image applicationIcon = new Image("/Logo.png", 32, 32, true, true);
             stage.getIcons().add(applicationIcon);
 
-            stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-                @Override
-                public void handle(WindowEvent arg0) {
-                    Platform.runLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            shutdown();
-                        }
-                    });
-                }
-            });
-            scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-
-                @Override
-                public void handle(KeyEvent event) {
-                    if (KeyCode.ESCAPE.equals(event.getCode())) {
-                        event.consume();
-                        shutdown();
-                    }
+            stage.setOnCloseRequest(event -> Platform.runLater(this::shutdown));
+            scene.setOnKeyPressed(event -> {
+                if (KeyCode.ESCAPE.equals(event.getCode())) {
+                    event.consume();
+                    shutdown();
                 }
             });
 
             stage.show();
             requestFocusOnCommandText();
 
-            commandText.textProperty().addListener(new ChangeListener<String>() {
-                @Override
-                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                    overlay.clearHighlights();
-                    CharStream input = new ANTLRInputStream(currentCommand.get());
-                    EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
-                    TokenStream tokenStream = new CommonTokenStream(lexer);
-                    EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
-                    commandHighlighter.addHighlights(parser.command());
-                }
-            });
+            CommandHighlighter commandHighlighter = new CommandHighlighter(commandText);
+            commandText.textProperty().addListener((observable, oldValue, newValue)
+                    -> commandHighlighter.addHighlights(currentCommand.get()));
 
             if (autoCompletionPopup) {
                 setupAutoCompletionPopup();
@@ -397,65 +327,43 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         private void setupAutoCompletionPopup() {
             ObservableList<String> suggestionsForContinuationList = createSuggestionsForContinuationList();
             ListView<String> contentOfAutocompletionPopup = new ListView<>(suggestionsForContinuationList);
-            final Popup popup = ContextPopupCreator.createPopupForContextMenu(contentOfAutocompletionPopup, new ContextPopupCreator.ItemSelectionCallback<String>() {
-                @Override
-                public void selected(String item) {
-                    insertAtCaret(item.endsWith(" ") ? item : item + " ");
-                }
-            });
-            suggestionsForContinuationList.addListener(new ListChangeListener<String>() {
-                @Override
-                public void onChanged(Change<? extends String> c) {
-                    if (c.getList().isEmpty()) {
-                        popup.hide();
-                    } else {
-                        popup.show(stage);
-                    }
+            final Popup popup = ContextPopupCreator.createPopupForContextMenu(contentOfAutocompletionPopup, item -> insertAtCaret(item.endsWith(" ") ? item : item + " "));
+            suggestionsForContinuationList.addListener((ListChangeListener<String>) c -> {
+                if (c.getList().isEmpty()) {
+                    popup.hide();
+                } else {
+                    popup.show(stage);
                 }
             });
             popup.show(stage);
-            new PopupAtCaretPlacer(commandText, popup);
         }
 
         private ObservableList<String> createSuggestionsForContinuationList() {
-            return new ListBinding<String>() {
-                @Override
-                protected ObservableList<String> computeValue() {
-                    List<String> suggestedContinuations = getSuggestedContinuations();
-                    Collections.sort(suggestedContinuations);
-                    return FXCollections.observableList(suggestedContinuations);
-                }
-
-                {
-                    bind(commandCaretPosition);
-                    bind(currentCommand);
-                }
-
-
-            };
+            return new MappedListBinding<>(() -> {
+                List<String> suggestedContinuations = getSuggestedContinuations();
+                Collections.sort(suggestedContinuations);
+                return suggestedContinuations;
+            }, commandCaretPosition, currentCommand);
         }
 
-        protected void updateAchievements(final Collection<Achievement> newAchievements) {
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    achievements.getChildren().clear();
-                    for (Achievement achievement : newAchievements) {
-                        final String imageName = "/achievements/"
-                                + achievement.getCode() + ".png";
-                        InputStream imageStream = getClass().getResourceAsStream(
-                                imageName);
-                        if (imageStream != null) {
-                            final ImageView imageView = new ImageView(new Image(
-                                    imageStream));
-                            String description = achievement.getDescription();
-                            if (description != null) {
-                                Tooltip.install(imageView, new Tooltip(description));
-                            }
-                            achievements.getChildren().add(imageView);
-                        } else {
-                            LOG.severe("Image " + imageName + " not found!");
+        void updateAchievements(final Collection<Achievement> newAchievements) {
+            Platform.runLater(() -> {
+                achievements.getChildren().clear();
+                for (Achievement achievement : newAchievements) {
+                    final String imageName = "/achievements/"
+                            + achievement.getCode() + ".png";
+                    InputStream imageStream = getClass().getResourceAsStream(
+                            imageName);
+                    if (imageStream != null) {
+                        final ImageView imageView = new ImageView(new Image(
+                                imageStream));
+                        String description = achievement.getDescription();
+                        if (description != null) {
+                            Tooltip.install(imageView, new Tooltip(description));
                         }
+                        achievements.getChildren().add(imageView);
+                    } else {
+                        LOG.severe("Image " + imageName + " not found!");
                     }
                 }
             });
@@ -465,110 +373,98 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             try {
                 stage.close();
             } finally {
-                eventBus.post(new ShuttingDown());
+                eventBus.publish(new ShuttingDown());
             }
         }
 
+        @FXML
         public void initialize() {
+            addCommandText();
+            addInsertButton();
+
+
             setupCellFactory();
-            final MultipleSelectionModel<TimeTrackingItem> selectionModel = result
+            final MultipleSelectionModel<TimeTrackingItem> selectionModel = activityList
                     .getSelectionModel();
             selectionModel.setSelectionMode(SelectionMode.SINGLE);
 
-            bindCaretPosition();
-            commandText.textProperty().bindBidirectional(currentCommand);
-            result.setItems(filteredList);
+            STTBindings.bidirectionBindCaretPosition(commandText, commandCaretPosition);
+            STTBindings.bidirectionBindTextArea(commandText, currentCommand);
+
+            activityList.setItems(filteredList);
             bindItemSelection();
         }
 
+        private void addCommandText() {
+            commandText = new StyleClassedTextArea();
+            commandPane.setCenter(new VirtualizedScrollPane<>(commandText));
+            Tooltip.install(commandText, new Tooltip(localization.getString("activities.command.tooltip")));
+        }
+
+        private void addInsertButton() {
+            FramelessButton insertButton = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.CHEVRON_CIRCLE_RIGHT, 50));
+            insertButton.setBackground(commandText.getBackground());
+            insertButton.setAlignment(Pos.CENTER_LEFT);
+            insertButton.setTooltip(new Tooltip(localization.getString("activities.command.insert")));
+            insertButton.setOnAction(event -> executeCommand());
+            commandPane.setRight(insertButton);
+            commandPane.setBackground(commandText.getBackground());
+        }
+
         private void bindItemSelection() {
-            result.setOnMouseClicked(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent event) {
-                    TimeTrackingItem selectedItem = result.getSelectionModel()
-                            .getSelectedItem();
-                    resultItemSelected(selectedItem);
-                }
+            activityList.setOnMouseClicked(event -> {
+                TimeTrackingItem selectedItem = activityList.getSelectionModel()
+                        .getSelectedItem();
+                resultItemSelected(selectedItem);
             });
+        }
+
+        private void resultItemSelected(TimeTrackingItem item) {
+            if (item != null) {
+                String textToSet = item.getActivity();
+                textOfSelectedItem(textToSet);
+            }
+        }
+
+        private void textOfSelectedItem(String textToSet) {
+            setCommandText(textToSet);
+            viewAdapter.requestFocusOnCommandText();
+        }
+
+        private Set<TimeTrackingItem> lastItemOf(Stream<TimeTrackingItem> itemsToProcess) {
+            return itemsToProcess.filter(Streams.distinctByKey(item -> item.getStart()
+                    .toLocalDate()))
+                    .collect(Collectors.toSet());
         }
 
         private void setupCellFactory() {
-            result.setCellFactory(new TimeTrackingItemCellFactory(
-                    STTApplication.this, STTApplication.this,
-                    STTApplication.this, new TimeTrackingItemFilter() {
-                ObservableSet<TimeTrackingItem> firstItemOfDayBinding = new FirstItemOfDaySet(
-                        allItems);
+            ObservableSet<TimeTrackingItem> lastItemOfDay = new MappedSetBinding<>(
+                    () -> lastItemOf(filteredList.stream()), filteredList);
 
-                @Override
-                public boolean filter(TimeTrackingItem item) {
-                    return firstItemOfDayBinding.contains(item);
-                }
-            }, localization));
-        }
-
-        private void bindCaretPosition() {
-            commandCaretPosition.addListener(new InvalidationListener() {
-                @Override
-                public void invalidated(Observable observable) {
-                    commandText.positionCaret(commandCaretPosition.get());
-                }
-            });
-            commandText.caretPositionProperty().addListener(
-                    new InvalidationListener() {
-                        @Override
-                        public void invalidated(Observable observable) {
-                            commandCaretPosition.set(commandText
-                                    .getCaretPosition());
-                        }
-                    });
+            activityList.setCellFactory(new TimeTrackingItemCellFactory(
+                    STTApplication.this, lastItemOfDay::contains, localization, fontAwesome));
         }
 
         protected void requestFocusOnCommandText() {
-            PlatformImpl.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    commandText.requestFocus();
-                }
-            });
+            Platform.runLater(commandText::requestFocus);
         }
 
         protected void updateAllItems(
                 final Collection<TimeTrackingItem> updateWith) {
-            PlatformImpl.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    allItems.setAll(updateWith);
-                    viewAdapter.requestFocusOnCommandText();
-                }
+            Platform.runLater(() -> {
+                allItems.setAll(updateWith);
+                viewAdapter.requestFocusOnCommandText();
             });
         }
 
         @FXML
         void showReportWindow() {
-            try {
-                reportWindowBuilder.setupStage();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            reportWindowBuilder.setupStage();
         }
 
         @FXML
         private void done() {
             executeCommand();
-            shutdown();
-        }
-
-        @FXML
-        void insert() {
-            boolean executedCommand = executeCommand();
-            if (executedCommand) {
-                updateItems();
-            }
-        }
-
-        @FXML
-        private void fin() {
-            commandParser.endCurrentItemCommand(new DateTime()).or(NothingCommand.INSTANCE).execute();
             shutdown();
         }
 
@@ -593,5 +489,50 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
             }
         }
 
+    }
+
+    private class ValidatingCommandHandler implements CommandHandler {
+        @Override
+        public void addNewActivity(NewItemCommand command) {
+            TimeTrackingItem newItem = command.newItem;
+            LocalDateTime start = newItem.getStart();
+            if (!validateItemIsFirstItemAndLater(start) || !validateItemWouldCoverOtherItems(newItem)) {
+                return;
+            }
+            activities.addNewActivity(command);
+            clearCommand();
+        }
+
+        @Override
+        public void endCurrentActivity(EndCurrentItem command) {
+            activities.endCurrentActivity(command);
+            clearCommand();
+        }
+
+        @Override
+        public void removeActivity(RemoveActivity command) {
+            activities.removeActivity(command);
+            clearCommand();
+        }
+
+        @Override
+        public void resumeActivity(ResumeActivity command) {
+            activities.resumeActivity(command);
+            clearCommand();
+        }
+
+        private boolean validateItemIsFirstItemAndLater(LocalDateTime start) {
+            return validator.validateItemIsFirstItemAndLater(start)
+                    || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(viewAdapter.stage) == Result.PERFORM_ACTION;
+        }
+
+        private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
+            int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
+            return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(viewAdapter.stage, numberOfCoveredItems) == Result.PERFORM_ACTION;
+        }
+
+        private void clearCommand() {
+            currentCommand.set("");
+        }
     }
 }

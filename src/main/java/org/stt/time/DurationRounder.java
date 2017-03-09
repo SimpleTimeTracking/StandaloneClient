@@ -1,8 +1,9 @@
 package org.stt.time;
 
-import com.google.common.base.Preconditions;
-import com.google.inject.Singleton;
-import org.joda.time.Duration;
+
+import javax.inject.Singleton;
+import java.time.Duration;
+import java.util.Objects;
 
 /**
  *
@@ -15,22 +16,22 @@ public class DurationRounder {
 	private long tieBreakMillis;
 
 	public void setInterval(Duration interval) {
-		Preconditions.checkNotNull(interval);
-		intervalMillis = interval.getMillis();
-		tieBreakMillis = intervalMillis / 2;
+        Objects.requireNonNull(interval);
+        intervalMillis = interval.toMillis();
+        tieBreakMillis = intervalMillis / 2;
 	}
 
 	public Duration roundDuration(Duration duration) {
-		Preconditions.checkNotNull(duration);
+        Objects.requireNonNull(duration);
 
-		long millisToRound = duration.getMillis();
-		long segments = millisToRound / intervalMillis;
+        long millisToRound = duration.toMillis();
+        long segments = millisToRound / intervalMillis;
 		long result = segments * intervalMillis;
 		long delta = millisToRound - result;
 		if (delta == tieBreakMillis && segments % 2 == 1 || delta > tieBreakMillis) {
 			result += intervalMillis;
 		}
-		return Duration.millis(result);
-	}
+        return Duration.ofMillis(result);
+    }
 
 }

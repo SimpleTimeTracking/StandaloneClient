@@ -33,7 +33,7 @@ java -jar path/to/STT.jar
 
 Also see https://github.com/Bytekeeper/STT/wiki/Intro for other options for launching.
 
-When starting work on a task, just enter a comment about what you are working on in the text field. Comments can span multiple lines. Then either press CTRL+ENTER or click on "Done". The window closes and the task is stored with the current time as start.
+When starting work on a task, just enter a activity about what you are working on in the text field. Comments can span multiple lines. Then either press CTRL+ENTER or click on "Done". The window closes and the task is stored with the current time as start.
 
 ## CLI
 

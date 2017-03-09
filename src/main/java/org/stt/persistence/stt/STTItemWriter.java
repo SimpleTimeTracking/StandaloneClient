@@ -1,14 +1,12 @@
 package org.stt.persistence.stt;
 
-import com.google.inject.Inject;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemWriter;
 
-import java.io.IOException;
+import javax.inject.Inject;
 import java.io.PrintWriter;
 import java.io.Writer;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 public class STTItemWriter implements ItemWriter {
 	private final PrintWriter out;
@@ -16,16 +14,16 @@ public class STTItemWriter implements ItemWriter {
 
 	@Inject
 	public STTItemWriter(@STTFile Writer out) {
-		this.out = new PrintWriter(checkNotNull(out));
-	}
+        this.out = new PrintWriter(Objects.requireNonNull(out));
+    }
 
 	@Override
-	public void write(TimeTrackingItem item) throws IOException {
-		out.println(converter.timeTrackingItemToLine(item));
-	}
+    public void write(TimeTrackingItem item) {
+        out.println(converter.timeTrackingItemToLine(item));
+    }
 
 	@Override
-	public void close() throws IOException {
-		out.close();
-	}
+    public void close() {
+        out.close();
+    }
 }

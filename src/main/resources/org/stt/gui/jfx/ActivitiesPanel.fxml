@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.60"
+            xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <VBox spacing="2.0" BorderPane.alignment="CENTER">
+            <VBox fx:id="additionals" VBox.vgrow="SOMETIMES">
+                <children>
+                    <SplitPane dividerPositions="0.2" orientation="VERTICAL" VBox.vgrow="ALWAYS">
+                        <items>
+                            <VBox>
+                                <children>
+                                    <ToolBar>
+                                        <items>
+                                            <Label text="%activities.command.title"/>
+                                        </items>
+                                    </ToolBar>
+                                    <BorderPane fx:id="commandPane" prefHeight="200.0" prefWidth="200.0"
+                                                VBox.vgrow="SOMETIMES"/>
+                                </children>
+                            </VBox>
+                            <VBox>
+                                <children>
+                                    <ToolBar prefHeight="40.0" prefWidth="200.0">
+                                        <items>
+                                            <Label text="%activities.list.title"/>
+                                        </items>
+                                    </ToolBar>
+                                    <ListView fx:id="activityList" minHeight="30.0" prefWidth="798.0"
+                                              VBox.vgrow="ALWAYS"/>
+                                </children>
+                            </VBox>
+                        </items>
+                    </SplitPane>
+                    <FlowPane fx:id="achievements" style="-fx-background-color: lightgray;" VBox.vgrow="NEVER"/>
+                </children>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

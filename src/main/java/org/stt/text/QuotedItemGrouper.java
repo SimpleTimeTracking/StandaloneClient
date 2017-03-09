@@ -2,22 +2,19 @@ package org.stt.text;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * Matches groups of quoted text. The quotes can be any non-alphabetic
  * characters.
- * 
- * @author bytekeeper
  * 
  */
 public class QuotedItemGrouper implements ItemGrouper {
 
 	@Override
 	public List<String> getGroupsOf(String text) {
-		checkNotNull(text);
-		List<String> groups = new ArrayList<>();
+        Objects.requireNonNull(text);
+        List<String> groups = new ArrayList<>();
 		int index = 0;
 		while (index < text.length()) {
 			char delimiter = text.charAt(index);

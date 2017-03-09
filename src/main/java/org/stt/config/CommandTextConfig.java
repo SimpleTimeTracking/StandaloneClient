@@ -1,9 +1,6 @@
 package org.stt.config;
 
-/**
- * Created by dante on 13.12.14.
- */
-public class CommandTextConfig implements Config {
+public class CommandTextConfig {
     private boolean autoCompletionPopup = false;
 
     public boolean isAutoCompletionPopup() {
@@ -12,10 +9,5 @@ public class CommandTextConfig implements Config {
 
     public void setAutoCompletionPopup(boolean autoCompletionPopup) {
         this.autoCompletionPopup = autoCompletionPopup;
-    }
-
-    @Override
-    public void applyDefaults() {
-
     }
 }

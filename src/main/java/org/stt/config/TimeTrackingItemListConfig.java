@@ -1,7 +1,7 @@
 package org.stt.config;
 
-public class TimeTrackingItemListConfig implements Config {
-	private boolean filterDuplicatesWhenSearching = false;
+public class TimeTrackingItemListConfig {
+    private boolean filterDuplicatesWhenSearching = false;
     private boolean askBeforeDeleting = false;
 
     /**
@@ -22,9 +22,5 @@ public class TimeTrackingItemListConfig implements Config {
 
     public void setAskBeforeDeleting(boolean askBeforeDeleting) {
         this.askBeforeDeleting = askBeforeDeleting;
-    }
-
-    @Override
-    public void applyDefaults() {
     }
 }

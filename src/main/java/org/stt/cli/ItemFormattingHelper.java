@@ -1,43 +1,40 @@
 package org.stt.cli;
 
-import com.google.common.base.Optional;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.stt.model.TimeTrackingItem;
-import org.stt.time.DateTimeHelper;
+import org.stt.time.DateTimes;
 
-public class ItemFormattingHelper {
+import java.time.Duration;
+import java.time.LocalDateTime;
 
-	public static StringBuilder prettyPrintItem(
-			Optional<TimeTrackingItem> optionalItem) {
+class ItemFormattingHelper {
 
-		StringBuilder builder = new StringBuilder();
+    private ItemFormattingHelper() {
+    }
 
-		if (optionalItem.isPresent()) {
-			TimeTrackingItem item = optionalItem.get();
-			DateTime start = item.getStart();
-			DateTime end = item.getEnd().orNull();
-			String comment = item.getComment().orNull();
+    static String prettyPrintItem(TimeTrackingItem item) {
 
-			if (DateTimeHelper.isToday(start)) {
-				builder.append(DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS.print(start));
-			} else {
-				builder.append(DateTimeHelper.DATE_TIME_FORMATTER_MM_DD_HH_MM_SS.print(start));
-			}
-			builder.append(" - ");
-			if (end == null) {
-				builder.append("now     ");
-			} else {
-				builder.append(DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS.print(end));
-			}
-			builder.append(" ( ");
-			builder.append(DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs
-					.print(new Duration(start, (end == null ? DateTime.now()
-							: end)).toPeriod()));
-			builder.append(" ) ");
-			builder.append(" => ");
-			builder.append(comment);
-		}
-		return builder;
-	}
+        StringBuilder builder = new StringBuilder();
+
+        LocalDateTime start = item.getStart();
+        LocalDateTime end = item.getEnd().orElse(null);
+        String comment = item.getActivity();
+
+        builder.append(DateTimes.prettyPrintTime(start));
+
+        builder.append(" - ");
+        if (end == null) {
+            builder.append("now     ");
+        } else {
+            builder.append(DateTimes.DATE_TIME_FORMATTER_HH_MM_SS.format(end));
+        }
+        builder.append(" ( ");
+        builder.append(DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs
+                .print(Duration.between(start, end == null ? LocalDateTime.now()
+                        : end)));
+        builder.append(" ) ");
+        builder.append(" => ");
+        builder.append(comment);
+
+        return builder.toString();
+    }
 }

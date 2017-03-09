@@ -1,49 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<BorderPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-   <padding>
-      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-   </padding>
-   <center>
-      <VBox spacing="15.0" BorderPane.alignment="CENTER">
-         <children>
-            <HBox spacing="15.0">
-               <children>
-                  <TextArea fx:id="commandText" minHeight="30.0" onKeyPressed="#onKeyPressed" prefHeight="100.0" prefWidth="624.0" wrapText="true" HBox.hgrow="SOMETIMES">
-                     <tooltip>
-                        <Tooltip text="%command.tooltip" />
-                     </tooltip></TextArea>
-                  <FlowPane alignment="CENTER" hgap="10.0" prefHeight="0.0" prefWidth="0.0" vgap="10.0">
-                     <children>
-                        <Button fx:id="insertButton" mnemonicParsing="true" onAction="#insert" text="%insert">
-                           <FlowPane.margin>
-                              <Insets />
-                           </FlowPane.margin>
-                        </Button>
-                        <Button fx:id="finButton" mnemonicParsing="true" onAction="#fin" text="%fin" />
-                        <Button mnemonicParsing="true" onAction="#showReportWindow" text="%show_report">
-                           <FlowPane.margin>
-                              <Insets />
-                           </FlowPane.margin>
-                        </Button>
-                     </children>
-                  </FlowPane>
-               </children>
-            </HBox>
-            <ListView fx:id="result" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </ListView>
-            <VBox fx:id="additionals">
-               <children>
-                  <FlowPane fx:id="achievements" style="-fx-background-color: lightgray;" />
-               </children>
-            </VBox>
-         </children>
-      </VBox>
-   </center>
-</BorderPane>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0"
+         prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.60"
+         xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.stt.gui.jfx.MainWindowController">
+    <tabs>
+        <Tab closable="false" text="%tab.entries">
+            <content>
+                <fx:include source="ActivitiesPanel.fxml" fx:id="activities"/>
+            </content>
+        </Tab>
+        <Tab closable="false" text="%tab.report">
+            <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0"/>
+            </content>
+        </Tab>
+        <Tab closable="false" text="%tab.info">
+            <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0"/>
+            </content>
+        </Tab>
+    </tabs>
+</TabPane>

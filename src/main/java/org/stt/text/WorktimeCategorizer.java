@@ -1,9 +1,9 @@
 package org.stt.text;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.stt.Configuration;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Collection;
 
 @Singleton

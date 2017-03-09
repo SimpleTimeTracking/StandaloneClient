@@ -1,9 +1,8 @@
 package org.stt.fun;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeComparator;
 import org.stt.model.TimeTrackingItem;
 
+import java.time.LocalDate;
 import java.util.ResourceBundle;
 
 /**
@@ -14,10 +13,9 @@ import java.util.ResourceBundle;
  */
 class AmountOfItemsAchievement extends LocalizedAchievement {
 
-	private static final DateTimeComparator DATE_COMPARATOR = DateTimeComparator.getDateOnlyInstance();
 	private final int amountOfItems;
-	private DateTime currentDay;
-	private int currentDayItems;
+    private LocalDate currentDay;
+    private int currentDayItems;
 	private boolean achieved;
 
 	public AmountOfItemsAchievement(ResourceBundle resourceBundle, int amountOfItems) {
@@ -34,12 +32,13 @@ class AmountOfItemsAchievement extends LocalizedAchievement {
 
 	@Override
 	void process(TimeTrackingItem read) {
-		if (currentDay != null && DATE_COMPARATOR.compare(read.getStart(), currentDay) == 0) {
-			currentDayItems++;
+        LocalDate dayOfItem = read.getStart().toLocalDate();
+        if (currentDay != null && currentDay.equals(dayOfItem)) {
+            currentDayItems++;
 		} else {
 			currentDayItems = 1;
-			currentDay = read.getStart();
-		}
+            currentDay = dayOfItem;
+        }
 		if (currentDayItems >= amountOfItems) {
 			achieved = true;
 		}
@@ -57,7 +56,7 @@ class AmountOfItemsAchievement extends LocalizedAchievement {
 
 	@Override
 	public String getDescription() {
-		return String.format(localize("achievement.twitchy"));
-	}
+        return localize("achievement.twitchy");
+    }
 
 }

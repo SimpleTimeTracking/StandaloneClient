@@ -36,8 +36,8 @@ class DaysTrackedAchievement extends LocalizedAchievement {
 
 	@Override
 	void process(TimeTrackingItem read) {
-		if (lastItem == null || !lastItem.getStart().withTimeAtStartOfDay().equals(read.getStart().withTimeAtStartOfDay())) {
-			daysTracked++;
+        if (lastItem == null || !lastItem.getStart().toLocalDate().equals(read.getStart().toLocalDate())) {
+            daysTracked++;
 			lastItem = read;
 		}
 	}

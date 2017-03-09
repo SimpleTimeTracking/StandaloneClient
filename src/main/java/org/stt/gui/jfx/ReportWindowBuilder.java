@@ -1,8 +1,5 @@
 package org.stt.gui.jfx;
 
-import com.google.common.base.Joiner;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableStringValue;
@@ -10,7 +7,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -19,42 +15,42 @@ import javafx.scene.control.*;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
-import org.stt.text.ItemGrouper;
 import org.stt.config.ReportWindowConfig;
+import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
-import org.stt.model.ReportingItem;
-import org.stt.persistence.ItemReaderProvider;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.reporting.SummingReportGenerator.Report;
-import org.stt.time.DateTimeHelper;
+import org.stt.text.ItemGrouper;
+import org.stt.time.DateTimes;
 import org.stt.time.DurationRounder;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.UncheckedIOException;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.stt.time.DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs;
+import static org.stt.time.DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs;
 
 public class ReportWindowBuilder {
-    private final ItemReaderProvider readerProvider;
     private final TimeTrackingItemQueries timeTrackingItemQueries;
 
     private final Provider<Stage> stageProvider;
@@ -66,14 +62,15 @@ public class ReportWindowBuilder {
 
     @Inject
     ReportWindowBuilder(Provider<Stage> stageProvider,
-                               ItemReaderProvider readerProvider, TimeTrackingItemQueries searcher,
-                               DurationRounder rounder, ItemGrouper itemGrouper, ReportWindowConfig config) {
-        this.config = checkNotNull(config);
-        this.stageProvider = checkNotNull(stageProvider);
-        this.timeTrackingItemQueries = checkNotNull(searcher);
-        this.readerProvider = checkNotNull(readerProvider);
-        this.rounder = checkNotNull(rounder);
-        this.itemGrouper = checkNotNull(itemGrouper);
+                        TimeTrackingItemQueries searcher,
+                        DurationRounder rounder,
+                        ItemGrouper itemGrouper,
+                        ReportWindowConfig config) {
+        this.config = Objects.requireNonNull(config);
+        this.stageProvider = Objects.requireNonNull(stageProvider);
+        this.timeTrackingItemQueries = Objects.requireNonNull(searcher);
+        this.rounder = Objects.requireNonNull(rounder);
+        this.itemGrouper = Objects.requireNonNull(itemGrouper);
 
         List<String> colorStrings = config.getGroupColors();
         groupColors = new Color[colorStrings.size()];
@@ -82,7 +79,7 @@ public class ReportWindowBuilder {
         }
     }
 
-    public void setupStage() throws IOException {
+    public void setupStage() {
         Stage stage = stageProvider.get();
 
         ReportWindowController controller = new ReportWindowController(stage);
@@ -90,53 +87,15 @@ public class ReportWindowBuilder {
         ResourceBundle localization = ResourceBundle
                 .getBundle("org.stt.gui.Application");
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                "/org/stt/gui/jfx/ReportWindow.fxml"), localization);
+                "/org/stt/gui/jfx/ReportPanel.fxml"), localization);
         loader.setController(controller);
-        loader.load();
+        try {
+            loader.load();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         stage.show();
-    }
-
-    private ObservableValue<Report> createReportModel(
-            final ObservableValue<DateTime> selectedDateTime) {
-        ObservableValue<DateTime> nextDay = new ObjectBinding<DateTime>() {
-            @Override
-            protected DateTime computeValue() {
-                return selectedDateTime.getValue() != null ? selectedDateTime
-                        .getValue().plusDays(1) : null;
-            }
-
-            {
-                bind(selectedDateTime);
-            }
-
-
-        };
-        return new ReportBinding(selectedDateTime, nextDay, readerProvider);
-    }
-
-    private ListBinding<ListItem> createReportingItemsListModel(
-            final ObservableValue<Report> report) {
-        return new ListBinding<ListItem>() {
-            @Override
-            protected ObservableList<ListItem> computeValue() {
-                List<ReportingItem> reportingItems = report.getValue()
-                        .getReportingItems();
-                List<ListItem> resultList = new ArrayList<>();
-                for (ReportingItem reportItem : reportingItems) {
-                    resultList.add(new ListItem(reportItem.getComment(),
-                            reportItem.getDuration(), rounder
-                            .roundDuration(reportItem.getDuration())));
-                }
-                return FXCollections.observableArrayList(resultList);
-            }
-
-            {
-                super.bind(report);
-            }
-
-
-        };
     }
 
     public static class ListItem {
@@ -190,7 +149,7 @@ public class ReportWindowBuilder {
         private Label roundedDurationSum;
 
         public ReportWindowController(Stage stage) {
-            this.stage = checkNotNull(stage);
+            this.stage = Objects.requireNonNull(stage);
         }
 
         @FXML
@@ -200,7 +159,7 @@ public class ReportWindowBuilder {
 
         @FXML
         public void initialize() {
-            final ObservableValue<DateTime> selectedDateTimeProperty = addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty();
+            final ObservableValue<LocalDate> selectedDateTimeProperty = addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty();
             final ObservableValue<Report> reportModel = createReportModel(selectedDateTimeProperty);
             final StringBinding startBinding = createBindingForStartOfReport(reportModel);
             final StringBinding endBinding = createBindingForEndOfReport(reportModel);
@@ -215,18 +174,8 @@ public class ReportWindowBuilder {
             endOfReport.textProperty().bind(endBinding);
             uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding);
             uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding);
-            startOfReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent event) {
-                    setClipboard(startBinding.get());
-                }
-            });
-            endOfReport.setOnMouseClicked(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent event) {
-                    setClipboard(endBinding.get());
-                }
-            });
+            startOfReport.setOnMouseClicked(event -> setClipboard(startBinding.get()));
+            endOfReport.setOnMouseClicked(event -> setClipboard(endBinding.get()));
 
             ListBinding<ListItem> reportListModel = createReportingItemsListModel(reportModel);
             tableForReport.setItems(reportListModel);
@@ -253,74 +202,51 @@ public class ReportWindowBuilder {
                                     columnForDuration.widthProperty())));
         }
 
+        private ObservableValue<Report> createReportModel(
+                final ObservableValue<LocalDate> selectedDateTime) {
+            ObservableValue<LocalDate> nextDay = Bindings.createObjectBinding(
+                    () -> selectedDateTime.getValue() != null ? selectedDateTime
+                            .getValue().plusDays(1) : null, selectedDateTime);
+            return new ReportBinding(selectedDateTime, nextDay, timeTrackingItemQueries);
+        }
+
+        private ListBinding<ListItem> createReportingItemsListModel(
+                final ObservableValue<Report> report) {
+            return new MappedListBinding<>(() -> report.getValue()
+                    .getReportingItems().stream()
+                    .map(reportingItem -> new ListItem(
+                            reportingItem.getComment(), reportingItem.getDuration(),
+                            rounder.roundDuration(reportingItem.getDuration())))
+                    .collect(Collectors.toList()), report);
+        }
+
+
         private ObservableValue<Duration> createBindingForRoundedDurationSum(
-                final ListBinding<ListItem> items) {
-            return new ObjectBinding<Duration>() {
-                @Override
-                protected Duration computeValue() {
-                    Duration duration = Duration.ZERO;
-                    for (ListItem item : items) {
-                        duration = duration.plus(item.roundedDuration);
-                    }
-                    return duration;
-                }
-
-                {
-                    bind(items);
-                }
-
-
-            };
+                final ObservableList<ListItem> items) {
+            return Bindings.createObjectBinding(() ->
+                    items.stream()
+                            .map(ListItem::getRoundedDuration)
+                            .reduce(Duration.ZERO, Duration::plus), items);
         }
 
         private ObjectBinding<Duration> createBindingForUncoveredTimeOfReport(
                 final ObservableValue<Report> reportModel) {
-            return new ObjectBinding<Duration>() {
-                @Override
-                protected Duration computeValue() {
-                    return reportModel.getValue().getUncoveredDuration();
-                }
-
-                {
-                    bind(reportModel);
-                }
-
-
-            };
+            return Bindings.createObjectBinding(() ->
+                    reportModel.getValue().getUncoveredDuration(), reportModel);
         }
 
         private StringBinding createBindingForEndOfReport(
                 final ObservableValue<Report> reportModel) {
-            return new StringBinding() {
-                @Override
-                protected String computeValue() {
-                    return DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS
-                            .print(reportModel.getValue().getEnd());
-                }
-
-                {
-                    bind(reportModel);
-                }
-
-
-            };
+            return Bindings.createStringBinding(() ->
+                    DateTimes.DATE_TIME_FORMATTER_HH_MM_SS
+                            .format(reportModel.getValue().getEnd()), reportModel);
         }
 
         private StringBinding createBindingForStartOfReport(
                 final ObservableValue<Report> reportModel) {
-            return new StringBinding() {
-                @Override
-                protected String computeValue() {
-                    return DateTimeHelper.DATE_TIME_FORMATTER_HH_MM_SS
-                            .print(reportModel.getValue().getStart());
-                }
-
-                {
-                    bind(reportModel);
-                }
-
-
-            };
+            return Bindings.createStringBinding(() ->
+                    DateTimes.DATE_TIME_FORMATTER_HH_MM_SS
+                            .format(reportModel.getValue().getStart()), reportModel);
         }
 
         private void addSceneToStageAndSetStageToModal() {
@@ -329,14 +255,10 @@ public class ReportWindowBuilder {
             stage.initStyle(StageStyle.UTILITY);
             stage.setScene(scene);
 
-            scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-
-                @Override
-                public void handle(KeyEvent event) {
-                    if (KeyCode.ESCAPE.equals(event.getCode())) {
-                        event.consume();
-                        stage.close();
-                    }
+            scene.setOnKeyPressed(event -> {
+                if (KeyCode.ESCAPE.equals(event.getCode())) {
+                    event.consume();
+                    stage.close();
                 }
             });
         }
@@ -348,7 +270,7 @@ public class ReportWindowBuilder {
 
         private void setCommentColumnCellFactory() {
             columnForComment
-                    .setCellValueFactory(new PropertyValueFactory<ListItem, String>(
+                    .setCellValueFactory(new PropertyValueFactory<>(
                             "comment"));
             if (config.isGroupItems()) {
                 setItemGroupingCellFactory();
@@ -356,12 +278,7 @@ public class ReportWindowBuilder {
         }
 
         private void setItemGroupingCellFactory() {
-            columnForComment.setCellFactory(new Callback<TableColumn<ListItem, String>, TableCell<ListItem, String>>() {
-                @Override
-                public TableCell<ListItem, String> call(TableColumn<ListItem, String> param) {
-                    return new CommentTableCell();
-                }
-            });
+            columnForComment.setCellFactory(param -> new CommentTableCell());
         }
 
         @SuppressWarnings("rawtypes")
@@ -385,9 +302,9 @@ public class ReportWindowBuilder {
                                 ListItem listItem = tableForReport.getItems()
                                         .get(position.getRow());
                                 if (position.getTableColumn() == columnForRoundedDuration) {
-                                    setClipBoard(listItem.getRoundedDuration());
+                                    copyDurationToClipboard(listItem.getRoundedDuration());
                                 } else if (position.getTableColumn() == columnForDuration) {
-                                    setClipBoard(listItem.getDuration());
+                                    copyDurationToClipboard(listItem.getDuration());
                                 } else if (position.getTableColumn() == columnForComment) {
                                     setClipboard(listItem.getComment());
                                 }
@@ -403,12 +320,8 @@ public class ReportWindowBuilder {
             setClipboardContentTo(content);
         }
 
-        private void setClipBoard(Duration duration) {
-            PeriodFormatter formatter = new PeriodFormatterBuilder()
-                    .printZeroIfSupported().minimumPrintedDigits(2)
-                    .appendHours().appendSeparator(":").appendMinutes()
-                    .toFormatter();
-            setClipboard(formatter.print(duration.toPeriod()));
+        private void copyDurationToClipboard(Duration duration) {
+            setClipboard(DateTimes.prettyPrintDuration(duration));
         }
 
         private void setClipboardContentTo(ClipboardContent content) {
@@ -425,7 +338,7 @@ public class ReportWindowBuilder {
                                 CellDataFeatures<ListItem, String> cellDataFeatures) {
                             String duration = FORMATTER_PERIOD_HHh_MMm_SSs
                                     .print(cellDataFeatures.getValue()
-                                            .getDuration().toPeriod());
+                                            .getDuration());
                             return new SimpleStringProperty(duration);
                         }
                     });
@@ -440,29 +353,29 @@ public class ReportWindowBuilder {
                                 CellDataFeatures<ListItem, String> cellDataFeatures) {
                             String duration = FORMATTER_PERIOD_HHh_MMm_SSs
                                     .print(cellDataFeatures.getValue()
-                                            .getRoundedDuration().toPeriod());
+                                            .getRoundedDuration());
                             return new SimpleStringProperty(duration);
                         }
                     });
         }
 
-        private ObservableValue<DateTime> addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty() {
-            final ComboBox<DateTime> comboBox = new ComboBox<>();
-            ObservableList<DateTime> availableDays = FXCollections
-                    .observableArrayList(timeTrackingItemQueries.getAllTrackedDays());
+        private ObservableValue<LocalDate> addComboBoxForDateTimeSelectionAndReturnSelectedDateTimeProperty() {
+            final ComboBox<LocalDate> comboBox = new ComboBox<>();
+            ObservableList<LocalDate> availableDays = FXCollections
+                    .observableArrayList(timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toList()));
             Collections.reverse(availableDays);
             comboBox.setItems(availableDays);
             if (!availableDays.isEmpty()) {
                 comboBox.getSelectionModel().select(0);
             }
-            comboBox.setConverter(new StringConverter<DateTime>() {
+            comboBox.setConverter(new StringConverter<LocalDate>() {
                 @Override
-                public String toString(DateTime dateTime) {
-                    return DateTimeFormat.shortDate().print(dateTime);
+                public String toString(LocalDate dateTime) {
+                    return DateTimeFormatter.ISO_LOCAL_DATE.format(dateTime);
                 }
 
                 @Override
-                public DateTime fromString(String arg0) {
+                public LocalDate fromString(String arg0) {
                     throw new UnsupportedOperationException();
                 }
             });
@@ -505,12 +418,9 @@ public class ReportWindowBuilder {
             }
 
             private void addClickListener(final List<String> itemGroups, Label partLabel, final int fromIndex) {
-                partLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
-                    @Override
-                    public void handle(MouseEvent event) {
-                        String commentRemainder = Joiner.on(" ").join(itemGroups.subList(fromIndex, itemGroups.size()));
-                        setClipboard(commentRemainder);
-                    }
+                partLabel.setOnMouseClicked(event -> {
+                    String commentRemainder = String.join(" ", itemGroups.subList(fromIndex, itemGroups.size()));
+                    setClipboard(commentRemainder);
                 });
             }
         }

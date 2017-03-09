@@ -5,11 +5,12 @@
  */
 package org.stt.fun;
 
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
+
+import java.time.LocalDateTime;
 
 import static org.hamcrest.CoreMatchers.is;
 
@@ -20,7 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 public class HoursTrackedAchievementTest extends AchievementTestBase {
 
 	private HoursTrackedAchievement sut;
-	private DateTime base = DateTime.now();
+    private LocalDateTime base = LocalDateTime.now();
 
 	@Before
 	public void setup() {
@@ -31,8 +32,8 @@ public class HoursTrackedAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldNotTriggerBelowThreshold() {
 		// GIVEN
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(99)));
-		sut.done();
+        sut.process(new TimeTrackingItem("", base, base.plusHours(99)));
+        sut.done();
 
 		// WHEN
 		boolean achieved = sut.isAchieved();
@@ -44,9 +45,9 @@ public class HoursTrackedAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldTriggerAboveThreshold() {
 		// GIVEN
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(99)));
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(2)));
-		sut.done();
+        sut.process(new TimeTrackingItem("", base, base.plusHours(99)));
+        sut.process(new TimeTrackingItem("", base, base.plusHours(2)));
+        sut.done();
 
 		// WHEN
 		boolean achieved = sut.isAchieved();
@@ -58,10 +59,10 @@ public class HoursTrackedAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldTriggerEqualToThreshold() {
 		// GIVEN
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(78)));
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(2)));
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(20)));
-		sut.done();
+        sut.process(new TimeTrackingItem("", base, base.plusHours(78)));
+        sut.process(new TimeTrackingItem("", base, base.plusHours(2)));
+        sut.process(new TimeTrackingItem("", base, base.plusHours(20)));
+        sut.done();
 
 		// WHEN
 		boolean achieved = sut.isAchieved();
@@ -73,9 +74,9 @@ public class HoursTrackedAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldNotTriggerIfItemIsOngoing() {
 		// GIVEN
-		sut.process(new TimeTrackingItem(null, base, base.plusHours(78)));
-		sut.process(new TimeTrackingItem(null, base.minusHours(30)));
-		sut.done();
+        sut.process(new TimeTrackingItem("", base, base.plusHours(78)));
+        sut.process(new TimeTrackingItem("", base.minusHours(30)));
+        sut.done();
 
 		// WHEN
 		boolean achieved = sut.isAchieved();

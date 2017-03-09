@@ -1,47 +1,46 @@
 package org.stt.gui.jfx;
 
-import com.google.common.base.Optional;
-import com.google.common.eventbus.EventBus;
-import org.joda.time.DateTime;
+import javafx.scene.text.Font;
+import net.engio.mbassy.bus.MBassador;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.stt.text.ExpansionProvider;
-import org.stt.text.ItemGrouper;
-import org.stt.command.Command;
-import org.stt.command.CommandParser;
-import org.stt.command.NothingCommand;
+import org.stt.command.CommandFormatter;
+import org.stt.command.CommandHandler;
+import org.stt.command.DoNothing;
+import org.stt.command.RemoveActivity;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.query.TimeTrackingItemQueries;
+import org.stt.text.ExpansionProvider;
+import org.stt.text.ItemGrouper;
 import org.stt.validation.ItemAndDateValidator;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.ResourceBundle;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.stt.LambdaMatcher.mapped;
 
 public class STTApplicationTest {
 
     private STTApplication sut;
     @Mock
-    private CommandParser commandParser;
+    private CommandFormatter commandFormatter;
     @Mock
     private ExecutorService executorService;
     @Mock
@@ -59,17 +58,18 @@ public class STTApplicationTest {
     private TimeTrackingItemQueries timeTrackingItemQueries;
     @Mock
     private AchievementService achievementService;
+    @Mock
+    private CommandHandler commandHandler;
+    private Font fontAwesome = Font.getDefault();
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        given(commandParser.parseCommandString(anyString())).willReturn(Optional.<Command>absent());
-        given(commandParser.endCurrentItemCommand(any(DateTime.class))).willReturn(Optional.<Command>absent());
-        given(commandParser.deleteCommandFor(any(TimeTrackingItem.class))).willReturn(NothingCommand.INSTANCE);
+        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new MBassador<>(), commandFormatter, reportWindowBuilder,
+                expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, timeTrackingItemQueries, achievementService, executorService,
+                commandHandler, fontAwesome);
 
-        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new EventBus(), commandParser, reportWindowBuilder,
-                expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, timeTrackingItemQueries, achievementService, executorService);
         sut.viewAdapter = sut.new ViewAdapter(null) {
 
             @Override
@@ -100,7 +100,7 @@ public class STTApplicationTest {
         setTextAndPositionCaretAtEnd("test");
 
         given(expansionProvider.getPossibleExpansions("test")).willReturn(
-                Arrays.asList("blub"));
+                Collections.singletonList("blub"));
 
         // WHEN
         sut.expandCurrentCommand();
@@ -117,7 +117,7 @@ public class STTApplicationTest {
         sut.commandCaretPosition.set(2);
 
         given(expansionProvider.getPossibleExpansions("al")).willReturn(
-                Arrays.asList("pha"));
+                Collections.singletonList("pha"));
 
         // WHEN
         sut.expandCurrentCommand();
@@ -152,13 +152,13 @@ public class STTApplicationTest {
     @Test
     public void shouldDeleteItemIfRequested() throws IOException {
         // GIVEN
-        TimeTrackingItem item = new TimeTrackingItem(null, DateTime.now());
+        TimeTrackingItem item = new TimeTrackingItem("", LocalDateTime.now());
 
         // WHEN
         sut.delete(item);
 
         // THEN
-        verify(commandParser).deleteCommandFor(item);
+        verify(commandHandler).removeActivity(argThat(mapped(cmd -> cmd.itemToDelete, is(item))));
     }
 
     @Test
@@ -166,7 +166,7 @@ public class STTApplicationTest {
         // GIVEN
         givenExecutorService();
         final TimeTrackingItem item = new TimeTrackingItem("comment",
-                DateTime.now());
+                LocalDateTime.now());
 
         sut.allItems.setAll(item);
 
@@ -192,7 +192,7 @@ public class STTApplicationTest {
     public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
         // GIVEN
         givenCommand("test");
-        given(commandParser.parseCommandString(anyString())).willReturn(Optional.<Command>of(mock(Command.class)));
+        given(commandFormatter.parse(anyString())).willReturn(new RemoveActivity(new TimeTrackingItem("", LocalDateTime.now())));
 
         // WHEN
         sut.executeCommand();
@@ -208,23 +208,23 @@ public class STTApplicationTest {
         String testCommand = "test";
 
         givenCommand(testCommand);
+        given(commandFormatter.parse(anyString())).willReturn(new RemoveActivity(new TimeTrackingItem("", LocalDateTime.now())));
 
         // WHEN
         sut.executeCommand();
 
         // THEN
-        verify(commandParser).parseCommandString(testCommand);
+        verify(commandFormatter).parse(testCommand);
     }
 
     @Test
-    public void shouldNotCloseWindowOnInsert() {
+    public void shouldNotCloseWindowOnSimpleCommandExecution() {
         // GIVEN
         givenCommand("Hello World");
-        given(commandParser.parseCommandString(anyString())).willReturn(
-                Optional.<Command>absent());
+        given(commandFormatter.parse(anyString())).willReturn(DoNothing.INSTANCE);
 
         // WHEN
-        sut.viewAdapter.insert();
+        sut.executeCommand();
 
         // THEN
         assertThat(shutdownCalled, is(false));
@@ -233,18 +233,15 @@ public class STTApplicationTest {
     private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
         ItemReader reader = mock(ItemReader.class);
         given(reader.read()).willReturn(Optional.of(item),
-                Optional.<TimeTrackingItem>absent());
+                Optional.empty());
         return reader;
     }
 
     private void givenExecutorService() {
-        willAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                ((Runnable) invocation.getArguments()[0]).run();
-                return null;
-            }
-        }).given(executorService).execute(any(Runnable.class));
+        willAnswer(invocation -> {
+            ((Runnable) invocation.getArguments()[0]).run();
+            return null;
+        }).given(executorService).execute(Matchers.any(Runnable.class));
     }
 
     private void givenCommand(String command) {

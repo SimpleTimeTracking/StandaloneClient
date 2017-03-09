@@ -1,9 +1,8 @@
 package org.stt.fun;
 
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.stt.model.TimeTrackingItem;
 
+import java.time.Duration;
 import java.util.ResourceBundle;
 
 /**
@@ -30,17 +29,16 @@ class HoursTrackedAchievement extends LocalizedAchievement {
 
 	@Override
 	void process(TimeTrackingItem read) {
-		if (read.getEnd().isPresent()) {
-			DateTime end = read.getEnd().get();
-			Duration duration = new Duration(read.getStart(), end);
-			timeTracked = timeTracked.plus(duration);
-		}
-	}
+        read.getEnd().ifPresent(endTime -> {
+            Duration duration = Duration.between(read.getStart(), endTime);
+            timeTracked = timeTracked.plus(duration);
+        });
+    }
 
 	@Override
 	void done() {
-		achieved = timeTracked.getStandardHours() >= thresholdHours;
-	}
+        achieved = timeTracked.toHours() >= thresholdHours;
+    }
 
 	@Override
 	boolean isAchieved() {

@@ -1,13 +1,17 @@
 grammar EnglishCommands;
 
 @header {
-import org.joda.time.*;
-import org.joda.time.format.*;
+import java.time.*;
+import java.time.format.*;
 import org.stt.model.*;
 }
 
+@members {
+private static final DateTimeFormatter LOCAL_DATE_PATTERN = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+}
+
 anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL;
-comment: anyToken*?;
+activity: anyToken*?;
 
 timeUnit:
 	HOURS
@@ -41,7 +45,7 @@ timeFormat:
 
 finCommand: FIN (AT? at=dateTime)?;
 
-itemWithComment returns [String text]:c=comment result=timeFormat { $text = $c.text; };
+itemWithComment returns [String text]:c=activity result=timeFormat { $text = $c.text; };
 
 command:
 	(	finCommand
@@ -52,20 +56,20 @@ command:
 
 // CLI stuff
 
-justDate returns [DateTime result]: txt=date { $result = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($txt.text); };
+justDate returns [LocalDate result]: txt=date { $result = LocalDate.parse($txt.text, LOCAL_DATE_PATTERN); };
 
-fromToDateFormat returns [DateTime start, DateTime end]: FROM? s=justDate TO e=justDate {
+fromToDateFormat returns [LocalDate start, LocalDate end]: FROM? s=justDate TO e=justDate {
 	$start = $s.result;
 	$end = $e.result;
 };
 
-reportStart returns [DateTime from_date, DateTime to_date]:
+reportStart returns [LocalDate from_date, LocalDate to_date]:
 		SINCE d=date {
-		$from_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text); $to_date = DateTime.now();
+		$from_date = LocalDate.parse($d.text, LOCAL_DATE_PATTERN); $to_date = LocalDate.now();
 		 }
-	|  	n=NUMBER DAYS { $from_date = new DateTime().minusDays($n.int); $to_date = DateTime.now();}
+	|  	n=NUMBER DAYS { $from_date = LocalDate.now().minusDays($n.int); $to_date = LocalDate.now();}
 	|   AT d=date {
-	    $from_date = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime($d.text); $to_date=$from_date;
+	    $from_date = LocalDate.parse($d.text, LOCAL_DATE_PATTERN); $to_date=$from_date;
 	    }
 	|   fromTo = fromToDateFormat { $from_date = $fromTo.start; $to_date = $fromTo.end; }
 	|	anyToken*;

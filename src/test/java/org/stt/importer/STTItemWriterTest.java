@@ -1,7 +1,5 @@
 package org.stt.importer;
 
-import com.google.inject.Provider;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -13,7 +11,10 @@ import org.junit.runner.RunWith;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.stt.STTItemPersister;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -24,10 +25,10 @@ public class STTItemWriterTest {
     private static final String LINE_SEPERATOR = System
             .getProperty("line.separator");
     @DataPoints
-    public static DateTime[] sampleDateTimes = new DateTime[]{
-            new DateTime(2011, 10, 10, 11, 12, 13),
-            new DateTime(2010, 10, 10, 11, 12, 13),
-            new DateTime(2012, 10, 10, 11, 12, 13)};
+    public static LocalDateTime[] sampleDateTimes = new LocalDateTime[]{
+            LocalDateTime.of(2011, 10, 10, 11, 12, 13),
+            LocalDateTime.of(2010, 10, 10, 11, 12, 13),
+            LocalDateTime.of(2012, 10, 10, 11, 12, 13)};
     private StringWriter stringWriter;
     private STTItemPersister sut;
 
@@ -35,24 +36,14 @@ public class STTItemWriterTest {
     public void setUp() {
         stringWriter = new StringWriter();
 
-        sut = new STTItemPersister(new Provider<Reader>() {
-            @Override
-            public Reader get() {
-                return new StringReader(stringWriter.toString());
-            }
-        }, new Provider<Writer>() {
-            @Override
-            public Writer get() {
-                return stringWriter = new StringWriter();
-            }
-        });
+        sut = new STTItemPersister(() -> new StringReader(stringWriter.toString()), () -> stringWriter = new StringWriter());
     }
 
     @Test(expected = NullPointerException.class)
     public void writeNullObjectFails() throws IOException {
 
         // WHEN
-        sut.insert(null);
+        sut.persist(null);
 
         // THEN
         // Exception expected
@@ -63,10 +54,10 @@ public class STTItemWriterTest {
 
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem("the comment",
-                DateTime.now());
+                LocalDateTime.now());
 
         // WHEN
-        sut.insert(theItem);
+        sut.persist(theItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -77,11 +68,11 @@ public class STTItemWriterTest {
     public void writeStartSucceeds() throws IOException {
 
         // GIVEN
-        DateTime theTime = new DateTime(2011, 10, 12, 13, 14, 15);
-        TimeTrackingItem theItem = new TimeTrackingItem(null, theTime);
+        LocalDateTime theTime = LocalDateTime.of(2011, 10, 12, 13, 14, 15);
+        TimeTrackingItem theItem = new TimeTrackingItem("", theTime);
 
         // WHEN
-        sut.insert(theItem);
+        sut.persist(theItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -92,13 +83,13 @@ public class STTItemWriterTest {
     public void writeEndSucceeds() throws IOException {
 
         // GIVEN
-        DateTime start = new DateTime(2011, 10, 12, 13, 14, 15);
-        DateTime end = new DateTime(2012, 10, 12, 13, 14, 15);
+        LocalDateTime start = LocalDateTime.of(2011, 10, 12, 13, 14, 15);
+        LocalDateTime end = LocalDateTime.of(2012, 10, 12, 13, 14, 15);
 
-        TimeTrackingItem theItem = new TimeTrackingItem(null, start, end);
+        TimeTrackingItem theItem = new TimeTrackingItem("", start, end);
 
         // WHEN
-        sut.insert(theItem);
+        sut.persist(theItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -109,14 +100,14 @@ public class STTItemWriterTest {
     public void writeCompleteEntrySucceeds() throws IOException {
 
         // GIVEN
-        DateTime start = new DateTime(2011, 10, 12, 13, 14, 15);
+        LocalDateTime start = LocalDateTime.of(2011, 10, 12, 13, 14, 15);
 
-        DateTime end = new DateTime(2012, 10, 12, 13, 14, 15);
+        LocalDateTime end = LocalDateTime.of(2012, 10, 12, 13, 14, 15);
         TimeTrackingItem theItem = new TimeTrackingItem("the comment", start,
                 end);
 
         // WHEN
-        sut.insert(theItem);
+        sut.persist(theItem);
 
         // THEN
         Assert.assertThat(
@@ -130,10 +121,10 @@ public class STTItemWriterTest {
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem(
                 "this is\n a multiline\r string\r\n with different separators",
-                DateTime.now());
+                LocalDateTime.now());
 
         // WHEN
-        sut.insert(theItem);
+        sut.persist(theItem);
 
         // THEN
         Assert.assertThat(
@@ -148,11 +139,11 @@ public class STTItemWriterTest {
 
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem("testitem",
-                new DateTime(2011, 10, 10, 11, 12, 13));
+                LocalDateTime.of(2011, 10, 10, 11, 12, 13));
         TimeTrackingItem theItem2 = new TimeTrackingItem("testitem",
-                new DateTime(2014, 10, 10, 11, 12, 13));
-        sut.insert(theItem);
-        sut.insert(theItem2);
+                LocalDateTime.of(2014, 10, 10, 11, 12, 13));
+        sut.persist(theItem);
+        sut.persist(theItem2);
 
         // when
         sut.delete(theItem2);
@@ -168,10 +159,10 @@ public class STTItemWriterTest {
 
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem("testitem",
-                new DateTime(2011, 10, 10, 11, 12, 13));
+                LocalDateTime.of(2011, 10, 10, 11, 12, 13));
         TimeTrackingItem theItem2 = new TimeTrackingItem("testitem",
-                DateTime.now());
-        sut.insert(theItem2);
+                LocalDateTime.now());
+        sut.persist(theItem2);
 
         // when
         sut.replace(theItem2, theItem);
@@ -185,10 +176,10 @@ public class STTItemWriterTest {
     public void shouldWriteItemsWithMultipleWhitespaces() throws IOException {
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem("item with 2  spaces",
-                new DateTime(2011, 10, 10, 11, 12, 13));
+                LocalDateTime.of(2011, 10, 10, 11, 12, 13));
 
         // when
-        sut.insert(theItem);
+        sut.persist(theItem);
 
         // then
         Assert.assertThat(stringWriter.toString(),
@@ -197,20 +188,20 @@ public class STTItemWriterTest {
 
     @Theory
     public void shouldRemoveCoveredTimeIntervalsIfNewItemHasNoEnd(
-            DateTime startOfNewItem) throws IOException {
-        DateTime startOfExistingItem = new DateTime(2011, 10, 10, 11, 12, 13);
+            LocalDateTime startOfNewItem) throws IOException {
+        LocalDateTime startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13);
 
         Assume.assumeFalse(startOfNewItem.isAfter(startOfExistingItem));
         // GIVEN
         TimeTrackingItem existingItem = new TimeTrackingItem("testitem",
                 startOfExistingItem);
-        sut.insert(existingItem);
+        sut.persist(existingItem);
 
         TimeTrackingItem newItem = new TimeTrackingItem("testitem2",
                 startOfExistingItem);
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -221,14 +212,14 @@ public class STTItemWriterTest {
     public void shouldSetEndTimeIfNewItemIsStarted() throws IOException {
         // GIVEN
         TimeTrackingItem existingItem = new TimeTrackingItem("testitem",
-                new DateTime(2011, 10, 10, 11, 12, 13));
-        sut.insert(existingItem);
+                LocalDateTime.of(2011, 10, 10, 11, 12, 13));
+        sut.persist(existingItem);
 
         TimeTrackingItem newItem = new TimeTrackingItem("testitem2",
-                new DateTime(2011, 10, 10, 11, 12, 14));
+                LocalDateTime.of(2011, 10, 10, 11, 12, 14));
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -240,21 +231,21 @@ public class STTItemWriterTest {
 
     @Theory
     public void shouldRemoveCoveredTimeIntervalsIfCoveredByNewItem(
-            DateTime startOfNewItem) throws IOException {
-        DateTime startOfExistingItem = new DateTime(2011, 10, 10, 11, 12, 13);
-        DateTime endOfNewItem = new DateTime(2020, 10, 10, 11, 12, 13);
+            LocalDateTime startOfNewItem) throws IOException {
+        LocalDateTime startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13);
+        LocalDateTime endOfNewItem = LocalDateTime.of(2020, 10, 10, 11, 12, 13);
 
         Assume.assumeFalse(startOfNewItem.isAfter(startOfExistingItem));
         // GIVEN
         TimeTrackingItem existingItem = new TimeTrackingItem("existing item",
                 startOfExistingItem, endOfNewItem);
-        sut.insert(existingItem);
+        sut.persist(existingItem);
 
         TimeTrackingItem newItem = new TimeTrackingItem("new item",
                 startOfExistingItem, endOfNewItem);
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -264,22 +255,22 @@ public class STTItemWriterTest {
 
     @Theory
     public void shouldSplitOverlappingTimeIntervalWithEndIfNewItemEndsBefore(
-            DateTime startOfNewItem) throws IOException {
-        DateTime startOfExistingItem = new DateTime(2011, 10, 10, 11, 12, 13);
-        DateTime endOfNewItem = new DateTime(2020, 10, 10, 11, 12, 13);
-        DateTime endOfExistingItem = endOfNewItem.plusMinutes(1);
+            LocalDateTime startOfNewItem) throws IOException {
+        LocalDateTime startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13);
+        LocalDateTime endOfNewItem = LocalDateTime.of(2020, 10, 10, 11, 12, 13);
+        LocalDateTime endOfExistingItem = endOfNewItem.plusMinutes(1);
 
         Assume.assumeFalse(startOfNewItem.isAfter(startOfExistingItem));
         // GIVEN
         TimeTrackingItem existingItem = new TimeTrackingItem("existing item",
                 startOfExistingItem, endOfExistingItem);
-        sut.insert(existingItem);
+        sut.persist(existingItem);
 
         TimeTrackingItem newItem = new TimeTrackingItem("new item",
                 startOfExistingItem, endOfNewItem);
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
         Assert.assertThat(
@@ -292,21 +283,21 @@ public class STTItemWriterTest {
 
     @Theory
     public void shouldSplitOverlappingTimeIntervalWithoutEndIfNewItemEndsBefore(
-            DateTime startOfNewItem) throws IOException {
-        DateTime startOfExistingItem = new DateTime(2011, 10, 10, 11, 12, 13);
-        DateTime endOfNewItem = new DateTime(2020, 10, 10, 11, 12, 13);
+            LocalDateTime startOfNewItem) throws IOException {
+        LocalDateTime startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13);
+        LocalDateTime endOfNewItem = LocalDateTime.of(2020, 10, 10, 11, 12, 13);
 
         Assume.assumeFalse(startOfNewItem.isAfter(startOfExistingItem));
         // GIVEN
         TimeTrackingItem existingItem = new TimeTrackingItem("existing item",
                 startOfExistingItem);
-        sut.insert(existingItem);
+        sut.persist(existingItem);
 
         TimeTrackingItem newItem = new TimeTrackingItem("new item",
                 startOfExistingItem, endOfNewItem);
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
         Assert.assertThat(stringWriter.toString(),
@@ -320,32 +311,32 @@ public class STTItemWriterTest {
             throws IOException {
         // GIVEN
         TimeTrackingItem itemBeforeBefore = new TimeTrackingItem(
-                "Item before before", new DateTime(2010, 10, 10, 11, 12, 13),
-                new DateTime(2010, 10, 10, 11, 14, 13));
-        sut.insert(itemBeforeBefore);
+                "Item before before", LocalDateTime.of(2010, 10, 10, 11, 12, 13),
+                LocalDateTime.of(2010, 10, 10, 11, 14, 13));
+        sut.persist(itemBeforeBefore);
         TimeTrackingItem itemBefore = new TimeTrackingItem("Item before",
-                new DateTime(2020, 10, 10, 11, 12, 13), new DateTime(2020, 10,
+                LocalDateTime.of(2020, 10, 10, 11, 12, 13), LocalDateTime.of(2020, 10,
                 10, 11, 14, 13));
-        sut.insert(itemBefore);
+        sut.persist(itemBefore);
         TimeTrackingItem overlappedItem = new TimeTrackingItem(
-                "Overlapped item", new DateTime(2020, 10, 10, 11, 14, 13),
-                new DateTime(2020, 10, 10, 11, 15, 13));
-        sut.insert(overlappedItem);
+                "Overlapped item", LocalDateTime.of(2020, 10, 10, 11, 14, 13),
+                LocalDateTime.of(2020, 10, 10, 11, 15, 13));
+        sut.persist(overlappedItem);
         TimeTrackingItem itemAfter = new TimeTrackingItem("Item after",
-                new DateTime(2020, 10, 10, 11, 15, 13), new DateTime(2020, 10,
+                LocalDateTime.of(2020, 10, 10, 11, 15, 13), LocalDateTime.of(2020, 10,
                 10, 11, 17, 13));
-        sut.insert(itemAfter);
+        sut.persist(itemAfter);
         TimeTrackingItem itemAfterAfter = new TimeTrackingItem(
-                "Item even after", new DateTime(2020, 10, 10, 11, 17, 13),
-                new DateTime(2020, 10, 10, 11, 19, 13));
-        sut.insert(itemAfterAfter);
+                "Item even after", LocalDateTime.of(2020, 10, 10, 11, 17, 13),
+                LocalDateTime.of(2020, 10, 10, 11, 19, 13));
+        sut.persist(itemAfterAfter);
 
         TimeTrackingItem newItem = new TimeTrackingItem("new item",
-                new DateTime(2020, 10, 10, 11, 13, 13), new DateTime(2020, 10,
+                LocalDateTime.of(2020, 10, 10, 11, 13, 13), LocalDateTime.of(2020, 10,
                 10, 11, 16, 13));
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
 
@@ -367,13 +358,13 @@ public class STTItemWriterTest {
     public void shouldSplitCoveringExistingItem() throws IOException {
         // GIVEN
         TimeTrackingItem coveringItem = new TimeTrackingItem("covering",
-                new DateTime(2012, 1, 1, 10, 0, 0), new DateTime(2012, 1, 1,
+                LocalDateTime.of(2012, 1, 1, 10, 0, 0), LocalDateTime.of(2012, 1, 1,
                 13, 0, 0));
-        sut.insert(coveringItem);
+        sut.persist(coveringItem);
         TimeTrackingItem coveredItem = new TimeTrackingItem("newItem",
-                new DateTime(2012, 1, 1, 11, 0, 0), new DateTime(2012, 1, 1,
+                LocalDateTime.of(2012, 1, 1, 11, 0, 0), LocalDateTime.of(2012, 1, 1,
                 12, 0, 0));
-        sut.insert(coveredItem);
+        sut.persist(coveredItem);
         // WHEN
 
         // THEN
@@ -387,15 +378,15 @@ public class STTItemWriterTest {
     public void shouldNotChangeOldNonOverlappingItem() throws IOException {
         // GIVEN
         TimeTrackingItem oldItem = new TimeTrackingItem("old item",
-                new DateTime(2010, 10, 10, 11, 12, 13), new DateTime(2010, 10,
+                LocalDateTime.of(2010, 10, 10, 11, 12, 13), LocalDateTime.of(2010, 10,
                 10, 11, 14, 13));
-        sut.insert(oldItem);
+        sut.persist(oldItem);
 
         TimeTrackingItem newItem = new TimeTrackingItem("old item",
-                new DateTime(2011, 10, 10, 11, 12, 13));
+                LocalDateTime.of(2011, 10, 10, 11, 12, 13));
 
         // WHEN
-        sut.insert(newItem);
+        sut.persist(newItem);
 
         // THEN
         assertThatFileMatches(

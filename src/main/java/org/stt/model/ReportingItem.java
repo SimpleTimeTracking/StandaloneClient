@@ -1,66 +1,46 @@
 package org.stt.model;
 
-import org.joda.time.Duration;
+
+import java.time.Duration;
+import java.util.Objects;
 
 public class ReportingItem {
+    private final Duration duration;
+    private final String comment;
 
-	private final Duration duration;
-	private final String comment;
+    public ReportingItem(Duration duration, String comment) {
+        this.duration = Objects.requireNonNull(duration);
+        this.comment = Objects.requireNonNull(comment);
+    }
 
-	public ReportingItem(Duration duration, String comment) {
-		this.duration = duration;
-		this.comment = comment;
-	}
+    public Duration getDuration() {
+        return duration;
+    }
 
-	public Duration getDuration() {
-		return duration;
-	}
+    public String getComment() {
+        return comment;
+    }
 
-	public String getComment() {
-		return comment;
-	}
+    @Override
+    public String toString() {
+        return duration.toString() + " " + comment;
+    }
 
-	@Override
-	public String toString() {
-		return duration.toString() + " " + comment;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((comment == null) ? 0 : comment.hashCode());
-		result = prime * result
-				+ ((duration == null) ? 0 : duration.hashCode());
-		return result;
-	}
+        ReportingItem that = (ReportingItem) o;
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		ReportingItem other = (ReportingItem) obj;
-		if (comment == null) {
-			if (other.comment != null) {
-				return false;
-			}
-		} else if (!comment.equals(other.comment)) {
-			return false;
-		}
-		if (duration == null) {
-			if (other.duration != null) {
-				return false;
-			}
-		} else if (!duration.equals(other.duration)) {
-			return false;
-		}
-		return true;
-	}
+        if (!duration.equals(that.duration)) return false;
+        return comment.equals(that.comment);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = duration.hashCode();
+        result = 31 * result + comment.hashCode();
+        return result;
+    }
 }

@@ -1,293 +1,269 @@
 package org.stt.cli;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.joda.time.Interval;
 import org.stt.Configuration;
-import org.stt.text.ItemCategorizer;
-import org.stt.text.ItemCategorizer.ItemCategory;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsParser.ReportStartContext;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemReaderProvider;
-import org.stt.query.DNFClause;
-import org.stt.query.FilteredItemReader;
+import org.stt.query.Criteria;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.reporting.OvertimeReportGenerator;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.reporting.WorkingtimeItemProvider;
-import org.stt.time.DateTimeHelper;
+import org.stt.text.ItemCategorizer;
+import org.stt.text.ItemCategorizer.ItemCategory;
+import org.stt.time.DateTimes;
+import org.stt.time.Interval;
 
+import javax.inject.Inject;
 import java.io.PrintStream;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Prints a nicely formatted report of {@link TimeTrackingItem}s
  */
 public class ReportPrinter {
 
-	private final ItemReaderProvider readFrom;
-	private final Configuration configuration;
-	private final WorkingtimeItemProvider workingtimeItemProvider;
-	private final ItemCategorizer categorizer;
+    private final TimeTrackingItemQueries queries;
+    private final Configuration configuration;
+    private final WorkingtimeItemProvider workingtimeItemProvider;
+    private final ItemCategorizer categorizer;
 
-	public ReportPrinter(ItemReaderProvider readFrom,
-			Configuration configuration,
-			WorkingtimeItemProvider workingtimeItemProvider,
-			ItemCategorizer categorizer) {
-		this.readFrom = readFrom;
-		this.configuration = configuration;
-		this.workingtimeItemProvider = workingtimeItemProvider;
-		this.categorizer = categorizer;
-	}
+    @Inject
+    public ReportPrinter(TimeTrackingItemQueries queries,
+                         Configuration configuration,
+                         WorkingtimeItemProvider workingtimeItemProvider,
+                         ItemCategorizer categorizer) {
+        this.queries = queries;
+        this.configuration = configuration;
+        this.workingtimeItemProvider = workingtimeItemProvider;
+        this.categorizer = categorizer;
+    }
 
-	public void report(Collection<String> args, PrintStream printTo) {
-		String searchString = null;
-		DateTime reportStart = DateTime.now().withTimeAtStartOfDay();
-		DateTime reportEnd = DateTime.now().plusDays(1).withTimeAtStartOfDay()
-				.minus(1);
-		boolean truncateLongLines = true;
+    public void report(Collection<String> args, PrintStream printTo) {
+        String searchString = null;
+        LocalDate reportStart = LocalDate.now();
+        LocalDate reportEnd = reportStart.plusDays(1);
+        boolean truncateLongLines = true;
 
-		if (args.size() > 0) {
-			// there is a parameter! Let's parse it ;-)
+        if (!args.isEmpty()) {
+            // there is a parameter! Let's parse it ;-)
 
-			truncateLongLines = !args.remove("long");
+            truncateLongLines = !args.remove("long");
 
-			// first collapse all following strings
-			String argsString = Joiner.on(" ").join(args);
+            // first collapse all following strings
+            String argsString = String.join(" ", args);
 
-			EnglishCommandsLexer lexer = new EnglishCommandsLexer(
-					new ANTLRInputStream(argsString));
-			EnglishCommandsParser parser = new EnglishCommandsParser(
-					new CommonTokenStream(lexer));
+            EnglishCommandsLexer lexer = new EnglishCommandsLexer(
+                    new ANTLRInputStream(argsString));
+            EnglishCommandsParser parser = new EnglishCommandsParser(
+                    new CommonTokenStream(lexer));
 
-			ReportStartContext startContext = parser.reportStart();
-			if (startContext.from_date != null) {
-				reportStart = startContext.from_date;
-				reportEnd = startContext.to_date.plusDays(1)
-						.withTimeAtStartOfDay().minus(1);
-			} else if (!argsString.isEmpty()) {
-				searchString = argsString;
-				reportStart = new DateTime(0);
-			}
-		}
+            ReportStartContext startContext = parser.reportStart();
+            if (startContext.from_date != null) {
+                reportStart = startContext.from_date;
+                reportEnd = startContext.to_date.plusDays(1);
+            } else if (!argsString.isEmpty()) {
+                searchString = argsString;
+                reportStart = LocalDate.MIN;
+            }
+        }
 
-		String output = "output " + (truncateLongLines ? "truncated" : "full")
-				+ " lines for ";
-		if (DateTimeHelper.isToday(reportStart)) {
-			output += "today ";
+        String output = "output " + (truncateLongLines ? "truncated" : "full")
+                + " lines for ";
+        if (DateTimes.isToday(reportStart)) {
+            output += "today ";
 
-		} else {
-			output += DateTimeHelper.prettyPrintDate(reportStart) + " to "
-					+ DateTimeHelper.prettyPrintDate(reportEnd);
-		}
-		printTo.println(output);
+        } else {
+            output += DateTimes.prettyPrintDate(reportStart) + " to "
+                    + DateTimes.prettyPrintDate(reportEnd);
+        }
+        printTo.println(output);
 
-		printDetails(printTo, searchString, reportStart, reportEnd,
-				truncateLongLines);
+        printDetails(printTo, searchString, reportStart, reportEnd,
+                truncateLongLines);
 
-		printSums(printTo, searchString, reportStart, reportEnd,
-				truncateLongLines);
+        printSums(printTo, searchString, reportStart, reportEnd,
+                truncateLongLines);
 
-		// only print overtime if we don't search for specific items
-		// In this case overtime is just confusing
-		if (searchString == null || searchString.isEmpty()) {
-			printOvertime(printTo, reportStart, reportEnd);
-		}
-	}
+        // only print overtime if we don't search for specific items
+        // In this case overtime is just confusing
+        if (searchString == null || searchString.isEmpty()) {
+            printOvertime(printTo, reportStart, reportEnd);
+        }
+    }
 
-	private void printOvertime(PrintStream printTo, DateTime reportStart,
-			DateTime reportEnd) {
-		OvertimeReportGenerator overtimeReportGenerator = createOvertimeReportGenerator();
-		Map<DateTime, Duration> overtimeMap = overtimeReportGenerator
-				.getOvertime(reportStart, reportEnd);
-		Duration overallOvertime = overtimeReportGenerator.getOverallOvertime();
+    private void printOvertime(PrintStream printTo, LocalDate reportStart,
+                               LocalDate reportEnd) {
+        OvertimeReportGenerator overtimeReportGenerator = createOvertimeReportGenerator();
+        Map<LocalDate, Duration> overtimeMap = overtimeReportGenerator
+                .getOvertime(reportStart, reportEnd);
+        Duration overallOvertime = overtimeReportGenerator.getOverallOvertime();
 
-		if (DateTimeHelper.isToday(reportStart)) {
-			printTo.println("====== times for today: ======");
-			Duration duration = overtimeMap.get(DateTime.now()
-					.withTimeAtStartOfDay());
-			if (duration != null) {
-				String closingTime = DateTimeHelper.prettyPrintTime(DateTime
-						.now().minus(duration));
-				printTo.println("closing time: " + closingTime);
-				String timeToGo = DateTimeHelper
-						.prettyPrintDuration(new Duration(duration.getMillis()
-										* -1));
-				printTo.println("time to go:   " + timeToGo);
-			}
+        if (DateTimes.isToday(reportStart)) {
+            printTo.println("====== times for today: ======");
+            Duration duration = overtimeMap.get(LocalDate.now());
+            if (duration != null) {
+                String closingTime = DateTimes.prettyPrintTime(LocalDateTime
+                        .now().minus(duration));
+                printTo.println("closing time: " + closingTime);
+                String timeToGo = DateTimes
+                        .prettyPrintDuration(duration.negated());
+                printTo.println("time to go:   " + timeToGo);
+            }
 
-		} else {
-			printTo.println("====== overtime from "
-					+ DateTimeHelper.prettyPrintDate(reportStart) + " to "
-					+ DateTimeHelper.prettyPrintDate(reportEnd) + ": ======");
-			Duration overallDuration = new Duration(0);
-			for (Map.Entry<DateTime, Duration> e : overtimeMap.entrySet()) {
-				overallDuration = overallDuration.plus(e.getValue());
+        } else {
+            printTo.println("====== overtime from "
+                    + DateTimes.prettyPrintDate(reportStart) + " to "
+                    + DateTimes.prettyPrintDate(reportEnd) + ": ======");
+            Duration overallDuration = Duration.ZERO;
+            for (Map.Entry<LocalDate, Duration> e : overtimeMap.entrySet()) {
+                overallDuration = overallDuration.plus(e.getValue());
 
-				printTo.println(DateTimeHelper.prettyPrintDate(e.getKey())
-						+ " "
-						+ DateTimeHelper.prettyPrintDuration(e.getValue())
-						+ " overall: "
-						+ DateTimeHelper.prettyPrintDuration(overallDuration));
-			}
-			printTo.print("sum:       ");
-			printTo.println(DateTimeHelper.prettyPrintDuration(overallDuration));
-		}
-		printTo.println("overall overtime: "
-				+ DateTimeHelper.prettyPrintDuration(overallOvertime));
+                printTo.println(DateTimes.prettyPrintDate(e.getKey())
+                        + " "
+                        + DateTimes.prettyPrintDuration(e.getValue())
+                        + " overall: "
+                        + DateTimes.prettyPrintDuration(overallDuration));
+            }
+            printTo.print("sum:       ");
+            printTo.println(DateTimes.prettyPrintDuration(overallDuration));
+        }
+        printTo.println("overall overtime: "
+                + DateTimes.prettyPrintDuration(overallOvertime));
 
-	}
+    }
 
-	/**
-	 * Prints a nice summed and grouped (by comment) report
-	 */
-	private void printSums(PrintStream printTo, String searchString,
-			DateTime reportStart, DateTime reportEnd, boolean truncateLongLines) {
-		ItemReader reportReader = readFrom.provideReader();
+    /**
+     * Prints a nice summed and grouped (by comment) report
+     */
+    private void printSums(PrintStream printTo, String searchString,
+                           LocalDate reportStart, LocalDate reportEnd, boolean truncateLongLines) {
+        Criteria criteria = new Criteria();
+        if (searchString != null) {
+            criteria.withCommentContains(searchString);
+        }
+        criteria.withStartBetween(Interval.between(reportStart, reportEnd));
 
-		DNFClause searchStringClause = new DNFClause();
-		if (searchString != null) {
-			searchStringClause.withCommentContains(searchString);
-		}
-		FilteredItemReader substFilter = new FilteredItemReader(reportReader, searchStringClause);
+        try (Stream<TimeTrackingItem> itemsToConsider = queries.queryItems(criteria)) {
+            SummingReportGenerator reporter = new SummingReportGenerator(itemsToConsider);
+            Report report = reporter.createReport();
 
-		FilteredItemReader dateFilter = createStartDateFilterForDays(
-				substFilter, reportStart, reportEnd);
+            if (DateTimes.isToday(reportStart)) {
+                printTo.println("====== sums of today ======");
+                if (report.getStart() != null) {
+                    printTo.println("start of day: "
+                            + DateTimes.prettyPrintTime(report.getStart()));
+                }
+                if (report.getEnd() != null) {
+                    printTo.println("end of day:   "
+                            + DateTimes.prettyPrintTime(report.getEnd()));
+                }
+            } else {
+                printTo.println("====== sums from "
+                        + DateTimes.prettyPrintDate(reportStart) + " to "
+                        + DateTimes.prettyPrintDate(reportEnd));
+            }
+            if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
+                printTo.println("time not yet tracked: "
+                        + DateTimes.prettyPrintDuration(report
+                        .getUncoveredDuration()));
+            }
+            List<ReportingItem> reportingItems = report.getReportingItems();
 
-		SummingReportGenerator reporter = new SummingReportGenerator(dateFilter);
-		Report report = reporter.createReport();
+            Duration worktimeDuration = Duration.ZERO;
+            Duration breakTimeDuration = Duration.ZERO;
+            for (ReportingItem i : reportingItems) {
+                Duration duration = i.getDuration();
+                String comment = i.getComment();
+                String prefix = " ";
+                if (ItemCategory.BREAK.equals(categorizer.getCategory(comment))) {
+                    prefix = "*";
+                    breakTimeDuration = breakTimeDuration.plus(duration);
+                } else {
+                    worktimeDuration = worktimeDuration.plus(duration);
+                }
+                printTruncatedString(
+                        prefix + DateTimes.prettyPrintDuration(duration)
+                                + "   " + comment, printTo, truncateLongLines);
+            }
 
-		if (DateTimeHelper.isToday(reportStart)) {
-			printTo.println("====== sums of today ======");
-			if (report.getStart() != null) {
-				printTo.println("start of day: "
-						+ DateTimeHelper.prettyPrintTime(report.getStart()));
-			}
-			if (report.getEnd() != null) {
-				printTo.println("end of day:   "
-						+ DateTimeHelper.prettyPrintTime(report.getEnd()));
-			}
-		} else {
-			printTo.println("====== sums from "
-					+ DateTimeHelper.prettyPrintDate(reportStart) + " to "
-					+ DateTimeHelper.prettyPrintDate(reportEnd));
-		}
-		if (!report.getUncoveredDuration().equals(Duration.ZERO)) {
-			printTo.println("time not yet tracked: "
-					+ DateTimeHelper.prettyPrintDuration(report
-							.getUncoveredDuration()));
-		}
-		List<ReportingItem> reportingItems = report.getReportingItems();
+            printTo.println("====== overall sum: ======");
+            printTo.println("work:  "
+                    + DateTimes.prettyPrintDuration(worktimeDuration));
+            printTo.println("break: "
+                    + DateTimes.prettyPrintDuration(breakTimeDuration));
+        }
+    }
 
-		Duration worktimeDuration = new Duration(0);
-		Duration breakTimeDuration = new Duration(0);
-		for (ReportingItem i : reportingItems) {
-			Duration duration = i.getDuration();
-			String comment = i.getComment();
-			String prefix = " ";
-			if (ItemCategory.BREAK.equals(categorizer.getCategory(comment))) {
-				prefix = "*";
-				breakTimeDuration = breakTimeDuration.plus(duration);
-			} else {
-				worktimeDuration = worktimeDuration.plus(duration);
-			}
-			printTruncatedString(
-					prefix + DateTimeHelper.prettyPrintDuration(duration)
-					+ "   " + comment, printTo, truncateLongLines);
-		}
+    /**
+     * Prints all items nicely formatted
+     */
+    private void printDetails(PrintStream printTo, String searchString,
+                              LocalDate reportStart, LocalDate reportEnd, boolean truncateLongLines) {
 
-		printTo.println("====== overall sum: ======");
-		printTo.println("work:  "
-				+ DateTimeHelper.prettyPrintDuration(worktimeDuration));
-		printTo.println("break: "
-				+ DateTimeHelper.prettyPrintDuration(breakTimeDuration));
+        printTo.println("====== recorded items: ======");
 
-		IOUtils.closeQuietly(reportReader);
-	}
+        Criteria criteria = new Criteria()
+                .withStartBetween(Interval.between(reportStart, reportEnd));
+        try (Stream<TimeTrackingItem> itemStream = queries.queryItems(criteria)) {
+            itemStream.forEach(item -> {
+                LocalDateTime start = item.getStart();
+                LocalDateTime end = item.getEnd().orElse(null);
+                String comment = item.getActivity();
 
-	/**
-	 * Prints all items nicely formatted
-	 */
-	private void printDetails(PrintStream printTo, String searchString,
-			DateTime reportStart, DateTime reportEnd, boolean truncateLongLines) {
+                StringBuilder builder = new StringBuilder();
+                builder.append(DateTimes.prettyPrintTime(start));
+                builder.append(" - ");
+                if (end == null) {
+                    builder.append("now     ");
+                } else {
+                    builder.append(DateTimes.prettyPrintTime(end));
+                }
+                builder.append(" ( ");
+                builder.append(DateTimes.prettyPrintDuration(Duration.between(
+                        start, end == null ? LocalDateTime.now() : end)));
+                builder.append(" ) ");
+                builder.append(" => ");
+                builder.append(comment);
+                if (searchString == null
+                        || builder.toString().contains(searchString)) {
+                    printTruncatedString(builder, printTo, truncateLongLines);
+                }
+            });
+        }
+    }
 
-		printTo.println("====== recorded items: ======");
+    private OvertimeReportGenerator createOvertimeReportGenerator() {
+        return new OvertimeReportGenerator(queries, categorizer,
+                workingtimeItemProvider);
+    }
 
-		ItemReader detailsReader = readFrom.provideReader();
-		ItemReader filteredReader = createStartDateFilterForDays(detailsReader,
-				reportStart, reportEnd);
-		Optional<TimeTrackingItem> optionalItem;
-		while ((optionalItem = filteredReader.read()).isPresent()) {
-			TimeTrackingItem item = optionalItem.get();
-			DateTime start = item.getStart();
-			DateTime end = item.getEnd().orNull();
-			String comment = item.getComment().orNull();
+    private void printTruncatedString(StringBuilder toPrint,
+                                      PrintStream printTo, boolean doTruncate) {
+        printTruncatedString(toPrint.toString(), printTo, doTruncate);
+    }
 
-			StringBuilder builder = new StringBuilder();
-			builder.append(DateTimeHelper.prettyPrintTime(start));
-			builder.append(" - ");
-			if (end == null) {
-				builder.append("now     ");
-			} else {
-				builder.append(DateTimeHelper.prettyPrintTime(end));
-			}
-			builder.append(" ( ");
-			builder.append(DateTimeHelper.prettyPrintDuration(new Duration(
-					start, (end == null ? DateTime.now() : end))));
-			builder.append(" ) ");
-			builder.append(" => ");
-			builder.append(comment);
-			if (searchString == null
-					|| builder.toString().contains(searchString)) {
-				printTruncatedString(builder, printTo, truncateLongLines);
-			}
-		}
-		IOUtils.closeQuietly(filteredReader);
-	}
+    private void printTruncatedString(String toPrint, PrintStream printTo,
+                                      boolean doTruncate) {
 
-	private OvertimeReportGenerator createOvertimeReportGenerator() {
-		return new OvertimeReportGenerator(readFrom, categorizer,
-				workingtimeItemProvider);
-	}
-
-	/**
-	 * Creates a filter which only accepts items with start date of "today minus
-	 * the given days" to "today"
-	 */
-	private FilteredItemReader createStartDateFilterForDays(
-			ItemReader readerToFilter, DateTime start, DateTime end) {
-		DNFClause dnfClause = new DNFClause();
-		dnfClause.withStartBetween(new Interval(start, end));
-		return new FilteredItemReader(
-                readerToFilter, dnfClause);
-	}
-
-	private void printTruncatedString(StringBuilder toPrint,
-			PrintStream printTo, boolean doTruncate) {
-		printTruncatedString(toPrint.toString(), printTo, doTruncate);
-	}
-
-	private void printTruncatedString(String toPrint, PrintStream printTo,
-			boolean doTruncate) {
-
-		int desiredWidth = Math.max(configuration.getCliReportingWidth() - 3,
-				10);
-		if (doTruncate && desiredWidth < toPrint.length()) {
-			String substr = toPrint.substring(0, desiredWidth);
-			printTo.println(substr + "...");
-		} else {
-			printTo.println(toPrint);
-		}
-	}
+        int desiredWidth = Math.max(configuration.getCliReportingWidth() - 3,
+                10);
+        if (doTruncate && desiredWidth < toPrint.length()) {
+            String substr = toPrint.substring(0, desiredWidth);
+            printTo.println(substr + "...");
+        } else {
+            printTo.println(toPrint);
+        }
+    }
 }

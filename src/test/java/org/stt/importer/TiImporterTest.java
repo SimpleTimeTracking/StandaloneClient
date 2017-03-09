@@ -1,10 +1,8 @@
 package org.stt.importer;
 
-import com.google.common.base.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.IOUtil;
 import org.stt.persistence.ItemReader;
 import org.stt.ti.importer.TiImporter;
 
@@ -60,9 +58,9 @@ public class TiImporterTest {
 		Assert.assertThat(
 				readItems,
 				contains(
-						hasProperty("comment",
-								is(Optional.of("the long comment"))),
-						hasProperty("comment",
-								is(Optional.of("the long comment2")))));
-	}
+                        hasProperty("activity",
+                                is("the long comment")),
+                        hasProperty("activity",
+                                is("the long comment2"))));
+    }
 }

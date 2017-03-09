@@ -7,22 +7,22 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.introspector.PropertyUtils;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-/**
- * @author dante
- */
-@com.google.inject.Singleton
+@Singleton
 public class YamlConfigService implements Service {
 
     private static final Logger LOG = Logger.getLogger(YamlConfigService.class
             .getName());
     private final File sttYaml;
-    private BaseConfig config;
+    private ConfigRoot config;
 
+    @Inject
     public YamlConfigService() {
         sttYaml = new File(determineBaseDir(), "stt.yaml");
     }
@@ -50,7 +50,7 @@ public class YamlConfigService implements Service {
         }
     }
 
-    public BaseConfig getConfig() {
+    public ConfigRoot getConfig() {
         return config;
     }
 
@@ -58,14 +58,14 @@ public class YamlConfigService implements Service {
     public void start() throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(sttYaml)) {
             LOG.info("Loading " + sttYaml.getName());
-            Constructor constructor = new Constructor(BaseConfig.class);
+            Constructor constructor = new Constructor(ConfigRoot.class);
             PropertyUtils propertyUtils = new PropertyUtils();
             propertyUtils.setSkipMissingProperties(true);
             constructor.setPropertyUtils(propertyUtils);
             Yaml yaml = new Yaml(constructor);
-            config = (BaseConfig) yaml.load(fileInputStream);
-            config.applyDefaults();
+            config = (ConfigRoot) yaml.load(fileInputStream);
         } catch (FileNotFoundException e) {
+            LOG.log(Level.FINEST, "No previous config file found, creating a new one.", e);
             createNewConfig();
         } catch (IOException | ClassCastException | NullPointerException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -75,8 +75,7 @@ public class YamlConfigService implements Service {
 
     private void createNewConfig() {
         LOG.info("Creating new config");
-        config = new BaseConfig();
-        config.applyDefaults();
+        config = new ConfigRoot();
     }
 
     @Override

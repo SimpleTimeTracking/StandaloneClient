@@ -1,10 +1,10 @@
 package org.stt.persistence;
 
-import com.google.common.base.Optional;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * <p>
@@ -25,4 +25,7 @@ public interface ItemReader extends Closeable {
 	 * @throws IOException
 	 */
 	Optional<TimeTrackingItem> read();
+
+    @Override
+    void close();
 }

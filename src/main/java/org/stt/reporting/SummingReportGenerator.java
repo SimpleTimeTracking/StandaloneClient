@@ -1,125 +1,115 @@
 package org.stt.reporting;
 
-import com.google.common.base.Optional;
-import org.apache.commons.io.IOUtils;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Comparator.comparing;
 
 /**
  * Reads all elements from the given reader and groups by the comment of the
  * item: all items with the identical comment get merged into one
  * {@link ReportingItem}. Duration is the sum of all durations of the items.
- *
+ * <p>
  * Items without an end date get reported as if the end date was now
- *
- * If a comment of an item is null, it will be treated as the empty String.
- *
+ * <p>
  * Items will be returned sorted in ascending order of the comments
  */
 public class SummingReportGenerator {
 
-	private final ItemReader reader;
+    private final Stream<TimeTrackingItem> itemsToRead;
 
-	public SummingReportGenerator(ItemReader reader) {
-		this.reader = reader;
-	}
+    public SummingReportGenerator(Stream<TimeTrackingItem> itemsToRead) {
+        this.itemsToRead = itemsToRead;
+    }
 
-	public Report createReport() {
-		DateTime startOfReport = null;
-		DateTime endOfReport = null;
-		List<ReportingItem> reportList = new LinkedList<>();
+    public Report createReport() {
+        LocalDateTime startOfReport = null;
+        LocalDateTime endOfReport = null;
+        List<ReportingItem> reportList = new LinkedList<>();
 
-		Map<String, Duration> collectingMap = new HashMap<>();
 
-		Duration uncoveredDuration = Duration.ZERO;
-		Optional<TimeTrackingItem> optionalItem;
-		TimeTrackingItem lastItem = null;
-		while ((optionalItem = reader.read()).isPresent()) {
-			TimeTrackingItem item = optionalItem.get();
-			DateTime now = DateTime.now();
-			DateTime start = item.getStart();
-			DateTime end = item.getEnd().or(now);
+        Map<String, Duration> collectingMap = new HashMap<>();
+        Duration uncoveredDuration = Duration.ZERO;
+        TimeTrackingItem lastItem = null;
+        try (Stream<TimeTrackingItem> items = itemsToRead) {
+            for (Iterator<TimeTrackingItem> it = items.iterator(); it.hasNext(); ) {
+                TimeTrackingItem item = it.next();
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime start = item.getStart();
+                LocalDateTime end = item.getEnd().orElse(now);
 
-			if (lastItem != null) {
-				DateTime endOfLastItem = lastItem.getEnd().or(now);
-				if (endOfLastItem.isBefore(start)) {
-					Duration additionalUncoveredTime = new Duration(
-							endOfLastItem, start);
-					uncoveredDuration = uncoveredDuration
-							.plus(additionalUncoveredTime);
-				}
-			}
+                if (lastItem != null) {
+                    LocalDateTime endOfLastItem = lastItem.getEnd().orElse(now);
+                    if (endOfLastItem.isBefore(start)) {
+                        Duration additionalUncoveredTime = Duration.between(
+                                endOfLastItem, start);
+                        uncoveredDuration = uncoveredDuration
+                                .plus(additionalUncoveredTime);
+                    }
+                }
 
-			lastItem = item;
+                lastItem = item;
 
-			if (startOfReport == null) {
-				startOfReport = start;
-			}
-			endOfReport = end;
+                if (startOfReport == null) {
+                    startOfReport = start;
+                }
+                endOfReport = end;
 
-			Duration duration = new Duration(start, end);
-			String comment = item.getComment().or("");
-			if (collectingMap.containsKey(comment)) {
-				Duration oldDuration = collectingMap.get(comment);
-				collectingMap.put(comment, oldDuration.plus(duration));
-			} else {
-				collectingMap.put(comment, duration);
-			}
-		}
+                Duration duration = Duration.between(start, end);
+                String comment = item.getActivity();
+                if (collectingMap.containsKey(comment)) {
+                    Duration oldDuration = collectingMap.get(comment);
+                    collectingMap.put(comment, oldDuration.plus(duration));
+                } else {
+                    collectingMap.put(comment, duration);
+                }
+            }
 
-		IOUtils.closeQuietly(reader);
+        }
 
-		for (Map.Entry<String, Duration> e : collectingMap.entrySet()) {
-			reportList.add(new ReportingItem(e.getValue(), e.getKey()));
-		}
+        for (Map.Entry<String, Duration> e : collectingMap.entrySet()) {
+            reportList.add(new ReportingItem(e.getValue(), e.getKey()));
+        }
 
-		Collections.sort(reportList, new Comparator<ReportingItem>() {
+        Collections.sort(reportList, comparing(ReportingItem::getComment));
+        return new Report(reportList, startOfReport, endOfReport,
+                uncoveredDuration);
+    }
 
-			@Override
-			public int compare(ReportingItem o1, ReportingItem o2) {
-				return o1.getComment().compareTo(o2.getComment());
-			}
-		});
-		return new Report(reportList, startOfReport, endOfReport,
-				uncoveredDuration);
-	}
 
-	public static class Report {
+    public static class Report {
+        private final List<ReportingItem> reportingItems;
+        private final LocalDateTime start;
+        private final LocalDateTime end;
+        private final Duration uncoveredDuration;
 
-		private final List<ReportingItem> reportingItems;
-		private final DateTime start;
-		private final DateTime end;
-		private final Duration uncoveredDuration;
+        public Report(List<ReportingItem> reportingItems, LocalDateTime start,
+                      LocalDateTime end, Duration uncoveredDuration) {
+            this.reportingItems = reportingItems;
+            this.start = start;
+            this.end = end;
+            this.uncoveredDuration = Objects.requireNonNull(uncoveredDuration);
+        }
 
-		public Report(List<ReportingItem> reportingItems, DateTime start,
-				DateTime end, Duration uncoveredDuration) {
-			this.reportingItems = reportingItems;
-			this.start = start;
-			this.end = end;
-			this.uncoveredDuration = checkNotNull(uncoveredDuration);
-		}
+        public List<ReportingItem> getReportingItems() {
+            return reportingItems;
+        }
 
-		public List<ReportingItem> getReportingItems() {
-			return reportingItems;
-		}
+        public LocalDateTime getStart() {
+            return start;
+        }
 
-		public DateTime getStart() {
-			return start;
-		}
+        public LocalDateTime getEnd() {
+            return end;
+        }
 
-		public DateTime getEnd() {
-			return end;
-		}
-
-		public Duration getUncoveredDuration() {
-			return uncoveredDuration;
-		}
-	}
+        public Duration getUncoveredDuration() {
+            return uncoveredDuration;
+        }
+    }
 }

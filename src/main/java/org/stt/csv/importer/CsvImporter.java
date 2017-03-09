@@ -1,20 +1,18 @@
 package org.stt.csv.importer;
 
-import com.google.common.base.Optional;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.time.DateTimeHelper;
+import org.stt.time.DateTimes;
 
-import java.io.IOException;
 import java.io.Reader;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -27,17 +25,16 @@ public class CsvImporter implements ItemReader {
 
 	private final LineIterator lineIter;
 
-	private final DateTimeFormatter formatter = DateTimeFormat
-			.forPattern("dd.MM.yyy");
-	private final PeriodFormatter durationParser = new PeriodFormatterBuilder()
-			.minimumPrintedDigits(2).printZeroAlways().appendHours()
-			.appendSeparator(":").appendMinutes().toFormatter();
+    private final DateTimeFormatter formatter = DateTimeFormatter
+            .ofPattern("dd.MM.yyy");
+    private final DateTimeFormatter durationParser = DateTimeFormatter
+            .ofPattern("hh:mm");
 
 	private int commentfieldIndex;
 	private int datefieldIndex;
 	private int timefieldIndex;
 
-	private DateTime nextStartTime = null;
+    private LocalDateTime nextStartTime = null;
 
 	public CsvImporter(Reader input, int datefieldIndex, int timefieldIndex,
 			int commentfieldIndex) {
@@ -63,10 +60,10 @@ public class CsvImporter implements ItemReader {
 			}
 		}
 		lineIter.close();
-		return Optional.absent();
-	}
+        return Optional.empty();
+    }
 
-	public TimeTrackingItem constructFrom(String line, DateTime startTime) {
+    public TimeTrackingItem constructFrom(String line, LocalDateTime startTime) {
 
 		// we want all items, even empty ones: negative parameter to split does
 		// exactly that
@@ -77,27 +74,27 @@ public class CsvImporter implements ItemReader {
 			String durationString = split[timefieldIndex].replaceAll("\"", "");
 			String comment = split[commentfieldIndex];
 			try {
-				DateTime parsedDateTime = formatter.parseDateTime(dateString);
-				Period period = durationParser.parsePeriod(durationString);
-				DateTime itemStartTime = startTime;
-				if (!DateTimeHelper.isOnSameDay(startTime, parsedDateTime)) {
-					itemStartTime = parsedDateTime.withTimeAtStartOfDay();
-				}
-				DateTime itemEndTime = itemStartTime.plus(period);
+                LocalDateTime parsedDateTime = LocalDateTime.parse(dateString, formatter);
+                Duration period = Duration.between(LocalTime.MIDNIGHT, LocalTime.parse(durationString, durationParser));
+                LocalDateTime itemStartTime = startTime;
+                if (!DateTimes.isOnSameDay(startTime, parsedDateTime)) {
+                    itemStartTime = parsedDateTime.toLocalDate().atStartOfDay();
+                }
+                LocalDateTime itemEndTime = itemStartTime.plus(period);
 
                 return new TimeTrackingItem(comment,
                         itemStartTime, itemEndTime);
 			} catch (IllegalArgumentException i) {
-				LOG.info("not parseable line: " + line);
-			}
+                LOG.log(Level.INFO, "not parseable line: " + line, i);
+            }
 		} else {
-			LOG.info("not parseable line: " + line);
-		}
+            LOG.info(() -> "not parseable line: " + line);
+        }
 		return null;
 	}
 
 	@Override
-	public void close() throws IOException {
-		lineIter.close();
+    public void close() {
+        lineIter.close();
 	}
 }

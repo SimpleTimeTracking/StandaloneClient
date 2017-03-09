@@ -2,10 +2,9 @@ package org.stt.persistence;
 
 import org.stt.model.TimeTrackingItem;
 
-import java.io.Closeable;
 import java.io.IOException;
 
-public interface ItemPersister extends Closeable {
+public interface ItemPersister {
 
 	/**
 	 * Writes the given item.
@@ -20,21 +19,20 @@ public interface ItemPersister extends Closeable {
 	 * </p>
 	 * 
 	 * @param item
-	 *            the item to write. If it already exists, it will be
-	 *            overwritten so the caller has to take care
-	 * @throws IOException
+     *            the item to persist. If it already exists, it will be
+     *            overwritten so the caller has to take care
+     * @throws IOException
 	 */
-	void insert(TimeTrackingItem item) throws IOException;
+    void persist(TimeTrackingItem item);
 
 	/**
 	 * Replaces the given item with a new one.
 	 * <p>
 	 * This is equivalent to calling {@link #delete(TimeTrackingItem)} and
-	 * {@link #insert(TimeTrackingItem)} but may potentially be faster
-	 * </p>
-	 */
-	void replace(TimeTrackingItem item, TimeTrackingItem with)
-			throws IOException;
+     * {@link #persist(TimeTrackingItem)} but may potentially be faster
+     * </p>
+     */
+    void replace(TimeTrackingItem item, TimeTrackingItem with);
 
 	/**
 	 * @param item
@@ -42,5 +40,5 @@ public interface ItemPersister extends Closeable {
 	 *            does nothing
 	 * @throws IOException
 	 */
-	void delete(TimeTrackingItem item) throws IOException;
+    void delete(TimeTrackingItem item);
 }

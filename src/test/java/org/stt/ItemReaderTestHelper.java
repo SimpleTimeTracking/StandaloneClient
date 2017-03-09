@@ -1,9 +1,10 @@
 package org.stt;
 
-import com.google.common.base.Optional;
 import org.mockito.BDDMockito.BDDMyOngoingStubbing;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
+
+import java.util.Optional;
 
 import static org.mockito.BDDMockito.given;
 
@@ -17,6 +18,6 @@ public class ItemReaderTestHelper {
 		for (TimeTrackingItem item : items) {
 			stubbing = stubbing.willReturn(Optional.of(item));
 		}
-		stubbing.willReturn(Optional.<TimeTrackingItem> absent());
-	}
+        stubbing.willReturn(Optional.empty());
+    }
 }

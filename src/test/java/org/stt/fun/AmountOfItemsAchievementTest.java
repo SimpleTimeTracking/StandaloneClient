@@ -5,11 +5,12 @@
  */
 package org.stt.fun;
 
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
+
+import java.time.LocalDateTime;
 
 import static org.hamcrest.CoreMatchers.is;
 
@@ -30,10 +31,10 @@ public class AmountOfItemsAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldNotBeAchievedWithTooFewItems() {
 		// GIVEN
-		final DateTime dateTime = DateTime.now();
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.done();
+        final LocalDateTime dateTime = LocalDateTime.now();
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.done();
 		// WHEN
 		boolean achieved = sut.isAchieved();
 		// THEN
@@ -43,11 +44,11 @@ public class AmountOfItemsAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldBeAchievedWithExactlyEnoughItems() {
 		// GIVEN
-		final DateTime dateTime = DateTime.now();
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.done();
+        final LocalDateTime dateTime = LocalDateTime.now();
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.done();
 		// WHEN
 		boolean achieved = sut.isAchieved();
 		// THEN
@@ -57,12 +58,12 @@ public class AmountOfItemsAchievementTest extends AchievementTestBase {
 	@Test
 	public void shouldBeAchievedWithMoreThanEnoughItems() {
 		// GIVEN
-		final DateTime dateTime = DateTime.now();
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.process(new TimeTrackingItem(null, dateTime));
-		sut.done();
+        final LocalDateTime dateTime = LocalDateTime.now();
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.process(new TimeTrackingItem("", dateTime));
+        sut.done();
 		// WHEN
 		boolean achieved = sut.isAchieved();
 		// THEN

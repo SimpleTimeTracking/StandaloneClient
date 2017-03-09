@@ -6,15 +6,25 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.stt.Configuration;
+import org.stt.command.Activities;
+import org.stt.command.CommandFormatter;
+import org.stt.persistence.ItemPersister;
+import org.stt.persistence.ItemReader;
+import org.stt.persistence.stt.STTItemPersister;
+import org.stt.persistence.stt.STTItemReader;
+import org.stt.query.TimeTrackingItemQueries;
+import org.stt.reporting.WorkingtimeItemProvider;
+import org.stt.text.ItemCategorizer;
+import org.stt.text.WorktimeCategorizer;
 
+import javax.inject.Provider;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
@@ -22,30 +32,53 @@ import static org.hamcrest.Matchers.containsString;
 public class MainTest {
 	private Main sut;
 
-	@Mock
-	private Configuration configuration;
-
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 
-	private File currentSttFile;
-	private File currentTiFile;
-	private File currentTiCurrentFile;
+    private File currentSttFile;
 
 	@Before
 	public void setup() throws IOException {
 		MockitoAnnotations.initMocks(this);
 
-		currentSttFile = tempFolder.newFile();
-		Mockito.when(configuration.getSttFile()).thenReturn(currentSttFile);
-		currentTiFile = tempFolder.newFile();
-		Mockito.when(configuration.getTiFile()).thenReturn(currentTiFile);
-		currentTiCurrentFile = tempFolder.newFile();
-		Mockito.when(configuration.getTiCurrentFile()).thenReturn(
-				currentTiCurrentFile);
+        Configuration configuration = new Configuration() {
+            @Override
+            public File determineBaseDir() {
+                try {
+                    return tempFolder.newFolder();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        };
 
-		sut = new Main(configuration);
-	}
+        currentSttFile = configuration.getSttFile();
+
+        Provider<Reader> sttReader = () -> {
+            try {
+                return new InputStreamReader(new FileInputStream(currentSttFile), "UTF8");
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+
+        Provider<Writer> sttWriter = () -> {
+            try {
+                return new OutputStreamWriter(new FileOutputStream(currentSttFile), "UTF8");
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+        Provider<ItemReader> readerProvider = () -> new STTItemReader(sttReader.get());
+        TimeTrackingItemQueries queries = new TimeTrackingItemQueries(readerProvider, Optional.empty());
+        WorkingtimeItemProvider worktimeItemProvider = new WorkingtimeItemProvider(configuration);
+        ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
+        ReportPrinter reportPrinter = new ReportPrinter(queries, configuration, worktimeItemProvider, categorizer);
+        ItemPersister persister = new STTItemPersister(sttReader, sttWriter);
+        CommandFormatter commandFormatter = new CommandFormatter();
+        Activities activities = new Activities(persister, queries, Optional.empty());
+        sut = new Main(queries, reportPrinter, commandFormatter, activities);
+    }
 
 	@Test
 	public void startingWorkWritesToConfiguredFile() throws IOException {

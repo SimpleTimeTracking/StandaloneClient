@@ -1,9 +1,6 @@
 package org.stt.reporting;
 
 import org.apache.commons.io.FileUtils;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.Duration;
-import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,6 +12,8 @@ import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDate;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -37,8 +36,8 @@ public class WorkingtimeItemProviderTest {
 
 		// populate test file
 		FileUtils.write(tempFile,
-				"2014-01-01 14\nhoursMon = 10\n2014-02-02 10 14");
-		// end populate
+                "2014-01-01 14\nhoursMon = 10\n2014-02-02 10 14", "UTF8");
+        // end populate
 
 		given(configuration.getWorkingTimesFile()).willReturn(tempFile);
 
@@ -50,12 +49,12 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 7, 1));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 7, 1));
 
 		// THEN
-		assertThat(new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR),
-				is(workingTimeFor.getMin()));
+        assertThat(Duration.ofHours(8),
+                is(workingTimeFor.getMin()));
 	}
 
 	@Test
@@ -63,13 +62,13 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 7, 7));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 7, 7));
 
 		// THEN
 
-		assertThat(new Duration(10 * DateTimeConstants.MILLIS_PER_HOUR),
-				is(workingTimeFor.getMin()));
+        assertThat(Duration.ofHours(10),
+                is(workingTimeFor.getMin()));
 	}
 
 	@Test
@@ -77,12 +76,12 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 1, 1));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 1, 1));
 
 		// THEN
-		assertThat(new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR),
-				is(workingTimeFor.getMin()));
+        assertThat(Duration.ofHours(14),
+                is(workingTimeFor.getMin()));
 	}
 
 	@Test
@@ -90,12 +89,12 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 2, 2));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 2, 2));
 
 		// THEN
-		Duration min = new Duration(10 * DateTimeConstants.MILLIS_PER_HOUR);
-		Duration max = new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR);
-		assertThat(new WorkingtimeItem(min, max), is(workingTimeFor));
+        Duration min = Duration.ofHours(10);
+        Duration max = Duration.ofHours(14);
+        assertThat(new WorkingtimeItem(min, max), is(workingTimeFor));
 	}
 }

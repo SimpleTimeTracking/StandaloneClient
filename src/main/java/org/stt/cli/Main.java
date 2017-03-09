@@ -1,293 +1,168 @@
 package org.stt.cli;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.inject.Provider;
 import org.stt.Configuration;
-import org.stt.command.ToItemWriterCommandHandler;
-import org.stt.text.WorktimeCategorizer;
+import org.stt.command.*;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.*;
-import org.stt.persistence.stt.STTItemPersister;
-import org.stt.persistence.stt.STTItemReader;
-import org.stt.query.DNFClause;
-import org.stt.query.DefaultTimeTrackingItemQueries;
-import org.stt.query.FilteredItemReader;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
-import org.stt.reporting.WorkingtimeItemProvider;
 
-import java.io.*;
+import javax.inject.Inject;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The starting point for the CLI
  */
 public class Main {
+    private final TimeTrackingItemQueries timeTrackingItemQueries;
+    private final ReportPrinter reportPrinter;
+    private final CommandFormatter commandFormatter;
+    private final CommandHandler activities;
 
-	private static Logger LOG = Logger.getLogger(Main.class.getName());
-
-	private final Configuration configuration;
-
-	private final File timeFile;
-
-	private ItemPersister itemPersister;
-	private TimeTrackingItemQueries timeTrackingItemQueries;
-
-	public Main(Configuration configuration) {
-		this.configuration = checkNotNull(configuration);
-
-		timeFile = configuration.getSttFile();
-	}
-
-	private void on(Collection<String> args, PrintStream printTo)
-			throws IOException {
-		String comment = Joiner.on(" ").join(args);
-
-		Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
-				.getCurrentTimeTrackingitem();
-
-		ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
-				itemPersister, timeTrackingItemQueries);
-		Optional<TimeTrackingItem> createdItem = tiw.executeCommand(comment);
-
-		if (currentItem.isPresent()) {
-			prettyPrintTimeTrackingItem(printTo, currentItem);
-		}
-		printTo.println("start working on "
-				+ createdItem.get().getComment().orNull());
-		tiw.close();
-	}
-
-	/**
-	 * output all items where the comment contains (ignoring case) the given
-	 * args.
-	 * 
-	 * Only unique comments are printed.
-	 * 
-	 * The ordering of the output is from newest to oldest.
-	 * 
-	 * Useful for completion.
-	 */
-	private void search(Collection<String> args, PrintStream printTo)
-			throws IOException {
-
-		SortedSet<TimeTrackingItem> sortedItems = new TreeSet<>(
-				new Comparator<TimeTrackingItem>() {
-
-					@Override
-					public int compare(TimeTrackingItem o1, TimeTrackingItem o2) {
-						return o2.getStart().compareTo(o1.getStart());
-					}
-				});
-
-		ItemReader readFrom = createNewReaderProvider(timeFile).provideReader();
-
-		DNFClause searchFilter = new DNFClause();
-		searchFilter.withCommentContains(Joiner.on(" ")
-				.join(args));
-		ItemReader reader = new FilteredItemReader(readFrom, searchFilter);
-		sortedItems.addAll(IOUtil.readAll(reader));
-
-		Set<String> sortedUniqueComments = new HashSet<>(sortedItems.size());
-
-		for (TimeTrackingItem i : sortedItems) {
-			String comment = i.getComment().orNull();
-			if (comment != null && !sortedUniqueComments.contains(comment)) {
-				sortedUniqueComments.add(comment);
-				printTo.println(comment);
-			}
-		}
-	}
-
-	private void report(List<String> args, PrintStream printTo) {
-		File source = timeFile;
-		int sourceIndex = args.indexOf("--source");
-		if (sourceIndex != -1) {
-			args.remove(sourceIndex);
-			String sourceParameter = args.get(sourceIndex);
-			if (sourceParameter.equals("-")) {
-				source = null;
-			} else {
-				source = new File(sourceParameter);
-			}
-			args.remove(sourceIndex);
-		}
-
-		createNewReportPrinter(source).report(args, printTo);
-	}
-
-	private void fin(Collection<String> args, PrintStream printTo)
-			throws IOException {
-		try (ToItemWriterCommandHandler tiw = new ToItemWriterCommandHandler(
-				itemPersister, timeTrackingItemQueries)) {
-			Optional<TimeTrackingItem> updatedItem = tiw
-					.executeCommand(ToItemWriterCommandHandler.COMMAND_FIN
-							+ " " + Joiner.on(" ").join(args));
-			if (updatedItem.isPresent()) {
-				prettyPrintTimeTrackingItem(printTo, updatedItem);
-			}
-		}
-	}
-
-	/**
-	 * @param printTo
-	 * @param updatedItem
-	 */
-	private void prettyPrintTimeTrackingItem(PrintStream printTo,
-			Optional<TimeTrackingItem> updatedItem) {
-		if (updatedItem.isPresent()) {
-			StringBuilder itemString = ItemFormattingHelper
-					.prettyPrintItem(updatedItem);
-			printTo.println("stopped working on " + itemString.toString());
-		}
-	}
-
-	/*
-	 * 
-	 * CLI use (example from ti usage):
-	 * 
-	 * ti on long text containing comment //starts a new entry and inserts
-	 * comment
-	 * 
-	 * ti on other comment //sets end time to the previous item and starts the
-	 * new one
-	 * 
-	 * ti fin // sets end time of previous item
-	 */
-	public static void main(String[] args) throws IOException {
-		// apply the desired encoding for all System.out calls
-		// this is necessary if one wants to output non ASCII
-		// characters on a Windows console
-		Configuration configuration = new Configuration();
-		System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
-				true, configuration.getSystemOutEncoding()));
-
-		Main main = new Main(configuration);
-		List<String> argsList = new ArrayList<>(Arrays.asList(args));
-		main.executeCommand(argsList, System.out);
-
-		// perform backup
-		main.createNewBackupCreator(configuration).start();
-	}
-
-	void executeCommand(List<String> args, PrintStream printTo) {
-		if (args.size() == 0) {
-			usage(printTo);
-			return;
-		}
-
-		try (STTItemPersister itemPersister = new STTItemPersister(
-				createReaderProvider(), createWriterProvider())) {
-
-			DefaultTimeTrackingItemQueries searcher = createNewSearcher();
-
-			this.itemPersister = itemPersister;
-			timeTrackingItemQueries = searcher;
-
-			String mainOperator = args.remove(0);
-			if (mainOperator.startsWith("o")) {
-				// on
-				on(args, printTo);
-			} else if (mainOperator.startsWith("r")) {
-				// report
-				report(args, printTo);
-			} else if (mainOperator.startsWith("f")) {
-				// fin
-				fin(args, printTo);
-			} else if (mainOperator.startsWith("s")) {
-				// search
-				search(args, printTo);
-			} else if (mainOperator.startsWith("c")) {
-				// convert
-				new FormatConverter(args).convert();
-			} else {
-				usage(printTo);
-			}
-		} catch (IOException e) {
-			LOG.throwing(Main.class.getName(), "parseCommandString", e);
-		}
-	}
-
-	/**
-	 * Prints usage information to the given Stream
-	 */
-	private static void usage(PrintStream printTo) {
-		String usage = "Usage:\n"
-				+ "on comment\tto start working on something\n"
-				+ "report [X days] [searchstring]\tto display a report\n"
-				+ "fin\t\tto stop working\n"
-				+ "search [searchstring]\tto get a list of all comments of items matching the given search string";
-
-		printTo.println(usage);
-	}
-
-	private DefaultTimeTrackingItemQueries createNewSearcher() {
-		return new DefaultTimeTrackingItemQueries(createNewReaderProvider(timeFile));
-	}
-
-	private ReportPrinter createNewReportPrinter(File source) {
-		ItemReaderProvider provider = createNewReaderProvider(source);
-		return new ReportPrinter(provider, configuration,
-				new WorkingtimeItemProvider(configuration),
-				new WorktimeCategorizer(configuration));
-	}
-
-	/**
-	 * creates a new ItemReaderProvider for timeFile
-	 */
-	private ItemReaderProvider createNewReaderProvider(final File source) {
-        ItemReaderProvider provider = new ItemReaderProvider() {
-            @Override
-            public ItemReader provideReader() {
-                try {
-                    InputStream inStream;
-                    if (source == null) {
-                        inStream = System.in;
-                    } else {
-                        inStream = new FileInputStream(source);
-                    }
-                    InputStreamReader in = new InputStreamReader(inStream, "UTF-8");
-                    return new STTItemReader(in);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
-        return new PreCachingItemReaderProvider(provider);
+    @Inject
+    public Main(TimeTrackingItemQueries timeTrackingItemQueries,
+                ReportPrinter reportPrinter,
+                CommandFormatter commandFormatter,
+                Activities activities) {
+        this.timeTrackingItemQueries = timeTrackingItemQueries;
+        this.reportPrinter = reportPrinter;
+        this.commandFormatter = commandFormatter;
+        this.activities = activities;
     }
 
-	private Provider<Reader> createReaderProvider() {
-		return new Provider<Reader>() {
-			@Override
-			public Reader get() {
-				try {
-					return new InputStreamReader(new FileInputStream(timeFile),
-							"UTF-8");
-				} catch (UnsupportedEncodingException | FileNotFoundException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		};
-	}
+    private void on(Collection<String> args, PrintStream printTo) {
+        String comment = String.join(" ", args);
 
-	private Provider<Writer> createWriterProvider() {
-		return new Provider<Writer>() {
-			@Override
-			public Writer get() {
-				try {
-					return new OutputStreamWriter(
-                            new FileOutputStream(timeFile, false), "UTF-8");
-				} catch (UnsupportedEncodingException | FileNotFoundException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		};
-	}
+        Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
+                .getCurrentTimeTrackingitem();
 
-	private BackupCreator createNewBackupCreator(Configuration config) {
-		return new BackupCreator(config);
-	}
+        executeCommand(comment);
+
+        currentItem.ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
+
+        timeTrackingItemQueries.getCurrentTimeTrackingitem()
+                .filter(Predicate.isEqual(currentItem.orElse(null)).negate())
+                .ifPresent(item -> printTo.println("start working on " + item.getActivity()));
+    }
+
+    public void executeCommand(String command) {
+        Objects.requireNonNull(command);
+        Command parsedCommand = commandFormatter.parse(command);
+
+        if (parsedCommand instanceof NewItemCommand) {
+            activities.addNewActivity((NewItemCommand) parsedCommand);
+        } else if (parsedCommand instanceof EndCurrentItem) {
+            activities.endCurrentActivity((EndCurrentItem) parsedCommand);
+        }
+        timeTrackingItemQueries.sourceChanged(null);
+    }
+
+    /**
+     * output all items where the comment contains (ignoring case) the given
+     * args.
+     * <p>
+     * Only unique comments are printed.
+     * <p>
+     * The ordering of the output is from newest to oldest.
+     * <p>
+     * Useful for completion.
+     */
+    private void search(Collection<String> args, PrintStream printTo) {
+
+        Criteria searchFilter = new Criteria();
+        searchFilter.withCommentContains(String.join(" ", args));
+        try (Stream<TimeTrackingItem> itemStream = timeTrackingItemQueries.queryItems(searchFilter)) {
+            itemStream
+                    .sorted((o1, o2) -> o2.getStart().compareTo(o1.getStart()))
+                    .map(TimeTrackingItem::getActivity)
+                    .distinct()
+                    .forEach(printTo::println);
+        }
+    }
+
+    private void fin(PrintStream printTo) {
+        activities.endCurrentActivity(new EndCurrentItem(LocalDateTime.now()));
+        timeTrackingItemQueries.getCurrentTimeTrackingitem()
+                .ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
+    }
+
+    private void prettyPrintTimeTrackingItem(PrintStream printTo, TimeTrackingItem updatedItem) {
+        printTo.println("stopped working on " + ItemFormattingHelper.prettyPrintItem(updatedItem));
+    }
+
+    /*
+     *
+     * CLI use (example from ti usage):
+     *
+     * ti on long text containing comment //starts a new entry and inserts
+     * comment
+     *
+     * ti on other comment //sets end time to the previous item and starts the
+     * new one
+     *
+     * ti fin // sets end time of previous item
+     */
+    public static void main(String[] args) throws IOException {
+        CLIApplication cliApplication = DaggerCLIApplication.create();
+        // accept the desired encoding for all System.out calls
+        // this is necessary if one wants to output non ASCII
+        // characters on a Windows console
+        Configuration configuration = cliApplication.configuration();
+        System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
+                true, configuration.getSystemOutEncoding()));
+
+        Main main = cliApplication.main();
+        List<String> argsList = new ArrayList<>(Arrays.asList(args));
+        main.executeCommand(argsList, System.out);
+
+        // perform backup
+        cliApplication.backupCreator().start();
+    }
+
+    void executeCommand(List<String> args, PrintStream printTo) {
+        if (args.isEmpty()) {
+            usage(printTo);
+            return;
+        }
+
+        String mainOperator = args.remove(0);
+        if (mainOperator.startsWith("o")) {
+            // on
+            on(args, printTo);
+        } else if (mainOperator.startsWith("r")) {
+            // report
+            reportPrinter.report(args, printTo);
+        } else if (mainOperator.startsWith("f")) {
+            // fin
+            fin(printTo);
+        } else if (mainOperator.startsWith("s")) {
+            // search
+            search(args, printTo);
+        } else if (mainOperator.startsWith("c")) {
+            // convert
+            new FormatConverter(args).convert();
+        } else {
+            usage(printTo);
+        }
+    }
+
+    /**
+     * Prints usage information to the given Stream
+     */
+    private static void usage(PrintStream printTo) {
+        String usage = "Usage:\n"
+                + "on comment\tto start working on something\n"
+                + "report [X days] [searchstring]\tto display a report\n"
+                + "fin\t\tto stop working\n"
+                + "search [searchstring]\tto get a list of all comments of items matching the given search string";
+
+        printTo.println(usage);
+    }
 }

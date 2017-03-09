@@ -1,11 +1,13 @@
 package org.stt;
 
-import com.google.inject.Singleton;
-import org.apache.commons.io.IOUtils;
-import org.joda.time.Duration;
-import org.stt.time.DateTimeHelper;
+import org.stt.time.DateTimes;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.*;
+import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
@@ -29,6 +31,7 @@ public class Configuration {
             .compile(".*\\$(.*)\\$.*");
     private final Properties loadedProps;
 
+    @Inject
     public Configuration() {
 
         loadedProps = new Properties();
@@ -67,9 +70,9 @@ public class Configuration {
 
         try (InputStream rcStream = this.getClass().getResourceAsStream(
                 "/org/stt/sttrc.example")) {
-            IOUtils.copy(rcStream, new FileOutputStream(propertiesFile));
+            Files.copy(rcStream, propertiesFile.toPath());
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "cannot write example config file "
+            LOG.log(Level.WARNING, "cannot persist example config file "
                     + propertiesFile.getAbsolutePath(), e);
         }
     }
@@ -87,20 +90,9 @@ public class Configuration {
         try {
             sttFile.createNewFile();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
         return sttFile;
-    }
-
-    public File getTiFile() {
-        String tiFile = getPropertiesReplaced("tiFile", "$HOME$/.ti-sheet");
-        return new File(tiFile);
-    }
-
-    public File getTiCurrentFile() {
-        String tiFile = getPropertiesReplaced("tiCurrentFile",
-                "$HOME$/.ti-sheet-current");
-        return new File(tiFile);
     }
 
     public File getItemLogFile() {
@@ -124,7 +116,7 @@ public class Configuration {
         try {
             workingTimesFile.createNewFile();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
         return workingTimesFile;
     }
@@ -137,9 +129,8 @@ public class Configuration {
     }
 
     public Duration getDurationToRoundTo() {
-        return DateTimeHelper.FORMATTER_PERIOD_H_M_S.parsePeriod(
-                getPropertiesReplaced("durationRoundingInterval", "00:05:00"))
-                .toStandardDuration();
+        return Duration.between(LocalTime.MIDNIGHT, LocalTime.parse(getPropertiesReplaced("durationRoundingInterval", "00:05:00"),
+                DateTimes.DATE_TIME_FORMATTER_HH_MM_SS));
     }
 
     public String getPropertiesReplaced(String propName, String fallback) {

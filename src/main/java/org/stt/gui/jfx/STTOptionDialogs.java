@@ -1,8 +1,5 @@
 package org.stt.gui.jfx;
 
-import com.google.inject.Inject;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -14,26 +11,23 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.stt.model.TimeTrackingItem;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Created by dante on 12.03.15.
- */
 public class STTOptionDialogs {
     private ResourceBundle localization;
 
     @Inject
     public STTOptionDialogs(ResourceBundle localization) {
 
-        this.localization = checkNotNull(localization);
+        this.localization = Objects.requireNonNull(localization);
     }
 
-    public Result showDeleteOrKeepDialog(Window parent, TimeTrackingItem item) {
+    Result showDeleteOrKeepDialog(Window parent, TimeTrackingItem item) {
         OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
         Button deleteButton = new Button(localization.getString("delete"));
         final Button keepButton = new Button(localization.getString("keep"));
@@ -41,10 +35,10 @@ public class STTOptionDialogs {
         dialogBuilder.addDefaultButton(keepButton, Result.ABORT);
 
         return dialogBuilder.showAndGetResult(parent, localization.getString("deleteItem.title"),
-                String.format(localization.getString("deleteItem.text"), item.getComment().or("")));
+                String.format(localization.getString("deleteItem.text"), item.getActivity()));
     }
 
-    public Result showNoCurrentItemAndItemIsLaterDialog(Window parent) {
+    Result showNoCurrentItemAndItemIsLaterDialog(Window parent) {
         OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
         Button addButton = new Button(localization.getString("add"));
         final Button abortButton = new Button(localization.getString("abort"));
@@ -55,7 +49,7 @@ public class STTOptionDialogs {
                 localization.getString("noCurrentItemWithLateItem.text"));
     }
 
-    public Result showItemCoversOtherItemsDialog(Stage parent, int numberOfCoveredItems) {
+    Result showItemCoversOtherItemsDialog(Stage parent, int numberOfCoveredItems) {
         OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
         Button addButton = new Button(localization.getString("add"));
         final Button abortButton = new Button(localization.getString("abort"));
@@ -70,27 +64,24 @@ public class STTOptionDialogs {
     private static class OptionDialogBuilder<T> {
         private Stage stage = new Stage();
         private List<Button> buttons = new ArrayList<>();
-        public T result;
+        private T result;
 
-        public void addDefaultButton(Button button, final T value) {
+        void addDefaultButton(Button button, final T value) {
             addButton(button, value);
             button.setCancelButton(true);
             button.setDefaultButton(true);
         }
 
-        public void addButton(final Button button, final T value) {
-            button.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
+        void addButton(final Button button, final T value) {
+            button.setOnAction(event -> {
                 stage.close();
                 result = value;
-                }
             });
             button.setMnemonicParsing(true);
             buttons.add(button);
         }
 
-        public T showAndGetResult(Window parent, String title, String message) {
+        T showAndGetResult(Window parent, String title, String message) {
             VBox vbox;
             Label messageLabel;
             HBox buttonContainer;
@@ -112,6 +103,10 @@ public class STTOptionDialogs {
             stage.initOwner(parent);
             stage.setScene(scene);
             stage.showAndWait();
+            return getResult();
+        }
+
+        public T getResult() {
             return result;
         }
     }
