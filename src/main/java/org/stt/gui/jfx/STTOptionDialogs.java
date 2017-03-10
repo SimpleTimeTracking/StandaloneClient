@@ -3,9 +3,9 @@ package org.stt.gui.jfx;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -82,13 +82,13 @@ public class STTOptionDialogs {
         }
 
         T showAndGetResult(Window parent, String title, String message) {
-            VBox vbox;
+            Pane root;
             Label messageLabel;
-            HBox buttonContainer;
+            ButtonBar buttonContainer;
             try {
-                vbox = FXMLLoader.load(getClass().getResource("/org/stt/gui/jfx/OptionDialog.fxml"));
-                messageLabel = (Label) vbox.lookup("#message");
-                buttonContainer = (HBox) vbox.lookup("#buttonContainer");
+                root = FXMLLoader.load(getClass().getResource("/org/stt/gui/jfx/OptionDialog.fxml"));
+                messageLabel = (Label) root.lookup("#message");
+                buttonContainer = (ButtonBar) root.lookup("#buttonContainer");
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
@@ -96,9 +96,9 @@ public class STTOptionDialogs {
             stage.setTitle(title);
             messageLabel.setText(message);
 
-            buttonContainer.getChildren().addAll(buttons);
+            buttonContainer.getButtons().addAll(buttons);
 
-            Scene scene = new Scene(vbox);
+            Scene scene = new Scene(root);
             stage.initModality(Modality.WINDOW_MODAL);
             stage.initOwner(parent);
             stage.setScene(scene);
