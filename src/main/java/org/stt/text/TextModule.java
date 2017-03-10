@@ -18,8 +18,8 @@ public class TextModule {
     }
 
     @Provides
-    static ExpansionProvider provideExpansionProvider() {
-        return new CommonPrefixGrouper();
+    static ExpansionProvider provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper) {
+        return commonPrefixGrouper;
     }
 
     @Provides
@@ -29,8 +29,8 @@ public class TextModule {
 
     @Provides
     static ItemGrouper provideItemGrouper(TimeTrackingItemQueries queries,
-                                          YamlConfigService yamlConfig) {
-        CommonPrefixGrouper commonPrefixGrouper = new CommonPrefixGrouper();
+                                          YamlConfigService yamlConfig,
+                                          CommonPrefixGrouper commonPrefixGrouper) {
         try (Stream<TimeTrackingItem> items = queries.queryAllItems()) {
             commonPrefixGrouper.scanForGroups(items);
         }
@@ -41,5 +41,4 @@ public class TextModule {
 
         return commonPrefixGrouper;
     }
-
 }

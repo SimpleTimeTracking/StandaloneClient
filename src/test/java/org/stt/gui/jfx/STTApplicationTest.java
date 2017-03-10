@@ -2,6 +2,7 @@ package org.stt.gui.jfx;
 
 import javafx.scene.text.Font;
 import net.engio.mbassy.bus.MBassador;
+import org.fxmisc.richtext.StyleClassedTextArea;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -15,7 +16,6 @@ import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
 import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.text.ExpansionProvider;
 import org.stt.text.ItemGrouper;
@@ -23,7 +23,9 @@ import org.stt.validation.ItemAndDateValidator;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -32,7 +34,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.stt.LambdaMatcher.mapped;
 
@@ -69,28 +70,7 @@ public class STTApplicationTest {
         sut = new STTApplication(new STTOptionDialogs(resourceBundle), new MBassador<>(), commandFormatter, reportWindowBuilder,
                 expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, timeTrackingItemQueries, achievementService, executorService,
                 commandHandler, fontAwesome);
-
-        sut.viewAdapter = sut.new ViewAdapter(null) {
-
-            @Override
-            protected void show() throws RuntimeException {
-            }
-
-            @Override
-            protected void requestFocusOnCommandText() {
-            }
-
-            @Override
-            protected void updateAllItems(
-                    Collection<TimeTrackingItem> updateWith) {
-                sut.allItems.setAll(updateWith);
-            }
-
-            @Override
-            protected void shutdown() {
-                shutdownCalled = true;
-            }
-        };
+        sut.commandText = new StyleClassedTextArea();
     }
 
     @Test
@@ -106,15 +86,15 @@ public class STTApplicationTest {
         sut.expandCurrentCommand();
 
         // THEN
-        assertThat(sut.currentCommand.get(), is("testblub"));
+        assertThat(sut.commandText.getText(), is("testblub"));
     }
 
     @Test
     public void shouldExpandWithinText() {
         // GIVEN
 
-        sut.currentCommand.set("al beta");
-        sut.commandCaretPosition.set(2);
+        sut.commandText.replaceText("al beta");
+        sut.commandText.moveTo(2);
 
         given(expansionProvider.getPossibleExpansions("al")).willReturn(
                 Collections.singletonList("pha"));
@@ -123,8 +103,8 @@ public class STTApplicationTest {
         sut.expandCurrentCommand();
 
         // THEN
-        assertThat(sut.currentCommand.get(), is("alpha beta"));
-        assertThat(sut.commandCaretPosition.get(), is(5));
+        assertThat(sut.commandText.getText(), is("alpha beta"));
+        assertThat(sut.commandText.getCaretPosition(), is(5));
     }
 
     @Test
@@ -141,12 +121,12 @@ public class STTApplicationTest {
         sut.expandCurrentCommand();
 
         // THEN
-        assertThat(sut.currentCommand.get(), is("testaa"));
+        assertThat(sut.commandText.getText(), is("testaa"));
     }
 
     private void setTextAndPositionCaretAtEnd(String currentText) {
-        sut.currentCommand.set(currentText);
-        sut.commandCaretPosition.set(currentText.length());
+        sut.commandText.replaceText(currentText);
+        sut.commandText.moveTo(currentText.length());
     }
 
     @Test
@@ -174,7 +154,7 @@ public class STTApplicationTest {
         sut.delete(item);
 
         // THEN
-        assertThat(sut.filteredList, not(hasItem(item)));
+        verify(commandHandler).removeActivity(argThat(instanceOf(RemoveActivity.class)));
     }
 
     @Test
@@ -182,7 +162,7 @@ public class STTApplicationTest {
         // GIVEN
 
         // WHEN
-        sut.viewAdapter.showReportWindow();
+        sut.showReportWindow();
 
         // THEN
         verify(reportWindowBuilder).setupStage();
@@ -198,7 +178,7 @@ public class STTApplicationTest {
         sut.executeCommand();
 
         // THEN
-        assertThat(sut.currentCommand.get(), equalTo(""));
+        assertThat(sut.commandText.getText(), equalTo(""));
     }
 
     @Test
@@ -230,13 +210,6 @@ public class STTApplicationTest {
         assertThat(shutdownCalled, is(false));
     }
 
-    private ItemReader givenReaderThatReturns(final TimeTrackingItem item) {
-        ItemReader reader = mock(ItemReader.class);
-        given(reader.read()).willReturn(Optional.of(item),
-                Optional.empty());
-        return reader;
-    }
-
     private void givenExecutorService() {
         willAnswer(invocation -> {
             ((Runnable) invocation.getArguments()[0]).run();
@@ -245,6 +218,6 @@ public class STTApplicationTest {
     }
 
     private void givenCommand(String command) {
-        sut.currentCommand.set(command);
+        sut.commandText.replaceText(command);
     }
 }

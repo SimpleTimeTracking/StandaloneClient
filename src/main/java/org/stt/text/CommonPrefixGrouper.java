@@ -2,6 +2,8 @@ package org.stt.text;
 
 import org.stt.model.TimeTrackingItem;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -10,8 +12,13 @@ import java.util.stream.Stream;
  * Note that items are split at 'space' unless the resulting subgroup would have less than
  * 3 characters, in which case the group gets expanded.
  */
+@Singleton
 class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
     private final RadixTreeNode root = new RadixTreeNode();
+
+    @Inject
+    public CommonPrefixGrouper() {
+    }
 
     @Override
     public List<String> getGroupsOf(String text) {

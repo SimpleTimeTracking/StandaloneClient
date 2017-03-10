@@ -1,7 +1,7 @@
 package org.stt.gui.jfx.binding;
 
 import javafx.beans.binding.ListBinding;
-import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.stt.Streams;
@@ -17,12 +17,12 @@ import java.util.stream.Stream;
 public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 
 	private final ObservableList<TimeTrackingItem> allItems;
-	private final StringProperty filterProperty;
+	private final ObservableValue<String> filterProperty;
 	private final boolean filterDuplicates;
 
 	public TimeTrackingListFilter(ObservableList<TimeTrackingItem> allItems,
-			StringProperty filterProperty, boolean filterDuplicates) {
-        this.allItems = Objects.requireNonNull(allItems);
+								  ObservableValue<String> filterProperty, boolean filterDuplicates) {
+		this.allItems = Objects.requireNonNull(allItems);
         this.filterProperty = Objects.requireNonNull(filterProperty);
         this.filterDuplicates = filterDuplicates;
 
@@ -37,7 +37,7 @@ public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 
 	private List<TimeTrackingItem> createFilteredList() {
 		List<TimeTrackingItem> result;
-		String filter = filterProperty.get().toLowerCase();
+		String filter = filterProperty.getValue().toLowerCase();
 		if (filter.isEmpty()) {
 			result = new ArrayList<>(allItems);
 		} else {

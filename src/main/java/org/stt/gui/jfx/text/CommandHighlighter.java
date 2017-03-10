@@ -20,8 +20,8 @@ public class CommandHighlighter {
         this.textArea = Objects.requireNonNull(styleClassedTextArea);
     }
 
-    public void addHighlights(String text) {
-        CharStream input = new ANTLRInputStream(text);
+    public void update() {
+        CharStream input = new ANTLRInputStream(textArea.getText());
         EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
