@@ -12,9 +12,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-/**
- * Created by dante on 29.03.15.
- */
 @Singleton
 public class WorkTimeQueries {
     private WorkingtimeItemProvider workingtimeItemProvider;
@@ -41,9 +38,9 @@ public class WorkTimeQueries {
     }
 
     public Duration queryWeekWorktime() {
-        LocalDate now = LocalDate.now();
-        LocalDate monday = now.with(DayOfWeek.MONDAY);
-        Interval currentWeek = Interval.between(monday, now);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate monday = now.toLocalDate().with(DayOfWeek.MONDAY);
+        Interval currentWeek = Interval.between(monday.atStartOfDay(), now);
         return queryWorktime(currentWeek);
     }
 
