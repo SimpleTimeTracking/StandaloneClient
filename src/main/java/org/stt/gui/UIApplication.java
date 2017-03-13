@@ -11,8 +11,9 @@ import org.stt.event.EventBusModule;
 import org.stt.event.ItemLogService;
 import org.stt.fun.AchievementModule;
 import org.stt.fun.AchievementService;
+import org.stt.gui.jfx.ActivitiesController;
 import org.stt.gui.jfx.JFXModule;
-import org.stt.gui.jfx.STTApplication;
+import org.stt.gui.jfx.MainWindowController;
 import org.stt.gui.jfx.WorktimePaneBuilder;
 import org.stt.persistence.BackupCreator;
 import org.stt.persistence.stt.STTPersistenceModule;
@@ -20,6 +21,7 @@ import org.stt.text.TextModule;
 import org.stt.time.TimeUtilModule;
 
 import javax.inject.Singleton;
+import java.util.concurrent.ExecutorService;
 
 @Singleton
 @Component(modules = {TimeUtilModule.class, STTPersistenceModule.class, I18NModule.class,
@@ -36,7 +38,11 @@ public interface UIApplication {
 
     ItemLogService itemLogService();
 
-    STTApplication sttApplication();
+    ActivitiesController activitiesPanel();
 
     WorktimePaneBuilder worktimePaneBuilder();
+
+    MainWindowController mainWindow();
+
+    ExecutorService executorService();
 }

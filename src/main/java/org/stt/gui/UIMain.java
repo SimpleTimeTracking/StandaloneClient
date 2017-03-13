@@ -8,7 +8,8 @@ import net.engio.mbassy.listener.Handler;
 import org.stt.Service;
 import org.stt.event.ShuttingDown;
 import org.stt.event.TimePassedEvent;
-import org.stt.gui.jfx.STTApplication;
+import org.stt.gui.jfx.ActivitiesController;
+import org.stt.gui.jfx.MainWindowController;
 import org.stt.gui.jfx.WorktimePaneBuilder;
 
 import java.util.Collections;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,8 +27,9 @@ public class UIMain extends Application {
             .getName());
 
     private List<Service> servicesToShutdown = new CopyOnWriteArrayList<>();
-    private STTApplication application;
-    private MBassador eventBus;
+    private MBassador<Object> eventBus;
+    private MainWindowController mainWindowController;
+    private ExecutorService executorService;
 
     public static void main(String[] args) {
         LOG.info("START");
@@ -40,6 +43,7 @@ public class UIMain extends Application {
         LOG.info("Starting injector");
         UIApplication uiApplication = DaggerUIApplication.create();
 
+        executorService = uiApplication.executorService();
         LOG.info("Setting up event bus");
         eventBus = uiApplication.eventBus();
         eventBus.subscribe(this);
@@ -55,14 +59,15 @@ public class UIMain extends Application {
         startService(uiApplication.achievementService());
         startService(uiApplication.itemLogService());
 
-        application = uiApplication.sttApplication();
+        ActivitiesController application = uiApplication.activitiesPanel();
         WorktimePaneBuilder worktimePaneBuilder = uiApplication.worktimePaneBuilder();
         eventBus.subscribe(worktimePaneBuilder);
         application.addAdditional(worktimePaneBuilder);
         LOG.info("init() done");
+        mainWindowController = uiApplication.mainWindow();
     }
 
-    @Handler
+    @Handler(priority = -999)
     public void shutdown(ShuttingDown request) {
         LOG.info("Shutting down");
         try {
@@ -71,8 +76,9 @@ public class UIMain extends Application {
                 LOG.info("Stopping " + service.getClass().getSimpleName());
                 service.stop();
             }
+            executorService.shutdown();
         } finally {
-            System.exit(0);
+            Platform.exit();
         }
     }
 
@@ -89,6 +95,6 @@ public class UIMain extends Application {
             eventBus.publish(e);
         });
         LOG.info("Showing window");
-        application.start(primaryStage);
+        mainWindowController.show(primaryStage);
     }
 }

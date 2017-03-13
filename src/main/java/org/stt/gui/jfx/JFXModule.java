@@ -10,11 +10,11 @@ import org.stt.text.ItemGrouper;
 import org.stt.time.DurationRounder;
 
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.ResourceBundle;
 
 @Module
 public class JFXModule {
@@ -22,13 +22,13 @@ public class JFXModule {
     }
 
     @Provides
-    static ReportWindowBuilder createReportWindowBuilder(TimeTrackingItemQueries timeTrackingItemQueries,
-                                                         DurationRounder durationRounder,
-                                                         ItemGrouper itemGrouper,
-                                                         Provider<Stage> stageProvider,
-                                                         YamlConfigService yamlConfig) {
-        return new ReportWindowBuilder(
-                stageProvider,
+    static ReportWindowController createReportWindowBuilder(TimeTrackingItemQueries timeTrackingItemQueries,
+                                                            DurationRounder durationRounder,
+                                                            ItemGrouper itemGrouper,
+                                                            ResourceBundle localization,
+                                                            YamlConfigService yamlConfig) {
+        return new ReportWindowController(
+                localization,
                 timeTrackingItemQueries,
                 durationRounder,
                 itemGrouper,

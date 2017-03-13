@@ -2,6 +2,7 @@ package org.stt.gui.jfx;
 
 import javafx.scene.text.Font;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,11 +15,11 @@ import org.stt.command.DoNothing;
 import org.stt.command.RemoveActivity;
 import org.stt.config.CommandTextConfig;
 import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.event.ShuttingDown;
 import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.text.ExpansionProvider;
-import org.stt.text.ItemGrouper;
 import org.stt.validation.ItemAndDateValidator;
 
 import java.io.IOException;
@@ -37,22 +38,15 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.stt.LambdaMatcher.mapped;
 
-public class STTApplicationTest {
+public class ActivitiesControllerTest {
 
-    private STTApplication sut;
+    private ActivitiesController sut;
     @Mock
     private CommandFormatter commandFormatter;
     @Mock
     private ExecutorService executorService;
     @Mock
-    private ReportWindowBuilder reportWindowBuilder;
-    @Mock
-    private ItemGrouper grouper;
-    @Mock
     private ExpansionProvider expansionProvider;
-    @Mock
-    private ResourceBundle resourceBundle;
-    private boolean shutdownCalled;
     @Mock
     private ItemAndDateValidator itemValidator;
     @Mock
@@ -62,14 +56,20 @@ public class STTApplicationTest {
     @Mock
     private CommandHandler commandHandler;
     private Font fontAwesome = Font.getDefault();
+    private boolean shutdownCalled;
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        TestFX.installTK();
 
-        sut = new STTApplication(new STTOptionDialogs(resourceBundle), new MBassador<>(), commandFormatter, reportWindowBuilder,
-                expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator, timeTrackingItemQueries, achievementService, executorService,
-                commandHandler, fontAwesome);
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("org/stt/gui/Application");
+        MBassador<Object> eventBus = new MBassador<>(error -> {
+        });
+        eventBus.subscribe(this);
+        sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
+                expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator,
+                timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome);
         sut.commandText = new StyleClassedTextArea();
     }
 
@@ -158,17 +158,6 @@ public class STTApplicationTest {
     }
 
     @Test
-    public void shouldShowReportWindow() throws IOException {
-        // GIVEN
-
-        // WHEN
-        sut.showReportWindow();
-
-        // THEN
-        verify(reportWindowBuilder).setupStage();
-    }
-
-    @Test
     public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
         // GIVEN
         givenCommand("test");
@@ -208,6 +197,11 @@ public class STTApplicationTest {
 
         // THEN
         assertThat(shutdownCalled, is(false));
+    }
+
+    @Handler
+    public void shutdownWasCalled(ShuttingDown event) {
+        shutdownCalled = true;
     }
 
     private void givenExecutorService() {

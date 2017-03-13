@@ -49,7 +49,7 @@ public class STTOptionDialogs {
                 localization.getString("noCurrentItemWithLateItem.text"));
     }
 
-    Result showItemCoversOtherItemsDialog(Stage parent, int numberOfCoveredItems) {
+    Result showItemCoversOtherItemsDialog(Window parent, int numberOfCoveredItems) {
         OptionDialogBuilder<Result> dialogBuilder = new OptionDialogBuilder<>();
         Button addButton = new Button(localization.getString("add"));
         final Button abortButton = new Button(localization.getString("abort"));
