@@ -23,7 +23,7 @@
                             </VBox>
                             <VBox>
                                 <children>
-                                    <ToolBar prefHeight="40.0" prefWidth="200.0">
+                                    <ToolBar>
                                         <items>
                                             <Label text="%activities.list.title"/>
                                         </items>

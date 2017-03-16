@@ -376,11 +376,11 @@ public class ActivitiesController implements ActionsHandler {
     }
 
     private void addInsertButton() {
-        FramelessButton insertButton = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.CHEVRON_CIRCLE_RIGHT, 50, Color.CORNFLOWERBLUE));
+        FramelessButton insertButton = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.CHEVRON_CIRCLE_RIGHT, 60, Color.CORNFLOWERBLUE));
         insertButton.setBackground(commandText.getBackground());
-        insertButton.setAlignment(Pos.CENTER_LEFT);
         insertButton.setTooltip(new Tooltip(localization.getString("activities.command.insert")));
         insertButton.setOnAction(event -> executeCommand());
+        commandPane.setAlignment(insertButton, Pos.CENTER);
         commandPane.setRight(insertButton);
         commandPane.setBackground(commandText.getBackground());
     }
