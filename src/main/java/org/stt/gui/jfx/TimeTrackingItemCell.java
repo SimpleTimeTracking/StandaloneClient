@@ -8,6 +8,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.stt.model.TimeTrackingItem;
 
@@ -47,9 +48,9 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         requireNonNull(fontAwesome);
         requireNonNull(actionsHandler);
         editButton = new FramelessButton(glyph(fontAwesome, Glyph.PENCIL, GLYPH_SIZE));
-        continueButton = new FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE));
-        deleteButton = new FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE));
-        stopButton = new FramelessButton(glyph(fontAwesome, Glyph.STOP_CIRCLE, GLYPH_SIZE));
+        continueButton = new FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE, Color.DARKGREEN));
+        deleteButton = new FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE, Color.web("e26868")));
+        stopButton = new FramelessButton(glyph(fontAwesome, Glyph.STOP_CIRCLE, GLYPH_SIZE, Color.GOLDENROD));
         this.lastItemOfDay = requireNonNull(lastItemOfDay);
         this.startToFinishActivityGraphics = glyph(fontAwesome, Glyph.FAST_FORWARD, GLYPH_SIZE);
         this.ongoingActivityGraphics = glyph(fontAwesome, Glyph.FORWARD, GLYPH_SIZE);

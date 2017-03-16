@@ -2,6 +2,7 @@ package org.stt.gui.jfx;
 
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 
 public enum Glyph {
@@ -32,6 +33,14 @@ public enum Glyph {
         Font font = Font.font(fontAwesome.getFamily(), size);
         label.setFont(font);
         label.setTextFill(GLYPH_COLOR);
+        return label;
+    }
+
+    public static Label glyph(Font fontAwesome, Glyph glyph, double size, Paint paint) {
+        Label label = new Label(glyph.getCode());
+        Font font = Font.font(fontAwesome.getFamily(), size);
+        label.setFont(font);
+        label.setTextFill(paint);
         return label;
     }
 

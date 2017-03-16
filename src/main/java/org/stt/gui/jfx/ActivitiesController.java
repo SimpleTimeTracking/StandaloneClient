@@ -18,6 +18,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Popup;
 import net.engio.mbassy.bus.MBassador;
@@ -375,7 +376,7 @@ public class ActivitiesController implements ActionsHandler {
     }
 
     private void addInsertButton() {
-        FramelessButton insertButton = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.CHEVRON_CIRCLE_RIGHT, 50));
+        FramelessButton insertButton = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.CHEVRON_CIRCLE_RIGHT, 50, Color.CORNFLOWERBLUE));
         insertButton.setBackground(commandText.getBackground());
         insertButton.setAlignment(Pos.CENTER_LEFT);
         insertButton.setTooltip(new Tooltip(localization.getString("activities.command.insert")));
