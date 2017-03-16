@@ -8,9 +8,7 @@ import net.engio.mbassy.listener.Handler;
 import org.stt.Service;
 import org.stt.event.ShuttingDown;
 import org.stt.event.TimePassedEvent;
-import org.stt.gui.jfx.ActivitiesController;
 import org.stt.gui.jfx.MainWindowController;
-import org.stt.gui.jfx.WorktimePaneBuilder;
 
 import java.util.Collections;
 import java.util.List;
@@ -59,10 +57,6 @@ public class UIMain extends Application {
         startService(uiApplication.achievementService());
         startService(uiApplication.itemLogService());
 
-        ActivitiesController application = uiApplication.activitiesPanel();
-        WorktimePaneBuilder worktimePaneBuilder = uiApplication.worktimePaneBuilder();
-        eventBus.subscribe(worktimePaneBuilder);
-        application.addAdditional(worktimePaneBuilder);
         LOG.info("init() done");
         mainWindowController = uiApplication.mainWindow();
     }

@@ -30,11 +30,7 @@ public class WorkTimeQueries {
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         Duration workedTime = queryWorktime(Interval.ofDay(today).withEnd(now));
-        Duration remainingDuration = workingtimeItemProvider.getWorkingTimeFor(today).getMin().minus(workedTime);
-        if (remainingDuration.isNegative()) {
-            remainingDuration = Duration.ZERO;
-        }
-        return remainingDuration;
+        return workingtimeItemProvider.getWorkingTimeFor(today).getMin().minus(workedTime);
     }
 
     public Duration queryWeekWorktime() {

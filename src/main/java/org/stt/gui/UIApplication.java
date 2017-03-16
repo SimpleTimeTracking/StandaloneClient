@@ -14,7 +14,7 @@ import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.ActivitiesController;
 import org.stt.gui.jfx.JFXModule;
 import org.stt.gui.jfx.MainWindowController;
-import org.stt.gui.jfx.WorktimePaneBuilder;
+import org.stt.gui.jfx.WorktimePane;
 import org.stt.persistence.BackupCreator;
 import org.stt.persistence.stt.STTPersistenceModule;
 import org.stt.text.TextModule;
@@ -40,7 +40,7 @@ public interface UIApplication {
 
     ActivitiesController activitiesPanel();
 
-    WorktimePaneBuilder worktimePaneBuilder();
+    WorktimePane worktimePaneBuilder();
 
     MainWindowController mainWindow();
 

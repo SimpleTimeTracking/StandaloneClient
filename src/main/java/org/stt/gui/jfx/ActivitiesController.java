@@ -92,24 +92,25 @@ public class ActivitiesController implements ActionsHandler {
     private final BorderPane panel;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
-    private TimeTrackingItemQueries searcher;
+    private TimeTrackingItemQueries queries;
     private AchievementService achievementService;
     private ExecutorService executorService;
-    private ObservableList<AdditionalPaneBuilder> additionalPaneBuilders = FXCollections.observableArrayList();
 
     StyleClassedTextArea commandText;
 
-    @FXML
-    ListView<TimeTrackingItem> activityList;
+    private WorktimePane worktimePane;
 
     @FXML
-    FlowPane achievements;
+    private ListView<TimeTrackingItem> activityList;
 
     @FXML
-    VBox additionals;
+    private FlowPane achievements;
 
     @FXML
-    BorderPane commandPane;
+    private VBox additionals;
+
+    @FXML
+    private BorderPane commandPane;
 
     @Inject
     ActivitiesController(STTOptionDialogs sttOptionDialogs,
@@ -120,15 +121,17 @@ public class ActivitiesController implements ActionsHandler {
                          TimeTrackingItemListConfig timeTrackingItemListConfig,
                          CommandTextConfig commandTextConfig,
                          ItemAndDateValidator validator,
-                         TimeTrackingItemQueries searcher,
+                         TimeTrackingItemQueries queries,
                          AchievementService achievementService,
                          ExecutorService executorService,
                          CommandHandler activities,
-                         @Named("glyph") Font fontAwesome) {
+                         @Named("glyph") Font fontAwesome,
+                         WorktimePane worktimePane) {
+        this.worktimePane = requireNonNull(worktimePane);
         requireNonNull(timeTrackingItemListConfig);
         this.executorService = requireNonNull(executorService);
         this.achievementService = requireNonNull(achievementService);
-        this.searcher = requireNonNull(searcher);
+        this.queries = requireNonNull(queries);
         this.sttOptionDialogs = requireNonNull(sttOptionDialogs);
         this.validator = requireNonNull(validator);
         this.eventBus = requireNonNull(eventBus);
@@ -239,7 +242,7 @@ public class ActivitiesController implements ActionsHandler {
     }
 
     private void updateItems() {
-        List<TimeTrackingItem> updateWith = searcher.queryAllItems().collect(Collectors.toList());
+        List<TimeTrackingItem> updateWith = queries.queryAllItems().collect(Collectors.toList());
         Platform.runLater(() -> allItems.setAll(updateWith));
     }
 
@@ -284,10 +287,6 @@ public class ActivitiesController implements ActionsHandler {
         shutdown();
     }
 
-    public void addAdditional(AdditionalPaneBuilder builder) {
-        additionalPaneBuilders.add(builder);
-    }
-
     private void setupAutoCompletionPopup() {
         ObservableList<String> suggestionsForContinuationList = createSuggestionsForContinuationList();
         ListView<String> contentOfAutocompletionPopup = new ListView<>(suggestionsForContinuationList);
@@ -312,16 +311,11 @@ public class ActivitiesController implements ActionsHandler {
 
     @FXML
     public void initialize() {
-        ObservableList<Node> additionalPanels = additionals.getChildren();
-        for (AdditionalPaneBuilder builder : additionalPaneBuilders) {
-            additionalPanels.add(builder.build());
-        }
-        additionalPaneBuilders.clear();
-
         if (autoCompletionPopup) {
             setupAutoCompletionPopup();
         }
 
+        addWorktimePanel();
         addCommandText();
         addInsertButton();
 
@@ -345,6 +339,10 @@ public class ActivitiesController implements ActionsHandler {
             updateItems();
             updateAchievements();
         });
+    }
+
+    private void addWorktimePanel() {
+        additionals.getChildren().add(worktimePane);
     }
 
     private void addCommandText() {

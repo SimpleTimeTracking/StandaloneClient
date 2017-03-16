@@ -19,6 +19,7 @@ import org.stt.event.ShuttingDown;
 import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
+import org.stt.query.WorkTimeQueries;
 import org.stt.text.ExpansionProvider;
 import org.stt.validation.ItemAndDateValidator;
 
@@ -57,6 +58,8 @@ public class ActivitiesControllerTest {
     private CommandHandler commandHandler;
     private Font fontAwesome = Font.getDefault();
     private boolean shutdownCalled;
+    @Mock
+    private WorkTimeQueries worktimeQueries;
 
     @Before
     public void setup() {
@@ -67,9 +70,11 @@ public class ActivitiesControllerTest {
         MBassador<Object> eventBus = new MBassador<>(error -> {
         });
         eventBus.subscribe(this);
+        WorktimePane worktimePane = new WorktimePane(resourceBundle, eventBus, worktimeQueries);
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
                 expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator,
-                timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome);
+                timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
+                worktimePane);
         sut.commandText = new StyleClassedTextArea();
     }
 
