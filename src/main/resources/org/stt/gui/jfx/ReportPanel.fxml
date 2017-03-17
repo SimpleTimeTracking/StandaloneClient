@@ -73,6 +73,10 @@
         </VBox>
     </center>
     <top>
-        <DatePicker fx:id="datePicker" BorderPane.alignment="CENTER"/>
+        <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <items>
+                <DatePicker fx:id="datePicker"/>
+            </items>
+        </ToolBar>
     </top>
 </BorderPane>

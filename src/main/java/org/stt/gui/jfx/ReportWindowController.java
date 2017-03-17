@@ -8,6 +8,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.TableColumn.CellDataFeatures;
@@ -16,8 +17,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import org.stt.config.ReportWindowConfig;
 import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.ReportBinding;
@@ -300,14 +302,34 @@ public class ReportWindowController {
     }
 
     private class CommentTableCell extends TableCell<ListItem, String> {
-        private FlowPane flowPane = new FlowPane();
+        private TextFlow textFlow = new TextFlow() {
+            // Textflow bug: Tries to place each character on a separate line if != USE_COMPUTED_SIZE by delivering width < -1...
+            @Override
+            protected double computePrefHeight(double width) {
+                if (width > USE_COMPUTED_SIZE) {
+                    return super.computePrefHeight(width);
+                }
+                CommentTableCell parent = (CommentTableCell) getParent();
+                double prefWidth = parent.computePrefWidth(USE_COMPUTED_SIZE);
+                Insets insets = parent.getInsets();
+                // See javafx.scene.control.Control.layoutChildren()
+                prefWidth = snapSize(prefWidth) - snapSize(insets.getLeft()) - snapSize(insets.getRight());
+                return super.computePrefHeight(prefWidth);
+            }
+        };
+
+        CommentTableCell() {
+            setGraphic(textFlow);
+        }
 
         @Override
         protected void updateItem(String item, boolean empty) {
             super.updateItem(item, empty);
-            ObservableList<Node> flowPaneChildren = flowPane.getChildren();
-            flowPaneChildren.clear();
-            if (!empty) {
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                ObservableList<Node> textList = textFlow.getChildren();
+                textList.clear();
                 final List<String> itemGroups = itemGrouper.getGroupsOf(item);
                 for (int i = 0; i < itemGroups.size(); i++) {
                     String partToShow;
@@ -317,22 +339,22 @@ public class ReportWindowController {
                     } else {
                         partToShow = part;
                     }
-                    final Label partLabel = new Label(partToShow);
+                    final Text partLabel = new Text(partToShow);
                     addClickListener(itemGroups, partLabel, i);
                     if (i < groupColors.length) {
                         Color color = groupColors[i];
                         Color selected = color.deriveColor(0, 1, 3, 1);
                         BooleanBinding selectedRow = Bindings.equal(tableForReport.getSelectionModel().selectedIndexProperty(), indexProperty());
                         ObjectBinding<Color> colorObjectBinding = new When(selectedRow).then(selected).otherwise(color);
-                        partLabel.textFillProperty().bind(colorObjectBinding);
+                        partLabel.fillProperty().bind(colorObjectBinding);
                     }
-                    flowPaneChildren.add(partLabel);
+                    textList.add(partLabel);
                 }
+                setGraphic(textFlow);
             }
-            setGraphic(flowPane);
         }
 
-        private void addClickListener(final List<String> itemGroups, Label partLabel, final int fromIndex) {
+        private void addClickListener(final List<String> itemGroups, Node partLabel, final int fromIndex) {
             partLabel.setOnMouseClicked(event -> {
                 String commentRemainder = String.join(" ", itemGroups.subList(fromIndex, itemGroups.size()));
                 setClipboard(commentRemainder);
