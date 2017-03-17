@@ -47,4 +47,12 @@
 # 0 disables deletion of old backup files.
 # WARNING: this will delete files with name .stt-YYYY-mm-dd regardless who created them. If in doubt, leave this set to 0 and delete old backup files yourself.
 #backupRetention=0
+
+# Jira Settings
+# URL of Jira Server
+#jiraURL=https://jira.atlassian.com/
+# User name for authentication; if no user name is given anonymous authentication will be used
+#jiraUserName=
+# User password for authentication
+#jiraPassword=
  

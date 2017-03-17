@@ -59,6 +59,7 @@ repositories {
 	mavenCentral()
 	maven {
 		url "http://oss.sonatype.org/content/groups/public/"
+		url "http://maven.atlassian.com/content/repositories/atlassian-public/"
 	}
 }
 
@@ -71,6 +72,8 @@ dependencies {
 	compile 'commons-io:commons-io:2.5'
 	compile 'joda-time:joda-time:2.9.4'
 	compile 'org.yaml:snakeyaml:1.17'
+	compile 'com.atlassian.jira:jira-rest-java-client-core:4.0.0'
+	compile 'com.atlassian.fugue:fugue:2.6.1'
 
 	testCompile 'junit:junit-dep:4.11'
 	testCompile 'org.hamcrest:hamcrest-core:1.3'

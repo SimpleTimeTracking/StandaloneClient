@@ -1,11 +1,14 @@
 package org.stt;
 
-import com.google.inject.Singleton;
-import org.apache.commons.io.IOUtils;
-import org.joda.time.Duration;
-import org.stt.time.DateTimeHelper;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
@@ -13,6 +16,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.io.IOUtils;
+import org.joda.time.Duration;
+import org.stt.time.DateTimeHelper;
+
+import com.google.inject.Singleton;
 
 /**
  * Simple configuration mechanism with fallback values.
@@ -170,4 +179,27 @@ public class Configuration {
         return Integer.parseInt(getPropertiesReplaced(
                 "backupRetention", "0"));
     }
+
+	public URI getJiraURI() {
+		String jiraUri = getPropertiesReplaced("jiraURL",
+                "");
+		if (jiraUri != null && jiraUri.length() > 0)
+		{
+			try {
+				return new URI(jiraUri);
+			} catch (URISyntaxException e) {
+				LOG.log(Level.SEVERE, "Unable to parse Jira URI", e);
+				return null;
+			}
+		}
+		return null;
+	}
+
+	public String getJiraPassword() {
+		return getPropertiesReplaced("jiraPassword", "");
+	}
+
+	public String getJiraUserName() {
+		return getPropertiesReplaced("jiraUserName", "");
+	}
 }
