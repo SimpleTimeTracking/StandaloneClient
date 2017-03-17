@@ -3,6 +3,7 @@ package org.stt.gui.jfx;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -74,10 +75,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,6 +88,7 @@ import java.util.logging.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.stt.gui.jfx.STTOptionDialogs.Result;
 
+@Singleton
 public class STTApplication implements DeleteActionHandler, EditActionHandler,
         ContinueActionHandler {
 
@@ -96,7 +100,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
     final IntegerProperty commandCaretPosition = new SimpleIntegerProperty();
     private final CommandParser commandParser;
     private final ReportWindowBuilder reportWindowBuilder;
-    private final ExpansionProvider expansionProvider;
+    private final Set<ExpansionProvider> expansionProviders;
     private final ResourceBundle localization;
     private final EventBus eventBus;
     private final boolean autoCompletionPopup;
@@ -115,7 +119,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
                    EventBus eventBus,
                    CommandParser commandParser,
                    ReportWindowBuilder reportWindowBuilder,
-                   ExpansionProvider expansionProvider,
+                   Set<ExpansionProvider> expansionProviders,
                    ResourceBundle resourceBundle,
                    TimeTrackingItemListConfig timeTrackingItemListConfig,
                    CommandTextConfig commandTextConfig,
@@ -130,7 +134,7 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
         this.sttOptionDialogs = checkNotNull(STTOptionDialogs);
         this.validator = checkNotNull(validator);
         this.eventBus = checkNotNull(eventBus);
-        this.expansionProvider = checkNotNull(expansionProvider);
+        this.expansionProviders = checkNotNull(expansionProviders);
         this.reportWindowBuilder = checkNotNull(reportWindowBuilder);
         this.commandParser = checkNotNull(commandParser);
         this.localization = checkNotNull(resourceBundle);
@@ -194,8 +198,13 @@ public class STTApplication implements DeleteActionHandler, EditActionHandler,
 
     private List<String> getSuggestedContinuations() {
         String textToExpand = getTextFromStartToCaret();
-        return expansionProvider
-                .getPossibleExpansions(textToExpand);
+        List<String> expansions = new ArrayList<>();
+        for (ExpansionProvider provider : expansionProviders)
+        {
+        	expansions.addAll(provider.getPossibleExpansions(textToExpand));
+        }
+        
+        return expansions;
     }
 
     private String getTextFromStartToCaret() {

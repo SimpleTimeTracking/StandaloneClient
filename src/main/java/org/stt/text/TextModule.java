@@ -1,12 +1,14 @@
 package org.stt.text;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
+import java.io.IOException;
+import java.util.logging.Logger;
+
 import org.stt.config.YamlConfigService;
 import org.stt.persistence.ItemReader;
 
-import java.io.IOException;
-import java.util.logging.Logger;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.multibindings.Multibinder;
 
 /**
  * Created by dante on 04.12.14.
@@ -19,6 +21,9 @@ public class TextModule extends AbstractModule {
         bind(ItemGrouper.class).to(CommonPrefixGrouper.class);
         bind(ExpansionProvider.class).to(CommonPrefixGrouper.class);
         bind(ItemCategorizer.class).to(WorktimeCategorizer.class);
+
+    	Multibinder<ExpansionProvider> expansionProviderBinder = Multibinder.newSetBinder(binder(), ExpansionProvider.class);
+    	expansionProviderBinder.addBinding().to(CommonPrefixGrouper.class);
     }
 
     @Provides
