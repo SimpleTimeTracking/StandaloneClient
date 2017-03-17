@@ -24,6 +24,7 @@ public class TextModule extends AbstractModule {
 
     	Multibinder<ExpansionProvider> expansionProviderBinder = Multibinder.newSetBinder(binder(), ExpansionProvider.class);
     	expansionProviderBinder.addBinding().to(CommonPrefixGrouper.class);
+    	expansionProviderBinder.addBinding().to(JiraExpansionProvider.class);
     }
 
     @Provides
