@@ -6,8 +6,6 @@ import org.stt.config.YamlConfigService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -19,9 +17,8 @@ public class TextModule {
     }
 
     @Provides
-    static Collection<ExpansionProvider> provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper,
-                                                                  JiraExpansionProvider jiraExpansionProvider) {
-        return Arrays.asList(commonPrefixGrouper, jiraExpansionProvider);
+    static ExpansionProvider provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper) {
+        return commonPrefixGrouper;
     }
 
     @Provides

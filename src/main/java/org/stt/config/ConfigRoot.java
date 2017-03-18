@@ -8,7 +8,6 @@ public class ConfigRoot {
     private BackupConfig backup = new BackupConfig();
     private PathSetting sttFile = new PathSetting("$HOME$/.stt/activities");
     private CliConfig cli = new CliConfig();
-    private JiraConfig jira = new JiraConfig();
 
     public ActivitiesConfig getActivities() {
         return activities;
@@ -65,13 +64,5 @@ public class ConfigRoot {
 
     public void setCli(CliConfig cli) {
         this.cli = cli;
-    }
-
-    public JiraConfig getJira() {
-        return jira;
-    }
-
-    public void setJira(JiraConfig jira) {
-        this.jira = jira;
     }
 }

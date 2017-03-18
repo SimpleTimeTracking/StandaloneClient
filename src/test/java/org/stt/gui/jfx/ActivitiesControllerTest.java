@@ -71,7 +71,7 @@ public class ActivitiesControllerTest {
         eventBus.subscribe(this);
         WorktimePane worktimePane = new WorktimePane(resourceBundle, eventBus, worktimeQueries);
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
-                Collections.singleton(expansionProvider), resourceBundle, new ActivitiesConfig(), itemValidator,
+                expansionProvider, resourceBundle, new ActivitiesConfig(), itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
                 worktimePane);
         sut.commandText = new StyleClassedTextArea();
