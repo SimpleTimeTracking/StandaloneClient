@@ -22,7 +22,7 @@ apply plugin: 'idea'
 
 
 // -SNAPSHOT is added if the release task is not set
-version = '1.4'
+version = '2'
 archivesBaseName = 'STT'
 
 def javaHome = System.properties['java.home']
