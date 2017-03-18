@@ -43,6 +43,11 @@ public class ConfigModule {
     }
 
     @Provides
+    static JiraConfig provideJiraConfig(ConfigRoot configRoot) {
+        return configRoot.getJira();
+    }
+
+    @Provides
     @Named("homePath")
     static String provideHomePath() {
         return determineBaseDir().getAbsolutePath();
