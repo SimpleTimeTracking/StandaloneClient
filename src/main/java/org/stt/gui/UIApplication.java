@@ -7,6 +7,8 @@ import org.stt.I18NModule;
 import org.stt.command.CommandModule;
 import org.stt.config.ConfigModule;
 import org.stt.config.YamlConfigService;
+import org.stt.connector.jira.JiraConnector;
+import org.stt.connector.jira.JiraModule;
 import org.stt.event.EventBusModule;
 import org.stt.event.ItemLogService;
 import org.stt.fun.AchievementModule;
@@ -26,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 @Singleton
 @Component(modules = {TimeUtilModule.class, STTPersistenceModule.class, I18NModule.class,
         EventBusModule.class, TextModule.class, JFXModule.class, BaseModule.class, ConfigModule.class,
-        AchievementModule.class, CommandModule.class})
+        AchievementModule.class, CommandModule.class, JiraModule.class})
 public interface UIApplication {
     MBassador<Object> eventBus();
 
@@ -45,4 +47,6 @@ public interface UIApplication {
     MainWindowController mainWindow();
 
     ExecutorService executorService();
+
+    JiraConnector jiraConnector();
 }

@@ -62,7 +62,10 @@ findbugs {
 repositories {
 	mavenCentral()
 	maven {
-		url "http://oss.sonatype.org/content/groups/public/"
+        url "http://oss.sonatype.org/content/groups/public/"
+    }
+    maven {
+		url "http://maven.atlassian.com/content/repositories/atlassian-public/"
 	}
 }
 
@@ -71,12 +74,14 @@ dependencies {
 	antlr4  group: "org.antlr", name: "antlr4", version: "4.6"
 	compile group: "org.antlr", name: "antlr4-runtime", version: "4.6"
     compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.7-M3'
-    compile 'commons-io:commons-io:2.5'
+	compile 'commons-io:commons-io:2.5'
 	compile 'org.yaml:snakeyaml:1.18'
     compile 'com.google.dagger:dagger:2.9'
     compile 'javax.inject:javax.inject:1'
     apt  'com.google.dagger:dagger-compiler:2.9'
     compile 'net.engio:mbassador:1.3.0'
+	compile 'com.atlassian.jira:jira-rest-java-client-core:4.0.0'
+	compile 'com.atlassian.fugue:fugue:2.6.1'
 
 	testCompile 'junit:junit-dep:4.11'
 	testCompile 'org.hamcrest:hamcrest-core:1.3'

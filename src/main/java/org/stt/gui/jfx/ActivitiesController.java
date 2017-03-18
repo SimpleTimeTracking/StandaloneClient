@@ -80,7 +80,7 @@ public class ActivitiesController implements ActionsHandler {
     final ObservableList<TimeTrackingItem> allItems = FXCollections
             .observableArrayList();
     private final CommandFormatter commandFormatter;
-    private final ExpansionProvider expansionProvider;
+    private final Collection<ExpansionProvider> expansionProviders;
     private final ResourceBundle localization;
     private final MBassador<Object> eventBus;
     private final boolean autoCompletionPopup;
@@ -115,7 +115,7 @@ public class ActivitiesController implements ActionsHandler {
     ActivitiesController(STTOptionDialogs sttOptionDialogs,
                          MBassador<Object> eventBus,
                          CommandFormatter commandFormatter,
-                         ExpansionProvider expansionProvider,
+                         Collection<ExpansionProvider> expansionProviders,
                          ResourceBundle resourceBundle,
                          ActivitiesConfig activitiesConfig,
                          ItemAndDateValidator validator,
@@ -133,7 +133,7 @@ public class ActivitiesController implements ActionsHandler {
         this.sttOptionDialogs = requireNonNull(sttOptionDialogs);
         this.validator = requireNonNull(validator);
         this.eventBus = requireNonNull(eventBus);
-        this.expansionProvider = requireNonNull(expansionProvider);
+        this.expansionProviders = requireNonNull(expansionProviders);
         this.commandFormatter = requireNonNull(commandFormatter);
         this.localization = requireNonNull(resourceBundle);
         this.activities = requireNonNull(activities);
@@ -220,8 +220,9 @@ public class ActivitiesController implements ActionsHandler {
 
     private List<String> getSuggestedContinuations() {
         String textToExpand = getTextFromStartToCaret();
-        return expansionProvider
-                .getPossibleExpansions(textToExpand);
+        return expansionProviders.stream()
+                .flatMap(expansionProvider -> expansionProvider.getPossibleExpansions(textToExpand).stream())
+                .collect(Collectors.toList());
     }
 
     private String getTextFromStartToCaret() {
