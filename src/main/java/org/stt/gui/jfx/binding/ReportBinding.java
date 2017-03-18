@@ -5,43 +5,34 @@
  */
 package org.stt.gui.jfx.binding;
 
-import com.google.common.base.Preconditions;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ObservableValue;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.joda.time.Interval;
-import org.stt.model.ReportingItem;
-import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemReaderProvider;
-import org.stt.query.DNFClause;
-import org.stt.query.FilteredItemReader;
+import org.stt.model.TimeTrackingItem;
+import org.stt.query.Criteria;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.reporting.SummingReportGenerator;
 import org.stt.reporting.SummingReportGenerator.Report;
+import org.stt.time.Interval;
 
-import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Collections;
+import java.util.stream.Stream;
 
-/**
- *
- * @author dante
- */
+import static java.util.Objects.requireNonNull;
+
 public class ReportBinding extends ObjectBinding<Report> {
 
-	private final ObservableValue<DateTime> reportStart;
-	private final ObservableValue<DateTime> reportEnd;
-	private final ItemReaderProvider readerProvider;
+    private final ObservableValue<LocalDate> reportStart;
+    private final ObservableValue<LocalDate> reportEnd;
+    private final TimeTrackingItemQueries queries;
 
-	public ReportBinding(ObservableValue<DateTime> reportStart,
-			ObservableValue<DateTime> reportEnd,
-			ItemReaderProvider readerProvider) {
-		Preconditions.checkNotNull(reportStart);
-		Preconditions.checkNotNull(reportEnd);
-		Preconditions.checkNotNull(readerProvider);
-
-		this.reportStart = reportStart;
-		this.reportEnd = reportEnd;
-		this.readerProvider = readerProvider;
+    public ReportBinding(ObservableValue<LocalDate> reportStart,
+                         ObservableValue<LocalDate> reportEnd,
+                         TimeTrackingItemQueries queries) {
+        this.reportStart = requireNonNull(reportStart);
+        this.reportEnd = requireNonNull(reportEnd);
+        this.queries = requireNonNull(queries);
 
 		bind(reportStart, reportEnd);
 	}
@@ -52,23 +43,17 @@ public class ReportBinding extends ObjectBinding<Report> {
 		if (reportStart.getValue() != null && reportEnd.getValue() != null) {
 			report = createSummaryReportFor();
 		} else {
-			report = new Report(Collections.<ReportingItem> emptyList(), null,
-					null, Duration.ZERO);
+            report = new Report(Collections.emptyList(), null,
+                    null, Duration.ZERO);
 		}
 		return report;
 	}
 
 	private Report createSummaryReportFor() {
-		DNFClause dnfClause = new DNFClause();
-		dnfClause.withStartBetween(new Interval(reportStart.getValue(), reportEnd.getValue()));
-		try (ItemReader itemReader = readerProvider.provideReader();
-				FilteredItemReader filter = new FilteredItemReader(
-						itemReader, dnfClause)) {
-			SummingReportGenerator reportGenerator = new SummingReportGenerator(
-					filter);
-			return reportGenerator.createReport();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+        Criteria criteria = new Criteria();
+        criteria.withStartBetween(Interval.between(reportStart.getValue().atStartOfDay(), reportEnd.getValue().atStartOfDay()));
+        try (Stream<TimeTrackingItem> items = queries.queryItems(criteria)) {
+            return new SummingReportGenerator(items).createReport();
+        }
 	}
 }

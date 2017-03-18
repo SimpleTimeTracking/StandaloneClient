@@ -1,13 +1,12 @@
 package org.stt.persistence.stt;
 
-import com.google.common.base.Optional;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemWriter;
 
 import java.io.IOException;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
+import java.util.Optional;
 
 class InsertHelper {
     private final ItemReader reader;
@@ -16,16 +15,16 @@ class InsertHelper {
 
     public InsertHelper(ItemReader reader, ItemWriter writer,
                         TimeTrackingItem itemToInsert) {
-        this.itemToInsert = checkNotNull(itemToInsert);
-        this.writer = checkNotNull(writer);
-        this.reader = checkNotNull(reader);
+        this.itemToInsert = Objects.requireNonNull(itemToInsert);
+        this.writer = Objects.requireNonNull(writer);
+        this.reader = Objects.requireNonNull(reader);
     }
 
     public void performInsert() throws IOException {
         Optional<TimeTrackingItem> lastReadItem = copyAllNonIntersectingItemsBeforeItemToInsert();
         adjustEndOfLastItemReadAndWrite(lastReadItem);
         writer.write(itemToInsert);
-        lastReadItem = skipAllItemsCompletlyCoveredByItemToInsert(lastReadItem);
+        lastReadItem = skipAllItemsCompletelyCoveredByItemToInsert(lastReadItem);
         adjustStartOfLastItemReadAndWrite(lastReadItem);
         copyRemainingItems();
     }
@@ -65,7 +64,7 @@ class InsertHelper {
         }
     }
 
-    private Optional<TimeTrackingItem> skipAllItemsCompletlyCoveredByItemToInsert(
+    private Optional<TimeTrackingItem> skipAllItemsCompletelyCoveredByItemToInsert(
             Optional<TimeTrackingItem> lastReadItem) {
         while (lastReadItem.isPresent()
                 && !endOfReadItemIsAfterEndOfItemToInsert(lastReadItem.get())) {

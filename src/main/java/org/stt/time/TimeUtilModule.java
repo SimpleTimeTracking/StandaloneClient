@@ -1,32 +1,26 @@
 package org.stt.time;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import org.joda.time.Duration;
-import org.stt.Configuration;
+import dagger.Module;
+import dagger.Provides;
+import org.stt.config.ReportConfig;
 
+import java.time.Duration;
 import java.util.logging.Logger;
 
-/**
- * Created by dante on 05.12.14.
- */
-public class TimeUtilModule extends AbstractModule {
+@Module
+public class TimeUtilModule {
     private static final Logger LOG = Logger.getLogger(TimeUtilModule.class.getName());
 
-    @Override
-    protected void configure() {
-        
+    private TimeUtilModule() {
     }
 
     @Provides
-    DurationRounder provideDurationRounder(Configuration configuration) {
+    static DurationRounder provideDurationRounder(ReportConfig reportConfig) {
         DurationRounder rounder = new DurationRounder();
-        final Duration durationToRoundTo = configuration
-                .getDurationToRoundTo();
+        final Duration durationToRoundTo = reportConfig.getRoundDurationsTo();
         rounder.setInterval(durationToRoundTo);
-        LOG.info("Rounding to "
-                + DateTimeHelper.FORMATTER_PERIOD_H_M_S
-                .print(durationToRoundTo.toPeriod()));
+        LOG.info(() -> String.format("Rounding to %s", DateTimes.FORMATTER_PERIOD_H_M_S
+                .print(durationToRoundTo)));
         return rounder;
     }
     

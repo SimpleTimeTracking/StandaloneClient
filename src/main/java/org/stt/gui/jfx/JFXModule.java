@@ -1,29 +1,34 @@
 package org.stt.gui.jfx;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provider;
-import com.google.inject.Provides;
+import dagger.Module;
+import dagger.Provides;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import org.stt.config.YamlConfigService;
-import org.stt.text.ItemGrouper;
-import org.stt.persistence.ItemReaderProvider;
-import org.stt.query.TimeTrackingItemQueries;
-import org.stt.time.DurationRounder;
 
-/**
- * Created by dante on 03.12.14.
- */
-public class JFXModule extends AbstractModule {
-    @Override
-    protected void configure() {
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+
+@Module
+public class JFXModule {
+    private JFXModule() {
+    }
+
+    @Singleton
+    @Provides
+    static Stage stageProvider() {
+        return new Stage();
     }
 
     @Provides
-    private ReportWindowBuilder createReportWindowBuilder(TimeTrackingItemQueries timeTrackingItemQueries, ItemReaderProvider itemReaderProvider,
-                                                          DurationRounder durationRounder, ItemGrouper itemGrouper, Provider<Stage> stageProvider,
-                                                          YamlConfigService yamlConfig) {
-        return new ReportWindowBuilder(
-                stageProvider, itemReaderProvider,
-                timeTrackingItemQueries, durationRounder, itemGrouper, yamlConfig.getConfig().getReportWindowConfig());
+    @Named("glyph")
+    static Font provideFont() {
+        try (InputStream fontStream = JFXModule.class.getResourceAsStream("/fontawesome-webfont.ttf")) {
+            return Font.loadFont(fontStream, 0);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

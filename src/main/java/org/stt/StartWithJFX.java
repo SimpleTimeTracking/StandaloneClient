@@ -10,11 +10,13 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 public class StartWithJFX {
+    private StartWithJFX() {
+    }
+
 	public static void main(String[] args) throws MalformedURLException,
-			IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, ClassNotFoundException,
-			NoSuchMethodException, SecurityException {
-		try {
+            IllegalAccessException, InvocationTargetException, ClassNotFoundException,
+            NoSuchMethodException {
+        try {
 			Class.forName("javafx.embed.swing.JFXPanel");
 		} catch (ClassNotFoundException e) {
 			File jfxrt = retrieveJFXRTFile();

@@ -1,10 +1,7 @@
 package org.stt.fun;
 
-/**
- * Created by dante on 07.12.14.
- */
-public class AchievementsUpdated {
+import org.stt.event.Event;
 
-    public AchievementsUpdated() {
-    }
+@Event
+public class AchievementsUpdated {
 }

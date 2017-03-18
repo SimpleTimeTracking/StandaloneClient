@@ -5,19 +5,21 @@
  */
 package org.stt.gui.jfx.binding;
 
-import com.google.common.base.Optional;
 import javafx.beans.property.SimpleObjectProperty;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.collection.IsEmptyCollection;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
-import org.stt.persistence.ItemReaderProvider;
+import org.stt.query.TimeTrackingItemQueries;
 import org.stt.reporting.SummingReportGenerator;
+
+import javax.inject.Provider;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -31,28 +33,22 @@ import static org.mockito.Mockito.mock;
 public class ReportBindingTest {
 
 	private ReportBinding sut;
-	private SimpleObjectProperty<DateTime> reportStart = new SimpleObjectProperty<>();
-	private SimpleObjectProperty<DateTime> reportEnd = new SimpleObjectProperty<>();
+    private SimpleObjectProperty<LocalDate> reportStart = new SimpleObjectProperty<>();
+    private SimpleObjectProperty<LocalDate> reportEnd = new SimpleObjectProperty<>();
 
-	private ItemReaderProvider readerProvider;
-	private ItemReader itemReader = mock(ItemReader.class);
+    private Provider<ItemReader> readerProvider;
+    private ItemReader itemReader = mock(ItemReader.class);
 
 	@Before
 	public void setup() {
-		readerProvider = new ItemReaderProvider() {
-
-			@Override
-			public ItemReader provideReader() {
-				return itemReader;
-			}
-		};
-		sut = new ReportBinding(reportStart, reportEnd, readerProvider);
-	}
+        readerProvider = () -> itemReader;
+        sut = new ReportBinding(reportStart, reportEnd, new TimeTrackingItemQueries(readerProvider, Optional.empty()));
+    }
 
 	@Test
 	public void shouldReturnEmptyReportIfStartIsNull() {
 		// GIVEN
-		reportEnd.set(new DateTime());
+        reportEnd.set(LocalDate.now());
 
 		// WHEN
 		SummingReportGenerator.Report result = sut.getValue();
@@ -67,7 +63,7 @@ public class ReportBindingTest {
 	@Test
 	public void shouldReturnEmptyReportIfEndIsNull() {
 		// GIVEN
-		reportStart.set(new DateTime());
+        reportStart.set(LocalDate.now());
 
 		// WHEN
 		SummingReportGenerator.Report result = sut.getValue();
@@ -82,20 +78,20 @@ public class ReportBindingTest {
 	@Test
 	public void shouldReadItemsIfStartAndEndAreSet() {
 		// GIVEN
-		final DateTime start = new DateTime();
-		reportStart.set(start);
-		final DateTime end = start.plusDays(1);
-		reportEnd.set(end);
-		TimeTrackingItem item = new TimeTrackingItem("none", start, end);
-		given(itemReader.read()).willReturn(Optional.of(item), Optional.<TimeTrackingItem>absent());
+        final LocalDate start = LocalDate.now();
+        reportStart.set(start);
+        final LocalDate end = start.plusDays(1);
+        reportEnd.set(end);
+        TimeTrackingItem item = new TimeTrackingItem("none", start.atStartOfDay(), end.atStartOfDay());
+        given(itemReader.read()).willReturn(Optional.of(item), Optional.empty());
 
 		// WHEN
 		SummingReportGenerator.Report result = sut.getValue();
 
 		// THEN
-		Assert.assertThat(result.getStart(), is(start));
-		Assert.assertThat(result.getEnd(), is(end));
-		Assert.assertThat(result.getReportingItems(), not(IsEmptyCollection.empty()));
+        Assert.assertThat(result.getStart(), is(start.atStartOfDay()));
+        Assert.assertThat(result.getEnd(), is(end.atStartOfDay()));
+        Assert.assertThat(result.getReportingItems(), not(IsEmptyCollection.empty()));
 		Assert.assertThat(result.getUncoveredDuration(), is(Duration.ZERO));
 	}
 }

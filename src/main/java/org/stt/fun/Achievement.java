@@ -2,19 +2,18 @@ package org.stt.fun;
 
 import org.stt.model.TimeTrackingItem;
 
-/**
- *
- * @author dante
- */
 public class Achievement {
 
 	void start() {
+		// No default behavior
 	}
 
 	void process(TimeTrackingItem read) {
+		// No default behavior
 	}
 
 	void done() {
+		// No default behavior
 	}
 
 	boolean isAchieved() {

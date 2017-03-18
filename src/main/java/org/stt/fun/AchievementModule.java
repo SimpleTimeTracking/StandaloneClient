@@ -1,8 +1,8 @@
 package org.stt.fun;
 
-import com.google.common.eventbus.EventBus;
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
+import dagger.Module;
+import dagger.Provides;
+import net.engio.mbassy.bus.MBassador;
 import org.stt.query.TimeTrackingItemQueries;
 
 import java.util.ArrayList;
@@ -10,17 +10,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.ResourceBundle;
 
-/**
- * Created by dante on 04.12.14.
- */
-public class AchievementModule extends AbstractModule {
-    @Override
-    protected void configure() {
-
+@Module
+public class AchievementModule {
+    private AchievementModule() {
     }
 
     @Provides
-    AchievementService provideAchievements(ResourceBundle resourceBundle, EventBus eventBus, TimeTrackingItemQueries timeTrackingItemQueries) {
+    static AchievementService provideAchievements(ResourceBundle resourceBundle, MBassador<Object> eventBus, TimeTrackingItemQueries timeTrackingItemQueries) {
         Collection<Achievement> listOfAchievements = new ArrayList<>();
         for (int i : Arrays.asList(11, 31, 101)) {
             listOfAchievements.add(new DaysTrackedAchievement(resourceBundle, i));

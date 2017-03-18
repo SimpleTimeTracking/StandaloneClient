@@ -1,7 +1,5 @@
 package org.stt.cli;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.stt.csv.importer.CsvImporter;
 import org.stt.model.TimeTrackingItem;
@@ -13,27 +11,21 @@ import org.stt.ti.importer.TiImporter;
 
 import java.io.*;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Converts different supported time tracking formats. Currently these are:
- * 
- * - CSV - STT internal format - modified ti format
+ *
+ * - CSV - STT internal asNewItemCommandText - modified ti asNewItemCommandText
  */
 public class FormatConverter {
 
 	private ItemReader from;
 	private ItemWriter to;
 
-	/**
-	 * 
-	 * @param input
-	 *            if null, System.in is assumed
-	 * @param output
-	 *            if null, System.out is assumed
-	 * @param args
-	 */
 	public FormatConverter(List<String> args) {
-		Preconditions.checkNotNull(args);
+        Objects.requireNonNull(args);
 
 		File sourceFile = null;
 		String sourceFormat = "stt";
@@ -75,8 +67,8 @@ public class FormatConverter {
 	}
 
 	private ItemReader getReaderFrom(File input, String sourceFormat) {
-		Reader inputReader = null;
-		try {
+        Reader inputReader;
+        try {
 			inputReader = new InputStreamReader(System.in, "UTF-8");
 			if (input != null) {
 				inputReader = new InputStreamReader(new FileInputStream(input),
@@ -94,15 +86,15 @@ public class FormatConverter {
 		case "csv":
 			return new CsvImporter(inputReader, 1, 4, 8);
 		default:
-			throw new RuntimeException("unknown input format \"" + sourceFormat
-					+ "\"");
-		}
+            throw new RuntimeException("unknown input asNewItemCommandText \"" + sourceFormat
+                    + "\"");
+        }
 	}
 
-	public void convert() throws IOException {
-		Optional<TimeTrackingItem> current = null;
-		while ((current = from.read()).isPresent()) {
-			to.write(current.get());
+    public void convert() {
+        Optional<TimeTrackingItem> current;
+        while ((current = from.read()).isPresent()) {
+            to.write(current.get());
 		}
 
 		from.close();

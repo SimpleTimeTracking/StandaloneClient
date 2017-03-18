@@ -1,16 +1,14 @@
 package org.stt.validation;
 
-import com.google.inject.Inject;
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.stt.model.TimeTrackingItem;
-import org.stt.query.DNFClause;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
-import org.stt.time.DateTimeHelper;
+import org.stt.time.DateTimes;
+import org.stt.time.Interval;
 
-/**
- * Created by dante on 16.03.15.
- */
+import javax.inject.Inject;
+import java.time.LocalDateTime;
+
 public class ItemAndDateValidator {
     private final TimeTrackingItemQueries timeTrackingItemQueries;
 
@@ -19,30 +17,25 @@ public class ItemAndDateValidator {
         this.timeTrackingItemQueries = timeTrackingItemQueries;
     }
 
-    public boolean validateItemIsFirstItemAndLater(DateTime start) {
-        DateTime startOfDay = start.withTimeAtStartOfDay();
-        Interval searchInterval = new Interval(startOfDay, start);
-        DNFClause dnfClause = new DNFClause();
-        dnfClause.withStartBetween(searchInterval);
-        boolean hasEarlierItem = !timeTrackingItemQueries.queryItems(dnfClause).isEmpty();
-        return !(DateTimeHelper.isToday(start) && DateTime.now().plusMinutes(5).isBefore(start)
+    public boolean validateItemIsFirstItemAndLater(LocalDateTime start) {
+        LocalDateTime startOfDay = start.toLocalDate().atStartOfDay();
+        Interval searchInterval = Interval.between(startOfDay, start);
+        Criteria criteria = new Criteria();
+        criteria.withStartBetween(searchInterval);
+        boolean hasEarlierItem = !timeTrackingItemQueries.queryItems(criteria).findAny().isPresent();
+        return !(DateTimes.isToday(start) && LocalDateTime.now().plusMinutes(5).isBefore(start)
                 && !hasEarlierItem);
     }
 
     public int validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
-        DNFClause dnfClause = new DNFClause();
-        dnfClause.withStartNotBefore(newItem.getStart());
-        if (newItem.getEnd().isPresent()) {
-            dnfClause.withEndNotAfter(newItem.getEnd().get());
-        }
-        int numberOfCoveredItems = 0;
-        for (TimeTrackingItem item: timeTrackingItemQueries.queryItems(dnfClause)) {
-            if (!newItem.getComment().equals(item.getComment()) && (!newItem.getStart().equals(item.getStart())
-                    || !newItem.getEnd().equals(item.getEnd()))) {
-                numberOfCoveredItems++;
-            }
-        }
-        return numberOfCoveredItems;
+        Criteria criteria = new Criteria();
+        criteria.withStartNotBefore(newItem.getStart());
+        newItem.getEnd().ifPresent(criteria::withEndNotAfter);
+        return (int) timeTrackingItemQueries.queryItems(criteria)
+                .filter(item -> !newItem.getActivity().equals(item.getActivity()))
+                .filter(item -> !newItem.getStart().equals(item.getStart())
+                        || !newItem.getEnd().equals(item.getEnd()))
+                .count();
     }
 
 }

@@ -1,25 +1,30 @@
 package org.stt.gui.jfx.binding;
 
-import com.google.common.base.Preconditions;
 import javafx.beans.binding.ListBinding;
-import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.stt.Streams;
 import org.stt.model.TimeTrackingItem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 
 	private final ObservableList<TimeTrackingItem> allItems;
-	private final StringProperty filterProperty;
+	private final ObservableValue<String> filterProperty;
 	private final boolean filterDuplicates;
 
 	public TimeTrackingListFilter(ObservableList<TimeTrackingItem> allItems,
-			StringProperty filterProperty, boolean filterDuplicates) {
-		this.allItems = Preconditions.checkNotNull(allItems);
-		this.filterProperty = Preconditions.checkNotNull(filterProperty);
-		this.filterDuplicates = filterDuplicates;
+								  ObservableValue<String> filterProperty, boolean filterDuplicates) {
+		this.allItems = Objects.requireNonNull(allItems);
+        this.filterProperty = Objects.requireNonNull(filterProperty);
+        this.filterDuplicates = filterDuplicates;
 
 		bind(allItems, filterProperty);
 	}
@@ -32,28 +37,18 @@ public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 
 	private List<TimeTrackingItem> createFilteredList() {
 		List<TimeTrackingItem> result;
-		String filter = filterProperty.get().toLowerCase();
+		String filter = filterProperty.getValue().toLowerCase();
 		if (filter.isEmpty()) {
 			result = new ArrayList<>(allItems);
 		} else {
-			result = new ArrayList<>();
-			Set<String> itemsInResult = new HashSet<>();
-			for (TimeTrackingItem item : allItems) {
-				if (item.getComment().isPresent()
-						&& (!filterDuplicates || !itemsInResult.contains(item
-								.getComment().get()))
-						&& matchesFilter(item, filter)) {
-					result.add(item);
-					itemsInResult.add(item.getComment().get());
-				}
-			}
-		}
-		Collections.reverse(result);
-		return result;
-	}
-
-	private boolean matchesFilter(TimeTrackingItem item, String filter) {
-		return item.getComment().isPresent()
-				&& item.getComment().get().toLowerCase().contains(filter);
+            Stream<TimeTrackingItem> processingStream = allItems.stream()
+                    .filter(item -> item.getActivity().toLowerCase().contains(filter));
+            if (filterDuplicates) {
+                processingStream = processingStream.filter(Streams.distinctByKey(TimeTrackingItem::getActivity));
+            }
+            result = processingStream.collect(Collectors.toList());
+        }
+        Collections.reverse(result);
+        return result;
 	}
 }

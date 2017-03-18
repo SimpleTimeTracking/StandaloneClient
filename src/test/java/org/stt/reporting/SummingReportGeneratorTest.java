@@ -1,72 +1,65 @@
 package org.stt.reporting;
 
 import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.ItemReaderTestHelper;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemReader;
 import org.stt.reporting.SummingReportGenerator.Report;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class SummingReportGeneratorTest {
-
-	@Mock
-	ItemReader reader;
 	private SummingReportGenerator sut;
 
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
-		sut = new SummingReportGenerator(reader);
 	}
 
 	@Test
 	public void shouldSumUpHoles() {
 		// GIVEN
 		TimeTrackingItem itemBeforeHole = new TimeTrackingItem(
-				"item before hole", new DateTime(2012, 12, 12, 14, 0, 0),
-				new DateTime(2012, 12, 12, 14, 1, 0));
-		TimeTrackingItem itemAfterHole = new TimeTrackingItem(
-				"item after hole", new DateTime(2012, 12, 12, 14, 2, 0),
-				new DateTime(2012, 12, 12, 14, 3, 0));
+                "item before hole", LocalDateTime.of(2012, 12, 12, 14, 0, 0),
+                LocalDateTime.of(2012, 12, 12, 14, 1, 0));
+        TimeTrackingItem itemAfterHole = new TimeTrackingItem(
+                "item after hole", LocalDateTime.of(2012, 12, 12, 14, 2, 0),
+                LocalDateTime.of(2012, 12, 12, 14, 3, 0));
 
-		ItemReaderTestHelper.givenReaderReturns(reader, itemBeforeHole,
-				itemAfterHole);
+        sut = new SummingReportGenerator(Stream.of(itemBeforeHole, itemAfterHole));
+
 		// WHEN
 		Report report = sut.createReport();
 
 		// THEN
 		assertThat(report.getUncoveredDuration(),
-				is(Duration.standardMinutes(1)));
-	}
+                is(Duration.ofMinutes(1)));
+    }
 
 	@Test
 	public void groupingByCommentWorks() {
 
 		// GIVEN
 		TimeTrackingItem expectedItem = new TimeTrackingItem("first comment",
-				new DateTime(2012, 12, 12, 14, 14, 14), new DateTime(2012, 12,
-						12, 14, 15, 14));
+                LocalDateTime.of(2012, 12, 12, 14, 14, 14), LocalDateTime.of(2012, 12,
+                12, 14, 15, 14));
 		TimeTrackingItem expectedItem2 = new TimeTrackingItem("first comment",
-				new DateTime(2012, 12, 12, 14, 15, 14), new DateTime(2012, 12,
-						12, 14, 15, 16));
+                LocalDateTime.of(2012, 12, 12, 14, 15, 14), LocalDateTime.of(2012, 12,
+                12, 14, 15, 16));
 		TimeTrackingItem expectedItem3 = new TimeTrackingItem("first comment?",
-				new DateTime(2012, 12, 12, 14, 15, 14), new DateTime(2012, 12,
-						12, 14, 15, 17));
+                LocalDateTime.of(2012, 12, 12, 14, 15, 14), LocalDateTime.of(2012, 12,
+                12, 14, 15, 17));
 
-		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
-				expectedItem2, expectedItem3);
+        sut = new SummingReportGenerator(Stream.of(expectedItem, expectedItem2, expectedItem3));
 
 		// WHEN
 		Report report = sut.createReport();
@@ -74,23 +67,22 @@ public class SummingReportGeneratorTest {
 
 		// THEN
 		Assert.assertThat(items, Matchers.containsInAnyOrder(new ReportingItem(
-				new Duration(60 * 1000 + 2 * 1000), "first comment"),
-				new ReportingItem(new Duration(3 * 1000), "first comment?")));
-	}
+                        Duration.ofMillis(60 * 1000 + 2 * 1000), "first comment"),
+                new ReportingItem(Duration.ofMillis(3 * 1000), "first comment?")));
+    }
 
 	@Test
 	public void nullCommentsGetHandledWell() {
 
 		// GIVEN
-		TimeTrackingItem expectedItem = new TimeTrackingItem(null,
-				new DateTime(2012, 12, 12, 14, 14, 14), new DateTime(2012, 12,
-						12, 14, 15, 14));
-		TimeTrackingItem expectedItem2 = new TimeTrackingItem(null,
-				new DateTime(2012, 12, 12, 14, 15, 14), new DateTime(2012, 12,
-						12, 14, 15, 16));
+        TimeTrackingItem expectedItem = new TimeTrackingItem("",
+                LocalDateTime.of(2012, 12, 12, 14, 14, 14), LocalDateTime.of(2012, 12,
+                12, 14, 15, 14));
+        TimeTrackingItem expectedItem2 = new TimeTrackingItem("",
+                LocalDateTime.of(2012, 12, 12, 14, 15, 14), LocalDateTime.of(2012, 12,
+                12, 14, 15, 16));
 
-		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
-				expectedItem2);
+        sut = new SummingReportGenerator(Stream.of(expectedItem, expectedItem2));
 
 		// WHEN
 		Report report = sut.createReport();
@@ -98,22 +90,21 @@ public class SummingReportGeneratorTest {
 
 		// THEN
 		Assert.assertThat(reportingItems, Matchers
-				.containsInAnyOrder(new ReportingItem(new Duration(
-						60 * 1000 + 2 * 1000), "")));
+                .containsInAnyOrder(new ReportingItem(Duration.ofMillis(
+                        60 * 1000 + 2 * 1000), "")));
 	}
 
 	@Test
 	public void reportShouldContainStartOfFirstAndEndOfLastItem() {
 		// GIVEN
-		DateTime startOfFirstItem = new DateTime(2012, 12, 12, 14, 14, 14);
-		TimeTrackingItem expectedItem = new TimeTrackingItem(null,
-				startOfFirstItem, new DateTime(2012, 12, 12, 14, 15, 14));
-		DateTime endOfLastItem = new DateTime(2012, 12, 12, 14, 15, 16);
-		TimeTrackingItem expectedItem2 = new TimeTrackingItem(null,
-				new DateTime(2012, 12, 12, 14, 15, 14), endOfLastItem);
+        LocalDateTime startOfFirstItem = LocalDateTime.of(2012, 12, 12, 14, 14, 14);
+        TimeTrackingItem expectedItem = new TimeTrackingItem("",
+                startOfFirstItem, LocalDateTime.of(2012, 12, 12, 14, 15, 14));
+        LocalDateTime endOfLastItem = LocalDateTime.of(2012, 12, 12, 14, 15, 16);
+        TimeTrackingItem expectedItem2 = new TimeTrackingItem("",
+                LocalDateTime.of(2012, 12, 12, 14, 15, 14), endOfLastItem);
 
-		ItemReaderTestHelper.givenReaderReturns(reader, expectedItem,
-				expectedItem2);
+        sut = new SummingReportGenerator(Stream.of(expectedItem, expectedItem2));
 
 		// WHEN
 		Report report = sut.createReport();

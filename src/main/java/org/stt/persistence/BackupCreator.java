@@ -1,23 +1,25 @@
 package org.stt.persistence;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.joda.time.DateTime;
-import org.stt.Configuration;
 import org.stt.Service;
-import org.stt.time.DateTimeHelper;
+import org.stt.config.BackupConfig;
+import org.stt.persistence.stt.STTFile;
+import org.stt.time.DateTimes;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * creates backups of the .stt file in configurable intervals and locations.
@@ -26,18 +28,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class BackupCreator implements Service {
 
-	private static Logger LOG = Logger.getLogger(BackupCreator.class.getName());
+    private static final Logger LOG = Logger.getLogger(BackupCreator.class.getName());
 
-	private final Configuration configuration;
+	private final BackupConfig backupConfig;
+	private final File sttFile;
+	private String homePath;
 
 	@Inject
-	public BackupCreator( Configuration configuration) {
-		this.configuration = checkNotNull(configuration);
+	public BackupCreator(BackupConfig backupConfig,
+						 @STTFile File sttFile,
+						 @Named("homePath") String homePath) {
+		this.backupConfig = requireNonNull(backupConfig);
+		this.sttFile = requireNonNull(sttFile);
+		this.homePath = requireNonNull(homePath);
 	}
 
 	@Override
 	public void stop() {
-	}
+        // No default behavior
+    }
 
 	/**
 	 * Perform the backup:
@@ -48,21 +57,20 @@ public class BackupCreator implements Service {
 	 */
 	@Override
 	public void start() throws IOException {
-		int backupInterval = configuration.getBackupInterval();
+		int backupInterval = backupConfig.getBackupInterval();
 
 		if (backupInterval < 1) {
 			LOG.info("Backup is disabled (see backupInterval setting).");
 			return;
 		}
 
-		File backupLocation = configuration.getBackupLocation();
+		File backupLocation = backupConfig.getBackupLocation().file(homePath);
 
 		if (!backupLocation.canWrite()) {
-			throw new RuntimeException("cannot write to "
-					+ backupLocation.getAbsolutePath());
-		}
+            throw new IOException("cannot persist to "
+                    + backupLocation.getAbsolutePath());
+        }
 
-		File sttFile = configuration.getSttFile();
 		String sttFileName = sttFile.getName();
 
 		Collection<File> backedUpFiles = FileUtils
@@ -71,8 +79,8 @@ public class BackupCreator implements Service {
 
 		if (backupNeeded(backedUpFiles, backupInterval, sttFile, backupLocation)) {
 
-			String backupFileName = getBackupFileName(sttFile, DateTime.now());
-			File newBackupFile = new File(backupLocation, backupFileName);
+            String backupFileName = getBackupFileName(sttFile, LocalDate.now());
+            File newBackupFile = new File(backupLocation, backupFileName);
 			// to be safe we don't accidentally overwrite something: check if
 			// there is already a file
 			if (!newBackupFile.exists()) {
@@ -89,9 +97,9 @@ public class BackupCreator implements Service {
 	 */
 	private void deleteOldBackupFiles(Collection<File> backedUpFiles) {
 
-		int retentionCount = configuration.getBackupRetentionCount();
+		int retentionCount = backupConfig.getBackupRetentionCount();
 		if (retentionCount < 1) {
-			// no deletion of old files desired by configuration
+			// no deletion of old files desired by backupConfig
 			return;
 		}
 
@@ -101,13 +109,11 @@ public class BackupCreator implements Service {
 		for (int i = 0; i < backupList.size(); i++) {
 			if (i >= retentionCount) {
 				boolean success = backupList.get(i).delete();
-				LOG.info("deleting ond backup file "
-						+ backupList.get(i).getAbsolutePath()
-						+ " because of configured retention count. Deleted successfully? "
-						+ success);
-			}
-		}
-	}
+                LOG.info(String.format("deleting old backup file %s because of configured retention count. Deleted successfully? %s",
+                        backupList.get(i).getAbsolutePath(), success));
+            }
+        }
+    }
 
 	/**
 	 * @return if in the given Collection any File has a name
@@ -118,7 +124,7 @@ public class BackupCreator implements Service {
 		for (int i = 0; i < backupInterval; i++) {
 
 			File backupFile = new File(backupLocation, getBackupFileName(
-					sttFile, DateTime.now().minusDays(i))).getAbsoluteFile();
+                    sttFile, LocalDate.now().minusDays(i))).getAbsoluteFile();
 
 			// files are only equal if getAbsoluteFile is called
 			for (File currentFile : backedUpFiles) {
@@ -131,9 +137,9 @@ public class BackupCreator implements Service {
 	}
 
 	/**
-	 * @return the name of the backup file for the given {@link DateTime}
-	 */
-	private String getBackupFileName(File sttFile, DateTime date) {
-		return sttFile.getName() + "-" + DateTimeHelper.prettyPrintDate(date);
-	}
+     * @return the name of the backup file for the given date
+     */
+    private String getBackupFileName(File sttFile, LocalDate date) {
+        return sttFile.getName() + "-" + DateTimes.prettyPrintDate(date);
+    }
 }

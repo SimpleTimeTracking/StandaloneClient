@@ -1,8 +1,6 @@
 package org.stt.importer;
 
-import com.google.common.base.Optional;
 import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
@@ -10,6 +8,8 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.stt.STTItemReader;
 
 import java.io.StringReader;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 public class STTItemReaderTest {
 
@@ -27,8 +27,8 @@ public class STTItemReaderTest {
 		// THEN
 		Assert.assertEquals(
 				"this is\n a multiline\r string\r\n with different separators",
-				readItem.get().getComment().get());
-	}
+                readItem.get().getActivity());
+    }
 
 	@Test
 	public void onlyStartTimeGiven() {
@@ -41,8 +41,8 @@ public class STTItemReaderTest {
 		Optional<TimeTrackingItem> readItem = theReader.read();
 
 		// THEN
-		DateTime time = new DateTime(2012, 10, 10, 22, 00, 00);
-		Assert.assertThat(time, Matchers.equalTo(readItem.get().getStart()));
+        LocalDateTime time = LocalDateTime.of(2012, 10, 10, 22, 00, 00);
+        Assert.assertThat(time, Matchers.equalTo(readItem.get().getStart()));
 	}
 
 	@Test
@@ -57,9 +57,9 @@ public class STTItemReaderTest {
 		Optional<TimeTrackingItem> readItem = theReader.read();
 
 		// THEN
-		DateTime time = new DateTime(2012, 10, 10, 22, 00, 00);
-		Assert.assertThat(time, Matchers.equalTo(readItem.get().getStart()));
+        LocalDateTime time = LocalDateTime.of(2012, 10, 10, 22, 00, 00);
+        Assert.assertThat(time, Matchers.equalTo(readItem.get().getStart()));
 		Assert.assertThat("the long comment",
-				Matchers.equalTo(readItem.get().getComment().get()));
-	}
+                Matchers.equalTo(readItem.get().getActivity()));
+    }
 }

@@ -1,16 +1,16 @@
 package org.stt.ti.importer;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
 import java.io.Reader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+
+import static org.stt.States.requireThat;
 
 /**
  * Imports all time tracking records of an existing (modified) ti installation.
@@ -21,8 +21,8 @@ import java.io.Reader;
 public class TiImporter implements ItemReader {
 
 	private final LineIterator lineIter;
-	private final DateTimeFormatter dateFormat = DateTimeFormat
-			.forPattern("yyyy-MM-dd_HH:mm:ss");
+    private final DateTimeFormatter dateFormat = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd_HH:mm:ss");
 
 	public TiImporter(Reader input) {
 		lineIter = IOUtils.lineIterator(input);
@@ -39,15 +39,14 @@ public class TiImporter implements ItemReader {
 			}
 		}
 		lineIter.close();
-		return Optional.absent();
-	}
+        return Optional.empty();
+    }
 
 	private TimeTrackingItem constructFrom(String singleLine) {
 
 		String[] splitLine = singleLine.split("\\s");
-		Preconditions
-				.checkState(
-						splitLine.length == 4 || splitLine.length == 2,
+        requireThat(
+                splitLine.length == 4 || splitLine.length == 2,
 						"The given line \""
 								+ singleLine
 								+ "\" must contain exactly 2 or 4 white space separated elements.");
@@ -55,9 +54,9 @@ public class TiImporter implements ItemReader {
 		String comment = splitLine[0];
 		comment = comment.replaceAll("_", " ");
 
-		DateTime start = dateFormat.parseDateTime(splitLine[1]);
-		if (splitLine.length > 2) {
-			DateTime end = dateFormat.parseDateTime(splitLine[3]);
+        LocalDateTime start = LocalDateTime.parse(splitLine[1], dateFormat);
+        if (splitLine.length > 2) {
+            LocalDateTime end = LocalDateTime.parse(splitLine[3], dateFormat);
 
 			return new TimeTrackingItem(comment, start, end);
 		}

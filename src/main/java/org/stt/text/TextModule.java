@@ -1,40 +1,43 @@
 package org.stt.text;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
+import dagger.Module;
+import dagger.Provides;
 import org.stt.config.YamlConfigService;
-import org.stt.persistence.ItemReader;
+import org.stt.model.TimeTrackingItem;
+import org.stt.query.TimeTrackingItemQueries;
 
-import java.io.IOException;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
-/**
- * Created by dante on 04.12.14.
- */
-public class TextModule extends AbstractModule {
+@Module
+public class TextModule {
     private static final Logger LOG = Logger.getLogger(TextModule.class.getName());
 
-    @Override
-    protected void configure() {
-        bind(ItemGrouper.class).to(CommonPrefixGrouper.class);
-        bind(ExpansionProvider.class).to(CommonPrefixGrouper.class);
-        bind(ItemCategorizer.class).to(WorktimeCategorizer.class);
+    private TextModule() {
     }
 
     @Provides
-    CommonPrefixGrouper provideCommonPrefixGrouper(ItemReader reader, YamlConfigService yamlConfig) {
-        CommonPrefixGrouper commonPrefixGrouper = new CommonPrefixGrouper();
-        try (ItemReader itemReader=reader) {
-            commonPrefixGrouper.scanForGroups(itemReader);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    static ExpansionProvider provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper) {
+        return commonPrefixGrouper;
+    }
+
+    @Provides
+    static ItemCategorizer provideItemCategorizer(WorktimeCategorizer worktimeCategorizer) {
+        return worktimeCategorizer;
+    }
+
+    @Provides
+    static ItemGrouper provideItemGrouper(TimeTrackingItemQueries queries,
+                                          YamlConfigService yamlConfig,
+                                          CommonPrefixGrouper commonPrefixGrouper) {
+        try (Stream<TimeTrackingItem> items = queries.queryAllItems()) {
+            commonPrefixGrouper.scanForGroups(items);
         }
         for (String item : yamlConfig.getConfig().getPrefixGrouper().getBaseLine()) {
-            LOG.info("Adding baseline item '" + item + "'");
+            LOG.info(() -> String.format("Adding baseline item '%s'", item));
             commonPrefixGrouper.learnLine(item);
         }
 
         return commonPrefixGrouper;
     }
-
 }

@@ -33,7 +33,7 @@ class LongComments extends LocalizedAchievement {
 
     @Override
     void process(TimeTrackingItem read) {
-        final String comment = read.getComment().or("");
+        final String comment = read.getActivity();
         if (comment.length() >= threshold && !matches.contains(comment)) {
             matches.add(comment);
         }

@@ -1,7 +1,8 @@
 package org.stt.time;
 
-import org.joda.time.Duration;
 import org.junit.Test;
+
+import java.time.Duration;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -17,10 +18,10 @@ public class DurationRounderTest {
 	@Test
 	public void shouldRound500msTo0msWith1SecondInterval() {
 		// GIVEN
-		sut.setInterval(Duration.standardSeconds(1));
+        sut.setInterval(Duration.ofSeconds(1));
 
 		// WHEN
-		Duration result = sut.roundDuration(Duration.millis(500));
+        Duration result = sut.roundDuration(Duration.ofMillis(500));
 
 		// THEN
 		assertThat(result, is(Duration.ZERO));
@@ -29,34 +30,34 @@ public class DurationRounderTest {
 	@Test
 	public void shouldRound1500msTo2000msWith1SecondInterval() {
 		// GIVEN
-		sut.setInterval(Duration.standardSeconds(1));
+        sut.setInterval(Duration.ofSeconds(1));
 
 		// WHEN
-		Duration result = sut.roundDuration(Duration.millis(1500));
+        Duration result = sut.roundDuration(Duration.ofMillis(1500));
 
 		// THEN
-		assertThat(result, is(Duration.standardSeconds(2)));
-	}
+        assertThat(result, is(Duration.ofSeconds(2)));
+    }
 
 	@Test
 	public void shouldRound5minsTo7minsWith7MinsInterval() {
 		// GIVEN
-		sut.setInterval(Duration.standardMinutes(7));
+        sut.setInterval(Duration.ofMinutes(7));
 
 		// WHEN
-		Duration result = sut.roundDuration(Duration.standardMinutes(5));
+        Duration result = sut.roundDuration(Duration.ofMinutes(5));
 
 		// THEN
-		assertThat(result, is(Duration.standardMinutes(7)));
-	}
+        assertThat(result, is(Duration.ofMinutes(7)));
+    }
 
 	@Test
 	public void shouldRound30minsTo0minsWith1HourInterval() {
 		// GIVEN
-		sut.setInterval(Duration.standardHours(1));
+        sut.setInterval(Duration.ofHours(1));
 
 		// WHEN
-		Duration result = sut.roundDuration(Duration.standardMinutes(30));
+        Duration result = sut.roundDuration(Duration.ofMinutes(30));
 
 		// THEN
 		assertThat(result, is(Duration.ZERO));
@@ -65,12 +66,12 @@ public class DurationRounderTest {
 	@Test
 	public void shouldRound7HoursTo5HoursWith5HourInterval() {
 		// GIVEN
-		sut.setInterval(Duration.standardHours(5));
+        sut.setInterval(Duration.ofHours(5));
 
 		// WHEN
-		Duration result = sut.roundDuration(Duration.standardHours(7));
+        Duration result = sut.roundDuration(Duration.ofHours(7));
 
 		// THEN
-		assertThat(result, is(Duration.standardHours(5)));
-	}
+        assertThat(result, is(Duration.ofHours(5)));
+    }
 }

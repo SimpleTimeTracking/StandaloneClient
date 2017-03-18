@@ -1,41 +1,44 @@
 package org.stt.config;
 
 import org.stt.Service;
+import org.stt.time.DateTimes;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.introspector.PropertyUtils;
+import org.yaml.snakeyaml.nodes.Node;
+import org.yaml.snakeyaml.nodes.ScalarNode;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.*;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-/**
- * @author dante
- */
-@com.google.inject.Singleton
+@Singleton
 public class YamlConfigService implements Service {
-
+    static final Tag TAG_DURATION = new Tag("!duration");
+    static final Tag TAG_PATH = new Tag("!path");
     private static final Logger LOG = Logger.getLogger(YamlConfigService.class
             .getName());
     private final File sttYaml;
-    private BaseConfig config;
+    private ConfigRoot config;
 
-    public YamlConfigService() {
-        sttYaml = new File(determineBaseDir(), "stt.yaml");
-    }
-
-    private static File determineBaseDir() {
-        String envHOMEVariable = System.getenv("HOME");
-        if (envHOMEVariable != null) {
-            File homeDirectory = new File(envHOMEVariable);
-            if (homeDirectory.exists()) {
-                return homeDirectory;
-            }
+    @Inject
+    public YamlConfigService(@Named("homePath") String homePath) {
+        sttYaml = new File(homePath + "/.stt", "stt.yaml");
+        boolean mkdirs = sttYaml.getParentFile().mkdirs();
+        if (mkdirs) {
+            LOG.finest("Created base dir.");
         }
-        return new File(System.getProperty("user.home"));
     }
 
     private void writeConfig() {
@@ -44,13 +47,13 @@ public class YamlConfigService implements Service {
              Writer writer = new OutputStreamWriter(out, "UTF8")) {
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(FlowStyle.BLOCK);
-            new Yaml(options).dump(config, writer);
+            yaml().dump(config, writer);
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
     }
 
-    public BaseConfig getConfig() {
+    public ConfigRoot getConfig() {
         return config;
     }
 
@@ -58,14 +61,10 @@ public class YamlConfigService implements Service {
     public void start() throws Exception {
         try (FileInputStream fileInputStream = new FileInputStream(sttYaml)) {
             LOG.info("Loading " + sttYaml.getName());
-            Constructor constructor = new Constructor(BaseConfig.class);
-            PropertyUtils propertyUtils = new PropertyUtils();
-            propertyUtils.setSkipMissingProperties(true);
-            constructor.setPropertyUtils(propertyUtils);
-            Yaml yaml = new Yaml(constructor);
-            config = (BaseConfig) yaml.load(fileInputStream);
-            config.applyDefaults();
+            Yaml yaml = yaml();
+            config = (ConfigRoot) yaml.load(fileInputStream);
         } catch (FileNotFoundException e) {
+            LOG.log(Level.FINEST, "No previous config file found, creating a new one.", e);
             createNewConfig();
         } catch (IOException | ClassCastException | NullPointerException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -73,15 +72,57 @@ public class YamlConfigService implements Service {
         }
     }
 
+    private Yaml yaml() {
+        return new Yaml(new MyConstructor(), new MyRepresenter());
+    }
+
     private void createNewConfig() {
         LOG.info("Creating new config");
-        config = new BaseConfig();
-        config.applyDefaults();
+        config = new ConfigRoot();
     }
 
     @Override
     public void stop() {
         // Overwrite existing config, some new options might be available, or old ones removed.
         writeConfig();
+    }
+
+    private class MyConstructor extends Constructor {
+
+        public MyConstructor() {
+            super(ConfigRoot.class);
+
+            PropertyUtils propertyUtils = new PropertyUtils();
+            propertyUtils.setSkipMissingProperties(true);
+            setPropertyUtils(propertyUtils);
+
+            yamlConstructors.put(TAG_DURATION, new AbstractConstruct() {
+                @Override
+                public Object construct(Node node) {
+                    String durationString = (String) constructScalar((ScalarNode) node);
+                    return Duration.between(LocalTime.MIDNIGHT, LocalTime.parse(durationString,
+                            DateTimes.DATE_TIME_FORMATTER_HH_MM_SS));
+                }
+            });
+            yamlConstructors.put(TAG_PATH, new AbstractConstruct() {
+                @Override
+                public Object construct(Node node) {
+                    String path = (String) constructScalar((ScalarNode) node);
+                    return new PathSetting(path);
+                }
+            });
+        }
+    }
+
+    private static class MyRepresenter extends Representer {
+        MyRepresenter() {
+            representers.put(Duration.class, data -> {
+                Duration duration = (Duration) data;
+                LocalTime asLocalTime = LocalTime.MIDNIGHT.plus(duration);
+                return representScalar(TAG_DURATION, DateTimes.DATE_TIME_FORMATTER_HH_MM_SS.format(asLocalTime));
+            });
+            representers.put(PathSetting.class, data -> representScalar(TAG_PATH, ((PathSetting) data).path()));
+            addClassTag(ConfigRoot.class, Tag.MAP);
+        }
     }
 }

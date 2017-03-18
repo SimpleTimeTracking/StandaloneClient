@@ -1,28 +1,61 @@
 package org.stt.config;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 
-/**
- * Created by dante on 26.06.15.
- */
-public class ConfigModule extends AbstractModule {
-    @Override
-    protected void configure() {
+import dagger.Module;
+import dagger.Provides;
 
+import javax.inject.Named;
+import java.io.File;
+
+@Module
+public class ConfigModule {
+    private ConfigModule() {
     }
 
     @Provides
-    @Singleton
-    private TimeTrackingItemListConfig provideTimeTrackingItemListConfig(YamlConfigService yamlConfigService) {
-        return yamlConfigService.getConfig().getTimeTrackingItemListConfig();
+    static ConfigRoot provideConfigRoot(YamlConfigService configService) {
+        return configService.getConfig();
     }
 
     @Provides
-    @Singleton
-    private CommandTextConfig provideCommandTextConfig(YamlConfigService yamlConfigService) {
-        return yamlConfigService.getConfig().getCommandText();
+    static ActivitiesConfig provideTimeTrackingItemListConfig(ConfigRoot configRoot) {
+        return configRoot.getActivities();
     }
 
+    @Provides
+    static WorktimeConfig provideWorktimeConfig(ConfigRoot configRoot) {
+        return configRoot.getWorktime();
+    }
+
+    @Provides
+    static ReportConfig provideReportConfig(ConfigRoot configRoot) {
+        return configRoot.getReport();
+    }
+
+    @Provides
+    static CliConfig provideCliConfig(ConfigRoot configRoot) {
+        return configRoot.getCli();
+    }
+
+    @Provides
+    static BackupConfig provideBackupConfig(ConfigRoot configRoot) {
+        return configRoot.getBackup();
+    }
+
+    @Provides
+    @Named("homePath")
+    static String provideHomePath() {
+        return determineBaseDir().getAbsolutePath();
+    }
+
+    private static File determineBaseDir() {
+        String envHOMEVariable = System.getenv("HOME");
+        if (envHOMEVariable != null) {
+            File homeDirectory = new File(envHOMEVariable);
+            if (homeDirectory.exists()) {
+                return homeDirectory;
+            }
+        }
+        return new File(System.getProperty("user.home"));
+    }
 }

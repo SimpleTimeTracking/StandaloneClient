@@ -1,24 +1,25 @@
 package org.stt.event;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.SubscriberExceptionContext;
-import com.google.common.eventbus.SubscriberExceptionHandler;
-import com.google.inject.AbstractModule;
-import org.stt.persistence.ItemPersister;
+import dagger.Module;
+import dagger.Provides;
+import net.engio.mbassy.bus.MBassador;
+
+import javax.inject.Singleton;
+import java.util.logging.Logger;
 
 /**
  * Created by dante on 03.12.14.
  */
-public class EventBusModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(EventBus.class).toInstance(new EventBus(new SubscriberExceptionHandler() {
+@Module
+public abstract class EventBusModule {
+    private static final Logger LOG = Logger.getLogger(EventBusModule.class.getSimpleName());
 
-            @Override
-            public void handleException(Throwable exception, SubscriberExceptionContext context) {
-                exception.printStackTrace();
-            }
-        }));
-        bind(ItemPersister.class).annotatedWith(EventBusAware.class).to(EventDispatchingItemPersister.class);
+    private EventBusModule() {
+    }
+
+    @Provides
+    @Singleton
+    static MBassador<Object> provideMBassador() {
+        return new MBassador<>(error -> LOG.severe(error::toString));
     }
 }

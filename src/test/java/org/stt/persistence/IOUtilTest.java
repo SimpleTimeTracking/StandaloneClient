@@ -1,17 +1,18 @@
 package org.stt.persistence;
 
-import com.google.common.base.Optional;
-import org.joda.time.DateTime;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.experimental.theories.suppliers.TestedOn;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito.BDDMyOngoingStubbing;
+import org.stt.importer.IOUtil;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -34,11 +35,11 @@ public class IOUtilTest {
 				.read());
 		for (int i = 0; i < numberOfItems; i++) {
 			Optional<TimeTrackingItem> item = Optional.of(new TimeTrackingItem(
-					Integer.toString(i), DateTime.now()));
-			expectedItems.add(item.get());
+                    Integer.toString(i), LocalDateTime.now()));
+            expectedItems.add(item.get());
 			stubbing = stubbing.willReturn(item);
 		}
-		stubbing.willReturn(Optional.<TimeTrackingItem> absent());
+        stubbing.willReturn(Optional.empty());
 
 		// WHEN
 		Collection<TimeTrackingItem> result = IOUtil.readAll(itemReader);

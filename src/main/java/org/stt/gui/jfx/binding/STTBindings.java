@@ -1,30 +1,17 @@
 package org.stt.gui.jfx.binding;
 
-import javafx.beans.binding.StringBinding;
-import javafx.beans.property.Property;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import org.joda.time.Duration;
-import org.stt.time.DateTimeHelper;
+import org.stt.time.DateTimes;
 
-/**
- *
- * @author dante
- */
+import java.time.Duration;
+
 public class STTBindings {
+    private STTBindings() {
+    }
 
-	public static ObservableStringValue formattedDuration(final ObservableValue<Duration> duration) {
-		return new StringBinding() {
-			{
-				bind(duration);
-			}
-
-			@Override
-			protected String computeValue() {
-				return DateTimeHelper.FORMATTER_PERIOD_HHh_MMm_SSs.print(duration.getValue().toPeriod());
-			}
-		};
-	}
+    public static ObservableStringValue formattedDuration(final ObservableValue<Duration> duration) {
+        return Bindings.createStringBinding(() -> DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs.print(duration.getValue()), duration);
+    }
 }

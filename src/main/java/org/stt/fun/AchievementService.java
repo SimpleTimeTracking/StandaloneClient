@@ -1,32 +1,27 @@
 package org.stt.fun;
 
-import com.google.common.eventbus.EventBus;
+import net.engio.mbassy.bus.MBassador;
 import org.stt.Service;
-import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.logging.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  *
  * @author dante
  */
 public class AchievementService implements Service {
-	private static final Logger LOG = Logger.getLogger(AchievementService.class.getName());
-
 	private Collection<Achievement> achievements = new ArrayList<>();
-	private EventBus eventBus;
+    private MBassador<Object> eventBus;
     private TimeTrackingItemQueries searcher;
 
-    public AchievementService(Collection<Achievement> achievements, EventBus eventBus, TimeTrackingItemQueries searcher) {
-        this.searcher = checkNotNull(searcher);
-        this.eventBus = checkNotNull(eventBus);
-		this.achievements.addAll(checkNotNull(achievements));
-	}
+    public AchievementService(Collection<Achievement> achievements, MBassador eventBus, TimeTrackingItemQueries searcher) {
+        this.searcher = Objects.requireNonNull(searcher);
+        this.eventBus = Objects.requireNonNull(eventBus);
+        this.achievements.addAll(Objects.requireNonNull(achievements));
+    }
 
 	private void finishAchievements() {
 		for (Achievement achievement : achievements) {
@@ -41,8 +36,8 @@ public class AchievementService implements Service {
 	}
 
 	private void dispatchSuccessfulAchievements() {
-		eventBus.post(new AchievementsUpdated());
-	}
+        eventBus.publish(new AchievementsUpdated());
+    }
 
     public Collection<Achievement> getReachedAchievements() {
         ArrayList<Achievement> result = new ArrayList<>();
@@ -56,17 +51,15 @@ public class AchievementService implements Service {
 
 	@Override
 	public void start() throws Exception {
-		eventBus.register(this);
+        eventBus.subscribe(this);
         calculateAchievements();
 	}
 
     private void calculateAchievements() {
         resetAchievements();
-        for (TimeTrackingItem item: searcher.queryAllItems()) {
-            for (Achievement achievement: achievements) {
-                achievement.process(item);
-            }
-        }
+        searcher.queryAllItems()
+                .forEach(item ->
+                        achievements.forEach(achievement -> achievement.process(item)));
 
         finishAchievements();
         dispatchSuccessfulAchievements();
@@ -74,6 +67,6 @@ public class AchievementService implements Service {
 
     @Override
 	public void stop() {
-		eventBus.unregister(this);
-	}
+        eventBus.unsubscribe(this);
+    }
 }

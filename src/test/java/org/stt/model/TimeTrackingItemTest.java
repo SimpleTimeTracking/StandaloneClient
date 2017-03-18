@@ -1,7 +1,9 @@
 package org.stt.model;
 
-import org.joda.time.DateTime;
 import org.junit.Test;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -13,7 +15,7 @@ public class TimeTrackingItemTest {
 		// GIVEN
 
 		// WHEN
-		TimeTrackingItem sut = new TimeTrackingItem(null, DateTime.now());
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
 		// THEN
 		assertThat(sut.getEnd().isPresent(), is(false));
@@ -24,7 +26,7 @@ public class TimeTrackingItemTest {
 		// GIVEN
 
 		// WHEN
-		TimeTrackingItem sut = new TimeTrackingItem(null, DateTime.now());
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
 		// THEN
 		assertThat(sut.getStart(), notNullValue());
@@ -35,8 +37,8 @@ public class TimeTrackingItemTest {
 		// GIVEN
 
 		// WHEN
-		TimeTrackingItem sut = new TimeTrackingItem(null, DateTime.now(),
-				DateTime.now().plusMinutes(1));
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(1));
 
 		// THEN
 		assertThat(sut.getStart(), notNullValue());
@@ -45,11 +47,11 @@ public class TimeTrackingItemTest {
 	@Test
 	public void withEndShouldCreateNewItem() {
 		// GIVEN
-		TimeTrackingItem sut = new TimeTrackingItem(null, DateTime.now());
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
 		// WHEN
-		DateTime newEndTime = DateTime.now().plusMinutes(2);
-		TimeTrackingItem newItem = sut.withEnd(newEndTime);
+        LocalDateTime newEndTime = LocalDateTime.now().plusMinutes(2);
+        TimeTrackingItem newItem = sut.withEnd(newEndTime);
 
 		// THEN
 		assertThat(newItem, not(is(sut)));
@@ -58,17 +60,30 @@ public class TimeTrackingItemTest {
 	}
 
 	@Test
-	public void withStartShouldCreateNewItem() {
-		// GIVEN
-		TimeTrackingItem sut = new TimeTrackingItem(null, DateTime.now());
+    public void withStartShouldCreateNewItem() {
+        // GIVEN
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
-		// WHEN
-		DateTime newStartTime = DateTime.now().plusMinutes(2);
-		TimeTrackingItem newItem = sut.withStart(newStartTime);
+        // WHEN
+        LocalDateTime newStartTime = LocalDateTime.now().plusMinutes(2);
+        TimeTrackingItem newItem = sut.withStart(newStartTime);
 
-		// THEN
-		assertThat(newItem, not(is(sut)));
-		assertThat(newItem.getStart(), is(newStartTime));
+        // THEN
+        assertThat(newItem, not(is(sut)));
+        assertThat(newItem.getStart(), is(newStartTime));
+    }
 
-	}
+    @Test
+    public void withPendingEndShouldCreateNewItem() {
+        // GIVEN
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        TimeTrackingItem newItem = sut.withPendingEnd();
+
+        // THEN
+        assertThat(newItem, not(is(sut)));
+        assertThat(newItem.getEnd(), is(Optional.empty()));
+    }
+
 }

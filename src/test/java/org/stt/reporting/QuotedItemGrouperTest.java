@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.stt.text.QuotedItemGrouper;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -20,8 +21,8 @@ public class QuotedItemGrouperTest {
 		List<String> result = sut.getGroupsOf("'test'");
 
 		// THEN
-		assertThat(result, is(Arrays.asList("test")));
-	}
+        assertThat(result, is(Collections.singletonList("test")));
+    }
 
 	@Test
 	public void shouldMatchCompleteStringIfNoDelimitersAreDetected() {
@@ -32,8 +33,8 @@ public class QuotedItemGrouperTest {
 		List<String> result = sut.getGroupsOf(completeText);
 
 		// THEN
-		assertThat(result, is(Arrays.asList(completeText)));
-	}
+        assertThat(result, is(Collections.singletonList(completeText)));
+    }
 
 	@Test
 	public void shouldMatchMixedDelimitersAndSubgroups() {

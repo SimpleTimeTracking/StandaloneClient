@@ -1,67 +1,63 @@
 package org.stt.persistence;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
-import org.stt.time.DateTimeHelper;
+import org.stt.config.BackupConfig;
+import org.stt.config.ConfigRoot;
+import org.stt.config.PathSetting;
+import org.stt.time.DateTimes;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.time.LocalDate;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.mockito.BDDMockito.given;
 
 public class BackupCreatorTest {
 
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 
-	@Mock
-	private Configuration configuration;
+    private ConfigRoot configRoot = new ConfigRoot();
+    private BackupConfig backupConfig = configRoot.getBackup();
 
-	private File currentTempFolder;
+    private File currentTempFolder;
+
 	private File currentSttFile;
+    private BackupCreator sut;
 
-	private BackupCreator sut;
-
-	@Before
-	public void setup() throws IOException {
-		MockitoAnnotations.initMocks(this);
+    @Before
+    public void setup() throws IOException {
+        MockitoAnnotations.initMocks(this);
 
 		currentTempFolder = tempFolder.newFolder();
 		currentSttFile = tempFolder.newFile();
-		try (OutputStream out = new FileOutputStream(
-				currentSttFile)) {
-			IOUtils.write("blubb, just a test line", out);
-		}
+        try (PrintWriter out = new PrintWriter(
+                currentSttFile, "UTF8")) {
+            out.print("blubb, just a test line");
+        }
 
-		given(configuration.getSttFile()).willReturn(currentSttFile);
-		given(configuration.getBackupInterval()).willReturn(7);
-		given(configuration.getBackupLocation()).willReturn(currentTempFolder);
-		given(configuration.getBackupRetentionCount()).willReturn(3);
+        backupConfig.setBackupRetentionCount(3);
+        backupConfig.setBackupLocation(new PathSetting(currentTempFolder.getAbsolutePath()));
 
-		sut = new BackupCreator(configuration);
-	}
+        sut = new BackupCreator(backupConfig, currentSttFile, "");
+    }
 
 	@Test
 	public void existingBackupShouldPreventNewBackup() throws IOException {
 		// GIVEN
-		String threeDaysAgo = DateTimeHelper.prettyPrintDate(DateTime.now()
-				.minusDays(3));
-		String sttFileName = currentSttFile.getName();
-		File backedUp = new File(currentTempFolder, sttFileName + "-"
+        String threeDaysAgo = DateTimes.prettyPrintDate(LocalDate.now()
+                .minusDays(3));
+        String sttFileName = currentSttFile.getName();
+        File backedUp = new File(currentTempFolder, sttFileName + "-"
 				+ threeDaysAgo);
 		createNewFile(backedUp);
 
@@ -80,19 +76,19 @@ public class BackupCreatorTest {
 	@Test
 	public void oldBackupShouldBeDeleted() throws IOException {
 		// GIVEN
-		for (int i = 0; i < configuration.getBackupRetentionCount(); i++) {
-			String xDaysAgo = DateTimeHelper.prettyPrintDate(DateTime.now()
-					.minusDays(i));
-			String sttFileName = currentSttFile.getName();
-			File oldFile = new File(currentTempFolder, sttFileName + "-"
+        for (int i = 0; i < backupConfig.getBackupRetentionCount(); i++) {
+            String xDaysAgo = DateTimes.prettyPrintDate(LocalDate.now()
+                    .minusDays(i));
+            String sttFileName = currentSttFile.getName();
+            File oldFile = new File(currentTempFolder, sttFileName + "-"
 					+ xDaysAgo);
 			createNewFile(oldFile);
 		}
 
-		String xDaysAgo = DateTimeHelper.prettyPrintDate(DateTime.now()
-				.minusDays(configuration.getBackupRetentionCount() + 1));
-		String sttFileName = currentSttFile.getName();
-		File oldFile = new File(currentTempFolder, sttFileName + "-" + xDaysAgo);
+        String xDaysAgo = DateTimes.prettyPrintDate(LocalDate.now()
+                .minusDays(backupConfig.getBackupRetentionCount() + 1));
+        String sttFileName = currentSttFile.getName();
+        File oldFile = new File(currentTempFolder, sttFileName + "-" + xDaysAgo);
 		createNewFile(oldFile);
 
 		// WHEN
@@ -106,10 +102,10 @@ public class BackupCreatorTest {
 	@Test
 	public void initialBackupShouldBeCreated() throws IOException {
 		// GIVEN
-		String currentDate = DateTimeHelper.prettyPrintDate(DateTime.now());
-		String sttFileName = currentSttFile.getName();
-		File expectedFile = new File(currentTempFolder, sttFileName + "-"
-				+ currentDate);
+        String currentDate = DateTimes.prettyPrintDate(LocalDate.now());
+        String sttFileName = currentSttFile.getName();
+        File expectedFile = new File(currentTempFolder, sttFileName + "-"
+                + currentDate);
 
 		// WHEN
 		sut.start();
@@ -123,10 +119,10 @@ public class BackupCreatorTest {
 	@Test
 	public void existingFileShouldNotBeOverwritten() throws IOException {
 		// GIVEN
-		String currentDate = DateTimeHelper.prettyPrintDate(DateTime.now());
-		String sttFileName = currentSttFile.getName();
-		File existingFile = new File(currentTempFolder, sttFileName + "-"
-				+ currentDate);
+        String currentDate = DateTimes.prettyPrintDate(LocalDate.now());
+        String sttFileName = currentSttFile.getName();
+        File existingFile = new File(currentTempFolder, sttFileName + "-"
+                + currentDate);
 		createNewFile(existingFile);
 
 		// WHEN

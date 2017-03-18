@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<BorderPane fx:id="borderPane" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.60"
+            xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+            <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="columnForRoundedDuration" prefWidth="170.0" text="%report.rounded"/>
+                    <TableColumn fx:id="columnForDuration" minWidth="0.0" prefWidth="120.0" text="%report.duration"/>
+                    <TableColumn fx:id="columnForComment" prefWidth="-1.0" text="%report.activity"/>
+                </columns>
+            </TableView>
+            <FlowPane hgap="10.0">
+                <children>
+                    <GridPane hgap="10.0">
+                        <columnConstraints>
+                            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                        </rowConstraints>
+                        <children>
+                            <Label text="%startOfReport">
+                                <font>
+                                    <Font name="System Bold" size="12.0"/>
+                                </font>
+                            </Label>
+                            <Label fx:id="startOfReport" text="startOfReportValue" GridPane.columnIndex="1"/>
+                            <Label text="%endOfReport" GridPane.rowIndex="1">
+                                <font>
+                                    <Font name="System Bold" size="12.0"/>
+                                </font>
+                            </Label>
+                            <Label fx:id="endOfReport" text="endOfReportValue" GridPane.columnIndex="1"
+                                   GridPane.rowIndex="1"/>
+                            <Label text="%uncoveredTime" GridPane.rowIndex="2">
+                                <font>
+                                    <Font name="System Bold" size="12.0"/>
+                                </font>
+                            </Label>
+                            <Label fx:id="uncoveredTime" text="uncoveredTime" GridPane.columnIndex="1"
+                                   GridPane.rowIndex="2"/>
+                        </children>
+                    </GridPane>
+                    <GridPane hgap="10.0">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                        </rowConstraints>
+                        <children>
+                            <Label text="%roundedDurationSum">
+                                <font>
+                                    <Font name="System Bold" size="12.0"/>
+                                </font>
+                            </Label>
+                            <Label fx:id="roundedDurationSum" text="roundedDurationSum" GridPane.columnIndex="1"/>
+                        </children>
+                    </GridPane>
+                </children>
+            </FlowPane>
+        </VBox>
+    </center>
+    <top>
+        <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <items>
+                <Label text="%report.startOfReport"/>
+                <DatePicker fx:id="datePicker"/>
+                <Label text="%report.endOfReport"/>
+                <DatePicker/>
+            </items>
+        </ToolBar>
+    </top>
+</BorderPane>

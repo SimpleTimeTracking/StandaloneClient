@@ -1,9 +1,6 @@
 package org.stt.gui.jfx;
 
-import com.google.inject.Inject;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -15,13 +12,10 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.stt.model.TimeTrackingItem;
 
+import javax.inject.Inject;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Created by dante on 12.03.15.
- */
 public class DeleteOrKeepDialog {
     private ResourceBundle localization;
 
@@ -32,7 +26,7 @@ public class DeleteOrKeepDialog {
     @Inject
     public DeleteOrKeepDialog(ResourceBundle localization) {
 
-        this.localization = checkNotNull(localization);
+        this.localization = Objects.requireNonNull(localization);
     }
 
     public Result show(Window parent, TimeTrackingItem item) {
@@ -45,21 +39,15 @@ public class DeleteOrKeepDialog {
         buttonBox.setAlignment(Pos.CENTER);
         Button deleteButton = new Button(localization.getString("delete"));
         final SimpleObjectProperty<Result> resultProperty = new SimpleObjectProperty<>(null);
-        deleteButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                resultProperty.setValue(Result.DELETE);
-                deleteCancelStage.close();
-            }
+        deleteButton.setOnAction(event -> {
+            resultProperty.setValue(Result.DELETE);
+            deleteCancelStage.close();
         });
         deleteButton.setMnemonicParsing(true);
         Button keepButton = new Button(localization.getString("keep"));
-        keepButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                resultProperty.setValue(Result.KEEP);
-                deleteCancelStage.close();
-            }
+        keepButton.setOnAction(event -> {
+            resultProperty.setValue(Result.KEEP);
+            deleteCancelStage.close();
         });
         keepButton.setMnemonicParsing(true);
         keepButton.setCancelButton(true);

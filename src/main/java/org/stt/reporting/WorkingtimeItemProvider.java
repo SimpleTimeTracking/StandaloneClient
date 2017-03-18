@@ -1,45 +1,51 @@
 package org.stt.reporting;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.Duration;
-import org.joda.time.LocalDate;
-import org.stt.Configuration;
-import org.stt.time.DateTimeHelper;
+import org.stt.config.WorktimeConfig;
+import org.stt.time.DateTimes;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.*;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Logger;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Reads information about working times from the configured workingTimes file
  * and aggregates them into {@link WorkingtimeItem}s
  */
-@Singleton
 public class WorkingtimeItemProvider {
-
-	private Map<Integer, WorkingtimeItem> defaultWorkingHours = new HashMap<>();
-	private Map<DateTime, WorkingtimeItem> workingHoursPerDay = new HashMap<>();
+    private static final Logger LOG = Logger.getLogger(WorkingtimeItemProvider.class.getSimpleName());
+    private final WorktimeConfig config;
+    private Map<LocalDate, WorkingtimeItem> workingHoursPerDay = new HashMap<>();
 
 	@Inject
-	public WorkingtimeItemProvider(Configuration configuration) {
-		populateHoursMapsFromFile(configuration.getWorkingTimesFile());
-	}
+    public WorkingtimeItemProvider(WorktimeConfig config,
+                                   @Named("homePath") String homePath) {
+        this.config = requireNonNull(config);
+
+        File workingTimesFile = config.getWorkingTimesFile().file(homePath);
+        if (workingTimesFile.exists()) {
+            populateHoursMapsFromFile(workingTimesFile);
+        }
+    }
 
 	/**
 	 * 
 	 * @return the dates and corresponding absence times
 	 */
-	public Map<DateTime, WorkingtimeItem> getOvertimeAbsences() {
-		Map<DateTime, WorkingtimeItem> overtimeAbsenceDuration = new TreeMap<>();
-		for (Map.Entry<DateTime, WorkingtimeItem> e : workingHoursPerDay
-				.entrySet()) {
+    public Map<LocalDate, WorkingtimeItem> getOvertimeAbsences() {
+        Map<LocalDate, WorkingtimeItem> overtimeAbsenceDuration = new TreeMap<>();
+        for (Map.Entry<LocalDate, WorkingtimeItem> e : workingHoursPerDay
+                .entrySet()) {
 			// if time is negative...
-			if (e.getValue().getMin().isShorterThan(new Duration(0))) {
-				overtimeAbsenceDuration.put(e.getKey(), e.getValue());
+            if (e.getValue().getMin().isNegative()) {
+                overtimeAbsenceDuration.put(e.getKey(), e.getValue());
 			}
 		}
 
@@ -53,27 +59,15 @@ public class WorkingtimeItemProvider {
 	 *         or negative overtime
 	 */
 	public WorkingtimeItem getWorkingTimeFor(LocalDate date) {
-		WorkingtimeItem workingHours = workingHoursPerDay.get(date
-				.toDateTimeAtStartOfDay());
-		if (workingHours == null) {
-			workingHours = defaultWorkingHours.get(date.getDayOfWeek());
-		}
-
-		return workingHours;
-	}
+        WorkingtimeItem workingHours = workingHoursPerDay.get(date);
+        if (workingHours == null) {
+            return fromDuration(config.getWorkingHours().getOrDefault(date.getDayOfWeek(), Duration.ZERO));
+        }
+        return workingHours;
+    }
 
 	private void populateHoursMapsFromFile(File workingTimesFile) {
 
-		// some defaults
-		defaultWorkingHours.put(DateTimeConstants.MONDAY, fromHours("8"));
-		defaultWorkingHours.put(DateTimeConstants.TUESDAY, fromHours("8"));
-		defaultWorkingHours.put(DateTimeConstants.WEDNESDAY, fromHours("8"));
-		defaultWorkingHours.put(DateTimeConstants.THURSDAY, fromHours("8"));
-		defaultWorkingHours.put(DateTimeConstants.FRIDAY, fromHours("8"));
-		defaultWorkingHours.put(DateTimeConstants.SATURDAY, fromHours("8"));
-		defaultWorkingHours.put(DateTimeConstants.SUNDAY, fromHours("0"));
-
-		// end defaults
 		try (BufferedReader wtReader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(workingTimesFile),
 						"UTF-8"))) {
@@ -83,10 +77,9 @@ public class WorkingtimeItemProvider {
 				if (currentLine.matches("^\\d+.*")) {
 					// it is a date
 					String[] split = currentLine.split("\\s+");
-					DateTime parseDateTime = DateTimeHelper.DATE_TIME_FORMATTER_YYYY_MM_DD
-							.parseDateTime(split[0]);
-					String minHours = split[1];
-					String maxHours = minHours;
+                    LocalDate parseDateTime = LocalDate.parse(split[0], DateTimes.DATE_TIME_FORMATTER_YYYY_MM_DD_DASHED);
+                    String minHours = split[1];
+                    String maxHours = minHours;
 
 					if (split.length > 2) {
 						maxHours = split[2];
@@ -95,63 +88,23 @@ public class WorkingtimeItemProvider {
 							fromHours(minHours, maxHours));
 
 				} else if (currentLine.startsWith("hours")) {
-					// it is the number of hours
-					String[] split = currentLine.split("=");
-					String spec = split[0].trim();
-					String hours = split[1].trim();
-					switch (spec) {
-					case "hoursMon":
-						defaultWorkingHours.put(DateTimeConstants.MONDAY,
-								fromHours(hours));
-						break;
-					case "hoursTue":
-						defaultWorkingHours.put(DateTimeConstants.TUESDAY,
-								fromHours(hours));
-						break;
-					case "hoursWed":
-						defaultWorkingHours.put(DateTimeConstants.WEDNESDAY,
-								fromHours(hours));
-						break;
-					case "hoursThu":
-						defaultWorkingHours.put(DateTimeConstants.THURSDAY,
-								fromHours(hours));
-						break;
-					case "hoursFri":
-						defaultWorkingHours.put(DateTimeConstants.FRIDAY,
-								fromHours(hours));
-						break;
-					case "hoursSat":
-						defaultWorkingHours.put(DateTimeConstants.SATURDAY,
-								fromHours(hours));
-						break;
-					case "hoursSun":
-						defaultWorkingHours.put(DateTimeConstants.SUNDAY,
-								fromHours(hours));
-						break;
-
-					default:
-						break;
-					}
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+                    LOG.severe("'hours' is no longer supported in you worktimes file, please setup default working hours in your configuration.");
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
 	private WorkingtimeItem fromHours(String minHours, String maxHours) {
-		Duration minDur = new Duration(Long.parseLong(minHours)
-				* DateTimeConstants.MILLIS_PER_HOUR);
-		Duration maxDur = new Duration(Long.parseLong(maxHours)
-				* DateTimeConstants.MILLIS_PER_HOUR);
-		return new WorkingtimeItem(minDur, maxDur);
+        Duration minDur = Duration.ofHours(Long.parseLong(minHours));
+        Duration maxDur = Duration.ofHours(Long.parseLong(maxHours));
+        return new WorkingtimeItem(minDur, maxDur);
 	}
 
-	private WorkingtimeItem fromHours(String hours) {
-		Duration d = new Duration(Long.parseLong(hours)
-				* DateTimeConstants.MILLIS_PER_HOUR);
-		return new WorkingtimeItem(d, d);
-	}
+    private WorkingtimeItem fromDuration(Duration duration) {
+        return new WorkingtimeItem(duration, duration);
+    }
 
 	/**
 	 *  

@@ -1,30 +1,29 @@
 package org.stt.reporting;
 
 import org.apache.commons.io.FileUtils;
-import org.joda.time.DateTimeConstants;
-import org.joda.time.Duration;
-import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
+import org.stt.config.PathSetting;
+import org.stt.config.WorktimeConfig;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
 
 public class WorkingtimeItemProviderTest {
 
-	@Mock
-	private Configuration configuration;
 	private WorkingtimeItemProvider sut;
+
+    private WorktimeConfig configuration = new WorktimeConfig();
 
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -37,39 +36,40 @@ public class WorkingtimeItemProviderTest {
 
 		// populate test file
 		FileUtils.write(tempFile,
-				"2014-01-01 14\nhoursMon = 10\n2014-02-02 10 14");
-		// end populate
+                "2014-01-01 14\n2014-02-02 10 14", "UTF8");
+        // end populate
 
-		given(configuration.getWorkingTimesFile()).willReturn(tempFile);
+        configuration.setWorkingTimesFile(new PathSetting(tempFile.getAbsolutePath()));
 
-		sut = new WorkingtimeItemProvider(configuration);
-	}
+        sut = new WorkingtimeItemProvider(configuration, "");
+    }
 
 	@Test
 	public void defaultTimeOf8hIsReturnedIfNoDateGiven() {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 7, 1));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 7, 1));
 
 		// THEN
-		assertThat(new Duration(8 * DateTimeConstants.MILLIS_PER_HOUR),
-				is(workingTimeFor.getMin()));
+        assertThat(Duration.ofHours(8),
+                is(workingTimeFor.getMin()));
 	}
 
 	@Test
 	public void configuredHoursForMondayIsUsed() {
 		// GIVEN
+        configuration.getWorkingHours().put(DayOfWeek.MONDAY, Duration.ofHours(10));
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 7, 7));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 7, 7));
 
 		// THEN
 
-		assertThat(new Duration(10 * DateTimeConstants.MILLIS_PER_HOUR),
-				is(workingTimeFor.getMin()));
+        assertThat(Duration.ofHours(10),
+                is(workingTimeFor.getMin()));
 	}
 
 	@Test
@@ -77,12 +77,12 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 1, 1));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 1, 1));
 
 		// THEN
-		assertThat(new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR),
-				is(workingTimeFor.getMin()));
+        assertThat(Duration.ofHours(14),
+                is(workingTimeFor.getMin()));
 	}
 
 	@Test
@@ -90,12 +90,12 @@ public class WorkingtimeItemProviderTest {
 		// GIVEN
 
 		// WHEN
-		WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(new LocalDate(
-				2014, 2, 2));
+        WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
+                2014, 2, 2));
 
 		// THEN
-		Duration min = new Duration(10 * DateTimeConstants.MILLIS_PER_HOUR);
-		Duration max = new Duration(14 * DateTimeConstants.MILLIS_PER_HOUR);
-		assertThat(new WorkingtimeItem(min, max), is(workingTimeFor));
+        Duration min = Duration.ofHours(10);
+        Duration max = Duration.ofHours(14);
+        assertThat(new WorkingtimeItem(min, max), is(workingTimeFor));
 	}
 }

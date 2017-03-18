@@ -1,29 +1,21 @@
 package org.stt.command;
 
 import org.stt.model.TimeTrackingItem;
-import org.stt.persistence.ItemPersister;
 
-import java.io.IOException;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * Created by dante on 14.03.15.
  */
-public class NewItemCommand extends PersistingCommand {
+public class NewItemCommand implements Command {
     public final TimeTrackingItem newItem;
 
-    NewItemCommand(ItemPersister persister, TimeTrackingItem newItem) {
-        super(persister);
-        this.newItem = checkNotNull(newItem);
+    NewItemCommand(TimeTrackingItem newItem) {
+        this.newItem = Objects.requireNonNull(newItem);
     }
 
     @Override
-    public void execute() {
-        try {
-            persister.insert(newItem);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void accept(CommandHandler commandHandler) {
+        commandHandler.addNewActivity(this);
     }
 }

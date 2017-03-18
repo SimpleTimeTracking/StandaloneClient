@@ -1,70 +1,36 @@
 package org.stt.gui.jfx;
 
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.image.Image;
-import javafx.scene.layout.Pane;
-import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
+import javafx.scene.text.Font;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.gui.jfx.TimeTrackingItemCell.Builder;
-import org.stt.gui.jfx.TimeTrackingItemCell.ContinueActionHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.DeleteActionHandler;
-import org.stt.gui.jfx.TimeTrackingItemCell.EditActionHandler;
+import org.stt.gui.jfx.TimeTrackingItemCell.ActionsHandler;
 import org.stt.model.TimeTrackingItem;
-import org.stt.model.TimeTrackingItemFilter;
 
+import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 
 public class TimeTrackingItemCellTest {
 
 	private TimeTrackingItemCell sut;
 	@Mock
-	private ContinueActionHandler continueActionHandler;
-	@Mock
-	private Image imageForContinue;
-	@Mock
-	private EditActionHandler editActionHandler;
-	@Mock
-	private DeleteActionHandler deleteActionHandler;
-	@Mock
-	private Image imageForEdit;
-	@Mock
-	private Image imageForDelete;
-	@Mock
-	private Image imageFromTo;
-	@Mock
-	private Image runningImage;
-	@Mock
-	private TimeTrackingItemFilter firstItemOfTheDayFilter;
+    private ActionsHandler actionsHandler;
+    private Font fontAwesome;
 
-	@Before
-	public void setup() throws Throwable {
-		new JFXPanel();
-		MockitoAnnotations.initMocks(this);
-		Builder builder = new TimeTrackingItemCell.Builder();
+    @Before
+    public void setup() throws Throwable {
+        new JFXPanel();
+        fontAwesome = Font.loadFont(getClass().getResourceAsStream("/fontawesome-webfont.ttf"), 0);
+        MockitoAnnotations.initMocks(this);
 		ResourceBundle resourceBundle = ResourceBundle
 				.getBundle("org.stt.gui.Application");
-		builder.continueActionHandler(continueActionHandler)
-				.deleteActionHandler(deleteActionHandler)
-				.editActionHandler(editActionHandler)
-				.continueImage(imageForContinue).deleteImage(imageForDelete)
-				.editImage(imageForEdit).runningImage(runningImage)
-				.fromToImage(imageFromTo)
-				.firstItemOfTheDayFilter(firstItemOfTheDayFilter)
-				.resourceBundle(resourceBundle);
 
-		sut = new TimeTrackingItemCell(builder) {
+        sut = new TimeTrackingItemCell(fontAwesome, resourceBundle, a -> false, actionsHandler) {
 
 			@Override
 			protected void setupTooltips(ResourceBundle localization) {
@@ -73,69 +39,10 @@ public class TimeTrackingItemCellTest {
 	}
 
 	@Test
-	public void shouldUseContinueImage() {
-		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-
-		// WHEN
-		sut.updateItem(item, false);
-
-		// THEN
-		Pane pane = (Pane) sut.getGraphic();
-		assertPanelHasImageButtonWithImage(pane, imageForContinue);
-	}
-
-	@Test
-	public void shouldUseFromToImage() {
-		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-
-		// WHEN
-		sut.updateItem(item, false);
-
-		// THEN
-		Pane pane = (Pane) sut.getGraphic();
-		assertPanelHasImageButtonWithImage(pane, imageForContinue);
-	}
-
-	@Test
-	public void shouldUseEditImage() {
-		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-
-		// WHEN
-		sut.updateItem(item, false);
-
-		// THEN
-		Pane pane = (Pane) sut.getGraphic();
-		assertPanelHasImageButtonWithImage(pane, imageForEdit);
-	}
-
-	@Test
-	public void shouldUseDeleteImage() {
-		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-
-		// WHEN
-		sut.updateItem(item, false);
-
-		// THEN
-		Pane pane = (Pane) sut.getGraphic();
-		assertPanelHasImageButtonWithImage(pane, imageForDelete);
-	}
-
-	private void assertPanelHasImageButtonWithImage(Pane pane, Image image) {
-		assertThat(pane.getChildren(), hasItem(Matchers.<Node>hasProperty(
-				"children",
-				hasItem(Matchers.<Node>hasProperty("graphic",
-								hasProperty("image", is(image)))))));
-	}
-
-	@Test
 	public void shouldCallDeleteHandlerOnClickOnDelete() {
 		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-		sut.updateItem(item, false);
+        TimeTrackingItem item = new TimeTrackingItem("test", LocalDateTime.now());
+        sut.updateItem(item, false);
 
 		Button deleteButton = sut.deleteButton;
 
@@ -143,14 +50,14 @@ public class TimeTrackingItemCellTest {
 		deleteButton.fire();
 
 		// THEN
-		verify(deleteActionHandler).delete(item);
-	}
+        verify(actionsHandler).delete(item);
+    }
 
 	@Test
 	public void shouldCallContinueHandlerOnClickOnContinue() {
 		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-		sut.updateItem(item, false);
+        TimeTrackingItem item = new TimeTrackingItem("test", LocalDateTime.now());
+        sut.updateItem(item, false);
 
 		Button continueButton = sut.continueButton;
 
@@ -158,20 +65,34 @@ public class TimeTrackingItemCellTest {
 		continueButton.fire();
 
 		// THEN
-		verify(continueActionHandler).continueItem(item);
-	}
+        verify(actionsHandler).continueItem(item);
+    }
 
 	@Test
 	public void shouldCallEditHandlerOnClickOnEdit() {
 		// GIVEN
-		TimeTrackingItem item = new TimeTrackingItem("test", DateTime.now());
-		sut.updateItem(item, false);
+        TimeTrackingItem item = new TimeTrackingItem("test", LocalDateTime.now());
+        sut.updateItem(item, false);
 
 		Button editButton = sut.editButton;
 		// WHEN
 		editButton.fire();
 
 		// THEN
-		verify(editActionHandler).edit(item);
-	}
+        verify(actionsHandler).edit(item);
+    }
+
+    @Test
+    public void shouldCallStopHandlerOnClickOnEdit() {
+        // GIVEN
+        TimeTrackingItem item = new TimeTrackingItem("test", LocalDateTime.now());
+        sut.updateItem(item, false);
+
+        Button stopButton = sut.stopButton;
+        // WHEN
+        stopButton.fire();
+
+        // THEN
+        verify(actionsHandler).stop(item);
+    }
 }

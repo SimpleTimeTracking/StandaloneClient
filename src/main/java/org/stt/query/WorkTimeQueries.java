@@ -1,22 +1,19 @@
 package org.stt.query;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import org.joda.time.*;
-import org.stt.text.ItemCategorizer;
-import org.stt.model.TimeTrackingItem;
 import org.stt.reporting.WorkingtimeItemProvider;
+import org.stt.text.ItemCategorizer;
+import org.stt.time.Interval;
 
-import java.util.logging.Logger;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.time.DayOfWeek;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Created by dante on 29.03.15.
- */
 @Singleton
 public class WorkTimeQueries {
-    private static final Logger LOG = Logger.getLogger(WorkTimeQueries.class.getName());
     private WorkingtimeItemProvider workingtimeItemProvider;
     private ItemCategorizer itemCategorizer;
     private TimeTrackingItemQueries timeTrackingItemQueries;
@@ -24,40 +21,35 @@ public class WorkTimeQueries {
     @Inject
     public WorkTimeQueries(WorkingtimeItemProvider workingtimeItemProvider, ItemCategorizer itemCategorizer,
                            TimeTrackingItemQueries timeTrackingItemQueries) {
-        this.workingtimeItemProvider = checkNotNull(workingtimeItemProvider);
-        this.itemCategorizer = checkNotNull(itemCategorizer);
-        this.timeTrackingItemQueries = checkNotNull(timeTrackingItemQueries);
+        this.workingtimeItemProvider = Objects.requireNonNull(workingtimeItemProvider);
+        this.itemCategorizer = Objects.requireNonNull(itemCategorizer);
+        this.timeTrackingItemQueries = Objects.requireNonNull(timeTrackingItemQueries);
     }
 
     public Duration queryRemainingWorktimeToday() {
-        DateTime now = new DateTime();
+        LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
-        Duration workedTime = queryWorktime(today.toInterval().withEnd(now));
-        Duration remainingDuration = workingtimeItemProvider.getWorkingTimeFor(today).getMin().minus(workedTime);
-        if (remainingDuration.isShorterThan(Duration.ZERO)) {
-            remainingDuration = Duration.ZERO;
-        }
-        return remainingDuration;
+        Duration workedTime = queryWorktime(Interval.ofDay(today).withEnd(now));
+        return workingtimeItemProvider.getWorkingTimeFor(today).getMin().minus(workedTime);
     }
 
     public Duration queryWeekWorktime() {
-        DateTime now = new DateTime();
-        LocalDate monday = now.toLocalDate().withDayOfWeek(DateTimeConstants.MONDAY);
-        Interval currentWeek = monday.toInterval().withEnd(now);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate monday = now.toLocalDate().with(DayOfWeek.MONDAY);
+        Interval currentWeek = Interval.between(monday.atStartOfDay(), now);
         return queryWorktime(currentWeek);
     }
 
     public Duration queryWorktime(Interval interval) {
-        Duration workedTime = Duration.ZERO;
-        DNFClause dnfClause = new DNFClause();
-        dnfClause.withStartNotBefore(interval.getStart());
-        dnfClause.withStartBefore(interval.getEnd());
-        for (TimeTrackingItem item: timeTrackingItemQueries.queryItems(dnfClause)) {
-            if (itemCategorizer.getCategory(item.getComment().or("")) == ItemCategorizer.ItemCategory.WORKTIME) {
-                DateTime end = item.getEnd().or(interval.getEnd());
-                workedTime = workedTime.plus(new Duration(item.getStart(), end));
-            }
-        }
-        return workedTime;
+        Criteria criteria = new Criteria();
+        criteria.withStartNotBefore(interval.getStart());
+        criteria.withStartBefore(interval.getEnd());
+        return timeTrackingItemQueries.queryItems(criteria)
+                .filter(item -> itemCategorizer.getCategory(item.getActivity()) == ItemCategorizer.ItemCategory.WORKTIME)
+                .map(item -> {
+                    LocalDateTime end = item.getEnd().orElse(interval.getEnd());
+                    return Duration.between(item.getStart(), end);
+                })
+                .reduce(Duration.ZERO, Duration::plus);
     }
 }
