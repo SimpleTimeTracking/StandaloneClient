@@ -1,15 +1,14 @@
 package org.stt.cli;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
 import org.stt.command.Activities;
 import org.stt.command.CommandFormatter;
+import org.stt.config.ConfigRoot;
 import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.stt.STTItemPersister;
@@ -26,8 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
 
 public class MainTest {
 	private Main sut;
@@ -41,18 +40,13 @@ public class MainTest {
 	public void setup() throws IOException {
 		MockitoAnnotations.initMocks(this);
 
-        Configuration configuration = new Configuration() {
-            @Override
-            public File determineBaseDir() {
-                try {
-                    return tempFolder.newFolder();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            }
-        };
+        ConfigRoot configRoot = new ConfigRoot();
 
-        currentSttFile = configuration.getSttFile();
+        currentSttFile = configRoot.getSttFile().file(tempFolder.newFolder().getAbsolutePath());
+        boolean mkdirs = currentSttFile.getParentFile().mkdirs();
+        assertThat(mkdirs, is(true));
+        boolean newFile = currentSttFile.createNewFile();
+        assertThat(newFile, is(true));
 
         Provider<Reader> sttReader = () -> {
             try {
@@ -71,9 +65,9 @@ public class MainTest {
         };
         Provider<ItemReader> readerProvider = () -> new STTItemReader(sttReader.get());
         TimeTrackingItemQueries queries = new TimeTrackingItemQueries(readerProvider, Optional.empty());
-        WorkingtimeItemProvider worktimeItemProvider = new WorkingtimeItemProvider(configuration);
-        ItemCategorizer categorizer = new WorktimeCategorizer(configuration);
-        ReportPrinter reportPrinter = new ReportPrinter(queries, configuration, worktimeItemProvider, categorizer);
+        WorkingtimeItemProvider worktimeItemProvider = new WorkingtimeItemProvider(configRoot.getWorktime(), "");
+        ItemCategorizer categorizer = new WorktimeCategorizer(configRoot.getWorktime());
+        ReportPrinter reportPrinter = new ReportPrinter(queries, configRoot.getCli(), worktimeItemProvider, categorizer);
         ItemPersister persister = new STTItemPersister(sttReader, sttWriter);
         CommandFormatter commandFormatter = new CommandFormatter();
         Activities activities = new Activities(persister, queries, Optional.empty());
@@ -97,10 +91,10 @@ public class MainTest {
 		// THEN
 		List<String> readLines = IOUtils.readLines(new InputStreamReader(
 				new FileInputStream(currentSttFile), "UTF-8"));
-		Assert.assertThat(readLines, contains(containsString(expectedComment)));
+        assertThat(readLines, contains(containsString(expectedComment)));
 
 		String returned = baos.toString("UTF-8");
-		Assert.assertThat(returned, containsString(expectedComment));
+        assertThat(returned, containsString(expectedComment));
 
 		ps.close();
 	}

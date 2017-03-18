@@ -75,7 +75,10 @@
     <top>
         <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <items>
+                <Label text="%report.startOfReport"/>
                 <DatePicker fx:id="datePicker"/>
+                <Label text="%report.endOfReport"/>
+                <DatePicker/>
             </items>
         </ToolBar>
     </top>

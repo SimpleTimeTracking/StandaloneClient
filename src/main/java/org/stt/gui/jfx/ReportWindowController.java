@@ -20,7 +20,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.stt.config.ReportWindowConfig;
+import org.stt.config.ReportConfig;
 import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
@@ -50,7 +50,7 @@ public class ReportWindowController {
     private final ItemGrouper itemGrouper;
     private final Color[] groupColors;
     private final ResourceBundle localization;
-    private ReportWindowConfig config;
+    private ReportConfig config;
 
     @FXML
     private TableColumn<ListItem, String> columnForRoundedDuration;
@@ -80,7 +80,7 @@ public class ReportWindowController {
                            TimeTrackingItemQueries searcher,
                            DurationRounder rounder,
                            ItemGrouper itemGrouper,
-                           ReportWindowConfig config) {
+                           ReportConfig config) {
         this.localization = requireNonNull(localization);
         this.config = requireNonNull(config);
         this.timeTrackingItemQueries = requireNonNull(searcher);

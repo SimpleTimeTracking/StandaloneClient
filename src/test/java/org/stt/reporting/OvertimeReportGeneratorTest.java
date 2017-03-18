@@ -5,7 +5,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
 import org.stt.ItemReaderTestHelper;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -18,7 +17,6 @@ import javax.inject.Provider;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,8 +27,6 @@ import static org.mockito.Matchers.anyString;
 
 public class OvertimeReportGeneratorTest {
 
-	@Mock
-	private Configuration configuration;
 	@Mock
 	private ItemCategorizer categorizer;
 	@Mock
@@ -46,8 +42,6 @@ public class OvertimeReportGeneratorTest {
     public void setUp() throws Exception {
 		MockitoAnnotations.initMocks(this);
 
-		given(configuration.getBreakTimeComments()).willReturn(
-                Collections.singletonList("pause"));
         given(categorizer.getCategory(anyString())).willReturn(
 				ItemCategory.WORKTIME);
 		given(categorizer.getCategory("pause")).willReturn(ItemCategory.BREAK);

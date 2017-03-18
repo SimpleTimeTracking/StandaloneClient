@@ -29,8 +29,7 @@ import org.fxmisc.wellbehaved.event.Nodes;
 import org.stt.States;
 import org.stt.Streams;
 import org.stt.command.*;
-import org.stt.config.CommandTextConfig;
-import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.config.ActivitiesConfig;
 import org.stt.event.ShuttingDown;
 import org.stt.fun.Achievement;
 import org.stt.fun.AchievementService;
@@ -118,8 +117,7 @@ public class ActivitiesController implements ActionsHandler {
                          CommandFormatter commandFormatter,
                          ExpansionProvider expansionProvider,
                          ResourceBundle resourceBundle,
-                         TimeTrackingItemListConfig timeTrackingItemListConfig,
-                         CommandTextConfig commandTextConfig,
+                         ActivitiesConfig activitiesConfig,
                          ItemAndDateValidator validator,
                          TimeTrackingItemQueries queries,
                          AchievementService achievementService,
@@ -128,7 +126,7 @@ public class ActivitiesController implements ActionsHandler {
                          @Named("glyph") Font fontAwesome,
                          WorktimePane worktimePane) {
         this.worktimePane = requireNonNull(worktimePane);
-        requireNonNull(timeTrackingItemListConfig);
+        requireNonNull(activitiesConfig);
         this.executorService = requireNonNull(executorService);
         this.achievementService = requireNonNull(achievementService);
         this.queries = requireNonNull(queries);
@@ -140,11 +138,10 @@ public class ActivitiesController implements ActionsHandler {
         this.localization = requireNonNull(resourceBundle);
         this.activities = requireNonNull(activities);
         this.fontAwesome = requireNonNull(fontAwesome);
-        autoCompletionPopup = requireNonNull(commandTextConfig).isAutoCompletionPopup();
-
+        autoCompletionPopup = activitiesConfig.isAutoCompletionPopup();
         eventBus.subscribe(this);
-        askBeforeDeleting = timeTrackingItemListConfig.isAskBeforeDeleting();
-        filterDuplicatesWhenSearching = timeTrackingItemListConfig.isFilterDuplicatesWhenSearching();
+        askBeforeDeleting = activitiesConfig.isAskBeforeDeleting();
+        filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/org/stt/gui/jfx/ActivitiesPanel.fxml"), localization);

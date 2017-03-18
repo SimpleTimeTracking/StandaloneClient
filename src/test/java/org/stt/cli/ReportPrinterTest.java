@@ -4,8 +4,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
 import org.stt.ItemReaderTestHelper;
+import org.stt.config.CliConfig;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.query.TimeTrackingItemQueries;
@@ -35,8 +35,7 @@ public class ReportPrinterTest {
 	private ReportPrinter sut;
     private Provider<ItemReader> readFrom;
 
-	@Mock
-	private Configuration configuration;
+    private CliConfig configuration = new CliConfig();
 
 	@Mock
 	private ItemReader itemReader;
@@ -53,7 +52,7 @@ public class ReportPrinterTest {
 
         given(workingtimeItemProvider.getWorkingTimeFor(any(LocalDate.class)))
                 .willReturn(new WorkingtimeItemProvider.WorkingtimeItem(Duration.ofHours(8), Duration.ofHours(8)));
-        given(configuration.getCliReportingWidth()).willReturn(120);
+        configuration.setCliReportingWidth(120);
         readFrom = () -> itemReader;
         given(categorizer.getCategory(anyString())).willReturn(
                 ItemCategory.WORKTIME);

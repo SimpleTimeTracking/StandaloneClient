@@ -2,7 +2,6 @@ package org.stt.text;
 
 import dagger.Module;
 import dagger.Provides;
-import org.stt.Configuration;
 import org.stt.config.YamlConfigService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
@@ -23,8 +22,8 @@ public class TextModule {
     }
 
     @Provides
-    static ItemCategorizer provideItemCategorizer(Configuration configuration) {
-        return new WorktimeCategorizer(configuration);
+    static ItemCategorizer provideItemCategorizer(WorktimeCategorizer worktimeCategorizer) {
+        return worktimeCategorizer;
     }
 
     @Provides

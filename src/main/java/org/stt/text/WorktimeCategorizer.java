@@ -1,29 +1,26 @@
 package org.stt.text;
 
-import org.stt.Configuration;
+import org.stt.config.WorktimeConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Collection;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Singleton
 public class WorktimeCategorizer implements ItemCategorizer {
-
-	private Configuration configuration;
+    private final Map<String, ItemCategory> activityCategory;
 
 	@Inject
-	public WorktimeCategorizer(Configuration configuration) {
-		this.configuration = configuration;
-	}
+    public WorktimeCategorizer(WorktimeConfig worktimeConfig) {
+        activityCategory = worktimeConfig.getBreakActivities()
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), a -> ItemCategory.BREAK));
+    }
 
 	@Override
 	public ItemCategory getCategory(String comment) {
-		Collection<String> breakTimeComments = configuration
-				.getBreakTimeComments();
-		if (breakTimeComments.contains(comment)) {
-			return ItemCategory.BREAK;
-		}
-		return ItemCategory.WORKTIME;
-	}
-
+        return activityCategory.getOrDefault(comment, ItemCategory.WORKTIME);
+    }
 }

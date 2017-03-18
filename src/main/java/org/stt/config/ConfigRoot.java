@@ -1,26 +1,21 @@
 package org.stt.config;
 
 public class ConfigRoot {
-    private TimeTrackingItemListConfig timeTrackingItemListConfig = new TimeTrackingItemListConfig();
-    private ReportWindowConfig reportWindowConfig = new ReportWindowConfig();
+    private ActivitiesConfig activities = new ActivitiesConfig();
     private CommonPrefixGrouperConfig prefixGrouper = new CommonPrefixGrouperConfig();
-    private CommandTextConfig commandText = new CommandTextConfig();
+    private WorktimeConfig worktime = new WorktimeConfig();
+    private ReportConfig report = new ReportConfig();
+    private BackupConfig backup = new BackupConfig();
+    private PathSetting sttFile = new PathSetting("$HOME$/.stt/activities");
+    private CliConfig cli = new CliConfig();
 
-    public TimeTrackingItemListConfig getTimeTrackingItemListConfig() {
-        return timeTrackingItemListConfig;
+    public ActivitiesConfig getActivities() {
+        return activities;
     }
 
-    public void setTimeTrackingItemListConfig(
-            TimeTrackingItemListConfig timeTrackingItemListConfig) {
-        this.timeTrackingItemListConfig = timeTrackingItemListConfig;
-    }
-
-    public ReportWindowConfig getReportWindowConfig() {
-        return reportWindowConfig;
-    }
-
-    public void setReportWindowConfig(ReportWindowConfig reportWindowConfig) {
-        this.reportWindowConfig = reportWindowConfig;
+    public void setActivities(
+            ActivitiesConfig activities) {
+        this.activities = activities;
     }
 
     public CommonPrefixGrouperConfig getPrefixGrouper() {
@@ -31,11 +26,43 @@ public class ConfigRoot {
         this.prefixGrouper = prefixGrouper;
     }
 
-    public CommandTextConfig getCommandText() {
-        return commandText;
+    public void setWorktime(WorktimeConfig worktime) {
+        this.worktime = worktime;
     }
 
-    public void setCommandText(CommandTextConfig commandText) {
-        this.commandText = commandText;
+    public WorktimeConfig getWorktime() {
+        return worktime;
+    }
+
+    public ReportConfig getReport() {
+        return report;
+    }
+
+    public void setReport(ReportConfig report) {
+        this.report = report;
+    }
+
+    public BackupConfig getBackup() {
+        return backup;
+    }
+
+    public void setBackup(BackupConfig backup) {
+        this.backup = backup;
+    }
+
+    public PathSetting getSttFile() {
+        return sttFile;
+    }
+
+    public void setSttFile(PathSetting sttFile) {
+        this.sttFile = sttFile;
+    }
+
+    public CliConfig getCli() {
+        return cli;
+    }
+
+    public void setCli(CliConfig cli) {
+        this.cli = cli;
     }
 }

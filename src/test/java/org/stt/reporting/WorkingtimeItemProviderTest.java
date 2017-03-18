@@ -5,25 +5,25 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
+import org.stt.config.PathSetting;
+import org.stt.config.WorktimeConfig;
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.BDDMockito.given;
 
 public class WorkingtimeItemProviderTest {
 
-	@Mock
-	private Configuration configuration;
 	private WorkingtimeItemProvider sut;
+
+    private WorktimeConfig configuration = new WorktimeConfig();
 
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -36,13 +36,13 @@ public class WorkingtimeItemProviderTest {
 
 		// populate test file
 		FileUtils.write(tempFile,
-                "2014-01-01 14\nhoursMon = 10\n2014-02-02 10 14", "UTF8");
+                "2014-01-01 14\n2014-02-02 10 14", "UTF8");
         // end populate
 
-		given(configuration.getWorkingTimesFile()).willReturn(tempFile);
+        configuration.setWorkingTimesFile(new PathSetting(tempFile.getAbsolutePath()));
 
-		sut = new WorkingtimeItemProvider(configuration);
-	}
+        sut = new WorkingtimeItemProvider(configuration, "");
+    }
 
 	@Test
 	public void defaultTimeOf8hIsReturnedIfNoDateGiven() {
@@ -60,6 +60,7 @@ public class WorkingtimeItemProviderTest {
 	@Test
 	public void configuredHoursForMondayIsUsed() {
 		// GIVEN
+        configuration.getWorkingHours().put(DayOfWeek.MONDAY, Duration.ofHours(10));
 
 		// WHEN
         WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(

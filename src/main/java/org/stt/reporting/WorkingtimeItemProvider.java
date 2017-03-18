@@ -1,33 +1,39 @@
 package org.stt.reporting;
 
-import org.stt.Configuration;
+import org.stt.config.WorktimeConfig;
 import org.stt.time.DateTimes;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.*;
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Reads information about working times from the configured workingTimes file
  * and aggregates them into {@link WorkingtimeItem}s
  */
 public class WorkingtimeItemProvider {
-    private Map<DayOfWeek, WorkingtimeItem> defaultWorkingHours;
+    private static final Logger LOG = Logger.getLogger(WorkingtimeItemProvider.class.getSimpleName());
+    private final WorktimeConfig config;
     private Map<LocalDate, WorkingtimeItem> workingHoursPerDay = new HashMap<>();
 
 	@Inject
-	public WorkingtimeItemProvider(Configuration configuration) {
-		populateHoursMapsFromFile(configuration.getWorkingTimesFile());
-	}
+    public WorkingtimeItemProvider(WorktimeConfig config,
+                                   @Named("homePath") String homePath) {
+        this.config = requireNonNull(config);
+
+        File workingTimesFile = config.getWorkingTimesFile().file(homePath);
+        if (workingTimesFile.exists()) {
+            populateHoursMapsFromFile(workingTimesFile);
+        }
+    }
 
 	/**
 	 * 
@@ -55,22 +61,13 @@ public class WorkingtimeItemProvider {
 	public WorkingtimeItem getWorkingTimeFor(LocalDate date) {
         WorkingtimeItem workingHours = workingHoursPerDay.get(date);
         if (workingHours == null) {
-			workingHours = defaultWorkingHours.get(date.getDayOfWeek());
-		}
-
-		return workingHours;
-	}
+            return fromDuration(config.getWorkingHours().getOrDefault(date.getDayOfWeek(), Duration.ZERO));
+        }
+        return workingHours;
+    }
 
 	private void populateHoursMapsFromFile(File workingTimesFile) {
 
-		// some defaults
-        defaultWorkingHours = Arrays.stream(DayOfWeek.values())
-                .collect(
-                        toMap(identity(),
-                                dayOfWeek -> dayOfWeek != DayOfWeek.SUNDAY
-                                        ? fromHours("8") : fromHours("0")));
-
-		// end defaults
 		try (BufferedReader wtReader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(workingTimesFile),
 						"UTF-8"))) {
@@ -91,49 +88,13 @@ public class WorkingtimeItemProvider {
 							fromHours(minHours, maxHours));
 
 				} else if (currentLine.startsWith("hours")) {
-					// it is the number of hours
-					String[] split = currentLine.split("=");
-					String spec = split[0].trim();
-					String hours = split[1].trim();
-					switch (spec) {
-					case "hoursMon":
-                        defaultWorkingHours.put(DayOfWeek.MONDAY,
-                                fromHours(hours));
-						break;
-					case "hoursTue":
-                        defaultWorkingHours.put(DayOfWeek.TUESDAY,
-                                fromHours(hours));
-						break;
-					case "hoursWed":
-                        defaultWorkingHours.put(DayOfWeek.WEDNESDAY,
-                                fromHours(hours));
-						break;
-					case "hoursThu":
-                        defaultWorkingHours.put(DayOfWeek.THURSDAY,
-                                fromHours(hours));
-						break;
-					case "hoursFri":
-                        defaultWorkingHours.put(DayOfWeek.FRIDAY,
-                                fromHours(hours));
-						break;
-					case "hoursSat":
-                        defaultWorkingHours.put(DayOfWeek.SATURDAY,
-                                fromHours(hours));
-						break;
-					case "hoursSun":
-                        defaultWorkingHours.put(DayOfWeek.SUNDAY,
-                                fromHours(hours));
-						break;
-
-					default:
-						break;
-					}
-				}
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+                    LOG.severe("'hours' is no longer supported in you worktimes file, please setup default working hours in your configuration.");
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
 	private WorkingtimeItem fromHours(String minHours, String maxHours) {
         Duration minDur = Duration.ofHours(Long.parseLong(minHours));
@@ -141,10 +102,9 @@ public class WorkingtimeItemProvider {
         return new WorkingtimeItem(minDur, maxDur);
 	}
 
-	private WorkingtimeItem fromHours(String hours) {
-        Duration d = Duration.ofHours(Long.parseLong(hours));
-        return new WorkingtimeItem(d, d);
-	}
+    private WorkingtimeItem fromDuration(Duration duration) {
+        return new WorkingtimeItem(duration, duration);
+    }
 
 	/**
 	 *  

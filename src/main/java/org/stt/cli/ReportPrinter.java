@@ -2,7 +2,7 @@ package org.stt.cli;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.stt.Configuration;
+import org.stt.config.CliConfig;
 import org.stt.g4.EnglishCommandsLexer;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsParser.ReportStartContext;
@@ -35,13 +35,13 @@ import java.util.stream.Stream;
 public class ReportPrinter {
 
     private final TimeTrackingItemQueries queries;
-    private final Configuration configuration;
+    private final CliConfig configuration;
     private final WorkingtimeItemProvider workingtimeItemProvider;
     private final ItemCategorizer categorizer;
 
     @Inject
     public ReportPrinter(TimeTrackingItemQueries queries,
-                         Configuration configuration,
+                         CliConfig configuration,
                          WorkingtimeItemProvider workingtimeItemProvider,
                          ItemCategorizer categorizer) {
         this.queries = queries;

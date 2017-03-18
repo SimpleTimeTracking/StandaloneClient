@@ -1,7 +1,7 @@
 package org.stt.cli;
 
-import org.stt.Configuration;
 import org.stt.command.*;
+import org.stt.config.ConfigRoot;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
@@ -114,9 +114,9 @@ public class Main {
         // accept the desired encoding for all System.out calls
         // this is necessary if one wants to output non ASCII
         // characters on a Windows console
-        Configuration configuration = cliApplication.configuration();
+        ConfigRoot configuration = cliApplication.configuration();
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
-                true, configuration.getSystemOutEncoding()));
+                true, configuration.getCli().getSystemOutEncoding()));
 
         Main main = cliApplication.main();
         List<String> argsList = new ArrayList<>(Arrays.asList(args));

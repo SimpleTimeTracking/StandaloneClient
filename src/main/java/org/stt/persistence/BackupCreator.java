@@ -2,17 +2,24 @@ package org.stt.persistence;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.stt.Configuration;
 import org.stt.Service;
+import org.stt.config.BackupConfig;
+import org.stt.persistence.stt.STTFile;
 import org.stt.time.DateTimes;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * creates backups of the .stt file in configurable intervals and locations.
@@ -23,12 +30,18 @@ public class BackupCreator implements Service {
 
     private static final Logger LOG = Logger.getLogger(BackupCreator.class.getName());
 
-	private final Configuration configuration;
+	private final BackupConfig backupConfig;
+	private final File sttFile;
+	private String homePath;
 
 	@Inject
-    public BackupCreator(Configuration configuration) {
-        this.configuration = Objects.requireNonNull(configuration);
-    }
+	public BackupCreator(BackupConfig backupConfig,
+						 @STTFile File sttFile,
+						 @Named("homePath") String homePath) {
+		this.backupConfig = requireNonNull(backupConfig);
+		this.sttFile = requireNonNull(sttFile);
+		this.homePath = requireNonNull(homePath);
+	}
 
 	@Override
 	public void stop() {
@@ -44,21 +57,20 @@ public class BackupCreator implements Service {
 	 */
 	@Override
 	public void start() throws IOException {
-		int backupInterval = configuration.getBackupInterval();
+		int backupInterval = backupConfig.getBackupInterval();
 
 		if (backupInterval < 1) {
 			LOG.info("Backup is disabled (see backupInterval setting).");
 			return;
 		}
 
-		File backupLocation = configuration.getBackupLocation();
+		File backupLocation = backupConfig.getBackupLocation().file(homePath);
 
 		if (!backupLocation.canWrite()) {
             throw new IOException("cannot persist to "
                     + backupLocation.getAbsolutePath());
         }
 
-		File sttFile = configuration.getSttFile();
 		String sttFileName = sttFile.getName();
 
 		Collection<File> backedUpFiles = FileUtils
@@ -85,9 +97,9 @@ public class BackupCreator implements Service {
 	 */
 	private void deleteOldBackupFiles(Collection<File> backedUpFiles) {
 
-		int retentionCount = configuration.getBackupRetentionCount();
+		int retentionCount = backupConfig.getBackupRetentionCount();
 		if (retentionCount < 1) {
-			// no deletion of old files desired by configuration
+			// no deletion of old files desired by backupConfig
 			return;
 		}
 

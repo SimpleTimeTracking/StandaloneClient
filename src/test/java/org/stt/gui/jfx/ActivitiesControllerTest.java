@@ -13,8 +13,7 @@ import org.stt.command.CommandFormatter;
 import org.stt.command.CommandHandler;
 import org.stt.command.DoNothing;
 import org.stt.command.RemoveActivity;
-import org.stt.config.CommandTextConfig;
-import org.stt.config.TimeTrackingItemListConfig;
+import org.stt.config.ActivitiesConfig;
 import org.stt.event.ShuttingDown;
 import org.stt.fun.AchievementService;
 import org.stt.model.TimeTrackingItem;
@@ -72,7 +71,7 @@ public class ActivitiesControllerTest {
         eventBus.subscribe(this);
         WorktimePane worktimePane = new WorktimePane(resourceBundle, eventBus, worktimeQueries);
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
-                expansionProvider, resourceBundle, new TimeTrackingItemListConfig(), new CommandTextConfig(), itemValidator,
+                expansionProvider, resourceBundle, new ActivitiesConfig(), itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
                 worktimePane);
         sut.commandText = new StyleClassedTextArea();

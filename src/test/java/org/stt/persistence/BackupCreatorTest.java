@@ -7,9 +7,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.Configuration;
+import org.stt.config.BackupConfig;
+import org.stt.config.ConfigRoot;
+import org.stt.config.PathSetting;
 import org.stt.time.DateTimes;
 
 import java.io.File;
@@ -19,24 +20,23 @@ import java.time.LocalDate;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.mockito.BDDMockito.given;
 
 public class BackupCreatorTest {
 
 	@Rule
 	public TemporaryFolder tempFolder = new TemporaryFolder();
 
-	@Mock
-	private Configuration configuration;
+    private ConfigRoot configRoot = new ConfigRoot();
+    private BackupConfig backupConfig = configRoot.getBackup();
 
-	private File currentTempFolder;
+    private File currentTempFolder;
+
 	private File currentSttFile;
+    private BackupCreator sut;
 
-	private BackupCreator sut;
-
-	@Before
-	public void setup() throws IOException {
-		MockitoAnnotations.initMocks(this);
+    @Before
+    public void setup() throws IOException {
+        MockitoAnnotations.initMocks(this);
 
 		currentTempFolder = tempFolder.newFolder();
 		currentSttFile = tempFolder.newFile();
@@ -45,13 +45,11 @@ public class BackupCreatorTest {
             out.print("blubb, just a test line");
         }
 
-		given(configuration.getSttFile()).willReturn(currentSttFile);
-		given(configuration.getBackupInterval()).willReturn(7);
-		given(configuration.getBackupLocation()).willReturn(currentTempFolder);
-		given(configuration.getBackupRetentionCount()).willReturn(3);
+        backupConfig.setBackupRetentionCount(3);
+        backupConfig.setBackupLocation(new PathSetting(currentTempFolder.getAbsolutePath()));
 
-		sut = new BackupCreator(configuration);
-	}
+        sut = new BackupCreator(backupConfig, currentSttFile, "");
+    }
 
 	@Test
 	public void existingBackupShouldPreventNewBackup() throws IOException {
@@ -78,7 +76,7 @@ public class BackupCreatorTest {
 	@Test
 	public void oldBackupShouldBeDeleted() throws IOException {
 		// GIVEN
-		for (int i = 0; i < configuration.getBackupRetentionCount(); i++) {
+        for (int i = 0; i < backupConfig.getBackupRetentionCount(); i++) {
             String xDaysAgo = DateTimes.prettyPrintDate(LocalDate.now()
                     .minusDays(i));
             String sttFileName = currentSttFile.getName();
@@ -88,7 +86,7 @@ public class BackupCreatorTest {
 		}
 
         String xDaysAgo = DateTimes.prettyPrintDate(LocalDate.now()
-                .minusDays(configuration.getBackupRetentionCount() + 1));
+                .minusDays(backupConfig.getBackupRetentionCount() + 1));
         String sttFileName = currentSttFile.getName();
         File oldFile = new File(currentTempFolder, sttFileName + "-" + xDaysAgo);
 		createNewFile(oldFile);
