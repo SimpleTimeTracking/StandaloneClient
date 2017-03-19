@@ -43,6 +43,11 @@ public class ConfigModule {
     }
 
     @Provides
+    static CommonPrefixGrouperConfig provideCommonPrefixGrouperConfig(ConfigRoot configRoot) {
+        return configRoot.getPrefixGrouper();
+    }
+
+    @Provides
     @Named("homePath")
     static String provideHomePath() {
         return determineBaseDir().getAbsolutePath();

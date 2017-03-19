@@ -24,23 +24,28 @@ public class MainWindowController {
     private final Parent rootNode;
     private final ResourceBundle localization;
     private final ActivitiesController activitiesController;
-    private final ReportWindowController reportWindowController;
+    private final ReportController reportController;
+    private final SettingsController settingsController;
     private final MBassador<Object> eventBus;
 
     @FXML
     private Tab activitiesTab;
     @FXML
     private Tab reportTab;
+    @FXML
+    private Tab settingsTab;
 
     @Inject
     MainWindowController(ResourceBundle localization,
                          ActivitiesController activitiesController,
-                         ReportWindowController reportWindowController,
-                         MBassador<Object> eventBus) {
+                         ReportController reportController,
+                         MBassador<Object> eventBus,
+                         SettingsController settingsController) {
         this.localization = requireNonNull(localization);
         this.activitiesController = requireNonNull(activitiesController);
-        this.reportWindowController = requireNonNull(reportWindowController);
+        this.reportController = requireNonNull(reportController);
         this.eventBus = requireNonNull(eventBus);
+        this.settingsController = requireNonNull(settingsController);
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/org/stt/gui/jfx/MainWindow.fxml"), localization);
         loader.setController(this);
@@ -55,7 +60,8 @@ public class MainWindowController {
     @FXML
     public void initialize() {
         activitiesTab.setContent(activitiesController.getNode());
-        reportTab.setContent(reportWindowController.getPanel());
+        reportTab.setContent(reportController.getPanel());
+        settingsTab.setContent(settingsController.getPanel());
     }
 
     public void show(Stage stage) {

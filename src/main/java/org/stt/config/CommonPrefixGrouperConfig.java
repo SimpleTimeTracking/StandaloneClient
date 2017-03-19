@@ -3,7 +3,7 @@ package org.stt.config;
 import java.util.Collections;
 import java.util.List;
 
-public class CommonPrefixGrouperConfig {
+public class CommonPrefixGrouperConfig implements ConfigurationContainer {
     private List<String> baseLine = Collections.emptyList();
 
     public void setBaseLine(List<String> baseLine) {

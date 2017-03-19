@@ -70,8 +70,10 @@ public class ActivitiesControllerTest {
         });
         eventBus.subscribe(this);
         WorktimePane worktimePane = new WorktimePane(resourceBundle, eventBus, worktimeQueries);
+        ActivitiesConfig activitiesConfig = new ActivitiesConfig();
+        activitiesConfig.setAskBeforeDeleting(false);
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
-                expansionProvider, resourceBundle, new ActivitiesConfig(), itemValidator,
+                expansionProvider, resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
                 worktimePane);
         sut.commandText = new StyleClassedTextArea();

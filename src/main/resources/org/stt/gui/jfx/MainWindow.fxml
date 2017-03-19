@@ -6,7 +6,7 @@
     <tabs>
         <Tab fx:id="activitiesTab" closable="false" text="%tab.entries"/>
         <Tab fx:id="reportTab" closable="false" text="%tab.report"/>
-        <Tab text="%tab.settings"/>
+        <Tab fx:id="settingsTab" text="%tab.settings"/>
         <Tab closable="false" text="%tab.info"/>
     </tabs>
 </TabPane>

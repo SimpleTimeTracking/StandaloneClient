@@ -1,8 +1,8 @@
 package org.stt.config;
 
-public class ActivitiesConfig {
+public class ActivitiesConfig implements ConfigurationContainer {
     private boolean filterDuplicatesWhenSearching = false;
-    private boolean askBeforeDeleting = false;
+    private boolean askBeforeDeleting = true;
     private boolean autoCompletionPopup = false;
 
     public boolean isAutoCompletionPopup() {

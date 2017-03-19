@@ -8,6 +8,7 @@ import javafx.scene.text.Font;
 public enum Glyph {
     CALENDAR('\uf073'),
     CHEVRON_CIRCLE_RIGHT('\uf138'),
+    CLIPBOARD('\uf0ea'),
     PENCIL('\uf040'),
     STOP_CIRCLE('\uf28d'),
     PLAY_CIRCLE('\uf144'),
