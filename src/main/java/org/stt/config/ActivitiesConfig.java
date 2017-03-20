@@ -4,6 +4,7 @@ public class ActivitiesConfig implements ConfigurationContainer {
     private boolean filterDuplicatesWhenSearching = false;
     private boolean askBeforeDeleting = true;
     private boolean autoCompletionPopup = false;
+    private boolean closeOnContinue = true;
 
     public boolean isAutoCompletionPopup() {
         return autoCompletionPopup;
@@ -14,16 +15,16 @@ public class ActivitiesConfig implements ConfigurationContainer {
     }
 
     /**
-	 * When true, only distinct comments will be shown in the result list.
-	 */
-	public boolean isFilterDuplicatesWhenSearching() {
-		return filterDuplicatesWhenSearching;
-	}
+     * When true, only distinct comments will be shown in the result list.
+     */
+    public boolean isFilterDuplicatesWhenSearching() {
+        return filterDuplicatesWhenSearching;
+    }
 
-	public void setFilterDuplicatesWhenSearching(
-			boolean filterDuplicatesWhenSearching) {
-		this.filterDuplicatesWhenSearching = filterDuplicatesWhenSearching;
-	}
+    public void setFilterDuplicatesWhenSearching(
+            boolean filterDuplicatesWhenSearching) {
+        this.filterDuplicatesWhenSearching = filterDuplicatesWhenSearching;
+    }
 
     public boolean isAskBeforeDeleting() {
         return askBeforeDeleting;
@@ -31,5 +32,13 @@ public class ActivitiesConfig implements ConfigurationContainer {
 
     public void setAskBeforeDeleting(boolean askBeforeDeleting) {
         this.askBeforeDeleting = askBeforeDeleting;
+    }
+
+    public boolean isCloseOnContinue() {
+        return closeOnContinue;
+    }
+
+    public void setCloseOnContinue(boolean closeOnContinue) {
+        this.closeOnContinue = closeOnContinue;
     }
 }

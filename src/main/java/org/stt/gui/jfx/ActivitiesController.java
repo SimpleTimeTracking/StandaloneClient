@@ -81,12 +81,11 @@ public class ActivitiesController implements ActionsHandler {
     private final ExpansionProvider expansionProvider;
     private final ResourceBundle localization;
     private final MBassador<Object> eventBus;
-    private final boolean autoCompletionPopup;
-    private final boolean askBeforeDeleting;
     private final boolean filterDuplicatesWhenSearching;
     private final CommandHandler activities;
     private final Font fontAwesome;
     private final BorderPane panel;
+    private final ActivitiesConfig activitiesConfig;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
     private TimeTrackingItemQueries queries;
@@ -122,7 +121,7 @@ public class ActivitiesController implements ActionsHandler {
                          @Named("glyph") Font fontAwesome,
                          WorktimePane worktimePane) {
         this.worktimePane = requireNonNull(worktimePane);
-        requireNonNull(activitiesConfig);
+        this.activitiesConfig = requireNonNull(activitiesConfig);
         this.executorService = requireNonNull(executorService);
         this.achievementService = requireNonNull(achievementService);
         this.queries = requireNonNull(queries);
@@ -134,9 +133,7 @@ public class ActivitiesController implements ActionsHandler {
         this.localization = requireNonNull(resourceBundle);
         this.activities = requireNonNull(activities);
         this.fontAwesome = requireNonNull(fontAwesome);
-        autoCompletionPopup = activitiesConfig.isAutoCompletionPopup();
         eventBus.subscribe(this);
-        askBeforeDeleting = activitiesConfig.isAskBeforeDeleting();
         filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -244,7 +241,10 @@ public class ActivitiesController implements ActionsHandler {
         requireNonNull(item);
         LOG.fine(() -> "Continuing item: " + item);
         activities.resumeActivity(new ResumeActivity(item, LocalDateTime.now()));
-        shutdown();
+
+        if (activitiesConfig.isCloseOnContinue()) {
+            shutdown();
+        }
     }
 
     private void shutdown() {
@@ -262,7 +262,7 @@ public class ActivitiesController implements ActionsHandler {
     public void delete(TimeTrackingItem item) {
         requireNonNull(item);
         LOG.fine(() -> "Deleting item: " + item);
-        if (!askBeforeDeleting || sttOptionDialogs.showDeleteOrKeepDialog(getWindow(), item) == Result.PERFORM_ACTION) {
+        if (!activitiesConfig.isAskBeforeDeleting() || sttOptionDialogs.showDeleteOrKeepDialog(getWindow(), item) == Result.PERFORM_ACTION) {
             activities.removeActivity(new RemoveActivity(item));
         }
     }
@@ -304,7 +304,7 @@ public class ActivitiesController implements ActionsHandler {
 
     @FXML
     public void initialize() {
-        if (autoCompletionPopup) {
+        if (activitiesConfig.isAutoCompletionPopup()) {
             setupAutoCompletionPopup();
         }
 
