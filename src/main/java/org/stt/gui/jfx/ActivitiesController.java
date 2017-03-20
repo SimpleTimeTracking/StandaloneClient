@@ -1,5 +1,6 @@
 package org.stt.gui.jfx;
 
+import com.sun.javafx.scene.control.skin.VirtualFlow;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -9,15 +10,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Popup;
@@ -54,7 +50,9 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -94,22 +92,20 @@ public class ActivitiesController implements ActionsHandler {
     private TimeTrackingItemQueries queries;
     private AchievementService achievementService;
     private ExecutorService executorService;
-
     StyleClassedTextArea commandText;
 
     private WorktimePane worktimePane;
 
     @FXML
     private ListView<TimeTrackingItem> activityList;
-
     @FXML
     private FlowPane achievements;
-
     @FXML
     private VBox additionals;
-
     @FXML
     private BorderPane commandPane;
+    @FXML
+    private ToolBar activityListToolbar;
 
     @Inject
     ActivitiesController(STTOptionDialogs sttOptionDialogs,
@@ -315,6 +311,7 @@ public class ActivitiesController implements ActionsHandler {
         addWorktimePanel();
         addCommandText();
         addInsertButton();
+        addNavigationButtonsForActivitiesList();
 
         TimeTrackingListFilter filteredList = new TimeTrackingListFilter(allItems, commandText.textProperty(),
                 filterDuplicatesWhenSearching);
@@ -336,6 +333,50 @@ public class ActivitiesController implements ActionsHandler {
             updateItems();
             updateAchievements();
         });
+    }
+
+    private void addNavigationButtonsForActivitiesList() {
+        Region space = new Region();
+        HBox.setHgrow(space, Priority.ALWAYS);
+
+        FramelessButton oneWeekDownBtn = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.ANGLE_DOUBLE_DOWN, 20));
+        oneWeekDownBtn.setOnAction(event -> {
+            VirtualFlow<?> virtualFlow = (VirtualFlow<?>) activityList.getChildrenUnmodifiable().get(0);
+            IndexedCell lastVisibleCell = virtualFlow.getLastVisibleCell();
+            int index = lastVisibleCell.getIndex();
+            TimeTrackingItem item = (TimeTrackingItem) lastVisibleCell.getItem();
+            LocalDate dateOfLastVisibleItem = item.getStart().toLocalDate();
+            while (index < activityList.getItems().size()) {
+                TimeTrackingItem currentItem = activityList.getItems().get(index);
+                if (ChronoUnit.DAYS.between(currentItem.getStart().toLocalDate(), dateOfLastVisibleItem) >= 7) {
+                    break;
+                }
+                index++;
+            }
+            activityList.scrollTo(index);
+        });
+        Tooltip.install(oneWeekDownBtn, new Tooltip(localization.getString("activities.list.weekDown")));
+        FramelessButton oneWeekUpBtn = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.ANGLE_DOUBLE_UP, 20));
+        oneWeekUpBtn.setOnAction(event -> {
+            VirtualFlow<?> virtualFlow = (VirtualFlow<?>) activityList.getChildrenUnmodifiable().get(0);
+            IndexedCell lastVisibleCell = virtualFlow.getFirstVisibleCell();
+            int index = lastVisibleCell.getIndex();
+            TimeTrackingItem item = (TimeTrackingItem) lastVisibleCell.getItem();
+            LocalDate dateOfLastVisibleItem = item.getStart().toLocalDate();
+            while (index >= 0) {
+                TimeTrackingItem currentItem = activityList.getItems().get(index);
+                if (ChronoUnit.DAYS.between(dateOfLastVisibleItem, currentItem.getStart().toLocalDate()) >= 7) {
+                    break;
+                }
+                index--;
+            }
+            activityList.scrollTo(index);
+        });
+        Tooltip.install(oneWeekUpBtn, new Tooltip(localization.getString("activities.list.weekUp")));
+        activityListToolbar.getItems()
+                .addAll(space,
+                        oneWeekDownBtn,
+                        oneWeekUpBtn);
     }
 
     private void addWorktimePanel() {
