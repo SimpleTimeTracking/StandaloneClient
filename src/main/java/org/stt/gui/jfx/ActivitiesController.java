@@ -262,7 +262,7 @@ public class ActivitiesController implements ActionsHandler {
     public void delete(TimeTrackingItem item) {
         requireNonNull(item);
         LOG.fine(() -> "Deleting item: " + item);
-        if (!activitiesConfig.isAskBeforeDeleting() || sttOptionDialogs.showDeleteOrKeepDialog(getWindow(), item) == Result.PERFORM_ACTION) {
+        if (!activitiesConfig.isAskBeforeDeleting() || sttOptionDialogs.showDeleteOrKeepDialog(item) == Result.PERFORM_ACTION) {
             activities.removeActivity(new RemoveActivity(item));
         }
     }
@@ -493,12 +493,12 @@ public class ActivitiesController implements ActionsHandler {
 
         private boolean validateItemIsFirstItemAndLater(LocalDateTime start) {
             return validator.validateItemIsFirstItemAndLater(start)
-                    || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(getWindow()) == Result.PERFORM_ACTION;
+                    || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog() == Result.PERFORM_ACTION;
         }
 
         private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
             int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
-            return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(getWindow(), numberOfCoveredItems) == Result.PERFORM_ACTION;
+            return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(numberOfCoveredItems) == Result.PERFORM_ACTION;
         }
 
         private void clearCommand() {
