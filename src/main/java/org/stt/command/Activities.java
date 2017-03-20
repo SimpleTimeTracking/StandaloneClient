@@ -67,4 +67,17 @@ public class Activities implements CommandHandler {
         eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
     }
 
+    @Override
+    public void resumeLastActivity(ResumeLastActivity command) {
+        requireNonNull(command);
+
+        if (!queries.getCurrentTimeTrackingitem().isPresent()) {
+            Optional<TimeTrackingItem> lastTimeTrackingItem = queries.getLastTimeTrackingItem();
+            lastTimeTrackingItem.ifPresent(timeTrackingItem -> {
+                TimeTrackingItem resumedItem = timeTrackingItem.withPendingEnd().withStart(command.resumeAt);
+                persister.persist(resumedItem);
+                eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
+            });
+        }
+    }
 }

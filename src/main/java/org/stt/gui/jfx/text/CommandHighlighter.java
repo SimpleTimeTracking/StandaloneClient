@@ -54,6 +54,8 @@ public class CommandHighlighter {
                     case EnglishCommandsParser.TO:
                     case EnglishCommandsParser.UNTIL:
                     case EnglishCommandsParser.FIN:
+                    case EnglishCommandsParser.RESUME:
+                    case EnglishCommandsParser.LAST:
                         addHighlight(token, token, "keyword");
                         break;
                     case EnglishCommandsParser.DAYS:

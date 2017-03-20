@@ -50,7 +50,7 @@ public class TimeTrackingItemTest {
         TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
 		// WHEN
-        LocalDateTime newEndTime = LocalDateTime.now().plusMinutes(2);
+        LocalDateTime newEndTime = LocalDateTime.now().plusMinutes(2).withNano(0);
         TimeTrackingItem newItem = sut.withEnd(newEndTime);
 
 		// THEN
@@ -65,7 +65,7 @@ public class TimeTrackingItemTest {
         TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
         // WHEN
-        LocalDateTime newStartTime = LocalDateTime.now().plusMinutes(2);
+        LocalDateTime newStartTime = LocalDateTime.now().plusMinutes(2).withNano(0);
         TimeTrackingItem newItem = sut.withStart(newStartTime);
 
         // THEN

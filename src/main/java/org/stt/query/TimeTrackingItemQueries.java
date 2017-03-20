@@ -48,6 +48,11 @@ public class TimeTrackingItemQueries {
         }
     }
 
+    public Optional<TimeTrackingItem> getLastTimeTrackingItem() {
+        validateCache();
+        return cachedItems.isEmpty() ? Optional.empty() : Optional.of(cachedItems.get(cachedItems.size() - 1));
+    }
+
     /**
      * @return a {@link Stream} containing all time tracking items, be sure to {@link Stream#close()} it!
      */
@@ -75,6 +80,11 @@ public class TimeTrackingItemQueries {
      * @return a {@link Stream} containing all time tracking items, be sure to {@link Stream#close()} it!
      */
     public synchronized Stream<TimeTrackingItem> queryAllItems() {
+        validateCache();
+        return cachedItems.stream();
+    }
+
+    private void validateCache() {
         if (cachedItems == null) {
             LOG.fine("Rebuilding cache");
             cachedItems = new ArrayList<>();
@@ -84,7 +94,6 @@ public class TimeTrackingItemQueries {
                 }
             }
         }
-        return cachedItems.stream();
     }
 
     private static class TimeTrackingItemIterator implements Iterator<TimeTrackingItem>, AutoCloseable {

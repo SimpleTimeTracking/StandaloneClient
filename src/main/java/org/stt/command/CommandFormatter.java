@@ -35,6 +35,9 @@ public class CommandFormatter {
         if (result instanceof LocalDateTime) {
             return new EndCurrentItem((LocalDateTime) result);
         }
+        if (result instanceof Command) {
+            return (Command) result;
+        }
         return DoNothing.INSTANCE;
     }
 

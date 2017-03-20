@@ -8,4 +8,6 @@ public interface CommandHandler {
     void removeActivity(RemoveActivity command);
 
     void resumeActivity(ResumeActivity command);
+
+    void resumeLastActivity(ResumeLastActivity command);
 }

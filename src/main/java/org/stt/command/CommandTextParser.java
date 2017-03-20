@@ -1,5 +1,6 @@
 package org.stt.command;
 
+import org.antlr.v4.runtime.tree.RuleNode;
 import org.stt.g4.EnglishCommandsBaseVisitor;
 import org.stt.g4.EnglishCommandsParser;
 import org.stt.g4.EnglishCommandsVisitor;
@@ -33,6 +34,11 @@ class CommandTextParser {
         @Override
         public LocalDateTime[] visitSinceFormat(EnglishCommandsParser.SinceFormatContext ctx) {
             return new LocalDateTime[]{visitDateTime(ctx.start), ctx.end != null ? visitDateTime(ctx.end) : null};
+        }
+
+        @Override
+        public Object visitResumeLastCommand(EnglishCommandsParser.ResumeLastCommandContext ctx) {
+            return new ResumeLastActivity(LocalDateTime.now());
         }
 
         @Override
@@ -87,14 +93,8 @@ class CommandTextParser {
         }
 
         @Override
-        public Object visitCommand(CommandContext ctx) {
-            if (ctx.finCommand() != null) {
-                return visitFinCommand(ctx.finCommand());
-            } else if (ctx.itemWithComment() != null) {
-                return visitItemWithComment(ctx.itemWithComment());
-            } else {
-                throw new IllegalStateException("Unknown command " + ctx.getText());
-            }
+        protected boolean shouldVisitNextChild(RuleNode node, Object currentResult) {
+            return currentResult == null;
         }
     }
 }

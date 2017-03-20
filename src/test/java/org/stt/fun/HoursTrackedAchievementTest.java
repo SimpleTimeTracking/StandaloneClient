@@ -21,7 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 public class HoursTrackedAchievementTest extends AchievementTestBase {
 
 	private HoursTrackedAchievement sut;
-    private LocalDateTime base = LocalDateTime.now();
+	private LocalDateTime base = LocalDateTime.now().withNano(0);
 
 	@Before
 	public void setup() {

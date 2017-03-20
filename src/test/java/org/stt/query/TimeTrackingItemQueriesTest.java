@@ -24,6 +24,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.is;
@@ -39,13 +40,13 @@ public class TimeTrackingItemQueriesTest {
     private TimeTrackingItemQueries sut;
 
     private static LocalDateTime BASE = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
-    private static final LocalDateTime _1500 = BASE.plus(1500, MILLIS);
-    private static final LocalDateTime _1200 = BASE.plus(1200, MILLIS);
-    private static final LocalDateTime _1000 = BASE.plus(1000, MILLIS);
-    private static final LocalDateTime _999 = BASE.plus(999, MILLIS);
-    private static final LocalDateTime _800 = BASE.plus(800, MILLIS);
-    private static final LocalDateTime _500 = BASE.plus(500, MILLIS);
-    private static final LocalDateTime _100 = BASE.plus(100, MILLIS);
+    private static final LocalDateTime _1500 = BASE.plus(1500, SECONDS);
+    private static final LocalDateTime _1200 = BASE.plus(1200, SECONDS);
+    private static final LocalDateTime _1000 = BASE.plus(1000, SECONDS);
+    private static final LocalDateTime _999 = BASE.plus(999, SECONDS);
+    private static final LocalDateTime _800 = BASE.plus(800, SECONDS);
+    private static final LocalDateTime _500 = BASE.plus(500, SECONDS);
+    private static final LocalDateTime _100 = BASE.plus(100, SECONDS);
 
     @Before
     public void setup() {

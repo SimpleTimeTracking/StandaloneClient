@@ -1,9 +1,9 @@
 package org.stt.model;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.Optional;
 
+import static java.util.Objects.requireNonNull;
 import static org.stt.States.requireThat;
 
 
@@ -13,25 +13,25 @@ public final class TimeTrackingItem {
     private final Optional<LocalDateTime> end;
 
     /**
-     * @param activity activity string describing this item. May be null
+     * @param activity activity string describing this item.
      * @param start    start time of the item
      * @param end      end time of the item.
      */
     public TimeTrackingItem(String activity, LocalDateTime start, LocalDateTime end) {
-        this.activity = Objects.requireNonNull(activity);
-        this.start = Objects.requireNonNull(start, "start must not be null");
-        this.end = Optional.of(end);
-        requireThat(!end.isBefore(start),
+        this.activity = requireNonNull(activity);
+        this.start = requireNonNull(start, "start must not be null");
+        this.end = Optional.of(end.withNano(0));
+        requireThat(!end.isBefore(start.withNano(0)),
                 "end must not be before start for item " + this.toString());
     }
 
     /**
-     * @param activity activity string describing this item. May be null
+     * @param activity activity string describing this item.
      * @param start    start time of the item
      */
     public TimeTrackingItem(String activity, LocalDateTime start) {
-        this.activity = Objects.requireNonNull(activity);
-        this.start = start;
+        this.activity = requireNonNull(activity);
+        this.start = requireNonNull(start).withNano(0);
         this.end = Optional.empty();
     }
 
@@ -76,7 +76,7 @@ public final class TimeTrackingItem {
     }
 
     public TimeTrackingItem withEnd(LocalDateTime newEnd) {
-        Objects.requireNonNull(newEnd);
+        requireNonNull(newEnd);
         return new TimeTrackingItem(activity, start, newEnd);
     }
 
@@ -85,7 +85,7 @@ public final class TimeTrackingItem {
     }
 
     public TimeTrackingItem withStart(LocalDateTime newStart) {
-        Objects.requireNonNull(newStart);
+        requireNonNull(newStart);
         return end.map(time -> new TimeTrackingItem(activity, newStart, time))
                 .orElse(new TimeTrackingItem(activity, newStart));
     }

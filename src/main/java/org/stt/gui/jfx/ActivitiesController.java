@@ -491,6 +491,13 @@ public class ActivitiesController implements ActionsHandler {
             clearCommand();
         }
 
+        @Override
+        public void resumeLastActivity(ResumeLastActivity command) {
+            activities.resumeLastActivity(command);
+            clearCommand();
+
+        }
+
         private boolean validateItemIsFirstItemAndLater(LocalDateTime start) {
             return validator.validateItemIsFirstItemAndLater(start)
                     || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog() == Result.PERFORM_ACTION;
