@@ -56,8 +56,8 @@ public class Main {
         Objects.requireNonNull(command);
         Command parsedCommand = commandFormatter.parse(command);
 
-        if (parsedCommand instanceof NewItemCommand) {
-            activities.addNewActivity((NewItemCommand) parsedCommand);
+        if (parsedCommand instanceof NewActivity) {
+            activities.addNewActivity((NewActivity) parsedCommand);
         } else if (parsedCommand instanceof EndCurrentItem) {
             activities.endCurrentActivity((EndCurrentItem) parsedCommand);
         }

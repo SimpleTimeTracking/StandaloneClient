@@ -363,4 +363,88 @@ public class TimeTrackingItemQueriesTest {
         Assert.assertThat(secondCall, IsCollectionWithSize.hasSize(2));
         Assert.assertThat(secondCall, hasItems(expected1, expected2));
     }
+
+    @Test
+    public void shouldNotFindPreviousNorNextItem() {
+        // GIVEN
+        TimeTrackingItem itemToSearch = new TimeTrackingItem("second",
+                LocalDateTime.of(2000, 10, 10, 1, 2));
+        givenReaderReturns(itemToSearch);
+
+        // WHEN
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = sut.getAdjacentItems(itemToSearch);
+
+        // THEN
+        assertThat(adjacentItems.previousItem(), is(Optional.empty()));
+    }
+
+    @Test
+    public void shouldFindPreviousItem() {
+        // GIVEN
+        TimeTrackingItem expected = new TimeTrackingItem("first",
+                LocalDateTime.of(2000, 10, 10, 1, 1), LocalDateTime.of(2000, 10, 10, 1, 2));
+        TimeTrackingItem itemToSearch = new TimeTrackingItem("second",
+                LocalDateTime.of(2000, 10, 10, 1, 2));
+        givenReaderReturns(expected, itemToSearch);
+
+        // WHEN
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = sut.getAdjacentItems(itemToSearch);
+
+        // THEN
+        assertThat(adjacentItems.previousItem().get(), is(expected));
+    }
+
+    @Test
+    public void shouldFindNextItem() {
+        // GIVEN
+        TimeTrackingItem itemToSearch = new TimeTrackingItem("first",
+                LocalDateTime.of(2000, 10, 10, 1, 1), LocalDateTime.of(2000, 10, 10, 1, 2));
+        TimeTrackingItem expected = new TimeTrackingItem("second",
+                LocalDateTime.of(2000, 10, 10, 1, 2));
+        givenReaderReturns(itemToSearch, expected);
+
+        // WHEN
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = sut.getAdjacentItems(itemToSearch);
+
+        // THEN
+        assertThat(adjacentItems.nextItem().get(), is(expected));
+    }
+
+    @Test
+    public void shouldFindPreviousAndNextItem() {
+        // GIVEN
+        TimeTrackingItem expectedPrevious = new TimeTrackingItem("first",
+                LocalDateTime.of(2000, 10, 10, 1, 1), LocalDateTime.of(2000, 10, 10, 1, 2));
+        TimeTrackingItem itemToSearch = new TimeTrackingItem("second",
+                LocalDateTime.of(2000, 10, 10, 1, 2), LocalDateTime.of(2000, 10, 10, 1, 3));
+        TimeTrackingItem expectedNext = new TimeTrackingItem("third",
+                LocalDateTime.of(2000, 10, 10, 1, 3));
+        givenReaderReturns(expectedPrevious, itemToSearch, expectedNext);
+
+        // WHEN
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = sut.getAdjacentItems(itemToSearch);
+
+        // THEN
+        assertThat(adjacentItems.previousItem().get(), is(expectedPrevious));
+        assertThat(adjacentItems.nextItem().get(), is(expectedNext));
+    }
+
+    @Test
+    public void shouldNotFindPreviousNorNextItemForGaps() {
+        // GIVEN
+        TimeTrackingItem previousWithGap = new TimeTrackingItem("first",
+                LocalDateTime.of(2000, 10, 10, 1, 1), LocalDateTime.of(2000, 10, 10, 1, 2));
+        TimeTrackingItem itemToSearch = new TimeTrackingItem("second",
+                LocalDateTime.of(2000, 10, 10, 1, 3), LocalDateTime.of(2000, 10, 10, 1, 4));
+        TimeTrackingItem nextWithGap = new TimeTrackingItem("third",
+                LocalDateTime.of(2000, 10, 10, 1, 5));
+        givenReaderReturns(previousWithGap, itemToSearch, nextWithGap);
+
+        // WHEN
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = sut.getAdjacentItems(itemToSearch);
+
+        // THEN
+        assertThat(adjacentItems.previousItem(), is(Optional.empty()));
+        assertThat(adjacentItems.nextItem(), is(Optional.empty()));
+    }
 }

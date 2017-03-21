@@ -5,6 +5,7 @@ public class ActivitiesConfig implements ConfigurationContainer {
     private boolean askBeforeDeleting = true;
     private boolean autoCompletionPopup = false;
     private boolean closeOnContinue = true;
+    private boolean deleteClosesGaps = true;
 
     public boolean isAutoCompletionPopup() {
         return autoCompletionPopup;
@@ -40,5 +41,13 @@ public class ActivitiesConfig implements ConfigurationContainer {
 
     public void setCloseOnContinue(boolean closeOnContinue) {
         this.closeOnContinue = closeOnContinue;
+    }
+
+    public boolean isDeleteClosesGaps() {
+        return deleteClosesGaps;
+    }
+
+    public void setDeleteClosesGaps(boolean deleteClosesGaps) {
+        this.deleteClosesGaps = deleteClosesGaps;
     }
 }

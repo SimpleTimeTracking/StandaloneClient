@@ -419,7 +419,7 @@ public class CommandFormatterTest {
         TimeTrackingItem resultItem;
 
         @Override
-        public void addNewActivity(NewItemCommand command) {
+        public void addNewActivity(NewActivity command) {
             resultItem = command.newItem;
         }
 
@@ -429,6 +429,11 @@ public class CommandFormatterTest {
 
         @Override
         public void removeActivity(RemoveActivity command) {
+
+        }
+
+        @Override
+        public void removeActivityAndFillGap(RemoveActivity command) {
 
         }
 

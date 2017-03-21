@@ -9,10 +9,7 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.command.CommandFormatter;
-import org.stt.command.CommandHandler;
-import org.stt.command.DoNothing;
-import org.stt.command.RemoveActivity;
+import org.stt.command.*;
 import org.stt.config.ActivitiesConfig;
 import org.stt.event.ShuttingDown;
 import org.stt.fun.AchievementService;
@@ -64,6 +61,9 @@ public class ActivitiesControllerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         TestFX.installTK();
+
+        given(itemValidator.validateItemIsFirstItemAndLater(Matchers.any(LocalDateTime.class)))
+                .willReturn(Boolean.TRUE);
 
         fontAwesome = Font.getDefault();
 
@@ -169,7 +169,7 @@ public class ActivitiesControllerTest {
     public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
         // GIVEN
         givenCommand("test");
-        given(commandFormatter.parse(anyString())).willReturn(new RemoveActivity(new TimeTrackingItem("", LocalDateTime.now())));
+        given(commandFormatter.parse(anyString())).willReturn(new NewActivity(new TimeTrackingItem("", LocalDateTime.now())));
 
         // WHEN
         sut.executeCommand();

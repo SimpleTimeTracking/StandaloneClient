@@ -463,7 +463,7 @@ public class ActivitiesController implements ActionsHandler {
 
     private class ValidatingCommandHandler implements CommandHandler {
         @Override
-        public void addNewActivity(NewItemCommand command) {
+        public void addNewActivity(NewActivity command) {
             TimeTrackingItem newItem = command.newItem;
             LocalDateTime start = newItem.getStart();
             if (!validateItemIsFirstItemAndLater(start) || !validateItemWouldCoverOtherItems(newItem)) {
@@ -482,6 +482,12 @@ public class ActivitiesController implements ActionsHandler {
         @Override
         public void removeActivity(RemoveActivity command) {
             activities.removeActivity(command);
+            clearCommand();
+        }
+
+        @Override
+        public void removeActivityAndFillGap(RemoveActivity command) {
+            activities.removeActivityAndFillGap(command);
             clearCommand();
         }
 

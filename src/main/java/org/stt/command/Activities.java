@@ -33,7 +33,7 @@ public class Activities implements CommandHandler {
     }
 
     @Override
-    public void addNewActivity(NewItemCommand command) {
+    public void addNewActivity(NewActivity command) {
         requireNonNull(command);
         persister.persist(command.newItem);
         eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
@@ -58,6 +58,12 @@ public class Activities implements CommandHandler {
     }
 
     @Override
+    public void removeActivityAndFillGap(RemoveActivity command) {
+        requireNonNull(command);
+        queries.getAdjacentItems(command.itemToDelete);
+    }
+
+    @Override
     public void resumeActivity(ResumeActivity command) {
         requireNonNull(command);
         TimeTrackingItem resumedItem = command.itemToResume
@@ -71,7 +77,7 @@ public class Activities implements CommandHandler {
     public void resumeLastActivity(ResumeLastActivity command) {
         requireNonNull(command);
 
-        Optional<TimeTrackingItem> lastTimeTrackingItem = queries.getLastTimeTrackingItem();
+        Optional<TimeTrackingItem> lastTimeTrackingItem = queries.getLastItem();
         if (lastTimeTrackingItem.isPresent() && lastTimeTrackingItem.get().getEnd().isPresent()) {
             lastTimeTrackingItem.ifPresent(timeTrackingItem -> {
                 TimeTrackingItem resumedItem = timeTrackingItem.withPendingEnd().withStart(command.resumeAt);
