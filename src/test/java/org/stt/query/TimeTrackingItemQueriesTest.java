@@ -72,7 +72,7 @@ public class TimeTrackingItemQueriesTest {
         given(reader.read()).willReturn(Optional.empty());
 
         // WHEN
-        Optional<TimeTrackingItem> result = sut.getCurrentTimeTrackingitem();
+        Optional<TimeTrackingItem> result = sut.getOngoingItem();
 
         // THEN
         assertThat(result, is(Optional.<TimeTrackingItem>empty()));
@@ -87,7 +87,7 @@ public class TimeTrackingItemQueriesTest {
                 .willReturn(Optional.empty());
 
         // WHEN
-        Optional<TimeTrackingItem> result = sut.getCurrentTimeTrackingitem();
+        Optional<TimeTrackingItem> result = sut.getOngoingItem();
 
         // THEN
         assertThat(result.get(), is(unfinishedItem));
@@ -102,7 +102,7 @@ public class TimeTrackingItemQueriesTest {
                 .willReturn(Optional.empty());
 
         // WHEN
-        Optional<TimeTrackingItem> result = sut.getCurrentTimeTrackingitem();
+        Optional<TimeTrackingItem> result = sut.getOngoingItem();
 
         // THEN
         assertThat(result, is(Optional.<TimeTrackingItem>empty()));
@@ -118,7 +118,7 @@ public class TimeTrackingItemQueriesTest {
         givenReaderReturns(finishedItem, unfinishedItem);
 
         // WHEN
-        Optional<TimeTrackingItem> result = sut.getCurrentTimeTrackingitem();
+        Optional<TimeTrackingItem> result = sut.getOngoingItem();
 
         // THEN
         assertThat(result.get(), is(unfinishedItem));

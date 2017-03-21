@@ -42,7 +42,7 @@ public class Activities implements CommandHandler {
     @Override
     public void endCurrentActivity(EndCurrentItem command) {
         requireNonNull(command);
-        queries.getCurrentTimeTrackingitem()
+        queries.getOngoingItem()
                 .ifPresent(item -> {
                     TimeTrackingItem derivedItem = item.withEnd(command.endAt);
                     persister.replace(item, derivedItem);
@@ -71,8 +71,8 @@ public class Activities implements CommandHandler {
     public void resumeLastActivity(ResumeLastActivity command) {
         requireNonNull(command);
 
-        if (!queries.getCurrentTimeTrackingitem().isPresent()) {
-            Optional<TimeTrackingItem> lastTimeTrackingItem = queries.getLastTimeTrackingItem();
+        Optional<TimeTrackingItem> lastTimeTrackingItem = queries.getLastTimeTrackingItem();
+        if (lastTimeTrackingItem.isPresent() && lastTimeTrackingItem.get().getEnd().isPresent()) {
             lastTimeTrackingItem.ifPresent(timeTrackingItem -> {
                 TimeTrackingItem resumedItem = timeTrackingItem.withPendingEnd().withStart(command.resumeAt);
                 persister.persist(resumedItem);

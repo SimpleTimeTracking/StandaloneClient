@@ -284,7 +284,7 @@ public class CommandFormatterTest {
 
         // THEN
         timeTrackingItemQueries.sourceChanged(null);
-        TimeTrackingItem timeTrackingItem = timeTrackingItemQueries.getCurrentTimeTrackingitem().get();
+        TimeTrackingItem timeTrackingItem = timeTrackingItemQueries.getOngoingItem().get();
         assertThat(timeTrackingItem, is(unfinishedItem));
     }
 
@@ -301,7 +301,7 @@ public class CommandFormatterTest {
 
         // THEN
         timeTrackingItemQueries.sourceChanged(null);
-        TimeTrackingItem timeTrackingItem = timeTrackingItemQueries.getCurrentTimeTrackingitem().get();
+        TimeTrackingItem timeTrackingItem = timeTrackingItemQueries.getOngoingItem().get();
         assertThat(timeTrackingItem.getActivity(), is("last item"));
         assertThat(!timeTrackingItem.getStart().isAfter(LocalDateTime.now()), is(true));
         assertThat(timeTrackingItem.getEnd(), is(Optional.empty()));

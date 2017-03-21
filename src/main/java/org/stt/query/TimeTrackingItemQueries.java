@@ -40,12 +40,11 @@ public class TimeTrackingItemQueries {
         LOG.fine("Clearing query cache");
     }
 
-    public Optional<TimeTrackingItem> getCurrentTimeTrackingitem() {
-        try (Stream<TimeTrackingItem> items = queryAllItems()) {
-            return items
-                    .reduce((a, b) -> b)
-                    .filter(item -> !item.getEnd().isPresent());
-        }
+    /**
+     * Returns the item which is ongoing (even if it starts in the future). This is neccessarily the last item.
+     */
+    public Optional<TimeTrackingItem> getOngoingItem() {
+        return getLastTimeTrackingItem().filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
     }
 
     public Optional<TimeTrackingItem> getLastTimeTrackingItem() {

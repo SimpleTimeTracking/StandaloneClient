@@ -41,13 +41,13 @@ public class Main {
         String comment = String.join(" ", args);
 
         Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
-                .getCurrentTimeTrackingitem();
+                .getOngoingItem();
 
         executeCommand(comment);
 
         currentItem.ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
 
-        timeTrackingItemQueries.getCurrentTimeTrackingitem()
+        timeTrackingItemQueries.getOngoingItem()
                 .filter(Predicate.isEqual(currentItem.orElse(null)).negate())
                 .ifPresent(item -> printTo.println("start working on " + item.getActivity()));
     }
@@ -89,7 +89,7 @@ public class Main {
 
     private void fin(PrintStream printTo) {
         activities.endCurrentActivity(new EndCurrentItem(LocalDateTime.now()));
-        timeTrackingItemQueries.getCurrentTimeTrackingitem()
+        timeTrackingItemQueries.getOngoingItem()
                 .ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
     }
 
