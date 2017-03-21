@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import java.io.*;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,6 +27,7 @@ import java.util.logging.Logger;
 @Singleton
 public class YamlConfigService implements Service {
     static final Tag TAG_DURATION = new Tag("!duration");
+    static final Tag TAG_ENCRYPTED = new Tag("!encrypted");
     static final Tag TAG_PATH = new Tag("!path");
     private static final Logger LOG = Logger.getLogger(YamlConfigService.class
             .getName());
@@ -111,10 +113,23 @@ public class YamlConfigService implements Service {
                     return new PathSetting(path);
                 }
             });
+            yamlConstructors.put(TAG_ENCRYPTED, new AbstractConstruct() {
+                @Override
+                public Object construct(Node node) {
+                    String base64EncryptedPassword = (String) constructScalar((ScalarNode) node);
+                    try {
+                        return PasswordSetting.fromEncryptedPassword(Base64.getDecoder().decode(base64EncryptedPassword));
+                    } catch (Exception e) {
+                        LOG.log(Level.SEVERE, String.format("Invalid encrypted string at %s", node.getNodeId()), e);
+                    }
+                    return null;
+                }
+            });
         }
     }
 
     private static class MyRepresenter extends Representer {
+
         MyRepresenter() {
             representers.put(Duration.class, data -> {
                 Duration duration = (Duration) data;
@@ -122,6 +137,7 @@ public class YamlConfigService implements Service {
                 return representScalar(TAG_DURATION, DateTimes.DATE_TIME_FORMATTER_HH_MM_SS.format(asLocalTime));
             });
             representers.put(PathSetting.class, data -> representScalar(TAG_PATH, ((PathSetting) data).path()));
+            representers.put(PasswordSetting.class, data -> representScalar(TAG_ENCRYPTED, Base64.getEncoder().encodeToString(((PasswordSetting) data).encodedPassword)));
             addClassTag(ConfigRoot.class, Tag.MAP);
         }
     }
