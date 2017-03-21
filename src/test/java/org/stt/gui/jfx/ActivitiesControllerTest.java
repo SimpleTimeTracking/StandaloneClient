@@ -55,7 +55,7 @@ public class ActivitiesControllerTest {
     private AchievementService achievementService;
     @Mock
     private CommandHandler commandHandler;
-    private Font fontAwesome = Font.getDefault();
+    private Font fontAwesome;
     private boolean shutdownCalled;
     @Mock
     private WorkTimeQueries worktimeQueries;
@@ -64,6 +64,8 @@ public class ActivitiesControllerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         TestFX.installTK();
+
+        fontAwesome = Font.getDefault();
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("org/stt/gui/Application");
         MBassador<Object> eventBus = new MBassador<>(error -> {
