@@ -61,11 +61,10 @@ public class ActivitiesControllerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         TestFX.installTK();
+        fontAwesome = Font.getDefault();
 
         given(itemValidator.validateItemIsFirstItemAndLater(Matchers.any(LocalDateTime.class)))
                 .willReturn(Boolean.TRUE);
-
-        fontAwesome = Font.getDefault();
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("org/stt/gui/Application");
         MBassador<Object> eventBus = new MBassador<>(error -> {
