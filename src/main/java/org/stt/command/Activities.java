@@ -58,9 +58,29 @@ public class Activities implements CommandHandler {
     }
 
     @Override
-    public void removeActivityAndFillGap(RemoveActivity command) {
+    public void removeActivityAndCloseGap(RemoveActivity command) {
         requireNonNull(command);
-        queries.getAdjacentItems(command.itemToDelete);
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = queries.getAdjacentItems(command.itemToDelete);
+        Optional<TimeTrackingItem> previous = adjacentItems.previousItem();
+        Optional<TimeTrackingItem> next = adjacentItems.nextItem();
+
+        if (previousAndNextActivitiesMatch(previous, next)) {
+            TimeTrackingItem replaceAllWith = next.get().getEnd()
+                    .map(previous.get()::withEnd).orElse(previous.get().withPendingEnd());
+            persister.persist(replaceAllWith);
+            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(replaceAllWith)));
+        } else if (previous.isPresent() && !command.itemToDelete.getEnd().isPresent()) {
+            TimeTrackingItem replaceAllWith = previous.get().withPendingEnd();
+            persister.persist(replaceAllWith);
+            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(replaceAllWith)));
+        } else {
+            removeActivity(command);
+        }
+    }
+
+    private boolean previousAndNextActivitiesMatch(Optional<TimeTrackingItem> previous, Optional<TimeTrackingItem> next) {
+        return previous.isPresent() && next.isPresent()
+                && previous.get().getActivity().equals(next.get().getActivity());
     }
 
     @Override

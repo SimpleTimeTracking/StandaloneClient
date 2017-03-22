@@ -157,7 +157,7 @@ public class TimeTrackingItemQueries {
         private final TimeTrackingItem previousItem;
         private final TimeTrackingItem nextItem;
 
-        private AdjacentItems(TimeTrackingItem previousItem, TimeTrackingItem nextItem) {
+        public AdjacentItems(TimeTrackingItem previousItem, TimeTrackingItem nextItem) {
             this.previousItem = previousItem;
             this.nextItem = nextItem;
         }

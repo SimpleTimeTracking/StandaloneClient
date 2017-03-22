@@ -47,11 +47,7 @@ public class TestFX {
 
     public static void installTK() {
         System.setProperty("javafx.toolkit", TestFXToolkit.class.getName());
-        PlatformImpl.startup(new Runnable() {
-            @Override
-            public void run() {
-
-            }
+        PlatformImpl.startup(() -> {
         });
     }
 

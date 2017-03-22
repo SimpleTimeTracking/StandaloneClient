@@ -263,7 +263,12 @@ public class ActivitiesController implements ActionsHandler {
         requireNonNull(item);
         LOG.fine(() -> "Deleting item: " + item);
         if (!activitiesConfig.isAskBeforeDeleting() || sttOptionDialogs.showDeleteOrKeepDialog(item) == Result.PERFORM_ACTION) {
-            activities.removeActivity(new RemoveActivity(item));
+            RemoveActivity command = new RemoveActivity(item);
+            if (activitiesConfig.isDeleteClosesGaps()) {
+                activities.removeActivityAndCloseGap(command);
+            } else {
+                activities.removeActivity(command);
+            }
         }
     }
 
@@ -486,8 +491,8 @@ public class ActivitiesController implements ActionsHandler {
         }
 
         @Override
-        public void removeActivityAndFillGap(RemoveActivity command) {
-            activities.removeActivityAndFillGap(command);
+        public void removeActivityAndCloseGap(RemoveActivity command) {
+            activities.removeActivityAndCloseGap(command);
             clearCommand();
         }
 

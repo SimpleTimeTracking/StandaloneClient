@@ -74,6 +74,7 @@ public class ActivitiesControllerTest {
         WorktimePane worktimePane = new WorktimePane(resourceBundle, eventBus, worktimeQueries);
         ActivitiesConfig activitiesConfig = new ActivitiesConfig();
         activitiesConfig.setAskBeforeDeleting(false);
+        activitiesConfig.setDeleteClosesGaps(false);
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
                 expansionProvider, resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,

@@ -433,7 +433,7 @@ public class CommandFormatterTest {
         }
 
         @Override
-        public void removeActivityAndFillGap(RemoveActivity command) {
+        public void removeActivityAndCloseGap(RemoveActivity command) {
 
         }
 

@@ -7,7 +7,7 @@ public interface CommandHandler {
 
     void removeActivity(RemoveActivity command);
 
-    void removeActivityAndFillGap(RemoveActivity command);
+    void removeActivityAndCloseGap(RemoveActivity command);
 
     void resumeActivity(ResumeActivity command);
 
