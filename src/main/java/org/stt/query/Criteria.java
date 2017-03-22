@@ -8,14 +8,16 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Disjunctive normal form term. All present conditions in the clause must be valid for a match.
+ * All present conditions in the clause must be valid for a match.
  */
 public class Criteria {
     private LocalDateTime startNotBefore = LocalDateTime.MIN;
     private LocalDateTime startBefore = LocalDateTime.MAX;
     private LocalDateTime endNotAfter = LocalDateTime.MAX;
     private LocalDateTime endBefore = LocalDateTime.MAX;
-    private String commentContains = "";
+    private LocalDateTime startsAt = null;
+    private String activityContains = "";
+    private String activityIs;
 
     public Criteria withStartBetween(Interval interval) {
         Objects.requireNonNull(interval);
@@ -51,8 +53,18 @@ public class Criteria {
         return this;
     }
 
-    public Criteria withCommentContains(String substring) {
-        commentContains = substring;
+    public Criteria withActivityContains(String substring) {
+        activityContains = substring;
+        return this;
+    }
+
+    public Criteria withStartsAt(LocalDateTime start) {
+        startsAt = start;
+        return this;
+    }
+
+    public Criteria withActivityIs(String activity) {
+        activityIs = activity;
         return this;
     }
 
@@ -70,7 +82,13 @@ public class Criteria {
         if (!item.getEnd().orElse(LocalDateTime.MIN).isBefore(endBefore)) {
             return false;
         }
-        if (!item.getActivity().contains(commentContains)) {
+        if (!item.getActivity().contains(activityContains)) {
+            return false;
+        }
+        if (startsAt != null && !item.getStart().equals(startsAt)) {
+            return false;
+        }
+        if (activityIs != null && !activityIs.equals(item.getActivity())) {
             return false;
         }
         return true;

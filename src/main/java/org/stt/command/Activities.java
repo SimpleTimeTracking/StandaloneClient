@@ -6,11 +6,13 @@ import org.stt.model.ItemInserted;
 import org.stt.model.ItemReplaced;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -35,8 +37,19 @@ public class Activities implements CommandHandler {
     @Override
     public void addNewActivity(NewActivity command) {
         requireNonNull(command);
-        persister.persist(command.newItem);
-        eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
+        Criteria criteria = new Criteria()
+                .withStartsAt(command.newItem.getStart())
+                .withActivityIs(command.newItem.getActivity());
+        Stream<TimeTrackingItem> timeTrackingItemStream = queries.queryItems(criteria);
+        Optional<TimeTrackingItem> potentialItemToReplace = timeTrackingItemStream.findAny().filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
+        if (potentialItemToReplace.isPresent()) {
+            TimeTrackingItem itemToReplace = potentialItemToReplace.get();
+            persister.replace(itemToReplace, command.newItem);
+            eventBus.ifPresent(eb -> eb.publish(new ItemReplaced(itemToReplace, command.newItem)));
+        } else {
+            persister.persist(command.newItem);
+            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
+        }
     }
 
     @Override

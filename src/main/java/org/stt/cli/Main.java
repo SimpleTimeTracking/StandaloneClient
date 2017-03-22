@@ -77,7 +77,7 @@ public class Main {
     private void search(Collection<String> args, PrintStream printTo) {
 
         Criteria searchFilter = new Criteria();
-        searchFilter.withCommentContains(String.join(" ", args));
+        searchFilter.withActivityContains(String.join(" ", args));
         try (Stream<TimeTrackingItem> itemStream = timeTrackingItemQueries.queryItems(searchFilter)) {
             itemStream
                     .sorted((o1, o2) -> o2.getStart().compareTo(o1.getStart()))

@@ -283,7 +283,6 @@ public class CommandFormatterTest {
         executeCommand("resume last");
 
         // THEN
-        timeTrackingItemQueries.sourceChanged(null);
         TimeTrackingItem timeTrackingItem = timeTrackingItemQueries.getOngoingItem().get();
         assertThat(timeTrackingItem, is(unfinishedItem));
     }
@@ -300,7 +299,6 @@ public class CommandFormatterTest {
         executeCommand("resume last");
 
         // THEN
-        timeTrackingItemQueries.sourceChanged(null);
         TimeTrackingItem timeTrackingItem = timeTrackingItemQueries.getOngoingItem().get();
         assertThat(timeTrackingItem.getActivity(), is("last item"));
         assertThat(!timeTrackingItem.getStart().isAfter(LocalDateTime.now()), is(true));
@@ -412,6 +410,7 @@ public class CommandFormatterTest {
         TestCommandHandler testCommandHandler = new TestCommandHandler();
         cmdToExec.accept(testCommandHandler);
         cmdToExec.accept(activities);
+        timeTrackingItemQueries.sourceChanged(null);
         return Optional.ofNullable(testCommandHandler.resultItem);
     }
 
@@ -453,7 +452,6 @@ public class CommandFormatterTest {
     }
 
     private TimeTrackingItem retrieveWrittenTimeTrackingItem() {
-        timeTrackingItemQueries.sourceChanged(null);
         Collection<TimeTrackingItem> allItems = timeTrackingItemQueries.queryAllItems().collect(Collectors.toList());
         assertThat(allItems, IsCollectionWithSize.hasSize(1));
         return allItems.iterator().next();

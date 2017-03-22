@@ -151,7 +151,7 @@ public class ReportPrinter {
                            LocalDate reportStart, LocalDate reportEnd, boolean truncateLongLines) {
         Criteria criteria = new Criteria();
         if (searchString != null) {
-            criteria.withCommentContains(searchString);
+            criteria.withActivityContains(searchString);
         }
         criteria.withStartBetween(Interval.between(reportStart, reportEnd));
 

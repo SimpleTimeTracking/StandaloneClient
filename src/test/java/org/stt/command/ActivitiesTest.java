@@ -6,12 +6,15 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -124,6 +127,46 @@ public class ActivitiesTest {
 
         // THEN
         verify(persister).delete(itemToDelete);
+        verifyNoMoreInteractions(persister);
+    }
+
+    @Test
+    public void shouldEndOngoingItemIfItemWithSameActivityAndStartIsGiven() {
+        // GIVEN
+        TimeTrackingItem ongoing = new TimeTrackingItem("ongoing",
+                LocalDateTime.of(2000, 10, 10, 10, 10));
+        TimeTrackingItem expected = new TimeTrackingItem("ongoing",
+                LocalDateTime.of(2000, 10, 10, 10, 12),
+                LocalDateTime.of(2000, 10, 10, 10, 13));
+
+        NewActivity newActivity = new NewActivity(expected);
+
+        given(queries.queryItems(any(Criteria.class))).willReturn(Stream.of(ongoing));
+
+        // WHEN
+        sut.addNewActivity(newActivity);
+
+        // THEN
+        verify(persister).replace(ongoing, expected);
+        verifyNoMoreInteractions(persister);
+    }
+
+    @Test
+    public void shouldNotEndOngoingItemIfItemWithDifferentActivityWithSameStartIsGiven() {
+        // GIVEN
+        TimeTrackingItem expected = new TimeTrackingItem("different",
+                LocalDateTime.of(2000, 10, 10, 10, 12),
+                LocalDateTime.of(2000, 10, 10, 10, 13));
+
+        NewActivity newActivity = new NewActivity(expected);
+
+        given(queries.queryItems(any(Criteria.class))).willReturn(Stream.empty());
+
+        // WHEN
+        sut.addNewActivity(newActivity);
+
+        // THEN
+        verify(persister).persist(expected);
         verifyNoMoreInteractions(persister);
     }
 }

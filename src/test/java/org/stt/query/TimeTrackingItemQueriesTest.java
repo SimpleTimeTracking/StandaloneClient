@@ -305,7 +305,7 @@ public class TimeTrackingItemQueriesTest {
         givenReaderReturns(new TimeTrackingItem("the comment", LocalDateTime.now()));
 
         Criteria criteria = new Criteria();
-        criteria.withCommentContains("comment");
+        criteria.withActivityContains("comment");
 
         // WHEN
         Optional<TimeTrackingItem> read = sut.queryItems(criteria).findFirst();
@@ -321,7 +321,7 @@ public class TimeTrackingItemQueriesTest {
         givenReaderReturns(new TimeTrackingItem("the comment", LocalDateTime.now()));
 
         Criteria criteria = new Criteria();
-        criteria.withCommentContains("not there");
+        criteria.withActivityContains("not there");
 
         // WHEN
         Optional<TimeTrackingItem> read = sut.queryItems(criteria).findFirst();
