@@ -47,18 +47,18 @@ See https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI for addition
 
 # Configuration
 
-When STT is started the first time, a configuration file will be created in your home directory automatically. See the comments for information about what the options do.
-The file is $HOME/.sttrc (Linux) resp. %HOME%\.sttrc (Windows)
+When STT is started the first time, a configuration file will be created in your home directory automatically. 
+The file is $HOME/.stt/stt.yaml (Linux) resp. %HOME%\.stt\stt.yaml (Windows)
 
 # Start hacking
 
 to start hacking on STT:
-- make sure you have an Oracle JDK >= 1.7
+- make sure you have an Oracle JDK >= 1.8
 - clone this repository 
 - build it
 ```bash
 git clone https://github.com/SimpleTimeTracking/StandaloneClient.git
-cd STT
+cd StandaloneClient
 gradlew build
 ```
 The created fat jar can be found in build/libs
