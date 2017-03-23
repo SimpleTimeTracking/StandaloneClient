@@ -4,8 +4,8 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
-import org.stt.g4.EnglishCommandsLexer;
-import org.stt.g4.EnglishCommandsParser;
+import org.stt.grammar.EnglishCommandsLexer;
+import org.stt.grammar.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
 import org.stt.time.DateTimes;
 

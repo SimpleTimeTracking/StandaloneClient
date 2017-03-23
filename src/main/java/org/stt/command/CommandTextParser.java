@@ -1,16 +1,16 @@
 package org.stt.command;
 
 import org.antlr.v4.runtime.tree.RuleNode;
-import org.stt.g4.EnglishCommandsBaseVisitor;
-import org.stt.g4.EnglishCommandsParser;
-import org.stt.g4.EnglishCommandsVisitor;
+import org.stt.grammar.EnglishCommandsBaseVisitor;
+import org.stt.grammar.EnglishCommandsParser;
+import org.stt.grammar.EnglishCommandsVisitor;
 import org.stt.model.TimeTrackingItem;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import static org.stt.g4.EnglishCommandsParser.CommandContext;
+import static org.stt.grammar.EnglishCommandsParser.CommandContext;
 
 class CommandTextParser {
     private EnglishCommandsVisitor<Object> parserVisitor = new MyEnglishCommandsBaseVisitor();

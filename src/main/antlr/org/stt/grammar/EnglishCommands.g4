@@ -1,6 +1,8 @@
 grammar EnglishCommands;
 
 @header {
+package org.stt.grammar;
+
 import java.time.*;
 import java.time.format.*;
 import org.stt.model.*;
