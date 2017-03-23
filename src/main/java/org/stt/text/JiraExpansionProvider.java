@@ -1,7 +1,6 @@
 package org.stt.text;
 
-import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.google.common.base.Optional;
+import net.rcarz.jiraclient.Issue;
 import org.stt.connector.jira.JiraConnector;
 import org.stt.connector.jira.JiraConnectorException;
 
@@ -9,9 +8,11 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public class JiraExpansionProvider implements ExpansionProvider {
 
@@ -22,7 +23,7 @@ public class JiraExpansionProvider implements ExpansionProvider {
 
 	@Inject
 	public JiraExpansionProvider(JiraConnector connector) {
-		this.jiraConnector = checkNotNull(connector);
+		this.jiraConnector = requireNonNull(connector);
 	}
 	
 	@Override
@@ -38,7 +39,7 @@ public class JiraExpansionProvider implements ExpansionProvider {
 		try {
 			issue = jiraConnector.getIssue(queryText);
 		} catch (JiraConnectorException e) {
-			LOG.severe(e.getLocalizedMessage());
+			LOG.log(Level.SEVERE, e.getLocalizedMessage());
 			return Collections.emptyList();
 		}
 		

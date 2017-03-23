@@ -1,10 +1,6 @@
 package org.stt.text;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.BDDMockito.given;
-
-import java.util.List;
-
+import net.rcarz.jiraclient.Issue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,8 +8,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.connector.jira.JiraConnector;
 
-import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.google.common.base.Optional;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.BDDMockito.given;
 
 public class JiraExpansionProviderTest {
 	

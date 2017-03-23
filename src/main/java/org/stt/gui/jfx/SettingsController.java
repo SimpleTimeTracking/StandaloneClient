@@ -32,7 +32,8 @@ public class SettingsController {
                               CliConfig cliConfig,
                               CommonPrefixGrouperConfig commonPrefixGrouperConfig,
                               ReportConfig reportConfig,
-                              WorktimeConfig worktimeConfig) {
+                              WorktimeConfig worktimeConfig,
+                              JiraConfig jiraConfig) {
         PropertySheet propertySheet = new PropertySheet();
         Callback<PropertySheet.Item, PropertyEditor<?>> defaultEditorFactory = propertySheet.getPropertyEditorFactory();
         propertySheet.setPropertyEditorFactory(item -> {
@@ -46,7 +47,7 @@ public class SettingsController {
             return defaultEditorFactory.call(item);
         });
         Stream.of(configRoot, activitiesConfig, backupConfig, cliConfig, commonPrefixGrouperConfig,
-                reportConfig, worktimeConfig)
+                reportConfig, worktimeConfig, jiraConfig)
                 .forEach(o -> propertySheet.getItems().addAll(BeanPropertyUtils.getProperties(o,
                         propertyDescriptor -> {
                             Class<?> propertyType = propertyDescriptor.getPropertyType();

@@ -1,17 +1,15 @@
 package org.stt.config;
 
-import java.net.URI;
-
-public class JiraConfig {
-    private URI jiraURI;
+public class JiraConfig implements ConfigurationContainer {
+    private String jiraURI;
     private String jiraUsername;
-    private String jiraPassword;
+    private PasswordSetting jiraPassword;
 
-    public URI getJiraURI() {
+    public String getJiraURI() {
         return jiraURI;
     }
 
-    public void setJiraURI(URI jiraURI) {
+    public void setJiraURI(String jiraURI) {
         this.jiraURI = jiraURI;
     }
 
@@ -23,11 +21,11 @@ public class JiraConfig {
         this.jiraUsername = jiraUsername;
     }
 
-    public String getJiraPassword() {
+    public PasswordSetting getJiraPassword() {
         return jiraPassword;
     }
 
-    public void setJiraPassword(String jiraPassword) {
+    public void setJiraPassword(PasswordSetting jiraPassword) {
         this.jiraPassword = jiraPassword;
     }
 }
