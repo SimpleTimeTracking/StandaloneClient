@@ -45,9 +45,15 @@ findbugs {
 	excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
 }
 
+configurations {
+    compile {
+        extendsFrom = extendsFrom.findAll { it != configurations.antlr }
+    }
+}
 
 dependencies {
 	antlr  group: "org.antlr", name: "antlr4", version: "4.6"
+    compile group: "org.antlr", name: "antlr4-runtime", version: "4.6"
     compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.7-M3'
     compile 'commons-io:commons-io:2.5'
 	compile 'org.yaml:snakeyaml:1.18'
