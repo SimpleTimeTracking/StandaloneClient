@@ -6,11 +6,13 @@ import org.stt.model.ItemInserted;
 import org.stt.model.ItemReplaced;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -33,16 +35,27 @@ public class Activities implements CommandHandler {
     }
 
     @Override
-    public void addNewActivity(NewItemCommand command) {
+    public void addNewActivity(NewActivity command) {
         requireNonNull(command);
-        persister.persist(command.newItem);
-        eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
+        Criteria criteria = new Criteria()
+                .withStartsAt(command.newItem.getStart())
+                .withActivityIs(command.newItem.getActivity());
+        Stream<TimeTrackingItem> timeTrackingItemStream = queries.queryItems(criteria);
+        Optional<TimeTrackingItem> potentialItemToReplace = timeTrackingItemStream.findAny().filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
+        if (potentialItemToReplace.isPresent()) {
+            TimeTrackingItem itemToReplace = potentialItemToReplace.get();
+            persister.replace(itemToReplace, command.newItem);
+            eventBus.ifPresent(eb -> eb.publish(new ItemReplaced(itemToReplace, command.newItem)));
+        } else {
+            persister.persist(command.newItem);
+            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
+        }
     }
 
     @Override
     public void endCurrentActivity(EndCurrentItem command) {
         requireNonNull(command);
-        queries.getCurrentTimeTrackingitem()
+        queries.getOngoingItem()
                 .ifPresent(item -> {
                     TimeTrackingItem derivedItem = item.withEnd(command.endAt);
                     persister.replace(item, derivedItem);
@@ -58,6 +71,32 @@ public class Activities implements CommandHandler {
     }
 
     @Override
+    public void removeActivityAndCloseGap(RemoveActivity command) {
+        requireNonNull(command);
+        TimeTrackingItemQueries.AdjacentItems adjacentItems = queries.getAdjacentItems(command.itemToDelete);
+        Optional<TimeTrackingItem> previous = adjacentItems.previousItem();
+        Optional<TimeTrackingItem> next = adjacentItems.nextItem();
+
+        if (previousAndNextActivitiesMatch(previous, next)) {
+            TimeTrackingItem replaceAllWith = next.get().getEnd()
+                    .map(previous.get()::withEnd).orElse(previous.get().withPendingEnd());
+            persister.persist(replaceAllWith);
+            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(replaceAllWith)));
+        } else if (previous.isPresent() && !command.itemToDelete.getEnd().isPresent()) {
+            TimeTrackingItem replaceAllWith = previous.get().withPendingEnd();
+            persister.persist(replaceAllWith);
+            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(replaceAllWith)));
+        } else {
+            removeActivity(command);
+        }
+    }
+
+    private boolean previousAndNextActivitiesMatch(Optional<TimeTrackingItem> previous, Optional<TimeTrackingItem> next) {
+        return previous.isPresent() && next.isPresent()
+                && previous.get().getActivity().equals(next.get().getActivity());
+    }
+
+    @Override
     public void resumeActivity(ResumeActivity command) {
         requireNonNull(command);
         TimeTrackingItem resumedItem = command.itemToResume
@@ -67,4 +106,17 @@ public class Activities implements CommandHandler {
         eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
     }
 
+    @Override
+    public void resumeLastActivity(ResumeLastActivity command) {
+        requireNonNull(command);
+
+        Optional<TimeTrackingItem> lastTimeTrackingItem = queries.getLastItem();
+        if (lastTimeTrackingItem.isPresent() && lastTimeTrackingItem.get().getEnd().isPresent()) {
+            lastTimeTrackingItem.ifPresent(timeTrackingItem -> {
+                TimeTrackingItem resumedItem = timeTrackingItem.withPendingEnd().withStart(command.resumeAt);
+                persister.persist(resumedItem);
+                eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
+            });
+        }
+    }
 }

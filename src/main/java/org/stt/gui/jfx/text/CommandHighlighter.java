@@ -4,10 +4,10 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.fxmisc.richtext.StyleClassedTextArea;
-import org.stt.g4.EnglishCommandsBaseVisitor;
-import org.stt.g4.EnglishCommandsLexer;
-import org.stt.g4.EnglishCommandsParser;
-import org.stt.g4.EnglishCommandsVisitor;
+import org.stt.grammar.EnglishCommandsBaseVisitor;
+import org.stt.grammar.EnglishCommandsLexer;
+import org.stt.grammar.EnglishCommandsParser;
+import org.stt.grammar.EnglishCommandsVisitor;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -54,6 +54,8 @@ public class CommandHighlighter {
                     case EnglishCommandsParser.TO:
                     case EnglishCommandsParser.UNTIL:
                     case EnglishCommandsParser.FIN:
+                    case EnglishCommandsParser.RESUME:
+                    case EnglishCommandsParser.LAST:
                         addHighlight(token, token, "keyword");
                         break;
                     case EnglishCommandsParser.DAYS:

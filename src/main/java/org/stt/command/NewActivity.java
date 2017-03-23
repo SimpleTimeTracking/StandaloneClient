@@ -4,13 +4,10 @@ import org.stt.model.TimeTrackingItem;
 
 import java.util.Objects;
 
-/**
- * Created by dante on 14.03.15.
- */
-public class NewItemCommand implements Command {
+public class NewActivity implements Command {
     public final TimeTrackingItem newItem;
 
-    NewItemCommand(TimeTrackingItem newItem) {
+    public NewActivity(TimeTrackingItem newItem) {
         this.newItem = Objects.requireNonNull(newItem);
     }
 

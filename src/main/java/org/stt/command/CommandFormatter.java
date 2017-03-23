@@ -4,8 +4,8 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
-import org.stt.g4.EnglishCommandsLexer;
-import org.stt.g4.EnglishCommandsParser;
+import org.stt.grammar.EnglishCommandsLexer;
+import org.stt.grammar.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
 import org.stt.time.DateTimes;
 
@@ -30,10 +30,13 @@ public class CommandFormatter {
         Object result = commandTextParser.walk(parser.command());
         if (result instanceof TimeTrackingItem) {
             TimeTrackingItem parsedItem = (TimeTrackingItem) result;
-            return new NewItemCommand(parsedItem);
+            return new NewActivity(parsedItem);
         }
         if (result instanceof LocalDateTime) {
             return new EndCurrentItem((LocalDateTime) result);
+        }
+        if (result instanceof Command) {
+            return (Command) result;
         }
         return DoNothing.INSTANCE;
     }

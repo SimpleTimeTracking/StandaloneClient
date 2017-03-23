@@ -1,6 +1,6 @@
 package org.stt.config;
 
-public class ConfigRoot {
+public class ConfigRoot implements ConfigurationContainer {
     private ActivitiesConfig activities = new ActivitiesConfig();
     private CommonPrefixGrouperConfig prefixGrouper = new CommonPrefixGrouperConfig();
     private WorktimeConfig worktime = new WorktimeConfig();

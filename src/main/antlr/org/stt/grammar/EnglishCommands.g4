@@ -1,6 +1,8 @@
 grammar EnglishCommands;
 
 @header {
+package org.stt.grammar;
+
 import java.time.*;
 import java.time.format.*;
 import org.stt.model.*;
@@ -10,7 +12,7 @@ import org.stt.model.*;
 private static final DateTimeFormatter LOCAL_DATE_PATTERN = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 }
 
-anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL;
+anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL | RESUME | LAST;
 activity: anyToken*?;
 
 timeUnit:
@@ -45,10 +47,13 @@ timeFormat:
 
 finCommand: FIN (AT? at=dateTime)?;
 
+resumeLastCommand: RESUME LAST;
+
 itemWithComment returns [String text]:c=activity result=timeFormat { $text = $c.text; };
 
 command:
 	(	finCommand
+	    |   resumeLastCommand
  		|	itemWithComment
 			
 	) EOF;
@@ -86,6 +91,8 @@ MINUS: '-';
 AGO: 'ago';
 AT: 'at';
 FIN: 'fin';
+RESUME: 'resume';
+LAST: 'last';
 FROM: 'from';
 DAYS: 'days';
 HOURS: 'h' | 'hr' | 'hrs' | 'hour' | 'hours';

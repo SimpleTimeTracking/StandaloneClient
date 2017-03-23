@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
+import org.controlsfx.dialog.ExceptionDialog;
 import org.stt.Service;
 import org.stt.event.ShuttingDown;
 import org.stt.event.TimePassedEvent;
@@ -89,6 +90,7 @@ public class UIMain extends Application {
         Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
             LOG.log(Level.SEVERE, "Uncaught exception", e);
             eventBus.publish(e);
+            new ExceptionDialog(e).show();
         });
         LOG.info("Showing window");
         mainWindowController.show(primaryStage);

@@ -6,8 +6,11 @@ import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 
 public enum Glyph {
+    ANGLE_DOUBLE_DOWN('\uf103'),
+    ANGLE_DOUBLE_UP('\uf102'),
     CALENDAR('\uf073'),
     CHEVRON_CIRCLE_RIGHT('\uf138'),
+    CLIPBOARD('\uf0ea'),
     PENCIL('\uf040'),
     STOP_CIRCLE('\uf28d'),
     PLAY_CIRCLE('\uf144'),

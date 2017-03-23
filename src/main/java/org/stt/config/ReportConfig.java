@@ -5,7 +5,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class ReportConfig {
+public class ReportConfig implements ConfigurationContainer {
     private Duration roundDurationsTo = Duration.ofMinutes(5);
     private boolean groupItems = true;
     private List<String> groupColors = asList("BLUE", "DARKCYAN", "GREEN", "DARKGREEN", "BROWN");

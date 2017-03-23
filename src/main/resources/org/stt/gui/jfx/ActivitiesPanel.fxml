@@ -23,7 +23,7 @@
                             </VBox>
                             <VBox>
                                 <children>
-                                    <ToolBar>
+                                    <ToolBar fx:id="activityListToolbar">
                                         <items>
                                             <Label text="%activities.list.title"/>
                                         </items>

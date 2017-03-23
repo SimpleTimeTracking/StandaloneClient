@@ -1,10 +1,10 @@
 package org.stt.gui.jfx;
 
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -16,10 +16,14 @@ import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.controlsfx.control.NotificationPane;
 import org.stt.config.ReportConfig;
 import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.ReportBinding;
@@ -31,6 +35,7 @@ import org.stt.time.DateTimes;
 import org.stt.time.DurationRounder;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Duration;
@@ -38,12 +43,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.stt.time.DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs;
 
-public class ReportWindowController {
+public class ReportController {
     private final TimeTrackingItemQueries timeTrackingItemQueries;
 
     private final DurationRounder rounder;
@@ -73,19 +79,24 @@ public class ReportWindowController {
     @FXML
     private DatePicker datePicker;
 
-    private Node panel;
+    private NotificationPane panel;
+    private Font fontaweSome;
+    private PauseTransition notificationPause = new PauseTransition(javafx.util.Duration.seconds(2));
+    ;
 
     @Inject
-    ReportWindowController(ResourceBundle localization,
-                           TimeTrackingItemQueries searcher,
-                           DurationRounder rounder,
-                           ItemGrouper itemGrouper,
-                           ReportConfig config) {
+    ReportController(ResourceBundle localization,
+                     TimeTrackingItemQueries searcher,
+                     DurationRounder rounder,
+                     ItemGrouper itemGrouper,
+                     ReportConfig config,
+                     @Named("glyph") Font fontaweSome) {
         this.localization = requireNonNull(localization);
         this.config = requireNonNull(config);
         this.timeTrackingItemQueries = requireNonNull(searcher);
         this.rounder = requireNonNull(rounder);
         this.itemGrouper = requireNonNull(itemGrouper);
+        this.fontaweSome = requireNonNull(fontaweSome);
 
         List<String> colorStrings = config.getGroupColors();
         groupColors = new Color[colorStrings.size()];
@@ -100,11 +111,14 @@ public class ReportWindowController {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/org/stt/gui/jfx/ReportPanel.fxml"), localization);
         loader.setController(this);
+        Pane reportPane;
         try {
-            panel = loader.load();
+            reportPane = loader.load();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        panel = new NotificationPane(reportPane);
+        notificationPause.setOnFinished(event -> panel.hide());
     }
 
     public Node getPanel() {
@@ -129,8 +143,8 @@ public class ReportWindowController {
         endOfReport.textProperty().bind(endBinding);
         uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding);
         uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding);
-        startOfReport.setOnMouseClicked(event -> setClipboard(startBinding.get()));
-        endOfReport.setOnMouseClicked(event -> setClipboard(endBinding.get()));
+        startOfReport.setOnMouseClicked(event -> setClipboard(startBinding.get(), event.getScreenX(), event.getScreenY()));
+        endOfReport.setOnMouseClicked(event -> setClipboard(endBinding.get(), event.getScreenX(), event.getScreenY()));
 
         ListBinding<ListItem> reportListModel = createReportingItemsListModel(reportModel);
         tableForReport.setItems(reportListModel);
@@ -146,8 +160,6 @@ public class ReportWindowController {
         setCommentColumnCellFactory();
 
         presetSortingToAscendingCommentColumn();
-
-        addSelectionToClipboardListenerToTableForReport();
 
         columnForComment.prefWidthProperty().bind(
                 tableForReport.widthProperty().subtract(
@@ -216,54 +228,45 @@ public class ReportWindowController {
                         "comment"));
         if (config.isGroupItems()) {
             setItemGroupingCellFactory();
+        } else {
+            addClickToCopy(columnForComment, (item, event) -> setClipboard(item.getComment(), event.getScreenX(), event.getScreenY()));
         }
+    }
+
+    private void addClickToCopy(TableColumn<ListItem, String> column, BiConsumer<ListItem, MouseEvent> clickHandler) {
+        column.setCellFactory(param -> {
+            TableCell<ListItem, String> tableCell = (TableCell<ListItem, String>) TableColumn.DEFAULT_CELL_FACTORY.call(param);
+            tableCell.setOnMouseClicked(event -> {
+                ListItem item = (ListItem) tableCell.getTableRow().getItem();
+                if (item != null) {
+                    clickHandler.accept(item, event);
+                }
+            });
+            return tableCell;
+        });
     }
 
     private void setItemGroupingCellFactory() {
         columnForComment.setCellFactory(param -> new CommentTableCell());
     }
 
-    @SuppressWarnings("rawtypes")
-    private void addSelectionToClipboardListenerToTableForReport() {
-        tableForReport.getSelectionModel().getSelectedCells()
-                .addListener(new ListChangeListener<TablePosition>() {
-
-                    @Override
-                    public void onChanged(
-                            javafx.collections.ListChangeListener.Change<? extends TablePosition> change) {
-                        ObservableList<? extends TablePosition> selectedPositions = change
-                                .getList();
-                        setClipboardIfExactlyOneItemWasSelected(selectedPositions);
-                    }
-
-                    private void setClipboardIfExactlyOneItemWasSelected(
-                            ObservableList<? extends TablePosition> selectedPositions) {
-                        if (selectedPositions.size() == 1) {
-                            TablePosition position = selectedPositions
-                                    .get(0);
-                            ListItem listItem = tableForReport.getItems()
-                                    .get(position.getRow());
-                            if (position.getTableColumn() == columnForRoundedDuration) {
-                                copyDurationToClipboard(listItem.getRoundedDuration());
-                            } else if (position.getTableColumn() == columnForDuration) {
-                                copyDurationToClipboard(listItem.getDuration());
-                            } else if (position.getTableColumn() == columnForComment) {
-                                setClipboard(listItem.getComment());
-                            }
-                        }
-                    }
-
-                });
-    }
-
-    private void setClipboard(String comment) {
+    private void setClipboard(String comment, double screenX, double screenY) {
         ClipboardContent content = new ClipboardContent();
         content.putString(comment);
         setClipboardContentTo(content);
+
+        notifyUserOfClipboardContent(comment);
     }
 
-    private void copyDurationToClipboard(Duration duration) {
-        setClipboard(DateTimes.prettyPrintDuration(duration));
+    private void notifyUserOfClipboardContent(String comment) {
+        panel.setGraphic(Glyph.glyph(fontaweSome, Glyph.CLIPBOARD, 20));
+        panel.setText(String.format("'%s'", comment));
+        panel.show();
+        notificationPause.playFromStart();
+    }
+
+    private void copyDurationToClipboard(Duration duration, double screenX, double screenY) {
+        setClipboard(DateTimes.prettyPrintDuration(duration), screenX, screenY);
     }
 
     private void setClipboardContentTo(ClipboardContent content) {
@@ -284,6 +287,7 @@ public class ReportWindowController {
                         return new SimpleStringProperty(duration);
                     }
                 });
+        addClickToCopy(columnForDuration, (item, event) -> copyDurationToClipboard(item.getDuration(), event.getScreenX(), event.getScreenY()));
     }
 
     private void setRoundedDurationColumnCellFactoryToConvertDurationToString() {
@@ -299,6 +303,7 @@ public class ReportWindowController {
                         return new SimpleStringProperty(duration);
                     }
                 });
+        addClickToCopy(columnForRoundedDuration, (item, event) -> copyDurationToClipboard(item.getRoundedDuration(), event.getScreenX(), event.getScreenY()));
     }
 
     private class CommentTableCell extends TableCell<ListItem, String> {
@@ -320,6 +325,14 @@ public class ReportWindowController {
 
         CommentTableCell() {
             setGraphic(textFlow);
+
+            setOnMouseClicked(event -> {
+                ListItem item = (ListItem) CommentTableCell.this.getTableRow().getItem();
+                if (item == null) {
+                    return;
+                }
+                setClipboard(item.getComment(), event.getScreenX(), event.getScreenY());
+            });
         }
 
         @Override
@@ -357,7 +370,8 @@ public class ReportWindowController {
         private void addClickListener(final List<String> itemGroups, Node partLabel, final int fromIndex) {
             partLabel.setOnMouseClicked(event -> {
                 String commentRemainder = String.join(" ", itemGroups.subList(fromIndex, itemGroups.size()));
-                setClipboard(commentRemainder);
+                setClipboard(commentRemainder, event.getScreenX(), event.getScreenY());
+                event.consume();
             });
         }
     }

@@ -41,13 +41,13 @@ public class Main {
         String comment = String.join(" ", args);
 
         Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
-                .getCurrentTimeTrackingitem();
+                .getOngoingItem();
 
         executeCommand(comment);
 
         currentItem.ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
 
-        timeTrackingItemQueries.getCurrentTimeTrackingitem()
+        timeTrackingItemQueries.getOngoingItem()
                 .filter(Predicate.isEqual(currentItem.orElse(null)).negate())
                 .ifPresent(item -> printTo.println("start working on " + item.getActivity()));
     }
@@ -56,8 +56,8 @@ public class Main {
         Objects.requireNonNull(command);
         Command parsedCommand = commandFormatter.parse(command);
 
-        if (parsedCommand instanceof NewItemCommand) {
-            activities.addNewActivity((NewItemCommand) parsedCommand);
+        if (parsedCommand instanceof NewActivity) {
+            activities.addNewActivity((NewActivity) parsedCommand);
         } else if (parsedCommand instanceof EndCurrentItem) {
             activities.endCurrentActivity((EndCurrentItem) parsedCommand);
         }
@@ -77,7 +77,7 @@ public class Main {
     private void search(Collection<String> args, PrintStream printTo) {
 
         Criteria searchFilter = new Criteria();
-        searchFilter.withCommentContains(String.join(" ", args));
+        searchFilter.withActivityContains(String.join(" ", args));
         try (Stream<TimeTrackingItem> itemStream = timeTrackingItemQueries.queryItems(searchFilter)) {
             itemStream
                     .sorted((o1, o2) -> o2.getStart().compareTo(o1.getStart()))
@@ -89,7 +89,7 @@ public class Main {
 
     private void fin(PrintStream printTo) {
         activities.endCurrentActivity(new EndCurrentItem(LocalDateTime.now()));
-        timeTrackingItemQueries.getCurrentTimeTrackingitem()
+        timeTrackingItemQueries.getOngoingItem()
                 .ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
     }
 

@@ -1,6 +1,5 @@
 package org.stt.gui.jfx;
 
-import javafx.embed.swing.JFXPanel;
 import javafx.scene.control.Button;
 import javafx.scene.text.Font;
 import org.junit.Before;
@@ -24,7 +23,7 @@ public class TimeTrackingItemCellTest {
 
     @Before
     public void setup() throws Throwable {
-        new JFXPanel();
+        TestFX.installTK();
         fontAwesome = Font.loadFont(getClass().getResourceAsStream("/fontawesome-webfont.ttf"), 0);
         MockitoAnnotations.initMocks(this);
 		ResourceBundle resourceBundle = ResourceBundle

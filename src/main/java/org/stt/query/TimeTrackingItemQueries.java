@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static org.stt.Streams.distinctByKey;
 
 @Singleton
@@ -30,7 +31,7 @@ public class TimeTrackingItemQueries {
     @Inject
     public TimeTrackingItemQueries(Provider<ItemReader> provider,
                                    Optional<MBassador<Object>> eventbus) {
-        this.provider = Objects.requireNonNull(provider);
+        this.provider = requireNonNull(provider);
         eventbus.ifPresent(bus -> bus.subscribe(this));
     }
 
@@ -40,12 +41,40 @@ public class TimeTrackingItemQueries {
         LOG.fine("Clearing query cache");
     }
 
-    public Optional<TimeTrackingItem> getCurrentTimeTrackingitem() {
-        try (Stream<TimeTrackingItem> items = queryAllItems()) {
-            return items
-                    .reduce((a, b) -> b)
-                    .filter(item -> !item.getEnd().isPresent());
+    /**
+     * Returns the item which is ongoing (even if it starts in the future). This is neccessarily the last item.
+     */
+    public Optional<TimeTrackingItem> getOngoingItem() {
+        return getLastItem().filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
+    }
+
+    public Optional<TimeTrackingItem> getLastItem() {
+        validateCache();
+        return cachedItems.isEmpty() ? Optional.empty() : Optional.of(cachedItems.get(cachedItems.size() - 1));
+    }
+
+    /**
+     * Returns the items coming directly before and directly after the give item.
+     * There will be no gap between previousItem, forItem and nextItem
+     */
+    public AdjacentItems getAdjacentItems(TimeTrackingItem forItem) {
+        validateCache();
+        int itemIndex = cachedItems.indexOf(forItem);
+        TimeTrackingItem previous = null;
+        if (itemIndex > 0) {
+            TimeTrackingItem potentialPrevious = cachedItems.get(itemIndex - 1);
+            if (potentialPrevious.getEnd().filter(forItem.getStart()::equals).isPresent()) {
+                previous = potentialPrevious;
+            }
         }
+        TimeTrackingItem next = null;
+        if (itemIndex < cachedItems.size() - 1) {
+            TimeTrackingItem potentialNext = cachedItems.get(itemIndex + 1);
+            if (forItem.getEnd().filter(potentialNext.getStart()::equals).isPresent()) {
+                next = potentialNext;
+            }
+        }
+        return new AdjacentItems(previous, next);
     }
 
     /**
@@ -75,6 +104,11 @@ public class TimeTrackingItemQueries {
      * @return a {@link Stream} containing all time tracking items, be sure to {@link Stream#close()} it!
      */
     public synchronized Stream<TimeTrackingItem> queryAllItems() {
+        validateCache();
+        return cachedItems.stream();
+    }
+
+    private void validateCache() {
         if (cachedItems == null) {
             LOG.fine("Rebuilding cache");
             cachedItems = new ArrayList<>();
@@ -84,7 +118,6 @@ public class TimeTrackingItemQueries {
                 }
             }
         }
-        return cachedItems.stream();
     }
 
     private static class TimeTrackingItemIterator implements Iterator<TimeTrackingItem>, AutoCloseable {
@@ -117,6 +150,24 @@ public class TimeTrackingItemQueries {
         @Override
         public void close() {
             sourceReader.close();
+        }
+    }
+
+    public static class AdjacentItems {
+        private final TimeTrackingItem previousItem;
+        private final TimeTrackingItem nextItem;
+
+        public AdjacentItems(TimeTrackingItem previousItem, TimeTrackingItem nextItem) {
+            this.previousItem = previousItem;
+            this.nextItem = nextItem;
+        }
+
+        public Optional<TimeTrackingItem> previousItem() {
+            return Optional.ofNullable(previousItem);
+        }
+
+        public Optional<TimeTrackingItem> nextItem() {
+            return Optional.ofNullable(nextItem);
         }
     }
 }

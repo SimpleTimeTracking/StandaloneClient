@@ -3,9 +3,9 @@ package org.stt.cli;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.stt.config.CliConfig;
-import org.stt.g4.EnglishCommandsLexer;
-import org.stt.g4.EnglishCommandsParser;
-import org.stt.g4.EnglishCommandsParser.ReportStartContext;
+import org.stt.grammar.EnglishCommandsLexer;
+import org.stt.grammar.EnglishCommandsParser;
+import org.stt.grammar.EnglishCommandsParser.ReportStartContext;
 import org.stt.model.ReportingItem;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.Criteria;
@@ -151,7 +151,7 @@ public class ReportPrinter {
                            LocalDate reportStart, LocalDate reportEnd, boolean truncateLongLines) {
         Criteria criteria = new Criteria();
         if (searchString != null) {
-            criteria.withCommentContains(searchString);
+            criteria.withActivityContains(searchString);
         }
         criteria.withStartBetween(Interval.between(reportStart, reportEnd));
 

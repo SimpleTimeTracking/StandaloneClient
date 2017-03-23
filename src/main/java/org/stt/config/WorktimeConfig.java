@@ -10,7 +10,7 @@ import java.util.Map;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
-public class WorktimeConfig {
+public class WorktimeConfig implements ConfigurationContainer {
     private List<String> breakActivities = Arrays.asList("pause", "break", "coffee");
     private Map<DayOfWeek, Duration> workingHours;
     private PathSetting workingTimesFile = new PathSetting("$HOME$/.stt/worktimes");

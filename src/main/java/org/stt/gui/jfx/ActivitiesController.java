@@ -1,5 +1,6 @@
 package org.stt.gui.jfx;
 
+import com.sun.javafx.scene.control.skin.VirtualFlow;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -9,15 +10,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Popup;
@@ -54,7 +50,9 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -83,33 +81,30 @@ public class ActivitiesController implements ActionsHandler {
     private final Collection<ExpansionProvider> expansionProviders;
     private final ResourceBundle localization;
     private final MBassador<Object> eventBus;
-    private final boolean autoCompletionPopup;
-    private final boolean askBeforeDeleting;
     private final boolean filterDuplicatesWhenSearching;
     private final CommandHandler activities;
     private final Font fontAwesome;
     private final BorderPane panel;
+    private final ActivitiesConfig activitiesConfig;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
     private TimeTrackingItemQueries queries;
     private AchievementService achievementService;
     private ExecutorService executorService;
-
     StyleClassedTextArea commandText;
 
     private WorktimePane worktimePane;
 
     @FXML
     private ListView<TimeTrackingItem> activityList;
-
     @FXML
     private FlowPane achievements;
-
     @FXML
     private VBox additionals;
-
     @FXML
     private BorderPane commandPane;
+    @FXML
+    private ToolBar activityListToolbar;
 
     @Inject
     ActivitiesController(STTOptionDialogs sttOptionDialogs,
@@ -126,7 +121,7 @@ public class ActivitiesController implements ActionsHandler {
                          @Named("glyph") Font fontAwesome,
                          WorktimePane worktimePane) {
         this.worktimePane = requireNonNull(worktimePane);
-        requireNonNull(activitiesConfig);
+        this.activitiesConfig = requireNonNull(activitiesConfig);
         this.executorService = requireNonNull(executorService);
         this.achievementService = requireNonNull(achievementService);
         this.queries = requireNonNull(queries);
@@ -138,9 +133,7 @@ public class ActivitiesController implements ActionsHandler {
         this.localization = requireNonNull(resourceBundle);
         this.activities = requireNonNull(activities);
         this.fontAwesome = requireNonNull(fontAwesome);
-        autoCompletionPopup = activitiesConfig.isAutoCompletionPopup();
         eventBus.subscribe(this);
-        askBeforeDeleting = activitiesConfig.isAskBeforeDeleting();
         filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -249,7 +242,10 @@ public class ActivitiesController implements ActionsHandler {
         requireNonNull(item);
         LOG.fine(() -> "Continuing item: " + item);
         activities.resumeActivity(new ResumeActivity(item, LocalDateTime.now()));
-        shutdown();
+
+        if (activitiesConfig.isCloseOnContinue()) {
+            shutdown();
+        }
     }
 
     private void shutdown() {
@@ -267,8 +263,13 @@ public class ActivitiesController implements ActionsHandler {
     public void delete(TimeTrackingItem item) {
         requireNonNull(item);
         LOG.fine(() -> "Deleting item: " + item);
-        if (!askBeforeDeleting || sttOptionDialogs.showDeleteOrKeepDialog(getWindow(), item) == Result.PERFORM_ACTION) {
-            activities.removeActivity(new RemoveActivity(item));
+        if (!activitiesConfig.isAskBeforeDeleting() || sttOptionDialogs.showDeleteOrKeepDialog(item) == Result.PERFORM_ACTION) {
+            RemoveActivity command = new RemoveActivity(item);
+            if (activitiesConfig.isDeleteClosesGaps()) {
+                activities.removeActivityAndCloseGap(command);
+            } else {
+                activities.removeActivity(command);
+            }
         }
     }
 
@@ -309,13 +310,14 @@ public class ActivitiesController implements ActionsHandler {
 
     @FXML
     public void initialize() {
-        if (autoCompletionPopup) {
+        if (activitiesConfig.isAutoCompletionPopup()) {
             setupAutoCompletionPopup();
         }
 
         addWorktimePanel();
         addCommandText();
         addInsertButton();
+        addNavigationButtonsForActivitiesList();
 
         TimeTrackingListFilter filteredList = new TimeTrackingListFilter(allItems, commandText.textProperty(),
                 filterDuplicatesWhenSearching);
@@ -337,6 +339,50 @@ public class ActivitiesController implements ActionsHandler {
             updateItems();
             updateAchievements();
         });
+    }
+
+    private void addNavigationButtonsForActivitiesList() {
+        Region space = new Region();
+        HBox.setHgrow(space, Priority.ALWAYS);
+
+        FramelessButton oneWeekDownBtn = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.ANGLE_DOUBLE_DOWN, 20));
+        oneWeekDownBtn.setOnAction(event -> {
+            VirtualFlow<?> virtualFlow = (VirtualFlow<?>) activityList.getChildrenUnmodifiable().get(0);
+            IndexedCell lastVisibleCell = virtualFlow.getLastVisibleCell();
+            int index = lastVisibleCell.getIndex();
+            TimeTrackingItem item = (TimeTrackingItem) lastVisibleCell.getItem();
+            LocalDate dateOfLastVisibleItem = item.getStart().toLocalDate();
+            while (index < activityList.getItems().size()) {
+                TimeTrackingItem currentItem = activityList.getItems().get(index);
+                if (ChronoUnit.DAYS.between(currentItem.getStart().toLocalDate(), dateOfLastVisibleItem) >= 7) {
+                    break;
+                }
+                index++;
+            }
+            activityList.scrollTo(index);
+        });
+        Tooltip.install(oneWeekDownBtn, new Tooltip(localization.getString("activities.list.weekDown")));
+        FramelessButton oneWeekUpBtn = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.ANGLE_DOUBLE_UP, 20));
+        oneWeekUpBtn.setOnAction(event -> {
+            VirtualFlow<?> virtualFlow = (VirtualFlow<?>) activityList.getChildrenUnmodifiable().get(0);
+            IndexedCell lastVisibleCell = virtualFlow.getFirstVisibleCell();
+            int index = lastVisibleCell.getIndex();
+            TimeTrackingItem item = (TimeTrackingItem) lastVisibleCell.getItem();
+            LocalDate dateOfLastVisibleItem = item.getStart().toLocalDate();
+            while (index >= 0) {
+                TimeTrackingItem currentItem = activityList.getItems().get(index);
+                if (ChronoUnit.DAYS.between(dateOfLastVisibleItem, currentItem.getStart().toLocalDate()) >= 7) {
+                    break;
+                }
+                index--;
+            }
+            activityList.scrollTo(index);
+        });
+        Tooltip.install(oneWeekUpBtn, new Tooltip(localization.getString("activities.list.weekUp")));
+        activityListToolbar.getItems()
+                .addAll(space,
+                        oneWeekDownBtn,
+                        oneWeekUpBtn);
     }
 
     private void addWorktimePanel() {
@@ -423,7 +469,7 @@ public class ActivitiesController implements ActionsHandler {
 
     private class ValidatingCommandHandler implements CommandHandler {
         @Override
-        public void addNewActivity(NewItemCommand command) {
+        public void addNewActivity(NewActivity command) {
             TimeTrackingItem newItem = command.newItem;
             LocalDateTime start = newItem.getStart();
             if (!validateItemIsFirstItemAndLater(start) || !validateItemWouldCoverOtherItems(newItem)) {
@@ -446,19 +492,32 @@ public class ActivitiesController implements ActionsHandler {
         }
 
         @Override
+        public void removeActivityAndCloseGap(RemoveActivity command) {
+            activities.removeActivityAndCloseGap(command);
+            clearCommand();
+        }
+
+        @Override
         public void resumeActivity(ResumeActivity command) {
             activities.resumeActivity(command);
             clearCommand();
         }
 
+        @Override
+        public void resumeLastActivity(ResumeLastActivity command) {
+            activities.resumeLastActivity(command);
+            clearCommand();
+
+        }
+
         private boolean validateItemIsFirstItemAndLater(LocalDateTime start) {
             return validator.validateItemIsFirstItemAndLater(start)
-                    || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog(getWindow()) == Result.PERFORM_ACTION;
+                    || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog() == Result.PERFORM_ACTION;
         }
 
         private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
             int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
-            return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(getWindow(), numberOfCoveredItems) == Result.PERFORM_ACTION;
+            return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(numberOfCoveredItems) == Result.PERFORM_ACTION;
         }
 
         private void clearCommand() {

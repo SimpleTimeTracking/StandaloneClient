@@ -43,6 +43,11 @@ public class ConfigModule {
     }
 
     @Provides
+    static CommonPrefixGrouperConfig provideCommonPrefixGrouperConfig(ConfigRoot configRoot) {
+        return configRoot.getPrefixGrouper();
+    }
+
+    @Provides
     static JiraConfig provideJiraConfig(ConfigRoot configRoot) {
         return configRoot.getJira();
     }

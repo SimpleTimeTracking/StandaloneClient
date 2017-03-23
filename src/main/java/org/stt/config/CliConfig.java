@@ -1,6 +1,6 @@
 package org.stt.config;
 
-public class CliConfig {
+public class CliConfig implements ConfigurationContainer {
     private int cliReportingWidth = 80;
     private String systemOutEncoding = "UTF-8";
 
