@@ -9,7 +9,7 @@ before_install:
 - sh -e /etc/init.d/xvfb start
 script:
 - ./gradlew assemble
-- ./gradlew check --stacktrace --debug
+- ./gradlew check --stacktrace
 after_success:
 - curl -T build/libs/SimpleTimeTrack.jar -ubytekeeper:$API_KEY https://api.bintray.com/content/bytekeeper/generic/SimpleTimeTrack/1/SimpleTimeTrack.jar
 - 'curl -H "Content-Type: application/json" -ubytekeeper:$API_KEY -d ''{}'' https://api.bintray.com/content/bytekeeper/generic/SimpleTimeTrack/1/publish'

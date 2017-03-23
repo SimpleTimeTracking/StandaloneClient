@@ -5,12 +5,15 @@ import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.tk.Toolkit;
 import com.sun.scenario.DelayedRunnable;
 import com.sun.scenario.animation.AbstractMasterTimer;
+import javafx.scene.text.Font;
 
+import java.io.InputStream;
 import java.lang.reflect.Field;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyDouble;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 
@@ -42,6 +45,7 @@ public class TestFX {
                     return 1;
                 }
             });
+            given(toolkit.getFontLoader().loadFont(any(InputStream.class), anyDouble())).willAnswer(invocation -> new Font(1));
             toolkitField.set(Toolkit.class, toolkit);
             toolkitField.setAccessible(false);
             PlatformImpl.startup(() -> {});
