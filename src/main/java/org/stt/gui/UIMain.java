@@ -21,7 +21,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UIMain extends Application {
-
+    /**
+     * Set to true to add debug graphics
+     */
+    public static final boolean DEBUG_UI = false;
     private static final Logger LOG = Logger.getLogger(UIMain.class
             .getName());
 

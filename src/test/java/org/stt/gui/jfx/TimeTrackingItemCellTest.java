@@ -11,6 +11,7 @@ import org.stt.model.TimeTrackingItem;
 
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.verify;
 
@@ -29,7 +30,7 @@ public class TimeTrackingItemCellTest {
 		ResourceBundle resourceBundle = ResourceBundle
 				.getBundle("org.stt.gui.Application");
 
-        sut = new TimeTrackingItemCell(fontAwesome, resourceBundle, a -> false, actionsHandler) {
+        sut = new TimeTrackingItemCell(fontAwesome, resourceBundle, a -> false, actionsHandler, Stream::of) {
 
 			@Override
 			protected void setupTooltips(ResourceBundle localization) {
