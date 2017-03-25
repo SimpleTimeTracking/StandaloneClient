@@ -86,7 +86,7 @@ public class MainTest {
 		PrintStream ps = new PrintStream(baos, true, "UTF-8");
 
 		// WHEN
-		sut.executeCommand(args, ps);
+		sut.prepareAndExecuteCommand(args, ps);
 
 		// THEN
 		List<String> readLines = IOUtils.readLines(new InputStreamReader(

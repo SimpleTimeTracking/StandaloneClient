@@ -69,8 +69,7 @@ public class WorkingtimeItemProvider {
 	private void populateHoursMapsFromFile(File workingTimesFile) {
 
 		try (BufferedReader wtReader = new BufferedReader(
-				new InputStreamReader(new FileInputStream(workingTimesFile),
-						"UTF-8"))) {
+				new InputStreamReader(constructReaderFrom(workingTimesFile), "UTF-8"))) {
 
 			String currentLine;
 			while ((currentLine = wtReader.readLine()) != null) {
@@ -88,13 +87,20 @@ public class WorkingtimeItemProvider {
 							fromHours(minHours, maxHours));
 
 				} else if (currentLine.startsWith("hours")) {
-                    LOG.severe("'hours' is no longer supported in you worktimes file, please setup default working hours in your configuration.");
+                    LOG.severe("'hours' is no longer supported in your worktimes file, please setup default working hours in your configuration.");
                 }
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+
+	private InputStream constructReaderFrom(File workingTimesFile) throws FileNotFoundException {
+		if(workingTimesFile.getName().equalsIgnoreCase("-")) {
+			return System.in;
+		}
+		return new FileInputStream(workingTimesFile);
+	}
 
 	private WorkingtimeItem fromHours(String minHours, String maxHours) {
         Duration minDur = Duration.ofHours(Long.parseLong(minHours));

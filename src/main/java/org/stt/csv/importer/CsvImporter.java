@@ -8,9 +8,11 @@ import org.stt.time.DateTimes;
 
 import java.io.Reader;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,9 +28,9 @@ public class CsvImporter implements ItemReader {
 	private final LineIterator lineIter;
 
     private final DateTimeFormatter formatter = DateTimeFormatter
-            .ofPattern("dd.MM.yyy");
+            .ofPattern("dd.MM.yyyy");
     private final DateTimeFormatter durationParser = DateTimeFormatter
-            .ofPattern("hh:mm");
+            .ofPattern("HH:mm");
 
 	private int commentfieldIndex;
 	private int datefieldIndex;
@@ -74,7 +76,8 @@ public class CsvImporter implements ItemReader {
 			String durationString = split[timefieldIndex].replaceAll("\"", "");
 			String comment = split[commentfieldIndex];
 			try {
-                LocalDateTime parsedDateTime = LocalDateTime.parse(dateString, formatter);
+                LocalDate parsedDate = LocalDate.parse(dateString, formatter);
+                LocalDateTime parsedDateTime = LocalDateTime.of(parsedDate, LocalTime.MIDNIGHT);
                 Duration period = Duration.between(LocalTime.MIDNIGHT, LocalTime.parse(durationString, durationParser));
                 LocalDateTime itemStartTime = startTime;
                 if (!DateTimes.isOnSameDay(startTime, parsedDateTime)) {
@@ -84,7 +87,7 @@ public class CsvImporter implements ItemReader {
 
                 return new TimeTrackingItem(comment,
                         itemStartTime, itemEndTime);
-			} catch (IllegalArgumentException i) {
+			} catch (DateTimeParseException i) {
                 LOG.log(Level.INFO, "not parseable line: " + line, i);
             }
 		} else {
