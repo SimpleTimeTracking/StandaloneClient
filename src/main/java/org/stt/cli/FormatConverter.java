@@ -1,6 +1,5 @@
 package org.stt.cli;
 
-import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.stt.csv.importer.CsvImporter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -59,12 +58,12 @@ public class FormatConverter {
 				return new STTItemWriter(new OutputStreamWriter(System.out,
 						"UTF-8"));
 			}
-			return new STTItemWriter(
-					new FileWriterWithEncoding(output, "UTF-8"));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+            return new STTItemWriter(
+                    new OutputStreamWriter(new FileOutputStream(output), "UTF-8"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 	private ItemReader getReaderFrom(File input, String sourceFormat) {
         Reader inputReader;
