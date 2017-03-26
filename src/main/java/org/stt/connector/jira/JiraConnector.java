@@ -30,7 +30,9 @@ public class JiraConnector implements Service {
             return;
         }
         try {
-            if (configuration.getJiraUsername() != null) {
+            if (configuration.getJiraUsername() != null
+                    && !configuration.getJiraUsername().isEmpty()
+                    && configuration.getJiraPassword() != null) {
                 client = new JiraClient(jiraURI,
                         new BasicCredentials(configuration.getJiraUsername(),
                                 new String(configuration.getJiraPassword().getPassword(), "UTF-8")));
