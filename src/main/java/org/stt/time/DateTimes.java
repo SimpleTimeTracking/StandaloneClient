@@ -38,6 +38,7 @@ public class DateTimes {
     }
 
     public static boolean isOnSameDay(LocalDateTime a, LocalDateTime b) {
+        if(a == null || b == null) return false;
         return a.toLocalDate().equals(b.toLocalDate());
     }
 

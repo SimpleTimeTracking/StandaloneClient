@@ -4,18 +4,22 @@ import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import org.stt.gui.UIMain;
 import org.stt.model.TimeTrackingItem;
 
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static org.stt.gui.jfx.Glyph.glyph;
@@ -26,13 +30,13 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     private static final int GLYPH_SIZE = 20;
 
     private final HBox cellPane = new HBox(2);
-    private final Label labelForComment = new Label();
+    private final TextFlow labelForComment = new TextFlow();
     private final HBox timePane = new HBox();
     private final Label labelForStart = new Label();
-	private final Label labelForEnd = new Label();
-	final Button editButton;
-	final Button continueButton;
-	final Button deleteButton;
+    private final Label labelForEnd = new Label();
+    final Button editButton;
+    final Button continueButton;
+    final Button deleteButton;
     final Button stopButton;
     private final Node startToFinishActivityGraphics;
     private final Node ongoingActivityGraphics;
@@ -40,13 +44,16 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     private final BorderPane lastItemOnDayPane;
 
     private final Node newDayNode;
+    private final Function<Object, Stream<Object>> labelToNodeMapper;
 
     TimeTrackingItemCell(Font fontAwesome,
                          ResourceBundle localization,
                          Predicate<TimeTrackingItem> lastItemOfDay,
-                         ActionsHandler actionsHandler) {
+                         ActionsHandler actionsHandler,
+                         ActivityTextDisplayProcessor labelToNodeMapper) {
         requireNonNull(fontAwesome);
         requireNonNull(actionsHandler);
+        this.labelToNodeMapper = requireNonNull(labelToNodeMapper);
         editButton = new FramelessButton(glyph(fontAwesome, Glyph.PENCIL, GLYPH_SIZE));
         continueButton = new FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE, Color.DARKGREEN));
         deleteButton = new FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE, Color.web("e26868")));
@@ -61,23 +68,29 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         deleteButton.setOnAction(event -> actionsHandler.delete(getItem()));
         stopButton.setOnAction(event -> actionsHandler.stop(getItem()));
 
-		Pane space = new Pane();
-		HBox.setHgrow(space, Priority.ALWAYS);
-		labelForComment.setWrapText(true);
-		labelForComment.setPrefWidth(350);
-
+        Pane space = new Pane();
+        HBox.setHgrow(space, Priority.ALWAYS);
         timePane.setPrefWidth(180);
         timePane.setSpacing(10);
         timePane.setAlignment(Pos.CENTER_LEFT);
 
+        StackPane labelArea = new StackPaneWithoutResize(labelForComment);
+        StackPane.setAlignment(labelForComment, Pos.CENTER_LEFT);
+
+        labelArea.setPrefWidth(450);
+
         cellPane.getChildren().addAll(
                 continueButton,
                 editButton,
-                labelForComment,
+                labelArea,
                 space,
                 timePane,
                 deleteButton);
         cellPane.setAlignment(Pos.CENTER_LEFT);
+        if (UIMain.DEBUG_UI) {
+            labelArea.setBorder(new Border(new BorderStroke(Color.RED, BorderStrokeStyle.DASHED, CornerRadii.EMPTY, BorderStroke.MEDIUM)));
+            labelForComment.setBorder(new Border(new BorderStroke(Color.GREEN, BorderStrokeStyle.DASHED, CornerRadii.EMPTY, BorderStroke.MEDIUM)));
+        }
 
         lastItemOnDayPane = new BorderPane();
 
@@ -90,26 +103,26 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         newDayHbox.getChildren().add(dayLabel);
         newDayNode = newDayHbox;
 
-		setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-	}
+        setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+    }
 
     protected void setupTooltips(ResourceBundle localization) {
         editButton.setTooltip(new Tooltip(localization
                 .getString("itemList.edit")));
         continueButton.setTooltip(new Tooltip(localization
-				.getString("itemList.continue")));
-		deleteButton.setTooltip(new Tooltip(localization
-				.getString("itemList.delete")));
+                .getString("itemList.continue")));
+        deleteButton.setTooltip(new Tooltip(localization
+                .getString("itemList.delete")));
         stopButton.setTooltip(new Tooltip(localization
                 .getString("itemList.stop")));
     }
 
-	@Override
-	protected void updateItem(TimeTrackingItem item, boolean empty) {
-		super.updateItem(item, empty);
-		if (empty) {
-			setGraphic(null);
-		} else {
+    @Override
+    protected void updateItem(TimeTrackingItem item, boolean empty) {
+        super.updateItem(item, empty);
+        if (empty) {
+            setGraphic(null);
+        } else {
             cellPane.getChildren().set(0, item.getEnd().isPresent() ? continueButton : stopButton);
             applyLabelForComment();
             setupTimePane();
@@ -119,11 +132,11 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
             } else {
                 setupCellPane();
                 setGraphic(cellPane);
-			}
-		}
-	}
+            }
+        }
+    }
 
-	private void setupCellPane() {
+    private void setupCellPane() {
         lastItemOnDayPane.setCenter(null);
         lastItemOnDayPane.setTop(null);
     }
@@ -133,11 +146,22 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         lastItemOnDayPane.setTop(newDayNode);
     }
 
-	private void applyLabelForComment() {
-        labelForComment.setText(getItem().getActivity());
+    private void applyLabelForComment() {
+        List<Node> textNodes = labelToNodeMapper.apply(getItem().getActivity())
+                .map(o -> {
+                    if (o instanceof String) {
+                        return new Text((String) o);
+                    }
+                    if (o instanceof Node) {
+                        return (Node) o;
+                    }
+                    throw new IllegalArgumentException(String.format("Unsupported element: %s", o));
+                })
+                .collect(Collectors.toList());
+        labelForComment.getChildren().setAll(textNodes);
     }
 
-	private void setupTimePane() {
+    private void setupTimePane() {
         labelForStart.setText(TIME_FORMATTER.format(getItem().getStart()));
 
         if (getItem().getEnd().isPresent()) {

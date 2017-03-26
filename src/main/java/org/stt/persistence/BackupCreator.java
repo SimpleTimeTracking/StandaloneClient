@@ -1,7 +1,5 @@
 package org.stt.persistence;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.stt.Service;
 import org.stt.config.BackupConfig;
 import org.stt.persistence.stt.STTFile;
@@ -12,12 +10,16 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -73,20 +75,18 @@ public class BackupCreator implements Service {
 
 		String sttFileName = sttFile.getName();
 
-		Collection<File> backedUpFiles = FileUtils
-				.listFiles(backupLocation, new RegexFileFilter(sttFileName
-						+ "-[0-9]{4}-[0-9]{2}-[0-9]{2}"), null);
+        Collection<File> backedUpFiles = Files.list(backupLocation.toPath())
+                .filter(path -> path.getFileName().toString().matches(sttFileName
+                        + "-[0-9]{4}-[0-9]{2}-[0-9]{2}"))
+                .map(Path::toFile)
+                .collect(Collectors.toList());
 
 		if (backupNeeded(backedUpFiles, backupInterval, sttFile, backupLocation)) {
 
             String backupFileName = getBackupFileName(sttFile, LocalDate.now());
             File newBackupFile = new File(backupLocation, backupFileName);
-			// to be safe we don't accidentally overwrite something: check if
-			// there is already a file
-			if (!newBackupFile.exists()) {
-				FileUtils.copyFile(sttFile, newBackupFile);
-			}
-		}
+            Files.copy(sttFile.toPath(), newBackupFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+        }
 
 		deleteOldBackupFiles(backedUpFiles);
 	}

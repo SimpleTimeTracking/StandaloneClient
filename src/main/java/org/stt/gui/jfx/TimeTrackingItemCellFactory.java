@@ -19,20 +19,23 @@ class TimeTrackingItemCellFactory implements
     private final Predicate<TimeTrackingItem> lastItemOfDay;
     private final ResourceBundle resourceBundle;
     private final Font fontAwesome;
+    private final ActivityTextDisplayProcessor labelToNodeMapper;
 
     public TimeTrackingItemCellFactory(
             ActionsHandler actionsHandler,
             Predicate<TimeTrackingItem> lastItemOfDay,
             ResourceBundle localization,
-            Font fontAwesome) {
+            Font fontAwesome,
+            ActivityTextDisplayProcessor labelToNodeMapper) {
         this.actionsHandler = requireNonNull(actionsHandler);
         this.lastItemOfDay = requireNonNull(lastItemOfDay);
         this.resourceBundle = requireNonNull(localization);
         this.fontAwesome = requireNonNull(fontAwesome);
+        this.labelToNodeMapper = labelToNodeMapper;
     }
 
 	@Override
 	public ListCell<TimeTrackingItem> call(ListView<TimeTrackingItem> arg0) {
-        return new TimeTrackingItemCell(fontAwesome, resourceBundle, lastItemOfDay, actionsHandler);
+        return new TimeTrackingItemCell(fontAwesome, resourceBundle, lastItemOfDay, actionsHandler, labelToNodeMapper);
     }
 }

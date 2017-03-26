@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -77,7 +78,7 @@ public class ActivitiesControllerTest {
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
                 Collections.singleton(expansionProvider), resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
-                worktimePane);
+                worktimePane, Stream::of);
         sut.commandText = new StyleClassedTextArea();
     }
 

@@ -86,6 +86,7 @@ public class ActivitiesController implements ActionsHandler {
     private final Font fontAwesome;
     private final BorderPane panel;
     private final ActivitiesConfig activitiesConfig;
+    private final ActivityTextDisplayProcessor labelToNodeMapper;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
     private TimeTrackingItemQueries queries;
@@ -106,6 +107,7 @@ public class ActivitiesController implements ActionsHandler {
     @FXML
     private ToolBar activityListToolbar;
 
+
     @Inject
     ActivitiesController(STTOptionDialogs sttOptionDialogs,
                          MBassador<Object> eventBus,
@@ -119,7 +121,8 @@ public class ActivitiesController implements ActionsHandler {
                          ExecutorService executorService,
                          CommandHandler activities,
                          @Named("glyph") Font fontAwesome,
-                         WorktimePane worktimePane) {
+                         WorktimePane worktimePane,
+                         @Named("activityToText") ActivityTextDisplayProcessor labelToNodeMapper) {
         this.worktimePane = requireNonNull(worktimePane);
         this.activitiesConfig = requireNonNull(activitiesConfig);
         this.executorService = requireNonNull(executorService);
@@ -133,6 +136,7 @@ public class ActivitiesController implements ActionsHandler {
         this.localization = requireNonNull(resourceBundle);
         this.activities = requireNonNull(activities);
         this.fontAwesome = requireNonNull(fontAwesome);
+        this.labelToNodeMapper = labelToNodeMapper;
         eventBus.subscribe(this);
         filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
 
@@ -455,7 +459,7 @@ public class ActivitiesController implements ActionsHandler {
 
     private void setupCellFactory(Predicate<TimeTrackingItem> lastItemOfDay) {
         activityList.setCellFactory(new TimeTrackingItemCellFactory(
-                ActivitiesController.this, lastItemOfDay, localization, fontAwesome));
+                ActivitiesController.this, lastItemOfDay, localization, fontAwesome, labelToNodeMapper));
     }
 
     private void done() {

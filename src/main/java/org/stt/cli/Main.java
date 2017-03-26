@@ -7,13 +7,12 @@ import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 
 import javax.inject.Inject;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 
@@ -25,6 +24,7 @@ public class Main {
     private final ReportPrinter reportPrinter;
     private final CommandFormatter commandFormatter;
     private final CommandHandler activities;
+
 
     @Inject
     public Main(TimeTrackingItemQueries timeTrackingItemQueries,
@@ -39,7 +39,7 @@ public class Main {
 
     private void on(Collection<String> args, PrintStream printTo) {
         String comment = String.join(" ", args);
-
+        System.out.println(comment);
         Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
                 .getOngoingItem();
 
@@ -55,12 +55,8 @@ public class Main {
     public void executeCommand(String command) {
         Objects.requireNonNull(command);
         Command parsedCommand = commandFormatter.parse(command);
+        parsedCommand.accept(activities);
 
-        if (parsedCommand instanceof NewActivity) {
-            activities.addNewActivity((NewActivity) parsedCommand);
-        } else if (parsedCommand instanceof EndCurrentItem) {
-            activities.endCurrentActivity((EndCurrentItem) parsedCommand);
-        }
         timeTrackingItemQueries.sourceChanged(null);
     }
 
@@ -87,8 +83,9 @@ public class Main {
         }
     }
 
-    private void fin(PrintStream printTo) {
-        activities.endCurrentActivity(new EndCurrentItem(LocalDateTime.now()));
+    private void fin(Collection<String> args, PrintStream printTo) {
+        String comment = String.join(" ", args);
+        executeCommand(comment);
         timeTrackingItemQueries.getOngoingItem()
                 .ifPresent(item -> prettyPrintTimeTrackingItem(printTo, item));
     }
@@ -109,39 +106,56 @@ public class Main {
      *
      * ti fin // sets end time of previous item
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
+        //switch off logging (the quick & dirty way)
+        LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(".level = SEVERE".getBytes("UTF-8")));
+
         CLIApplication cliApplication = DaggerCLIApplication.create();
         // accept the desired encoding for all System.out calls
         // this is necessary if one wants to output non ASCII
         // characters on a Windows console
-        ConfigRoot configuration = cliApplication.configuration();
+        cliApplication.configService().start();
+        ConfigRoot configuration = cliApplication.configService().getConfig();
+
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
                 true, configuration.getCli().getSystemOutEncoding()));
 
         Main main = cliApplication.main();
         List<String> argsList = new ArrayList<>(Arrays.asList(args));
-        main.executeCommand(argsList, System.out);
+        main.prepareAndExecuteCommand(argsList, System.out);
 
+        //store config
+        cliApplication.configService().stop();
         // perform backup
         cliApplication.backupCreator().start();
     }
 
-    void executeCommand(List<String> args, PrintStream printTo) {
+    void prepareAndExecuteCommand(List<String> args, PrintStream printTo) {
         if (args.isEmpty()) {
             usage(printTo);
             return;
         }
 
         String mainOperator = args.remove(0);
-        if (mainOperator.startsWith("o")) {
-            // on
+        if(mainOperator.equalsIgnoreCase("rl") || mainOperator.startsWith("res")) {
+            // resume last
+            // add the proper command for execution
+            args.add(0, "resume last");
+            executeCommand(String.join(" ", args));
+            timeTrackingItemQueries.getOngoingItem()
+                    .ifPresent(item -> printTo.println("current item: " + ItemFormattingHelper.prettyPrintItem(item)));
+        }
+        else if (mainOperator.startsWith("o")) {
+            // add the proper command for execution
+            args.add(0, "on");
             on(args, printTo);
         } else if (mainOperator.startsWith("r")) {
             // report
             reportPrinter.report(args, printTo);
         } else if (mainOperator.startsWith("f")) {
-            // fin
-            fin(printTo);
+            // add the proper command for execution
+            args.add(0, "fin");
+            fin(args, printTo);
         } else if (mainOperator.startsWith("s")) {
             // search
             search(args, printTo);
@@ -161,7 +175,8 @@ public class Main {
                 + "on comment\tto start working on something\n"
                 + "report [X days] [searchstring]\tto display a report\n"
                 + "fin\t\tto stop working\n"
-                + "search [searchstring]\tto get a list of all comments of items matching the given search string";
+                + "search [searchstring]\tto get a list of all comments of items matching the given search string\n"
+                + "resume last\tstart the previous work item if not already started";
 
         printTo.println(usage);
     }

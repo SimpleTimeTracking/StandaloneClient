@@ -1,11 +1,12 @@
 package org.stt.ti.importer;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -20,26 +21,30 @@ import static org.stt.States.requireThat;
  */
 public class TiImporter implements ItemReader {
 
-	private final LineIterator lineIter;
+    private final BufferedReader reader;
     private final DateTimeFormatter dateFormat = DateTimeFormatter
             .ofPattern("yyyy-MM-dd_HH:mm:ss");
 
 	public TiImporter(Reader input) {
-		lineIter = IOUtils.lineIterator(input);
-	}
+        reader = new BufferedReader(input);
+    }
 
 	@Override
 	public Optional<TimeTrackingItem> read() {
-		while (lineIter.hasNext()) {
-			String nextLine = lineIter.nextLine();
-			// ignore empty lines or ones just containing whitespace
-			if (!nextLine.trim().isEmpty()) {
-				return Optional.of(constructFrom(nextLine));
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                // ignore empty lines or ones just containing whitespace
+                if (!line.trim().isEmpty()) {
+                    return Optional.of(constructFrom(line));
 
-			}
-		}
-		lineIter.close();
-        return Optional.empty();
+                }
+            }
+            reader.close();
+            return Optional.empty();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
 	private TimeTrackingItem constructFrom(String singleLine) {
@@ -66,7 +71,11 @@ public class TiImporter implements ItemReader {
 
 	@Override
 	public void close() {
-		lineIter.close();
-	}
+        try {
+            reader.close();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
 }
