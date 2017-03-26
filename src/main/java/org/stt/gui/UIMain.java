@@ -7,6 +7,7 @@ import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
 import org.controlsfx.dialog.ExceptionDialog;
 import org.stt.Service;
+import org.stt.StopWatch;
 import org.stt.event.ShuttingDown;
 import org.stt.event.TimePassedEvent;
 import org.stt.gui.jfx.MainWindowController;
@@ -58,7 +59,7 @@ public class UIMain extends Application {
 
         startService(uiApplication.configService());
         startService(uiApplication.backupCreator());
-        startService(uiApplication.achievementService());
+//        startService(uiApplication.achievementService());
         startService(uiApplication.itemLogService());
 
         LOG.info("init() done");
@@ -81,9 +82,11 @@ public class UIMain extends Application {
     }
 
     private void startService(Service serviceInstance) throws Exception {
+        StopWatch stopWatch = new StopWatch(serviceInstance.getClass().getSimpleName());
         LOG.info("Starting " + serviceInstance.getClass().getSimpleName());
         serviceInstance.start();
         servicesToShutdown.add(serviceInstance);
+        stopWatch.stop();
     }
 
     @Override
