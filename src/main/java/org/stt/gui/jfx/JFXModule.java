@@ -77,6 +77,7 @@ public abstract class JFXModule {
                     result.add(hyperlink);
                     index = matcher.end();
                 }
+                result.add(string.substring(index));
                 return result.stream();
             }
             return Stream.of(o);

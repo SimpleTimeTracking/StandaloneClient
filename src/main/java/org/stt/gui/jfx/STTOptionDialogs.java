@@ -3,6 +3,7 @@ package org.stt.gui.jfx;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
 import org.stt.model.TimeTrackingItem;
 
 import javax.inject.Inject;
@@ -43,7 +44,7 @@ public class STTOptionDialogs {
     Result showItemCoversOtherItemsDialog(int numberOfCoveredItems) {
         Dialog<Result> dialog = new Dialog<>();
         dialog.setHeaderText(localization.getString("strangeItem.title"));
-        dialog.setContentText(String.format(localization.getString("itemCoversOtherItems.text"), numberOfCoveredItems));
+        dialog.getDialogPane().setContent(new Label(String.format(localization.getString("itemCoversOtherItems.text"), numberOfCoveredItems)));
         ButtonType apply = new ButtonType(localization.getString("add"), ButtonBar.ButtonData.APPLY);
         dialog.getDialogPane().getButtonTypes().addAll(apply, ButtonType.CANCEL);
         dialog.setResultConverter(param -> param == apply ? Result.PERFORM_ACTION : Result.ABORT);

@@ -5,10 +5,6 @@ import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.Objects;
 
-/**
- *
- * @author dante
- */
 @Singleton
 public class DurationRounder {
 
