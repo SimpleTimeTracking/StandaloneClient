@@ -10,6 +10,9 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import org.controlsfx.control.Notifications;
+import org.stt.event.NotifyUser;
 import org.stt.event.ShuttingDown;
 
 import javax.inject.Inject;
@@ -55,6 +58,13 @@ public class MainWindowController {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        eventBus.subscribe(this);
+    }
+
+    @Handler
+    public void onUserNotifactionRequest(NotifyUser event) {
+        Notifications.create().text(event.message).show();
     }
 
     @FXML

@@ -53,7 +53,7 @@ public class JiraConnector implements Service {
     public void stop() {
     }
 
-    public Optional<Issue> getIssue(String issueKey) throws JiraConnectorException {
+    public Optional<Issue> getIssue(String issueKey) throws InvalidCredentialsException, IssueDoesNotExistException, AccessDeniedException {
         if (client == null) {
             return Optional.empty();
         }
@@ -70,11 +70,21 @@ public class JiraConnector implements Service {
 
             return Optional.of(jiraIssue);
         } catch (JiraException e) {
+            if (e.getCause() instanceof RestException) {
+                RestException cause = (RestException) e.getCause();
+                int httpStatusCode = cause.getHttpStatusCode();
+                switch (httpStatusCode) {
+                    case 404:
+                        throw new IssueDoesNotExistException(String.format("Couldn't find issue %s.", issueKey), e);
+                    case 401:
+                        throw new AccessDeniedException(String.format("You don't have permission to see %s.", issueKey), e);
+                }
+            }
             throw new JiraConnectorException(String.format("Error while retrieving issue %s: %s", issueKey, e.getCause().getLocalizedMessage()), e);
         }
     }
 
-    private boolean projectExists(String projectKey) throws JiraConnectorException {
+    private boolean projectExists(String projectKey) throws InvalidCredentialsException {
         return getProjectNames().contains(projectKey);
     }
 
@@ -91,19 +101,26 @@ public class JiraConnector implements Service {
         return projectKey;
     }
 
-    public Set<String> getProjectNames() throws JiraConnectorException {
+    public Set<String> getProjectNames() throws InvalidCredentialsException {
         if (projectsCache == null) {
             projectsCache = internalGetProjectNames();
         }
         return projectsCache;
     }
 
-    private Set<String> internalGetProjectNames() throws JiraConnectorException {
+    private Set<String> internalGetProjectNames() throws InvalidCredentialsException {
         try {
             return client.getProjects().stream()
                     .map(Project::getKey)
                     .collect(Collectors.toSet());
         } catch (JiraException e) {
+            if (e.getCause() instanceof RestException) {
+                RestException cause = (RestException) e.getCause();
+                int httpStatusCode = cause.getHttpStatusCode();
+                if (httpStatusCode == 403 || httpStatusCode == 401) {
+                    throw new InvalidCredentialsException("Please check your Jira username/password.", e);
+                }
+            }
             throw new JiraConnectorException(String.format("Error retrieving projects from Jira: %s", e.getLocalizedMessage()), e);
         }
     }

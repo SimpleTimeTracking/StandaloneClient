@@ -37,7 +37,7 @@ public class JiraExpansionProviderTest {
 	@Test
 	public void testGetPossibleExpansions() {
 		// GIVEN
-		JiraExpansionProvider sut = new JiraExpansionProvider(jiraConnector);
+		JiraExpansionProvider sut = new JiraExpansionProvider(jiraConnector, Optional.empty());
 		
 		// WHEN
 		List<String> matches = sut.getPossibleExpansions("JRA-7");
@@ -52,7 +52,7 @@ public class JiraExpansionProviderTest {
 	@Test
 	public void testGetPossibleExpansionsShouldHandleSubstring() {
 		// GIVEN
-		JiraExpansionProvider sut = new JiraExpansionProvider(jiraConnector);
+		JiraExpansionProvider sut = new JiraExpansionProvider(jiraConnector, Optional.empty());
 		
 		// WHEN
 		List<String> matches = sut.getPossibleExpansions("Test JRA-7");
@@ -66,7 +66,7 @@ public class JiraExpansionProviderTest {
 	@Test
 	public void testGetPossibleExpansionsShouldHandleSpace() {
 		// GIVEN
-		JiraExpansionProvider sut = new JiraExpansionProvider(jiraConnector);
+		JiraExpansionProvider sut = new JiraExpansionProvider(jiraConnector, Optional.empty());
 		
 		// WHEN
 		List<String> matches = sut.getPossibleExpansions(" JRA-7 ");
