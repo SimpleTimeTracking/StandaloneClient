@@ -38,7 +38,7 @@ public class DateTimes {
     }
 
     public static boolean isOnSameDay(LocalDateTime a, LocalDateTime b) {
-        if(a == null || b == null) return false;
+        if (a == null || b == null) return false;
         return a.toLocalDate().equals(b.toLocalDate());
     }
 
@@ -59,6 +59,8 @@ public class DateTimes {
     public static String prettyPrintTime(LocalDateTime date) {
         if (isToday(date)) {
             return DATE_TIME_FORMATTER_HH_MM_SS.format(date);
+        } else if (LocalDate.MIN.equals(date.toLocalDate())) {
+            return "beginning of time";
         } else {
             return DATE_TIME_FORMATTER_YYYY_MM_DD_HH_MM_SS.format(date);
         }
@@ -70,14 +72,16 @@ public class DateTimes {
      * @param date
      */
     public static String prettyPrintDate(LocalDate date) {
+        if (LocalDate.MIN.equals(date)) {
+            return "beginning of time";
+        }
         return DATE_TIME_FORMATTER_YYYY_MM_DD_DASHED.format(date);
     }
 
     public static String prettyPrintDuration(Duration duration) {
         if (duration.isNegative()) {
             // it is negative
-            return "-"
-                    + FORMATTER_PERIOD_HHh_MMm_SSs.print(duration.abs());
+            return "-" + FORMATTER_PERIOD_HHh_MMm_SSs.print(duration.abs());
         } else {
             return " " + FORMATTER_PERIOD_HHh_MMm_SSs.print(duration);
         }

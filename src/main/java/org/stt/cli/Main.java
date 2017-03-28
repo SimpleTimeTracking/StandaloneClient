@@ -1,7 +1,10 @@
 package org.stt.cli;
 
 import org.stt.command.*;
+import org.stt.config.CliConfig;
 import org.stt.config.ConfigRoot;
+import org.stt.config.PathSetting;
+import org.stt.config.YamlConfigService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
@@ -25,7 +28,6 @@ public class Main {
     private final CommandFormatter commandFormatter;
     private final CommandHandler activities;
 
-
     @Inject
     public Main(TimeTrackingItemQueries timeTrackingItemQueries,
                 ReportPrinter reportPrinter,
@@ -39,7 +41,6 @@ public class Main {
 
     private void on(Collection<String> args, PrintStream printTo) {
         String comment = String.join(" ", args);
-        System.out.println(comment);
         Optional<TimeTrackingItem> currentItem = timeTrackingItemQueries
                 .getOngoingItem();
 
@@ -116,7 +117,7 @@ public class Main {
         // characters on a Windows console
         cliApplication.configService().start();
         ConfigRoot configuration = cliApplication.configService().getConfig();
-
+        //configuration.setSttFile(new PathSetting("-"));
         System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out),
                 true, configuration.getCli().getSystemOutEncoding()));
 
@@ -137,22 +138,21 @@ public class Main {
         }
 
         String mainOperator = args.remove(0);
-        if(mainOperator.equalsIgnoreCase("rl") || mainOperator.startsWith("res")) {
+        if(mainOperator.equalsIgnoreCase("rl") || mainOperator.startsWith("resume")) {
             // resume last
             // add the proper command for execution
-            args.add(0, "resume last");
+            args.add(0, "resume");
             executeCommand(String.join(" ", args));
             timeTrackingItemQueries.getOngoingItem()
-                    .ifPresent(item -> printTo.println("current item: " + ItemFormattingHelper.prettyPrintItem(item)));
+                    .ifPresent(item -> printTo.println("resumed: " + ItemFormattingHelper.prettyPrintItem(item)));
         }
-        else if (mainOperator.startsWith("o")) {
-            // add the proper command for execution
-            args.add(0, "on");
+        else if (mainOperator.matches("on?")) {
+            // no command needed for "on"
             on(args, printTo);
-        } else if (mainOperator.startsWith("r")) {
+        } else if (mainOperator.matches("re?p?o?r?t?")) {
             // report
             reportPrinter.report(args, printTo);
-        } else if (mainOperator.startsWith("f")) {
+        } else if (mainOperator.matches("fi?n?")) {
             // add the proper command for execution
             args.add(0, "fin");
             fin(args, printTo);
