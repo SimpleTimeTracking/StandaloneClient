@@ -246,6 +246,7 @@ public class ActivitiesController implements ActionsHandler {
         requireNonNull(item);
         LOG.fine(() -> "Continuing item: " + item);
         activities.resumeActivity(new ResumeActivity(item, LocalDateTime.now()));
+        clearCommand();
 
         if (activitiesConfig.isCloseOnContinue()) {
             shutdown();
@@ -471,6 +472,10 @@ public class ActivitiesController implements ActionsHandler {
         return panel;
     }
 
+    private void clearCommand() {
+        commandText.clear();
+    }
+
     private class ValidatingCommandHandler implements CommandHandler {
         @Override
         public void addNewActivity(NewActivity command) {
@@ -504,7 +509,6 @@ public class ActivitiesController implements ActionsHandler {
         @Override
         public void resumeActivity(ResumeActivity command) {
             activities.resumeActivity(command);
-            clearCommand();
         }
 
         @Override
@@ -522,10 +526,6 @@ public class ActivitiesController implements ActionsHandler {
         private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
             int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
             return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(numberOfCoveredItems) == Result.PERFORM_ACTION;
-        }
-
-        private void clearCommand() {
-            commandText.clear();
         }
     }
 }
