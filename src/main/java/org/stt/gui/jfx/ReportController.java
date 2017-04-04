@@ -183,8 +183,8 @@ public class ReportController {
                     public void updateItem(LocalDate item, boolean empty) {
                         super.updateItem(item, empty);
 
-                        if (trackedDays.contains(item)) {
-                            setStyle("-fx-background-color: #ff4444;");
+                        if (trackedDays.contains(item) && !isSelected()) {
+                            setStyle("-fx-background-color: #006699;");
                         }
                     }
                 }
