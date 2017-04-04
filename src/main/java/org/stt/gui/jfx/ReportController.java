@@ -41,8 +41,12 @@ import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalField;
+import java.time.temporal.WeekFields;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -78,11 +82,14 @@ public class ReportController {
     private Label roundedDurationSum;
     @FXML
     private DatePicker datePicker;
+    @FXML
+    private ToolBar toolbar;
 
     private NotificationPane panel;
     private Font fontaweSome;
     private PauseTransition notificationPause = new PauseTransition(javafx.util.Duration.seconds(2));
-    ;
+    private TemporalField dayOfWeekField = WeekFields.of(Locale.getDefault()).dayOfWeek();
+    private Set<LocalDate> trackedDays;
 
     @Inject
     ReportController(ResourceBundle localization,
@@ -127,7 +134,7 @@ public class ReportController {
 
     @FXML
     public void initialize() {
-        datePicker.setValue(LocalDate.now());
+        setupNavigation();
 
         final ObservableValue<Report> reportModel = createReportModel();
         final StringBinding startBinding = createBindingForStartOfReport(reportModel);
@@ -165,6 +172,52 @@ public class ReportController {
                 tableForReport.widthProperty().subtract(
                         columnForRoundedDuration.widthProperty().add(
                                 columnForDuration.widthProperty())));
+    }
+
+    private void setupNavigation() {
+        datePicker.setValue(LocalDate.now());
+        trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet());
+        datePicker.setDayCellFactory(datePicker ->
+                new DateCell() {
+                    @Override
+                    public void updateItem(LocalDate item, boolean empty) {
+                        super.updateItem(item, empty);
+
+                        if (trackedDays.contains(item)) {
+                            setStyle("-fx-background-color: #ff4444;");
+                        }
+                    }
+                }
+        );
+        datePicker.valueProperty().addListener(observable -> trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet()));
+
+        FramelessButton oneDayBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_LEFT, Glyph.GLYPH_SIZE_MEDIUM));
+        oneDayBack.setOnAction(event -> datePicker.setValue(datePicker.getValue().minusDays(1)));
+        Tooltips.install(oneDayBack, localization.getString("report.backADay.tooltip"));
+
+        FramelessButton oneWeekBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_LEFT, Glyph.GLYPH_SIZE_MEDIUM));
+        oneWeekBack.setOnAction(event -> {
+            LocalDate selectedDate = datePicker.getValue();
+            LocalDate startOfWeek = selectedDate.with(dayOfWeekField, 1);
+            if (startOfWeek.equals(selectedDate)) {
+                datePicker.setValue(startOfWeek.minusDays(7));
+            } else {
+                datePicker.setValue(startOfWeek);
+            }
+        });
+        Tooltips.install(oneWeekBack, localization.getString("report.backAWeek.tooltip"));
+
+        FramelessButton oneDayForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_RIGHT, Glyph.GLYPH_SIZE_MEDIUM));
+        oneDayForward.setOnAction(event -> datePicker.setValue(datePicker.getValue().plusDays(1)));
+        Tooltips.install(oneDayForward, localization.getString("report.forwardADay.tooltip"));
+
+        FramelessButton oneWeekForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_RIGHT, Glyph.GLYPH_SIZE_MEDIUM));
+        oneWeekForward.setOnAction(event -> datePicker.setValue(datePicker.getValue().with(dayOfWeekField, 1).plusDays(7)));
+        Tooltips.install(oneWeekForward, localization.getString("report.forwardAWeek.tooltip"));
+        toolbar.getItems().add(0, oneDayBack);
+        toolbar.getItems().add(0, oneWeekBack);
+        toolbar.getItems().add(oneDayForward);
+        toolbar.getItems().add(oneWeekForward);
     }
 
     private ObservableValue<Report> createReportModel() {

@@ -7,7 +7,11 @@ import javafx.scene.text.Font;
 
 public enum Glyph {
     ANGLE_DOUBLE_DOWN('\uf103'),
+    ANGLE_DOUBLE_LEFT('\uf100'),
+    ANGLE_DOUBLE_RIGHT('\uf101'),
     ANGLE_DOUBLE_UP('\uf102'),
+    ANGLE_LEFT('\uf104'),
+    ANGLE_RIGHT('\uf105'),
     CALENDAR('\uf073'),
     CHEVRON_CIRCLE_RIGHT('\uf138'),
     CLIPBOARD('\uf0ea'),
@@ -19,6 +23,7 @@ public enum Glyph {
     FAST_FORWARD('\uf050'),
     FORWARD('\uf04e');
 
+    public static final int GLYPH_SIZE_MEDIUM = 24;
     private static final Color GLYPH_COLOR = Color.GRAY;
     private final char code;
 

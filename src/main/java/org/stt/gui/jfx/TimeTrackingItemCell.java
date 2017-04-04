@@ -1,6 +1,7 @@
 package org.stt.gui.jfx;
 
 import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -22,12 +23,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static org.stt.gui.jfx.Glyph.GLYPH_SIZE_MEDIUM;
 import static org.stt.gui.jfx.Glyph.glyph;
 
 class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
-    private static final int GLYPH_SIZE = 20;
 
     private final HBox cellPane = new HBox(2);
     private final TextFlow labelForComment = new TextFlow();
@@ -54,13 +55,13 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         requireNonNull(fontAwesome);
         requireNonNull(actionsHandler);
         this.labelToNodeMapper = requireNonNull(labelToNodeMapper);
-        editButton = new FramelessButton(glyph(fontAwesome, Glyph.PENCIL, GLYPH_SIZE));
-        continueButton = new FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE, Color.DARKGREEN));
-        deleteButton = new FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE, Color.web("e26868")));
-        stopButton = new FramelessButton(glyph(fontAwesome, Glyph.STOP_CIRCLE, GLYPH_SIZE, Color.GOLDENROD));
+        editButton = new FramelessButton(glyph(fontAwesome, Glyph.PENCIL, GLYPH_SIZE_MEDIUM));
+        continueButton = new FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE_MEDIUM, Color.DARKGREEN));
+        deleteButton = new FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE_MEDIUM, Color.web("e26868")));
+        stopButton = new FramelessButton(glyph(fontAwesome, Glyph.STOP_CIRCLE, GLYPH_SIZE_MEDIUM, Color.GOLDENROD));
         this.lastItemOfDay = requireNonNull(lastItemOfDay);
-        this.startToFinishActivityGraphics = glyph(fontAwesome, Glyph.FAST_FORWARD, GLYPH_SIZE);
-        this.ongoingActivityGraphics = glyph(fontAwesome, Glyph.FORWARD, GLYPH_SIZE);
+        this.startToFinishActivityGraphics = glyph(fontAwesome, Glyph.FAST_FORWARD, GLYPH_SIZE_MEDIUM);
+        this.ongoingActivityGraphics = glyph(fontAwesome, Glyph.FORWARD, GLYPH_SIZE_MEDIUM);
         setupTooltips(localization);
 
         continueButton.setOnAction(event -> actionsHandler.continueItem(getItem()));
@@ -95,8 +96,13 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         lastItemOnDayPane = new BorderPane();
 
         HBox newDayHbox = new HBox(5);
-        newDayHbox.getChildren().add(glyph(fontAwesome, Glyph.CALENDAR));
+        newDayHbox.setPadding(new Insets(2));
+        newDayHbox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
+        Label calenderIcon = glyph(fontAwesome, Glyph.CALENDAR);
+        calenderIcon.setTextFill(Color.BLACK);
+        newDayHbox.getChildren().add(calenderIcon);
         Label dayLabel = new Label();
+        dayLabel.setTextFill(Color.BLACK);
         dayLabel.textProperty().bind(Bindings.createStringBinding(
                 () -> itemProperty().get() == null ? "" : DATE_FORMATTER.format(itemProperty().get().getStart()),
                 itemProperty()));

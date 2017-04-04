@@ -103,12 +103,12 @@ public class TimeTrackingItemQueries {
     /**
      * @return a {@link Stream} containing all time tracking items, be sure to {@link Stream#close()} it!
      */
-    public synchronized Stream<TimeTrackingItem> queryAllItems() {
+    public Stream<TimeTrackingItem> queryAllItems() {
         validateCache();
         return cachedItems.stream();
     }
 
-    private void validateCache() {
+    private synchronized void validateCache() {
         if (cachedItems == null) {
             LOG.fine("Rebuilding cache");
             cachedItems = new ArrayList<>();
