@@ -23,7 +23,7 @@ public enum Glyph {
     FAST_FORWARD('\uf050'),
     FORWARD('\uf04e');
 
-    public static final int GLYPH_SIZE_MEDIUM = 24;
+    public static final int GLYPH_SIZE_MEDIUM = 20;
     private static final Color GLYPH_COLOR = Color.GRAY;
     private final char code;
 
