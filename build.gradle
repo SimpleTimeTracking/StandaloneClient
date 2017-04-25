@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 buildscript {
   repositories {
     jcenter()
@@ -77,6 +79,14 @@ jar {
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 	manifest.attributes("Main-Class":"org.stt.StartWithJFX")
 	manifest.attributes("JavaFX-Feature-Proxy":"None")
+}
+
+processResources {
+    filesMatching('version.info') {
+        filter(ReplaceTokens, tokens: [
+                "app.version": project.property("version")
+        ])
+    }
 }
 
 tasks.withType(FindBugs) {

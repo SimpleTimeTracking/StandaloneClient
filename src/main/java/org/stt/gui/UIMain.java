@@ -11,7 +11,6 @@ import org.stt.StopWatch;
 import org.stt.event.ShuttingDown;
 import org.stt.event.TimePassedEvent;
 import org.stt.gui.jfx.MainWindowController;
-import org.stt.connector.jira.JiraConnector;
 
 import java.util.Collections;
 import java.util.List;

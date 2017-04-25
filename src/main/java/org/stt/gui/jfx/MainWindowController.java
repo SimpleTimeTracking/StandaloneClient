@@ -29,6 +29,7 @@ public class MainWindowController {
     private final ActivitiesController activitiesController;
     private final ReportController reportController;
     private final SettingsController settingsController;
+    private final ReportController infoController;
     private final MBassador<Object> eventBus;
 
     @FXML
@@ -37,18 +38,22 @@ public class MainWindowController {
     private Tab reportTab;
     @FXML
     private Tab settingsTab;
+    @FXML
+    private Tab infoTab;
 
     @Inject
     MainWindowController(ResourceBundle localization,
                          ActivitiesController activitiesController,
                          ReportController reportController,
                          MBassador<Object> eventBus,
-                         SettingsController settingsController) {
+                         SettingsController settingsController,
+                         ReportController infoController) {
         this.localization = requireNonNull(localization);
         this.activitiesController = requireNonNull(activitiesController);
         this.reportController = requireNonNull(reportController);
         this.eventBus = requireNonNull(eventBus);
         this.settingsController = requireNonNull(settingsController);
+        this.infoController = requireNonNull(infoController);
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/org/stt/gui/jfx/MainWindow.fxml"), localization);
         loader.setController(this);
@@ -72,6 +77,7 @@ public class MainWindowController {
         activitiesTab.setContent(activitiesController.getNode());
         reportTab.setContent(reportController.getPanel());
         settingsTab.setContent(settingsController.getPanel());
+        infoTab.setContent(infoController.getPanel());
     }
 
     public void show(Stage stage) {

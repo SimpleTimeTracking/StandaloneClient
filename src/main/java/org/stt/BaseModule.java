@@ -9,6 +9,7 @@ import org.stt.persistence.stt.STTFile;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.*;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -92,4 +93,15 @@ public class BaseModule {
         }
     }
 
+    @Provides
+    @Named("version.info")
+    static Properties getVersionInfoProperties() {
+        Properties properties = new Properties();
+        try (InputStream in = BaseModule.class.getResourceAsStream("/version.info")) {
+            properties.load(in);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return properties;
+    }
 }
