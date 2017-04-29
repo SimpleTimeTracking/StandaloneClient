@@ -57,9 +57,9 @@ configurations {
 }
 
 dependencies {
-	antlr  group: "org.antlr", name: "antlr4", version: "4.6"
-    compile group: "org.antlr", name: "antlr4-runtime", version: "4.6"
-    compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.7-M3'
+	antlr  group: "org.antlr", name: "antlr4", version: "4.7"
+    compile group: "org.antlr", name: "antlr4-runtime", version: "4.7"
+    compile group: 'org.fxmisc.richtext', name: 'richtextfx', version: '0.7-M5'
 	compile 'org.yaml:snakeyaml:1.18'
     compile 'com.google.dagger:dagger:2.10'
     compile 'javax.inject:javax.inject:1'

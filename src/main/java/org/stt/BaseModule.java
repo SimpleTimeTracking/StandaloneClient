@@ -9,6 +9,8 @@ import org.stt.persistence.stt.STTFile;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -94,8 +96,8 @@ public class BaseModule {
     }
 
     @Provides
-    @Named("version.info")
-    static Properties getVersionInfoProperties() {
+    @Named("applicationMetadata")
+    static Properties provideApplicationMetadata() {
         Properties properties = new Properties();
         try (InputStream in = BaseModule.class.getResourceAsStream("/version.info")) {
             properties.load(in);
@@ -103,5 +105,21 @@ public class BaseModule {
             throw new UncheckedIOException(e);
         }
         return properties;
+    }
+
+    @Provides
+    @Named("version")
+    static String provideVersion(@Named("applicationMetadata") Properties applicationMetadata) {
+        return applicationMetadata.getProperty("app.version");
+    }
+
+    @Provides
+    @Named("release url")
+    static URL provideReleaseURL(@Named("applicationMetadata") Properties applicationMetadata) {
+        try {
+            return new URL(applicationMetadata.getProperty("release.url"));
+        } catch (MalformedURLException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

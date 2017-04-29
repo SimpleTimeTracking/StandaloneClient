@@ -42,4 +42,15 @@ public class VersionComparatorTest {
         assertThat(result, is(0));
     }
 
+    @Test
+    public void higherVersionShouldBeHigher() {
+        // GIVEN
+
+        // WHEN
+        int result = sut.compare("2-SNAPSHOT", "1.1.1");
+
+        // THEN
+        assertThat(result, is(1));
+    }
+
 }

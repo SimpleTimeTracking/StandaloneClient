@@ -19,14 +19,13 @@ public class TextModule {
     }
 
     @Provides
-    static Collection<ExpansionProvider> provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper,
-                                                                  JiraExpansionProvider jiraExpansionProvider) {
-        return Arrays.asList(commonPrefixGrouper, jiraExpansionProvider);
+    static ItemCategorizer provideItemCategorizer(WorktimeCategorizer worktimeCategorizer) {
+        return worktimeCategorizer;
     }
 
     @Provides
-    static ItemCategorizer provideItemCategorizer(WorktimeCategorizer worktimeCategorizer) {
-        return worktimeCategorizer;
+    static Collection<ExpansionProvider> provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper) {
+        return Arrays.asList(commonPrefixGrouper);
     }
 
     @Provides

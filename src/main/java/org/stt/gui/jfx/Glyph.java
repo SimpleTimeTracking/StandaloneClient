@@ -13,6 +13,7 @@ public enum Glyph {
     ANGLE_LEFT('\uf104'),
     ANGLE_RIGHT('\uf105'),
     CALENDAR('\uf073'),
+    CHECK('\uf00c'),
     CHEVRON_CIRCLE_RIGHT('\uf138'),
     CLIPBOARD('\uf0ea'),
     PENCIL('\uf040'),

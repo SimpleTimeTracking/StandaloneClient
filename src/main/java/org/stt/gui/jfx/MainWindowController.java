@@ -29,7 +29,7 @@ public class MainWindowController {
     private final ActivitiesController activitiesController;
     private final ReportController reportController;
     private final SettingsController settingsController;
-    private final ReportController infoController;
+    private final InfoController infoController;
     private final MBassador<Object> eventBus;
 
     @FXML
@@ -47,7 +47,7 @@ public class MainWindowController {
                          ReportController reportController,
                          MBassador<Object> eventBus,
                          SettingsController settingsController,
-                         ReportController infoController) {
+                         InfoController infoController) {
         this.localization = requireNonNull(localization);
         this.activitiesController = requireNonNull(activitiesController);
         this.reportController = requireNonNull(reportController);

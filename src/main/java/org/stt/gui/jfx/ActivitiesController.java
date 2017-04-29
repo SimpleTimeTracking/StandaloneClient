@@ -415,7 +415,7 @@ public class ActivitiesController implements ActionsHandler {
             try {
                 Desktop.getDesktop()
                         .browse(new URI(
-                                "https://github.com/Bytekeeper/STT/wiki/CLI"));
+                                "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI"));
             } catch (IOException | URISyntaxException ex) {
                 LOG.log(Level.SEVERE, "Couldn't open help page", ex);
             }

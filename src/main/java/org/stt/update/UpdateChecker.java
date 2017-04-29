@@ -6,11 +6,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
@@ -25,13 +23,9 @@ public class UpdateChecker {
     private final String appVersion;
 
     @Inject
-    public UpdateChecker(@Named("version.info") Properties versionInfo) {
-        try {
-            projectURL = requireNonNull(new URL(versionInfo.getProperty("release.url")));
-        } catch (MalformedURLException e) {
-            throw new UncheckedIOException(e);
-        }
-        appVersion = requireNonNull(versionInfo.getProperty("app.version"));
+    public UpdateChecker(@Named("version") String appVersion, @Named("release url") URL releaseUrl) {
+        projectURL = requireNonNull(releaseUrl);
+        this.appVersion = requireNonNull(appVersion);
     }
 
     public CompletionStage<Optional<String>> queryNewerVersion() {

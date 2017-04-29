@@ -61,7 +61,7 @@ public class UIMain extends Application {
         startService(uiApplication.backupCreator());
 //        startService(uiApplication.achievementService());
         startService(uiApplication.itemLogService());
-        startService(uiApplication.jiraConnector());
+//        startService(uiApplication.jiraConnector());
 
         LOG.info("init() done");
         mainWindowController = uiApplication.mainWindow();

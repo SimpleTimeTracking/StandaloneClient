@@ -47,7 +47,7 @@ public class SettingsController {
             return defaultEditorFactory.call(item);
         });
         Stream.of(configRoot, activitiesConfig, backupConfig, cliConfig, commonPrefixGrouperConfig,
-                reportConfig, worktimeConfig, jiraConfig)
+                reportConfig, worktimeConfig)
                 .forEach(o -> propertySheet.getItems().addAll(BeanPropertyUtils.getProperties(o,
                         propertyDescriptor -> {
                             Class<?> propertyType = propertyDescriptor.getPropertyType();
