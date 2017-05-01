@@ -1,6 +1,7 @@
 package org.stt.gui.jfx;
 
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableStringValue;
@@ -48,6 +49,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -124,6 +126,7 @@ public class ReportController {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        reportPane.getStylesheets().add("org/stt/gui/jfx/Reports.css");
         panel = new NotificationPane(reportPane);
         notificationPause.setOnFinished(event -> panel.hide());
     }
@@ -135,6 +138,9 @@ public class ReportController {
     @FXML
     public void initialize() {
         setupNavigation();
+
+        tableForReport.getSelectionModel().selectedIndexProperty().addListener(i ->
+                Platform.runLater(tableForReport.getSelectionModel()::clearSelection));
 
         final ObservableValue<Report> reportModel = createReportModel();
         final StringBinding startBinding = createBindingForStartOfReport(reportModel);
@@ -150,12 +156,11 @@ public class ReportController {
         endOfReport.textProperty().bind(endBinding);
         uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding);
         uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding);
-        startOfReport.setOnMouseClicked(event -> setClipboard(startBinding.get(), event.getScreenX(), event.getScreenY()));
-        endOfReport.setOnMouseClicked(event -> setClipboard(endBinding.get(), event.getScreenX(), event.getScreenY()));
+        startOfReport.setOnMouseClicked(event -> setClipboard(startBinding.get()));
+        endOfReport.setOnMouseClicked(event -> setClipboard(endBinding.get()));
 
         ListBinding<ListItem> reportListModel = createReportingItemsListModel(reportModel);
         tableForReport.setItems(reportListModel);
-        tableForReport.getSelectionModel().setCellSelectionEnabled(true);
 
         roundedDurationSum
                 .textProperty()
@@ -172,6 +177,18 @@ public class ReportController {
                 tableForReport.widthProperty().subtract(
                         columnForRoundedDuration.widthProperty().add(
                                 columnForDuration.widthProperty())));
+
+        applyClipboardTooltip(columnForComment::setGraphic, "report.tooltips.copyActivity");
+        applyClipboardTooltip(columnForDuration::setGraphic, "report.tooltips.copyRow");
+        applyClipboardTooltip(columnForRoundedDuration::setGraphic, "report.tooltips.copyRow");
+        applyClipboardTooltip(startOfReport::setGraphic, "report.tooltips.copy");
+        applyClipboardTooltip(endOfReport::setGraphic, "report.tooltips.copy");
+    }
+
+    public void applyClipboardTooltip(Consumer<Node> on, String tooltipKey) {
+        Label tooltipLabel = Glyph.glyph(fontaweSome, Glyph.CLIPBOARD);
+        Tooltips.install(tooltipLabel, localization.getString(tooltipKey));
+        on.accept(tooltipLabel);
     }
 
     private void setupNavigation() {
@@ -282,7 +299,7 @@ public class ReportController {
         if (config.isGroupItems()) {
             setItemGroupingCellFactory();
         } else {
-            addClickToCopy(columnForComment, (item, event) -> setClipboard(item.getComment(), event.getScreenX(), event.getScreenY()));
+            addClickToCopy(columnForComment, (item, event) -> setClipboard(item.getComment()));
         }
     }
 
@@ -303,7 +320,7 @@ public class ReportController {
         columnForComment.setCellFactory(param -> new CommentTableCell());
     }
 
-    private void setClipboard(String comment, double screenX, double screenY) {
+    private void setClipboard(String comment) {
         ClipboardContent content = new ClipboardContent();
         content.putString(comment);
         setClipboardContentTo(content);
@@ -318,8 +335,8 @@ public class ReportController {
         notificationPause.playFromStart();
     }
 
-    private void copyDurationToClipboard(Duration duration, double screenX, double screenY) {
-        setClipboard(DateTimes.prettyPrintDuration(duration), screenX, screenY);
+    private void copyDurationToClipboard(Duration duration) {
+        setClipboard(DateTimes.prettyPrintDuration(duration));
     }
 
     private void setClipboardContentTo(ClipboardContent content) {
@@ -340,7 +357,7 @@ public class ReportController {
                         return new SimpleStringProperty(duration);
                     }
                 });
-        addClickToCopy(columnForDuration, (item, event) -> copyDurationToClipboard(item.getDuration(), event.getScreenX(), event.getScreenY()));
+        addClickToCopy(columnForDuration, (item, event) -> copyDurationToClipboard(item.getDuration()));
     }
 
     private void setRoundedDurationColumnCellFactoryToConvertDurationToString() {
@@ -356,7 +373,7 @@ public class ReportController {
                         return new SimpleStringProperty(duration);
                     }
                 });
-        addClickToCopy(columnForRoundedDuration, (item, event) -> copyDurationToClipboard(item.getRoundedDuration(), event.getScreenX(), event.getScreenY()));
+        addClickToCopy(columnForRoundedDuration, (item, event) -> copyDurationToClipboard(item.getRoundedDuration()));
     }
 
     private class CommentTableCell extends TableCell<ListItem, String> {
@@ -384,7 +401,7 @@ public class ReportController {
                 if (item == null) {
                     return;
                 }
-                setClipboard(item.getComment(), event.getScreenX(), event.getScreenY());
+                setClipboard(item.getComment());
             });
         }
 
@@ -408,11 +425,7 @@ public class ReportController {
                     final Text partLabel = new Text(partToShow);
                     addClickListener(itemGroups, partLabel, i);
                     if (i < groupColors.length) {
-                        Color color = groupColors[i];
-                        Color selected = color.deriveColor(0, 1, 3, 1);
-                        BooleanBinding selectedRow = Bindings.equal(tableForReport.getSelectionModel().selectedIndexProperty(), indexProperty());
-                        ObjectBinding<Color> colorObjectBinding = new When(selectedRow).then(selected).otherwise(color);
-                        partLabel.fillProperty().bind(colorObjectBinding);
+                        partLabel.setFill(groupColors[i]);
                     }
                     textList.add(partLabel);
                 }
@@ -423,7 +436,7 @@ public class ReportController {
         private void addClickListener(final List<String> itemGroups, Node partLabel, final int fromIndex) {
             partLabel.setOnMouseClicked(event -> {
                 String commentRemainder = String.join(" ", itemGroups.subList(fromIndex, itemGroups.size()));
-                setClipboard(commentRemainder, event.getScreenX(), event.getScreenY());
+                setClipboard(commentRemainder);
                 event.consume();
             });
         }

@@ -150,7 +150,7 @@ public class ActivitiesController implements ActionsHandler {
             throw new UncheckedIOException(e);
         }
 
-        panel.getStylesheets().add("org/stt/gui/jfx/CommandText.css");
+        panel.getStylesheets().add("org/stt/gui/jfx/Activities.css");
     }
 
     @Handler
@@ -427,7 +427,7 @@ public class ActivitiesController implements ActionsHandler {
         insertButton.setBackground(commandText.getBackground());
         insertButton.setTooltip(new Tooltip(localization.getString("activities.command.insert")));
         insertButton.setOnAction(event -> executeCommand());
-        commandPane.setAlignment(insertButton, Pos.CENTER);
+        BorderPane.setAlignment(insertButton, Pos.CENTER);
         commandPane.setRight(insertButton);
         commandPane.setBackground(commandText.getBackground());
     }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
@@ -9,9 +10,9 @@
         <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
             <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="columnForRoundedDuration" prefWidth="170.0" text="%report.rounded"/>
-                    <TableColumn fx:id="columnForDuration" minWidth="0.0" prefWidth="120.0" text="%report.duration"/>
-                    <TableColumn fx:id="columnForComment" prefWidth="-1.0" text="%report.activity"/>
+                    <TableColumn fx:id="columnForRoundedDuration" prefWidth="100.0" text="%report.rounded"/>
+                    <TableColumn fx:id="columnForDuration" minWidth="0.0" prefWidth="100.0" text="%report.duration"/>
+                    <TableColumn fx:id="columnForComment" minWidth="0.0" prefWidth="108.0" text="%report.activity"/>
                 </columns>
             </TableView>
             <FlowPane hgap="10.0">
@@ -22,7 +23,6 @@
                             <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
                         </columnConstraints>
                         <rowConstraints>
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                         </rowConstraints>
@@ -40,13 +40,6 @@
                             </Label>
                             <Label fx:id="endOfReport" text="endOfReportValue" GridPane.columnIndex="1"
                                    GridPane.rowIndex="1"/>
-                            <Label text="%uncoveredTime" GridPane.rowIndex="2">
-                                <font>
-                                    <Font name="System Bold" size="12.0"/>
-                                </font>
-                            </Label>
-                            <Label fx:id="uncoveredTime" text="uncoveredTime" GridPane.columnIndex="1"
-                                   GridPane.rowIndex="2"/>
                         </children>
                     </GridPane>
                     <GridPane hgap="10.0">
@@ -57,7 +50,6 @@
                         <rowConstraints>
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                         </rowConstraints>
                         <children>
                             <Label text="%roundedDurationSum">
@@ -66,9 +58,19 @@
                                 </font>
                             </Label>
                             <Label fx:id="roundedDurationSum" text="roundedDurationSum" GridPane.columnIndex="1"/>
+                            <Label text="%uncoveredTime" GridPane.rowIndex="1">
+                                <font>
+                                    <Font name="System Bold" size="12.0"/>
+                                </font>
+                            </Label>
+                            <Label fx:id="uncoveredTime" text="uncoveredTime" GridPane.columnIndex="1"
+                                   GridPane.rowIndex="1"/>
                         </children>
                     </GridPane>
                 </children>
+                <padding>
+                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                </padding>
             </FlowPane>
         </VBox>
     </center>

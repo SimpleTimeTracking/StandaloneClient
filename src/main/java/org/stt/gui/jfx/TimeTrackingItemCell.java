@@ -81,11 +81,11 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         labelArea.setPrefWidth(450);
 
         cellPane.getChildren().addAll(
-                continueButton,
-                editButton,
                 labelArea,
                 space,
                 timePane,
+                continueButton,
+                editButton,
                 deleteButton);
         cellPane.setAlignment(Pos.CENTER_LEFT);
         if (UIMain.DEBUG_UI) {
@@ -95,21 +95,24 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
 
         lastItemOnDayPane = new BorderPane();
 
+        newDayNode = createDateSubheader(fontAwesome);
+
+        setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+    }
+
+    private VBox createDateSubheader(Font fontAwesome) {
         HBox newDayHbox = new HBox(5);
         newDayHbox.setPadding(new Insets(2));
-        newDayHbox.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, null, null)));
         Label calenderIcon = glyph(fontAwesome, Glyph.CALENDAR);
-        calenderIcon.setTextFill(Color.BLACK);
+        calenderIcon.setTextFill(Color.CORNFLOWERBLUE);
         newDayHbox.getChildren().add(calenderIcon);
         Label dayLabel = new Label();
-        dayLabel.setTextFill(Color.BLACK);
+        dayLabel.setTextFill(Color.CORNFLOWERBLUE);
         dayLabel.textProperty().bind(Bindings.createStringBinding(
                 () -> itemProperty().get() == null ? "" : DATE_FORMATTER.format(itemProperty().get().getStart()),
                 itemProperty()));
         newDayHbox.getChildren().add(dayLabel);
-        newDayNode = newDayHbox;
-
-        setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        return new VBox(10, new Separator(), newDayHbox);
     }
 
     protected void setupTooltips(ResourceBundle localization) {
@@ -129,7 +132,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         if (empty) {
             setGraphic(null);
         } else {
-            cellPane.getChildren().set(0, item.getEnd().isPresent() ? continueButton : stopButton);
+            cellPane.getChildren().set(3, item.getEnd().isPresent() ? continueButton : stopButton);
             applyLabelForComment();
             setupTimePane();
             if (lastItemOfDay.test(item)) {
@@ -150,6 +153,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     private void setupLastItemOfDayPane() {
         lastItemOnDayPane.setCenter(cellPane);
         lastItemOnDayPane.setTop(newDayNode);
+        BorderPane.setMargin(newDayNode, new Insets(10, 0, 10, 0));
     }
 
     private void applyLabelForComment() {
