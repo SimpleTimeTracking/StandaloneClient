@@ -18,26 +18,24 @@
         </VBox>
     </bottom>
     <center>
-        <FlowPane alignment="TOP_CENTER" hgap="5.0" BorderPane.alignment="CENTER">
+        <VBox alignment="CENTER" BorderPane.alignment="CENTER">
             <children>
-                <Label text="%info.nameAndVersion">
-                    <padding>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                    </padding>
-                </Label>
-                <Label fx:id="versionLabel" text="Unknown"/>
+                <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../../../../Logo.png"/>
+                    </image>
+                </ImageView>
+                <FlowPane alignment="TOP_CENTER" hgap="5.0">
+                    <children>
+                        <Label text="%info.nameAndVersion">
+                            <padding>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                            </padding>
+                        </Label>
+                        <Label fx:id="versionLabel" text="Unknown"/>
+                    </children>
+                </FlowPane>
             </children>
-        </FlowPane>
+        </VBox>
     </center>
-    <top>
-        <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true"
-                   BorderPane.alignment="CENTER">
-            <image>
-                <Image url="@../../../../Logo.png"/>
-            </image>
-            <BorderPane.margin>
-                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-            </BorderPane.margin>
-        </ImageView>
-    </top>
 </BorderPane>
