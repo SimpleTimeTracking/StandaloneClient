@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/SimpleTimeTracking/StandaloneClient.svg)](https://travis-ci.org/SimpleTimeTracking/StandaloneClient) 
 
 # What? 
-The goal of STT is to make time tracking as simple and quick as possible.
+_SimpleTimeTracking_ is an application to make time tracking as simple and quick as possible.
 
 ![Main window](https://raw.githubusercontent.com/SimpleTimeTracking/StandaloneClient/master/doc/MainApp.png)
 
