@@ -35,7 +35,7 @@ public class TimeTrackingItemQueries {
         eventbus.ifPresent(bus -> bus.subscribe(this));
     }
 
-    @Handler
+    @Handler(priority = Integer.MAX_VALUE)
     public synchronized void sourceChanged(ItemModified event) {
         cachedItems = null;
         LOG.fine("Clearing query cache");

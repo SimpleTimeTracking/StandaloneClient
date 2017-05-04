@@ -158,7 +158,7 @@ public class ActivitiesController implements ActionsHandler {
         updateAchievements();
     }
 
-    @Handler(priority = -1)
+    @Handler
     public void onItemChange(ItemModified event) {
         updateItems();
     }
@@ -315,9 +315,9 @@ public class ActivitiesController implements ActionsHandler {
 
     @FXML
     public void initialize() {
-        if (activitiesConfig.isAutoCompletionPopup()) {
-            setupAutoCompletionPopup();
-        }
+//        if (activitiesConfig.isAutoCompletionPopup()) {
+//            setupAutoCompletionPopup();
+//        }
 
         addWorktimePanel();
         addCommandText();

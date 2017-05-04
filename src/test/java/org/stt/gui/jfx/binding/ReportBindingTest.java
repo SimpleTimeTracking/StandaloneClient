@@ -42,7 +42,8 @@ public class ReportBindingTest {
 	@Before
 	public void setup() {
         readerProvider = () -> itemReader;
-        sut = new ReportBinding(reportStart, reportEnd, new TimeTrackingItemQueries(readerProvider, Optional.empty()));
+        sut = new ReportBinding(reportStart, reportEnd,
+                new TimeTrackingItemQueries(readerProvider, Optional.empty()));
     }
 
 	@Test

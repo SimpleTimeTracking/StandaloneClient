@@ -11,14 +11,14 @@ buildscript {
 }
 
 plugins {
-    id "net.ltgt.apt" version "0.9"
+    id "net.ltgt.apt" version "0.10"
 }
 
-apply plugin: 'application';
-apply plugin: 'java';
-apply plugin: 'findbugs';
-apply plugin: 'pmd';
-apply plugin: 'jacoco';
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'findbugs'
+apply plugin: 'pmd'
+apply plugin: 'jacoco'
 apply plugin: 'com.github.ben-manes.versions'
 apply plugin: 'idea'
 apply plugin: 'antlr'
@@ -39,12 +39,8 @@ repositories {
 version = '2'
 archivesBaseName = 'STT'
 
-def javaHome = System.properties['java.home']
-
 sourceCompatibility = 1.8
 mainClassName='org.stt.StartWithJFX'
-
-ext.mainClass = mainClassName
 
 findbugs {
 	excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
@@ -97,7 +93,7 @@ tasks.withType(FindBugs) {
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '3.4'
+	gradleVersion = '3.5'
 }
 
 task release(dependsOn: 'distZip') {

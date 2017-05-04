@@ -100,7 +100,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
 
-    private VBox createDateSubheader(Font fontAwesome) {
+    private Node createDateSubheader(Font fontAwesome) {
         HBox newDayHbox = new HBox(5);
         newDayHbox.setPadding(new Insets(2));
         Label calenderIcon = glyph(fontAwesome, Glyph.CALENDAR);
@@ -112,7 +112,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
                 () -> itemProperty().get() == null ? "" : DATE_FORMATTER.format(itemProperty().get().getStart()),
                 itemProperty()));
         newDayHbox.getChildren().add(dayLabel);
-        return new VBox(10, new Separator(), newDayHbox);
+        return newDayHbox;
     }
 
     protected void setupTooltips(ResourceBundle localization) {

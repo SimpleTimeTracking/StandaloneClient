@@ -9,6 +9,3 @@
 }
 
 .value { -fx-fill: blue; }
-
-.list-cell:odd { -fx-background-color: transparent; }
-.list-cell:even{ -fx-background-color: transparent; }

@@ -1,8 +1,4 @@
-.table-view {
-    -fx-control-inner-background-alt: -fx-control-inner-background;
-}
-
 .table-cell {
-    -fx-border-color: transparent transparent -fx-table-cell-border-color transparent;
+    -fx-border-color: transparent;
     -fx-padding: 1em;
 }

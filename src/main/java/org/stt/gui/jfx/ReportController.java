@@ -24,11 +24,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 import org.controlsfx.control.NotificationPane;
 import org.stt.config.ReportConfig;
 import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
+import org.stt.model.ItemModified;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.reporting.SummingReportGenerator.Report;
 import org.stt.text.ItemGrouper;
@@ -89,6 +94,7 @@ public class ReportController {
 
     private NotificationPane panel;
     private Font fontaweSome;
+    private final MBassador<Object> eventBus;
     private PauseTransition notificationPause = new PauseTransition(javafx.util.Duration.seconds(2));
     private TemporalField dayOfWeekField = WeekFields.of(Locale.getDefault()).dayOfWeek();
     private Set<LocalDate> trackedDays;
@@ -99,13 +105,15 @@ public class ReportController {
                      DurationRounder rounder,
                      ItemGrouper itemGrouper,
                      ReportConfig config,
-                     @Named("glyph") Font fontaweSome) {
+                     @Named("glyph") Font fontaweSome,
+                     MBassador<Object> eventBus) {
         this.localization = requireNonNull(localization);
         this.config = requireNonNull(config);
         this.timeTrackingItemQueries = requireNonNull(searcher);
         this.rounder = requireNonNull(rounder);
         this.itemGrouper = requireNonNull(itemGrouper);
         this.fontaweSome = requireNonNull(fontaweSome);
+        this.eventBus = requireNonNull(eventBus);
 
         List<String> colorStrings = config.getGroupColors();
         groupColors = new Color[colorStrings.size()];
@@ -142,7 +150,8 @@ public class ReportController {
         tableForReport.getSelectionModel().selectedIndexProperty().addListener(i ->
                 Platform.runLater(tableForReport.getSelectionModel()::clearSelection));
 
-        final ObservableValue<Report> reportModel = createReportModel();
+        final ObjectBinding<Report> reportModel = createReportModel();
+        eventBus.subscribe(new OnItemChangeListener(reportModel));
         final StringBinding startBinding = createBindingForStartOfReport(reportModel);
         final StringBinding endBinding = createBindingForEndOfReport(reportModel);
         final ObjectBinding<Duration> uncoveredTimeBinding = createBindingForUncoveredTimeOfReport(reportModel);
@@ -237,7 +246,7 @@ public class ReportController {
         toolbar.getItems().add(oneWeekForward);
     }
 
-    private ObservableValue<Report> createReportModel() {
+    private ObjectBinding<Report> createReportModel() {
         ObservableValue<LocalDate> nextDay = Bindings.createObjectBinding(
                 () -> datePicker.getValue() != null ? datePicker
                         .getValue().plusDays(1) : null, datePicker.valueProperty());
@@ -465,6 +474,20 @@ public class ReportController {
 
         public Duration getRoundedDuration() {
             return roundedDuration;
+        }
+    }
+
+    @Listener(references = References.Strong)
+    private static class OnItemChangeListener {
+        private final ObjectBinding<?> binding;
+
+        private OnItemChangeListener(ObjectBinding<?> binding) {
+            this.binding = binding;
+        }
+
+        @Handler
+        public void onItemChanged(ItemModified changeEvent) {
+            binding.invalidate();
         }
     }
 }
