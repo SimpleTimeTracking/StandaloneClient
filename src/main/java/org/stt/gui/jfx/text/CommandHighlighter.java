@@ -25,7 +25,9 @@ public class CommandHighlighter {
         EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
-        textArea.clearStyle(0, textArea.getLength());
+        if (textArea.getLength() > 0) {
+            textArea.clearStyle(0, textArea.getLength());
+        }
         parser.command().accept(visitor);
     }
 
