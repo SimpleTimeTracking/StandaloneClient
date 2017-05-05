@@ -122,4 +122,10 @@ public class BaseModule {
             throw new UncheckedIOException(e);
         }
     }
+
+    @Provides
+    @Named("commit hash")
+    static String provideCommitHash(@Named("applicationMetadata") Properties applicationMetadata) {
+        return applicationMetadata.getProperty("app.hash");
+    }
 }

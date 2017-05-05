@@ -1,2 +1,3 @@
 app.version=@app.version@
+app.hash=@app.hash@
 release.url=https://api.github.com/repos/SimpleTimeTracking/StandaloneClient/releases

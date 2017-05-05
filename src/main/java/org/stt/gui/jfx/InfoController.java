@@ -37,9 +37,12 @@ public class InfoController {
     @FXML
     private Label versionLabel;
     @FXML
+    private Label hashValue;
+    @FXML
     private VBox updateArea;
     private Font fontAwesome;
     private final String appVersion;
+    private String commitHash;
     private final ExecutorService executorService;
 
     @Inject
@@ -47,11 +50,13 @@ public class InfoController {
                           UpdateChecker updateChecker,
                           @Named("glyph") Font fontAwesome,
                           @Named("version") String appVersion,
+                          @Named("commit hash") String commitHash,
                           ExecutorService executorService) {
         this.localization = requireNonNull(localization);
         this.updateChecker = requireNonNull(updateChecker);
         this.fontAwesome = requireNonNull(fontAwesome);
         this.appVersion = requireNonNull(appVersion);
+        this.commitHash = requireNonNull(commitHash);
         this.executorService = requireNonNull(executorService);
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
                 "/org/stt/gui/jfx/InfoPanel.fxml"), localization);
@@ -66,6 +71,7 @@ public class InfoController {
     @FXML
     public void initialize() {
         versionLabel.setText(appVersion);
+        hashValue.setText(commitHash);
     }
 
     public Pane getPanel() {
