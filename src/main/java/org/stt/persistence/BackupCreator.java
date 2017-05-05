@@ -68,6 +68,13 @@ public class BackupCreator implements Service {
 
 		File backupLocation = backupConfig.getBackupLocation().file(homePath);
 
+        if (!backupLocation.exists()) {
+            boolean mkdirs = backupLocation.mkdirs();
+            if (!mkdirs) {
+                throw new IOException("Couldn't create backup folder: " + backupLocation.getAbsolutePath());
+            }
+        }
+
 		if (!backupLocation.canWrite()) {
             throw new IOException("cannot persist to "
                     + backupLocation.getAbsolutePath());

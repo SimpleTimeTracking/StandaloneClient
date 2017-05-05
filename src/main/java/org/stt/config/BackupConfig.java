@@ -3,7 +3,7 @@ package org.stt.config;
 public class BackupConfig implements ConfigurationContainer {
     private int backupInterval = 7;
     private int backupRetentionCount = 0;
-    private PathSetting backupLocation = new PathSetting("$HOME$");
+    private PathSetting backupLocation = new PathSetting("$HOME$/.stt/backups");
     private PathSetting itemLogFile = new PathSetting("$HOME$/.stt/itemlog");
 
     public int getBackupInterval() {
