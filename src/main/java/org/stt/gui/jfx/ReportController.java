@@ -182,11 +182,6 @@ public class ReportController {
 
         presetSortingToAscendingCommentColumn();
 
-        columnForComment.prefWidthProperty().bind(
-                tableForReport.widthProperty().subtract(
-                        columnForRoundedDuration.widthProperty().add(
-                                columnForDuration.widthProperty())));
-
         applyClipboardTooltip(columnForComment::setGraphic, "report.tooltips.copyActivity");
         applyClipboardTooltip(columnForDuration::setGraphic, "report.tooltips.copyRow");
         applyClipboardTooltip(columnForRoundedDuration::setGraphic, "report.tooltips.copyRow");

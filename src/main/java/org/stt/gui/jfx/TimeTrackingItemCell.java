@@ -70,7 +70,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         stopButton.setOnAction(event -> actionsHandler.stop(getItem()));
 
         Pane space = new Pane();
-        HBox.setHgrow(space, Priority.ALWAYS);
+        HBox.setHgrow(space, Priority.SOMETIMES);
         timePane.setPrefWidth(180);
         timePane.setSpacing(10);
         timePane.setAlignment(Pos.CENTER_LEFT);
@@ -78,6 +78,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
         StackPane labelArea = new StackPaneWithoutResize(labelForComment);
         StackPane.setAlignment(labelForComment, Pos.CENTER_LEFT);
 
+        HBox.setHgrow(labelArea, Priority.ALWAYS);
         labelArea.setPrefWidth(450);
 
         cellPane.getChildren().addAll(
