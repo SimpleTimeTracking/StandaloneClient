@@ -1,10 +1,12 @@
 package org.stt.model;
 
 import org.junit.Test;
+import org.stt.time.DateTimes;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static java.time.LocalDateTime.now;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
@@ -50,7 +52,7 @@ public class TimeTrackingItemTest {
         TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
 		// WHEN
-        LocalDateTime newEndTime = LocalDateTime.now().plusMinutes(2).withNano(0);
+        LocalDateTime newEndTime = DateTimes.preciseToSecond(now().plusMinutes(2));
         TimeTrackingItem newItem = sut.withEnd(newEndTime);
 
 		// THEN
@@ -65,7 +67,7 @@ public class TimeTrackingItemTest {
         TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
 
         // WHEN
-        LocalDateTime newStartTime = LocalDateTime.now().plusMinutes(2).withNano(0);
+        LocalDateTime newStartTime = DateTimes.preciseToSecond(now().plusMinutes(2));
         TimeTrackingItem newItem = sut.withStart(newStartTime);
 
         // THEN

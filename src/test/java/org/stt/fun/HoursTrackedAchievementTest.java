@@ -9,9 +9,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.stt.model.TimeTrackingItem;
+import org.stt.time.DateTimes;
 
 import java.time.LocalDateTime;
 
+import static java.time.LocalDateTime.now;
 import static org.hamcrest.CoreMatchers.is;
 
 /**
@@ -21,7 +23,7 @@ import static org.hamcrest.CoreMatchers.is;
 public class HoursTrackedAchievementTest extends AchievementTestBase {
 
 	private HoursTrackedAchievement sut;
-	private LocalDateTime base = LocalDateTime.now().withNano(0);
+	private LocalDateTime base = DateTimes.preciseToSecond(now());
 
 	@Before
 	public void setup() {

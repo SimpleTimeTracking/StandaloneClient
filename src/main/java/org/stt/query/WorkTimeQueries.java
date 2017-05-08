@@ -2,6 +2,7 @@ package org.stt.query;
 
 import org.stt.reporting.WorkingtimeItemProvider;
 import org.stt.text.ItemCategorizer;
+import org.stt.time.DateTimes;
 import org.stt.time.Interval;
 
 import javax.inject.Inject;
@@ -27,14 +28,14 @@ public class WorkTimeQueries {
     }
 
     public Duration queryRemainingWorktimeToday() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = DateTimes.preciseToSecond(LocalDateTime.now());
         LocalDate today = now.toLocalDate();
         Duration workedTime = queryWorktime(Interval.ofDay(today).withEnd(now));
         return workingtimeItemProvider.getWorkingTimeFor(today).getMin().minus(workedTime);
     }
 
     public Duration queryWeekWorktime() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = DateTimes.preciseToSecond(LocalDateTime.now());
         LocalDate monday = now.toLocalDate().with(DayOfWeek.MONDAY);
         Interval currentWeek = Interval.between(monday.atStartOfDay(), now);
         return queryWorktime(currentWeek);

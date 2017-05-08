@@ -86,4 +86,8 @@ public class DateTimes {
             return " " + FORMATTER_PERIOD_HHh_MMm_SSs.print(duration);
         }
     }
+
+    public static LocalDateTime preciseToSecond(LocalDateTime localDateTime) {
+        return localDateTime.withNano(0);
+    }
 }

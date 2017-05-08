@@ -1,5 +1,7 @@
 package org.stt.model;
 
+import org.stt.time.DateTimes;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -20,8 +22,8 @@ public final class TimeTrackingItem {
     public TimeTrackingItem(String activity, LocalDateTime start, LocalDateTime end) {
         this.activity = requireNonNull(activity);
         this.start = requireNonNull(start, "start must not be null");
-        this.end = Optional.of(end.withNano(0));
-        requireThat(!end.isBefore(start.withNano(0)),
+        this.end = Optional.of(DateTimes.preciseToSecond(end));
+        requireThat(!end.isBefore(DateTimes.preciseToSecond(start)),
                 "end must not be before start for item " + this.toString());
     }
 
@@ -31,7 +33,7 @@ public final class TimeTrackingItem {
      */
     public TimeTrackingItem(String activity, LocalDateTime start) {
         this.activity = requireNonNull(activity);
-        this.start = requireNonNull(start).withNano(0);
+        this.start = DateTimes.preciseToSecond(requireNonNull(start));
         this.end = Optional.empty();
     }
 
