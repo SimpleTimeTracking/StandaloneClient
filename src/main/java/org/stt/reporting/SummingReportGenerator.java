@@ -61,6 +61,9 @@ public class SummingReportGenerator {
                 endOfReport = end;
 
                 Duration duration = Duration.between(start, end);
+                if (duration.isNegative()) {
+                    duration = Duration.ZERO;
+                }
                 String comment = item.getActivity();
                 if (collectingMap.containsKey(comment)) {
                     Duration oldDuration = collectingMap.get(comment);
