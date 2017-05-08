@@ -8,16 +8,16 @@
         <VBox spacing="2.0" BorderPane.alignment="CENTER">
             <VBox fx:id="additionals" VBox.vgrow="SOMETIMES">
                 <children>
-                    <SplitPane dividerPositions="0.2" orientation="VERTICAL" VBox.vgrow="ALWAYS">
+                    <SplitPane dividerPositions="0.215" orientation="VERTICAL" VBox.vgrow="ALWAYS">
                         <items>
-                            <VBox>
+                            <VBox SplitPane.resizableWithParent="false">
                                 <children>
                                     <ToolBar>
                                         <items>
                                             <Label text="%activities.command.title"/>
                                         </items>
                                     </ToolBar>
-                                    <BorderPane fx:id="commandPane" prefHeight="200.0" prefWidth="200.0"
+                                    <BorderPane fx:id="commandPane" prefHeight="150.0" prefWidth="200.0"
                                                 VBox.vgrow="SOMETIMES"/>
                                 </children>
                             </VBox>
