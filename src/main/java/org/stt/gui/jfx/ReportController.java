@@ -176,8 +176,8 @@ public class ReportController {
                 .bind(STTBindings
                         .formattedDuration(createBindingForRoundedDurationSum(reportListModel)));
 
-        columnForRoundedDuration.setStyle("-fx-alignment: CENTER-RIGHT;");
-        columnForDuration.setStyle("-fx-alignment: CENTER-RIGHT;");
+        columnForRoundedDuration.setStyle("-fx-alignment: TOP-RIGHT;");
+        columnForDuration.setStyle("-fx-alignment: TOP-RIGHT;");
 
         setRoundedDurationColumnCellFactoryToConvertDurationToString();
         setDurationColumnCellFactoryToConvertDurationToString();

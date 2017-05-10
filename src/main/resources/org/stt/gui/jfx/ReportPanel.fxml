@@ -10,9 +10,9 @@
         <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
             <TableView fx:id="tableForReport" prefHeight="300.0" prefWidth="400.0" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="columnForRoundedDuration" maxWidth="1000.0" minWidth="100.0" prefWidth="100.0"
+                    <TableColumn fx:id="columnForRoundedDuration" maxWidth="400.0" minWidth="100.0" prefWidth="100.0"
                                  text="%report.rounded"/>
-                    <TableColumn fx:id="columnForDuration" maxWidth="1000.0" minWidth="100.0" prefWidth="100.0"
+                    <TableColumn fx:id="columnForDuration" maxWidth="400.0" minWidth="100.0" prefWidth="100.0"
                                  text="%report.duration"/>
                     <TableColumn fx:id="columnForComment" maxWidth="12000.0" minWidth="100.0" prefWidth="500.0"
                                  text="%report.activity"/>
