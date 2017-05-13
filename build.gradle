@@ -36,7 +36,7 @@ repositories {
 
 
 // -SNAPSHOT is added if the release task is not set
-version = '2'
+version = '3'
 archivesBaseName = 'STT'
 
 sourceCompatibility = 1.8
