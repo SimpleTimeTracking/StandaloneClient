@@ -316,7 +316,6 @@ public class TimeTrackingItemQueriesTest {
 
     @Test
     public void itemNotContainingSubstringGetsNotFound() throws IOException {
-
         // GIVEN
         givenReaderReturns(new TimeTrackingItem("the comment", LocalDateTime.now()));
 
@@ -446,5 +445,21 @@ public class TimeTrackingItemQueriesTest {
         // THEN
         assertThat(adjacentItems.previousItem(), is(Optional.empty()));
         assertThat(adjacentItems.nextItem(), is(Optional.empty()));
+    }
+
+    @Test
+    public void shouldMatchActivityIsNotCriteria() {
+        // GIVEN
+        givenReaderReturns(new TimeTrackingItem("to be filtered", LocalDateTime.now()),
+                new TimeTrackingItem("not to be filtered", LocalDateTime.now()));
+
+        Criteria criteria = new Criteria();
+        criteria.withActivityIsNot("to be filtered");
+
+        // WHEN
+        Optional<TimeTrackingItem> read = sut.queryItems(criteria).findFirst();
+
+        // THEN
+        Assert.assertEquals("not to be filtered", read.map(TimeTrackingItem::getActivity).get());
     }
 }

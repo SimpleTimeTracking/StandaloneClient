@@ -27,7 +27,9 @@ public class ItemAndDateValidator {
         Interval searchInterval = Interval.between(startOfDay, start);
         Criteria criteria = new Criteria();
         criteria.withStartBetween(searchInterval);
-        boolean hasEarlierItem = timeTrackingItemQueries.queryItems(criteria).findAny().isPresent();
+        boolean hasEarlierItem = timeTrackingItemQueries.queryItems(criteria)
+                .findAny()
+                .isPresent();
         if (hasEarlierItem) {
             return true;
         }
@@ -37,9 +39,9 @@ public class ItemAndDateValidator {
     public int validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
         Criteria criteria = new Criteria();
         criteria.withStartNotBefore(newItem.getStart());
+        criteria.withActivityIsNot(newItem.getActivity());
         newItem.getEnd().ifPresent(criteria::withEndNotAfter);
         return (int) timeTrackingItemQueries.queryItems(criteria)
-                .filter(item -> !newItem.getActivity().equals(item.getActivity()))
                 .filter(item -> !newItem.getStart().equals(item.getStart())
                         || !newItem.getEnd().equals(item.getEnd()))
                 .count();

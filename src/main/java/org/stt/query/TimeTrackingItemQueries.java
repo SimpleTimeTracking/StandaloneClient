@@ -11,7 +11,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -112,44 +114,12 @@ public class TimeTrackingItemQueries {
         if (cachedItems == null) {
             LOG.fine("Rebuilding cache");
             cachedItems = new ArrayList<>();
-            try (TimeTrackingItemIterator it = new TimeTrackingItemIterator(provider.get())) {
-                while (it.hasNext()) {
-                    cachedItems.add(it.next());
+            try (ItemReader reader = provider.get()) {
+                Optional<TimeTrackingItem> itemOptional;
+                while ((itemOptional = reader.read()).isPresent()) {
+                    cachedItems.add(itemOptional.get());
                 }
             }
-        }
-    }
-
-    private static class TimeTrackingItemIterator implements Iterator<TimeTrackingItem>, AutoCloseable {
-        private final ItemReader sourceReader;
-        private TimeTrackingItem nextItem;
-
-        TimeTrackingItemIterator(ItemReader sourceReader) {
-            this.sourceReader = sourceReader;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (nextItem != null) {
-                return true;
-            }
-            nextItem = sourceReader.read().orElse(null);
-            return nextItem != null;
-        }
-
-        @Override
-        public TimeTrackingItem next() {
-            if (nextItem != null || hasNext()) {
-                TimeTrackingItem itemToReturn = nextItem;
-                nextItem = null;
-                return itemToReturn;
-            }
-            throw new NoSuchElementException();
-        }
-
-        @Override
-        public void close() {
-            sourceReader.close();
         }
     }
 

@@ -18,6 +18,7 @@ public class Criteria {
     private LocalDateTime startsAt = null;
     private String activityContains = "";
     private String activityIs;
+    private String activityIsNot;
 
     public Criteria withStartBetween(Interval interval) {
         Objects.requireNonNull(interval);
@@ -58,6 +59,10 @@ public class Criteria {
         return this;
     }
 
+    public void withActivityIsNot(String activity) {
+        activityIsNot = activity;
+    }
+
     public Criteria withStartsAt(LocalDateTime start) {
         startsAt = start;
         return this;
@@ -89,6 +94,9 @@ public class Criteria {
             return false;
         }
         if (activityIs != null && !activityIs.equals(item.getActivity())) {
+            return false;
+        }
+        if (activityIsNot != null && activityIsNot.equals(item.getActivity())) {
             return false;
         }
         return true;

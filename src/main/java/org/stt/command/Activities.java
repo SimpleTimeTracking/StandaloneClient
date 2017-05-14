@@ -41,7 +41,9 @@ public class Activities implements CommandHandler {
                 .withStartsAt(command.newItem.getStart())
                 .withActivityIs(command.newItem.getActivity());
         Stream<TimeTrackingItem> timeTrackingItemStream = queries.queryItems(criteria);
-        Optional<TimeTrackingItem> potentialItemToReplace = timeTrackingItemStream.findAny().filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
+        Optional<TimeTrackingItem> potentialItemToReplace = timeTrackingItemStream
+                .findAny()
+                .filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
         if (potentialItemToReplace.isPresent()) {
             TimeTrackingItem itemToReplace = potentialItemToReplace.get();
             persister.replace(itemToReplace, command.newItem);

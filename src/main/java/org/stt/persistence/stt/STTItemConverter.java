@@ -5,53 +5,32 @@ import org.stt.model.TimeTrackingItem;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
 
 class STTItemConverter {
     private final DateTimeFormatter dateFormat = DateTimeFormatter
             .ofPattern("yyyy-MM-dd_HH:mm:ss");
 
-    public TimeTrackingItem lineToTimeTrackingItem(String singleLine) {
-
-        List<String> splitLine = new LinkedList<>(Arrays.asList(singleLine
-                .split(" ")));
-
-        LocalDateTime start = LocalDateTime.parse(splitLine.remove(0), dateFormat);
-
+    public TimeTrackingItem lineToTimeTrackingItem(String line) {
+        int endOfStartDate = line.indexOf(' ');
+        LocalDateTime start = LocalDateTime.parse(line.substring(0, endOfStartDate), dateFormat);
         LocalDateTime end = null;
-        if (!splitLine.isEmpty()) {
+        int endOfEndDate = line.indexOf(' ', endOfStartDate + 1);
+        if (endOfEndDate >= 0) {
             try {
-                end = LocalDateTime.parse(splitLine.get(0), dateFormat);
-                splitLine.remove(0);
-            } catch (DateTimeParseException i) { // NOPMD
-                // NOOP, if the string cannot be parsed, it is no date
-                // this is a bit ugly but currently no idea how to do it
-                // "correctly"
+                end = LocalDateTime.parse(line.substring(endOfStartDate + 1, endOfEndDate), dateFormat);
+            } catch (DateTimeParseException e) { // NOPMD
+                // It was no end date after all
+                endOfEndDate = endOfStartDate;
             }
-        }
-        String comment = "";
-        if (!splitLine.isEmpty()) {
-            StringBuilder commentBuilder = new StringBuilder(
-                    singleLine.length());
-            for (String current : splitLine) {
-                current = current.replaceAll("\\\\r", "\r");
-                current = current.replaceAll("\\\\n", "\n");
-                commentBuilder.append(current);
-
-                commentBuilder.append(" ");
-            }
-            commentBuilder.deleteCharAt(commentBuilder.length() - 1);
-
-            comment = commentBuilder.toString();
-        }
-
-        if (end != null) {
-            return new TimeTrackingItem(comment, start, end);
         } else {
-            return new TimeTrackingItem(comment, start);
+            endOfEndDate = endOfStartDate;
         }
+        String activity = line.substring(endOfEndDate + 1);
+        activity = activity.replace("\\n", "\n");
+        if (end != null) {
+            return new TimeTrackingItem(activity, start, end);
+        }
+        return new TimeTrackingItem(activity, start);
     }
 
     public String timeTrackingItemToLine(TimeTrackingItem item) {
@@ -65,7 +44,6 @@ class STTItemConverter {
                 });
 
         String oneLineComment = item.getActivity();
-        oneLineComment = oneLineComment.replaceAll("\r", "\\\\r");
         oneLineComment = oneLineComment.replaceAll("\n", "\\\\n");
         builder.append(oneLineComment);
 
