@@ -12,6 +12,7 @@ class STTItemConverter {
 
     public TimeTrackingItem lineToTimeTrackingItem(String line) {
         int endOfStartDate = line.indexOf(' ');
+        endOfStartDate = endOfStartDate < 0 ? line.length() : endOfStartDate;
         LocalDateTime start = LocalDateTime.parse(line.substring(0, endOfStartDate), dateFormat);
         LocalDateTime end = null;
         int endOfEndDate = line.indexOf(' ', endOfStartDate + 1);
@@ -25,8 +26,10 @@ class STTItemConverter {
         } else {
             endOfEndDate = endOfStartDate;
         }
-        String activity = line.substring(endOfEndDate + 1);
-        activity = activity.replace("\\n", "\n");
+        String activity = endOfEndDate < line.length() ? line
+                .substring(endOfEndDate + 1)
+                .replace("\\n", "\n")
+                : "";
         if (end != null) {
             return new TimeTrackingItem(activity, start, end);
         }

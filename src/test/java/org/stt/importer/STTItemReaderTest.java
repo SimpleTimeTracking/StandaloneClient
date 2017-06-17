@@ -18,7 +18,7 @@ public class STTItemReaderTest {
 
 		// GIVEN
 		StringReader stringReader = new StringReader(
-				"2012-10-10_22:00:00 2012-11-10_22:00:01 this is\\n a multiline\\r string\\r\\n with different separators");
+				"2012-10-10_22:00:00 2012-11-10_22:00:01 this is\\n a multiline\\n string\\n");
 		ItemReader theReader = new STTItemReader(stringReader);
 
 		// WHEN
@@ -26,9 +26,9 @@ public class STTItemReaderTest {
 
 		// THEN
 		Assert.assertEquals(
-				"this is\n a multiline\r string\r\n with different separators",
-                readItem.get().getActivity());
-    }
+				"this is\n a multiline\n string\n",
+				readItem.get().getActivity());
+	}
 
 	@Test
 	public void onlyStartTimeGiven() {

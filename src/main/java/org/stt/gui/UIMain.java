@@ -47,6 +47,17 @@ public class UIMain extends Application {
         UIApplication uiApplication = DaggerUIApplication.create();
 
         executorService = uiApplication.executorService();
+        startEventBus(uiApplication);
+
+        startService(uiApplication.configService());
+        startService(uiApplication.backupCreator());
+        startService(uiApplication.itemLogService());
+
+        LOG.info("init() done");
+        mainWindowController = uiApplication.mainWindow();
+    }
+
+    private void startEventBus(UIApplication uiApplication) {
         LOG.info("Setting up event bus");
         eventBus = uiApplication.eventBus();
         eventBus.subscribe(this);
@@ -56,15 +67,6 @@ public class UIMain extends Application {
                 Platform.runLater(() -> eventBus.publish(new TimePassedEvent()));
             }
         }, 0, 1000);
-
-        startService(uiApplication.configService());
-        startService(uiApplication.backupCreator());
-//        startService(uiApplication.achievementService());
-        startService(uiApplication.itemLogService());
-//        startService(uiApplication.jiraConnector());
-
-        LOG.info("init() done");
-        mainWindowController = uiApplication.mainWindow();
     }
 
     @Handler(priority = -999)

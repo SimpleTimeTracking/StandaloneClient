@@ -120,7 +120,7 @@ public class STTItemWriterTest {
 
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem(
-                "this is\n a multiline\r string\r\n with different separators",
+                "this is\n a multiline\n string\n with different separators",
                 LocalDateTime.now());
 
         // WHEN
@@ -129,7 +129,7 @@ public class STTItemWriterTest {
         // THEN
         Assert.assertThat(
                 stringWriter.toString(),
-                endsWith("this is\\n a multiline\\r string\\r\\n with different separators"
+                endsWith("this is\\n a multiline\\n string\\n with different separators"
                         + LINE_SEPERATOR));
 
     }
