@@ -55,6 +55,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -139,7 +140,7 @@ public class ReportController {
         notificationPause.setOnFinished(event -> panel.hide());
     }
 
-    public Node getPanel() {
+    Node getPanel() {
         return panel;
     }
 
@@ -192,7 +193,7 @@ public class ReportController {
         applyClipboardTooltip(endOfReport::setGraphic, "report.tooltips.copy");
     }
 
-    public void applyClipboardTooltip(Consumer<Node> on, String tooltipKey) {
+    private void applyClipboardTooltip(Consumer<Node> on, String tooltipKey) {
         Label tooltipLabel = Glyph.glyph(fontaweSome, Glyph.CLIPBOARD);
         Tooltips.install(tooltipLabel, localization.getString(tooltipKey));
         on.accept(tooltipLabel);
@@ -201,7 +202,7 @@ public class ReportController {
     private void setupNavigation() {
         datePicker.setValue(LocalDate.now());
         trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet());
-        datePicker.setDayCellFactory(datePicker ->
+        datePicker.setDayCellFactory(picker ->
                 new DateCell() {
                     @Override
                     public void updateItem(LocalDate item, boolean empty) {
@@ -215,11 +216,11 @@ public class ReportController {
         );
         datePicker.valueProperty().addListener(observable -> trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet()));
 
-        FramelessButton oneDayBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_LEFT, Glyph.GLYPH_SIZE_MEDIUM));
-        oneDayBack.setOnAction(event -> datePicker.setValue(datePicker.getValue().minusDays(1)));
+        FramelessButton oneDayBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_LEFT, Glyph.GLYPH_SIZE_LARGE));
+        oneDayBack.setOnAction(event -> datePicker.setValue(findNextTrackedDay(datePicker.getValue(), date -> date.minusDays(1))));
         Tooltips.install(oneDayBack, localization.getString("report.backADay.tooltip"));
 
-        FramelessButton oneWeekBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_LEFT, Glyph.GLYPH_SIZE_MEDIUM));
+        FramelessButton oneWeekBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_LEFT, Glyph.GLYPH_SIZE_LARGE));
         oneWeekBack.setOnAction(event -> {
             LocalDate selectedDate = datePicker.getValue();
             LocalDate startOfWeek = selectedDate.with(dayOfWeekField, 1);
@@ -231,17 +232,28 @@ public class ReportController {
         });
         Tooltips.install(oneWeekBack, localization.getString("report.backAWeek.tooltip"));
 
-        FramelessButton oneDayForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_RIGHT, Glyph.GLYPH_SIZE_MEDIUM));
-        oneDayForward.setOnAction(event -> datePicker.setValue(datePicker.getValue().plusDays(1)));
+        FramelessButton oneDayForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_RIGHT, Glyph.GLYPH_SIZE_LARGE));
+        oneDayForward.setOnAction(event -> datePicker.setValue(findNextTrackedDay(datePicker.getValue(), date -> date.plusDays(1))));
         Tooltips.install(oneDayForward, localization.getString("report.forwardADay.tooltip"));
 
-        FramelessButton oneWeekForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_RIGHT, Glyph.GLYPH_SIZE_MEDIUM));
+        FramelessButton oneWeekForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_RIGHT, Glyph.GLYPH_SIZE_LARGE));
         oneWeekForward.setOnAction(event -> datePicker.setValue(datePicker.getValue().with(dayOfWeekField, 1).plusDays(7)));
         Tooltips.install(oneWeekForward, localization.getString("report.forwardAWeek.tooltip"));
         toolbar.getItems().add(0, oneDayBack);
         toolbar.getItems().add(0, oneWeekBack);
         toolbar.getItems().add(oneDayForward);
         toolbar.getItems().add(oneWeekForward);
+    }
+
+    private LocalDate findNextTrackedDay(LocalDate startFrom, Function<LocalDate, LocalDate> nextDayFunction) {
+        LocalDate nextDay = nextDayFunction.apply(startFrom);
+        for (int attempt = 0; attempt < 5; attempt++) {
+            if (trackedDays.contains(nextDay)) {
+                return nextDay;
+            }
+            nextDay = nextDayFunction.apply(nextDay);
+        }
+        return nextDayFunction.apply(startFrom);
     }
 
     private ObjectBinding<Report> createReportModel() {
@@ -455,8 +467,8 @@ public class ReportController {
         private final Duration duration;
         private final Duration roundedDuration;
 
-        public ListItem(String comment, Duration duration,
-                        Duration roundedDuration) {
+        ListItem(String comment, Duration duration,
+                 Duration roundedDuration) {
             this.comment = comment;
             this.duration = duration;
             this.roundedDuration = roundedDuration;
@@ -470,7 +482,7 @@ public class ReportController {
             return duration;
         }
 
-        public Duration getRoundedDuration() {
+        Duration getRoundedDuration() {
             return roundedDuration;
         }
     }

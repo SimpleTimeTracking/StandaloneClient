@@ -25,6 +25,7 @@ public enum Glyph {
     FORWARD('\uf04e');
 
     public static final int GLYPH_SIZE_MEDIUM = 20;
+    public static final int GLYPH_SIZE_LARGE = 30;
     private static final Color GLYPH_COLOR = Color.GRAY;
     private final char code;
 
