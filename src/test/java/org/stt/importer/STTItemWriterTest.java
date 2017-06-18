@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -401,4 +402,35 @@ public class STTItemWriterTest {
         }
         assertThat(stringWriter.toString(), is(expectedText.toString()));
     }
+
+    @Test
+    public void shouldChangeUpdateItems() {
+        // GIVEN
+        TimeTrackingItem oldItem = new TimeTrackingItem("old item",
+                LocalDateTime.of(2010, 10, 10, 11, 12, 13), LocalDateTime.of(2010, 10,
+                10, 11, 14, 13));
+        sut.persist(oldItem);
+
+        // WHEN
+        sut.updateActivitities(Collections.singleton(oldItem), "new item");
+
+        // THEN
+        assertThatFileMatches("2010-10-10_11:12:13 2010-10-10_11:14:13 new item");
+    }
+
+    @Test
+    public void shouldOnlyChangeGivenItems() {
+        // GIVEN
+        TimeTrackingItem oldItem = new TimeTrackingItem("old item",
+                LocalDateTime.of(2010, 10, 10, 11, 12, 13), LocalDateTime.of(2010, 10,
+                10, 11, 14, 13));
+        sut.persist(oldItem);
+
+        // WHEN
+        sut.updateActivitities(Collections.emptyList(), "new item");
+
+        // THEN
+        assertThatFileMatches("2010-10-10_11:12:13 2010-10-10_11:14:13 old item");
+    }
+
 }

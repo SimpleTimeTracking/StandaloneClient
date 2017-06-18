@@ -3,7 +3,6 @@ package org.stt.gui.jfx;
 import com.sun.javafx.scene.control.skin.VirtualFlow;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 import javafx.fxml.FXML;
@@ -16,9 +15,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.stage.Popup;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
+import net.engio.mbassy.listener.Listener;
+import net.engio.mbassy.listener.References;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.fxmisc.wellbehaved.event.Nodes;
@@ -31,13 +31,13 @@ import org.stt.fun.Achievement;
 import org.stt.fun.AchievementService;
 import org.stt.fun.AchievementsUpdated;
 import org.stt.gui.jfx.TimeTrackingItemCell.ActionsHandler;
-import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.MappedSetBinding;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.gui.jfx.text.CommandHighlighter;
-import org.stt.gui.jfx.text.ContextPopupCreator;
 import org.stt.model.ItemModified;
+import org.stt.model.ItemReplaced;
 import org.stt.model.TimeTrackingItem;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.text.ExpansionProvider;
 import org.stt.validation.ItemAndDateValidator;
@@ -53,8 +53,10 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -70,11 +72,13 @@ import static org.fxmisc.wellbehaved.event.InputMap.consume;
 import static org.fxmisc.wellbehaved.event.InputMap.sequence;
 import static org.stt.Strings.commonPrefix;
 import static org.stt.gui.jfx.STTOptionDialogs.Result;
+import static org.stt.model.TimeTrackingItems.*;
 
 public class ActivitiesController implements ActionsHandler {
 
     private static final Logger LOG = Logger.getLogger(ActivitiesController.class
             .getName());
+    public static final String WIKI_URL = "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI";
     final ObservableList<TimeTrackingItem> allItems = FXCollections
             .observableArrayList();
     private final CommandFormatter commandFormatter;
@@ -109,7 +113,7 @@ public class ActivitiesController implements ActionsHandler {
 
 
     @Inject
-    ActivitiesController(STTOptionDialogs sttOptionDialogs,
+    ActivitiesController(STTOptionDialogs sttOptionDialogs, // NOSONAR
                          MBassador<Object> eventBus,
                          CommandFormatter commandFormatter,
                          Collection<ExpansionProvider> expansionProviders,
@@ -138,6 +142,7 @@ public class ActivitiesController implements ActionsHandler {
         this.fontAwesome = requireNonNull(fontAwesome);
         this.labelToNodeMapper = labelToNodeMapper;
         eventBus.subscribe(this);
+        eventBus.subscribe(new BulkRenameHelper());
         filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(
@@ -278,10 +283,6 @@ public class ActivitiesController implements ActionsHandler {
         }
     }
 
-    private javafx.stage.Window getWindow() {
-        return panel.getScene().getWindow();
-    }
-
     @Override
     public void stop(TimeTrackingItem item) {
         requireNonNull(item);
@@ -291,33 +292,8 @@ public class ActivitiesController implements ActionsHandler {
         shutdown();
     }
 
-    private void setupAutoCompletionPopup() {
-        ObservableList<String> suggestionsForContinuationList = createSuggestionsForContinuationList();
-        ListView<String> contentOfAutocompletionPopup = new ListView<>(suggestionsForContinuationList);
-        final Popup popup = ContextPopupCreator.createPopupForContextMenu(contentOfAutocompletionPopup, item -> insertAtCaret(item.endsWith(" ") ? item : item + " "));
-        suggestionsForContinuationList.addListener((ListChangeListener<String>) c -> {
-            if (c.getList().isEmpty()) {
-                popup.hide();
-            } else {
-                popup.show(getWindow());
-            }
-        });
-        popup.show(getWindow());
-    }
-
-    private ObservableList<String> createSuggestionsForContinuationList() {
-        return new MappedListBinding<>(() -> {
-            List<String> suggestedContinuations = getSuggestedContinuations();
-            Collections.sort(suggestedContinuations);
-            return suggestedContinuations;
-        }, commandText.caretPositionProperty(), commandText.textProperty());
-    }
-
     @FXML
     public void initialize() {
-//        if (activitiesConfig.isAutoCompletionPopup()) {
-//            setupAutoCompletionPopup();
-//        }
 
         addWorktimePanel();
         addCommandText();
@@ -413,9 +389,7 @@ public class ActivitiesController implements ActionsHandler {
     private void help() {
         executorService.execute(() -> {
             try {
-                Desktop.getDesktop()
-                        .browse(new URI(
-                                "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI"));
+                Desktop.getDesktop().browse(new URI(WIKI_URL));
             } catch (IOException | URISyntaxException ex) {
                 LOG.log(Level.SEVERE, "Couldn't open help page", ex);
             }
@@ -518,6 +492,11 @@ public class ActivitiesController implements ActionsHandler {
 
         }
 
+        @Override
+        public void bulkChangeActivity(Collection<TimeTrackingItem> itemsToChange, String activity) {
+            activities.bulkChangeActivity(itemsToChange, activity);
+        }
+
         private boolean validateItemIsFirstItemAndLater(LocalDateTime start) {
             return validator.validateItemIsFirstItemAndLater(start)
                     || sttOptionDialogs.showNoCurrentItemAndItemIsLaterDialog() == Result.PERFORM_ACTION;
@@ -526,6 +505,44 @@ public class ActivitiesController implements ActionsHandler {
         private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
             int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
             return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(numberOfCoveredItems) == Result.PERFORM_ACTION;
+        }
+    }
+
+    @Listener(references = References.Strong)
+    private class BulkRenameHelper {
+        private boolean updating;
+
+        @Handler
+        public void onItemReplaced(ItemReplaced event) {
+            if (updating) {
+                return;
+            }
+            updating = true;
+            try {
+                TimeTrackingItem beforeUpdate = event.beforeUpdate;
+                TimeTrackingItem afterUpdate = event.afterUpdate;
+                if (!sameStart(beforeUpdate, afterUpdate)
+                        || sameActivity(beforeUpdate, afterUpdate)
+                        || !sameEndOrWasOngoing(beforeUpdate, afterUpdate)) {
+                    return;
+                }
+                Criteria criteria = new Criteria().withActivityIs(beforeUpdate.getActivity());
+                List<TimeTrackingItem> activityItems = queries.queryItems(criteria).collect(Collectors.toList());
+                if (activityItems.isEmpty()) {
+                    return;
+                }
+                Result renameResult = sttOptionDialogs.showRenameDialog(activityItems.size(), beforeUpdate.getActivity(), afterUpdate.getActivity());
+                if (Result.PERFORM_ACTION == renameResult) {
+                    activities.bulkChangeActivity(activityItems, event.afterUpdate.getActivity());
+                }
+            } finally {
+                updating = false;
+            }
+        }
+
+        private boolean sameEndOrWasOngoing(TimeTrackingItem beforeUpdate, TimeTrackingItem afterUpdate) {
+            return sameEnd(beforeUpdate, afterUpdate)
+                    || !beforeUpdate.getEnd().isPresent();
         }
     }
 }

@@ -29,7 +29,6 @@ public class ActivitiesTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         sut = new Activities(persister, queries, Optional.empty());
-        ;
     }
 
     @Test
@@ -142,6 +141,7 @@ public class ActivitiesTest {
         NewActivity newActivity = new NewActivity(expected);
 
         given(queries.queryItems(any(Criteria.class))).willReturn(Stream.of(ongoing));
+        given(queries.getLastItem()).willReturn(Optional.of(ongoing));
 
         // WHEN
         sut.addNewActivity(newActivity);
@@ -161,6 +161,7 @@ public class ActivitiesTest {
         NewActivity newActivity = new NewActivity(expected);
 
         given(queries.queryItems(any(Criteria.class))).willReturn(Stream.empty());
+        given(queries.getLastItem()).willReturn(Optional.of(expected));
 
         // WHEN
         sut.addNewActivity(newActivity);

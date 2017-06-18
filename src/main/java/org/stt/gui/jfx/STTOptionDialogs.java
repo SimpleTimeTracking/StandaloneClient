@@ -52,6 +52,17 @@ public class STTOptionDialogs {
                 .orElse(Result.ABORT);
     }
 
+    Result showRenameDialog(int numberOfActivities, String before, String after) {
+        Dialog<Result> dialog = new Dialog<>();
+        dialog.setHeaderText(localization.getString("bulkRename.title"));
+        dialog.getDialogPane().setContent(new Label(String.format(localization.getString("bulkRename.text"), numberOfActivities, before, after)));
+        ButtonType apply = new ButtonType(localization.getString("rename"), ButtonBar.ButtonData.APPLY);
+        dialog.getDialogPane().getButtonTypes().addAll(apply, ButtonType.CANCEL);
+        dialog.setResultConverter(param -> param == apply ? Result.PERFORM_ACTION : Result.ABORT);
+        return dialog.showAndWait()
+                .orElse(Result.ABORT);
+    }
+
     public enum Result {
         PERFORM_ACTION, ABORT
     }

@@ -11,8 +11,8 @@ import org.stt.query.TimeTrackingItemQueries;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -37,13 +37,12 @@ public class Activities implements CommandHandler {
     @Override
     public void addNewActivity(NewActivity command) {
         requireNonNull(command);
-        Criteria criteria = new Criteria()
-                .withStartsAt(command.newItem.getStart())
-                .withActivityIs(command.newItem.getActivity());
-        Stream<TimeTrackingItem> timeTrackingItemStream = queries.queryItems(criteria);
-        Optional<TimeTrackingItem> potentialItemToReplace = timeTrackingItemStream
-                .findAny()
-                .filter(timeTrackingItem -> !timeTrackingItem.getEnd().isPresent());
+        TimeTrackingItem newItem = command.newItem;
+        Optional<TimeTrackingItem> potentialItemToReplace = ongoingItemThatWouldEnd(newItem);
+        if (!potentialItemToReplace.isPresent()) {
+            potentialItemToReplace = itemWithEditedActivity(newItem);
+        }
+
         if (potentialItemToReplace.isPresent()) {
             TimeTrackingItem itemToReplace = potentialItemToReplace.get();
             persister.replace(itemToReplace, command.newItem);
@@ -52,6 +51,20 @@ public class Activities implements CommandHandler {
             persister.persist(command.newItem);
             eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
         }
+    }
+
+    private Optional<TimeTrackingItem> itemWithEditedActivity(TimeTrackingItem newItem) {
+        Criteria criteria = new Criteria()
+                .withStartsAt(newItem.getStart());
+        newItem.getEnd().ifPresent(criteria::withEndsAt);
+        return queries.queryItems(criteria).findAny();
+    }
+
+    private Optional<TimeTrackingItem> ongoingItemThatWouldEnd(TimeTrackingItem newItem) {
+        return queries.getLastItem()
+                .filter(timeTrackingItem ->
+                        !timeTrackingItem.getEnd().isPresent()
+                                && newItem.getStart().equals(timeTrackingItem.getStart()));
     }
 
     @Override
@@ -120,5 +133,15 @@ public class Activities implements CommandHandler {
                 eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
             });
         }
+    }
+
+    @Override
+    public void bulkChangeActivity(Collection<TimeTrackingItem> itemsToChange, String activity) {
+        requireNonNull(itemsToChange);
+        requireNonNull(activity);
+        Collection<ItemPersister.UpdatedItem> updatedItems = persister.updateActivitities(itemsToChange, activity);
+        eventBus.ifPresent(eb -> updatedItems.stream()
+                .map(updatedItem -> new ItemReplaced(updatedItem.original, updatedItem.updated))
+                .forEach(eb::publish));
     }
 }

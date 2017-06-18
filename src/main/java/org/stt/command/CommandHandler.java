@@ -1,5 +1,9 @@
 package org.stt.command;
 
+import org.stt.model.TimeTrackingItem;
+
+import java.util.Collection;
+
 public interface CommandHandler {
     void addNewActivity(NewActivity command);
 
@@ -12,4 +16,6 @@ public interface CommandHandler {
     void resumeActivity(ResumeActivity command);
 
     void resumeLastActivity(ResumeLastActivity command);
+
+    void bulkChangeActivity(Collection<TimeTrackingItem> itemsToChange, String activity);
 }

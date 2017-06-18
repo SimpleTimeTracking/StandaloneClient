@@ -91,4 +91,10 @@ public final class TimeTrackingItem {
         return end.map(time -> new TimeTrackingItem(activity, newStart, time))
                 .orElse(new TimeTrackingItem(activity, newStart));
     }
+
+    public TimeTrackingItem withActivity(String newActivity) {
+        requireNonNull(newActivity);
+        return end.map(time -> new TimeTrackingItem(newActivity, start, time))
+                .orElse(new TimeTrackingItem(activity, start));
+    }
 }

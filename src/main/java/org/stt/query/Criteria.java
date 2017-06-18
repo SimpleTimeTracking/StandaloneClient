@@ -16,6 +16,7 @@ public class Criteria {
     private LocalDateTime endNotAfter = LocalDateTime.MAX;
     private LocalDateTime endBefore = LocalDateTime.MAX;
     private LocalDateTime startsAt = null;
+    private LocalDateTime endsAt = null;
     private String activityContains = "";
     private String activityIs;
     private String activityIsNot;
@@ -73,6 +74,11 @@ public class Criteria {
         return this;
     }
 
+    public Criteria withEndsAt(LocalDateTime end) {
+        endsAt = end;
+        return this;
+    }
+
     public boolean matches(TimeTrackingItem item) {
         Objects.requireNonNull(item);
         if (!item.getStart().isBefore(startBefore)) {
@@ -91,6 +97,9 @@ public class Criteria {
             return false;
         }
         if (startsAt != null && !item.getStart().equals(startsAt)) {
+            return false;
+        }
+        if (endsAt != null && !endsAt.equals(item.getEnd().orElse(null))) {
             return false;
         }
         if (activityIs != null && !activityIs.equals(item.getActivity())) {

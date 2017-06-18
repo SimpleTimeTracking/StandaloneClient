@@ -444,6 +444,10 @@ public class CommandFormatterTest {
         @Override
         public void resumeLastActivity(ResumeLastActivity command) {
         }
+
+        @Override
+        public void bulkChangeActivity(Collection<TimeTrackingItem> itemsToChange, String activity) {
+        }
     }
 
     private TimeTrackingItem retrieveItemWhenCommandIsExecuted(String command) {

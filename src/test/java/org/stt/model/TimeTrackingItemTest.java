@@ -88,4 +88,16 @@ public class TimeTrackingItemTest {
         assertThat(newItem.getEnd(), is(Optional.empty()));
     }
 
+    @Test
+    public void withActivityShouldCreateNewItem() {
+        // GIVEN
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        TimeTrackingItem newItem = sut.withActivity("11");
+
+        // THEN
+        assertThat(newItem, not(is(sut)));
+        assertThat(newItem.getActivity(), is("11"));
+    }
 }
