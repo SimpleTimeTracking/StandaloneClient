@@ -12,11 +12,8 @@ import javax.inject.Provider;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Created by dante on 03.12.14.
- */
 @Module
-public abstract class STTPersistenceModule {
+public abstract class STTPersistenceModule { // NOSONAR Dagger requirement
     private STTPersistenceModule() {
     }
 
@@ -41,22 +38,26 @@ public abstract class STTPersistenceModule {
     @Provides
     @STTFile
     static Reader provideReader(@STTFile File sttFile) {
+        FileInputStream in;
         try {
-            return new InputStreamReader(
-                    new FileInputStream(sttFile), StandardCharsets.UTF_8);
+            in = new FileInputStream(sttFile);
         } catch (FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
+        return new InputStreamReader(
+                in, StandardCharsets.UTF_8);
     }
 
     @Provides
     @STTFile
     static Writer provideWriter(@STTFile File sttFile) {
+        FileOutputStream out;
         try {
-            return new OutputStreamWriter(new FileOutputStream(sttFile, false), StandardCharsets.UTF_8);
+            out = new FileOutputStream(sttFile, false);
         } catch (FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
+        return new OutputStreamWriter(out, StandardCharsets.UTF_8);
     }
 
 }

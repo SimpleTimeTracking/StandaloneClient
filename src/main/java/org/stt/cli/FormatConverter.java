@@ -16,88 +16,87 @@ import java.util.Optional;
 
 /**
  * Converts different supported time tracking formats. Currently these are:
- *
+ * <p>
  * - CSV - STT internal asNewItemCommandText - modified ti asNewItemCommandText
  */
-public class FormatConverter {
+class FormatConverter {
 
-	private ItemReader from;
-	private ItemWriter to;
+    private File targetFile;
+    private File sourceFile;
+    private String sourceFormat;
 
-	public FormatConverter(List<String> args) {
+    FormatConverter(List<String> args) {
         Objects.requireNonNull(args);
 
-		File sourceFile = null;
-		String sourceFormat = "stt";
-		File targetFile = null;
-		int sourceFormatIndex = args.indexOf("--sourceFormat");
-		if (sourceFormatIndex != -1) {
-			args.remove(sourceFormatIndex);
-			sourceFormat = args.get(sourceFormatIndex);
-			args.remove(sourceFormatIndex);
-		}
-		int sourceIndex = args.indexOf("--source");
-		if (sourceIndex != -1) {
-			args.remove(sourceIndex);
-			sourceFile = new File(args.get(sourceIndex));
-			args.remove(sourceIndex);
-		}
-		int targetIndex = args.indexOf("--target");
-		if (targetIndex != -1) {
-			args.remove(targetIndex);
-			targetFile = new File(args.get(targetIndex));
-			args.remove(targetIndex);
-		}
-
-		from = getReaderFrom(sourceFile, sourceFormat);
-		to = getWriterFrom(targetFile);
-	}
-
-	private ItemWriter getWriterFrom(File output) {
-		try {
-			if (output == null) {
-				return new STTItemWriter(new OutputStreamWriter(System.out,
-						StandardCharsets.UTF_8));
-			}
-            return new STTItemWriter(
-					new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+        sourceFile = null;
+        sourceFormat = "stt";
+        targetFile = null;
+        int sourceFormatIndex = args.indexOf("--sourceFormat");
+        if (sourceFormatIndex != -1) {
+            args.remove(sourceFormatIndex);
+            sourceFormat = args.get(sourceFormatIndex);
+            args.remove(sourceFormatIndex);
+        }
+        int sourceIndex = args.indexOf("--source");
+        if (sourceIndex != -1) {
+            args.remove(sourceIndex);
+            sourceFile = new File(args.get(sourceIndex));
+            args.remove(sourceIndex);
+        }
+        int targetIndex = args.indexOf("--target");
+        if (targetIndex != -1) {
+            args.remove(targetIndex);
+            targetFile = new File(args.get(targetIndex));
+            args.remove(targetIndex);
         }
     }
 
-	private ItemReader getReaderFrom(File input, String sourceFormat) {
-        Reader inputReader;
-        try {
-			inputReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
-			if (input != null) {
-				inputReader = new InputStreamReader(new FileInputStream(input),
-						StandardCharsets.UTF_8);
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-
-		switch (sourceFormat) {
-		case "stt":
-			return new STTItemReader(inputReader);
-		case "ti":
-			return new TiImporter(inputReader);
-		case "csv":
-			return new CsvImporter(inputReader, 1, 4, 8);
-		default:
-            throw new RuntimeException("unknown input asNewItemCommandText \"" + sourceFormat
-                    + "\"");
+    private ItemWriter getWriterFrom(File output) throws FileNotFoundException {
+        if (output == null) {
+            return new STTItemWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8)); // NOSONAR not logging
         }
-	}
+        return new STTItemWriter(
+                new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8));
+    }
 
-    public void convert() {
-        Optional<TimeTrackingItem> current;
-        while ((current = from.read()).isPresent()) {
-            to.write(current.get());
-		}
+    private ItemReader getReaderFrom(File input, String sourceFormat) throws IOException {
+        Reader inputReader;
+        if (input == null) {
+            inputReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
+        } else {
+            inputReader = new InputStreamReader(new FileInputStream(input), StandardCharsets.UTF_8);
+        }
 
-		from.close();
-		to.close();
-	}
+        switch (sourceFormat) {
+            case "stt":
+                return new STTItemReader(inputReader);
+            case "ti":
+                return new TiImporter(inputReader);
+            case "csv":
+                return new CsvImporter(inputReader, 1, 4, 8);
+            default:
+                inputReader.close();
+                throw new InvalidSourceFormatException("unknown input asNewItemCommandText \"" + sourceFormat
+                        + "\"");
+        }
+    }
+
+    void convert() {
+        try (ItemReader from = getReaderFrom(sourceFile, sourceFormat);
+             ItemWriter to = getWriterFrom(targetFile)) {
+
+            Optional<TimeTrackingItem> current;
+            while ((current = from.read()).isPresent()) {
+                to.write(current.get());
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private class InvalidSourceFormatException extends RuntimeException {
+        InvalidSourceFormatException(String message) {
+            super(message);
+        }
+    }
 }

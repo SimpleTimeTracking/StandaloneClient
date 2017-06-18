@@ -91,12 +91,14 @@ public class BaseModule {
         if (file.getParentFile().mkdirs()) {
             LOG.info("Created directory " + file.getParentFile().getAbsolutePath());
         }
+        FileOutputStream out;
         try {
-            return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8)),
-                    true);
+            out = new FileOutputStream(file, true);
         } catch (FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
+        return new PrintWriter(new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)),
+                true);
     }
 
     @Provides
@@ -134,7 +136,7 @@ public class BaseModule {
     }
 
     public static class MigrationException extends RuntimeException {
-        public MigrationException(String message) {
+        MigrationException(String message) {
             super(message);
         }
     }
