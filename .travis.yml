@@ -19,15 +19,14 @@ before_install:
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
 script:
-- ./gradlew assemble
-- ./gradlew check sonarqube --stacktrace
-#- ./gradlew release --stacktrace
+- ./gradlew check sonarqube release --stacktrace
 deploy:
   skip_cleanup: true
   provider: releases
   api_key:
     secure: Wy/mCFejLqMLLCJ5xdsQbKDKYO7LcXzWhaUI0iBtYNmV+xZgXLkLWNhdcVGuP7fBtMSztbKNeTpWbYYVS6AfE1NIlLusANBJi0FsRV14CfqzlDyRgdvg3Xkf1UAT889z3Y4prxrUJHwQN2yAZ3LTUGXAZeG+2xzHM6yKbZO8clU=
-  file: build/libs/STT-2.jar
+  file_glob: true
+  file: build/libs/*
   on:
     repo: SimpleTimeTracking/StandaloneClient
     tags: true
