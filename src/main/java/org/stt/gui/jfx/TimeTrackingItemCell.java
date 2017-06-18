@@ -13,9 +13,11 @@ import javafx.scene.text.TextFlow;
 import org.stt.gui.UIMain;
 import org.stt.model.TimeTrackingItem;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -175,9 +177,9 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     private void setupTimePane() {
         labelForStart.setText(TIME_FORMATTER.format(getItem().getStart()));
 
-        if (getItem().getEnd().isPresent()) {
-            labelForEnd.setText(TIME_FORMATTER.format(getItem().getEnd()
-                    .get()));
+        Optional<LocalDateTime> end = getItem().getEnd();
+        if (end.isPresent()) {
+            labelForEnd.setText(TIME_FORMATTER.format(end.get()));
             timePane.getChildren().setAll(labelForStart, startToFinishActivityGraphics,
                     labelForEnd);
         } else {
