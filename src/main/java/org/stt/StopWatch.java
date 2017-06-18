@@ -3,8 +3,8 @@ package org.stt;
 import java.util.logging.Logger;
 
 public class StopWatch {
+    private static final Logger LOG = Logger.getLogger(StopWatch.class.getName());
     private final String name;
-    private Logger LOG = Logger.getLogger(StopWatch.class.getName());
     private final long start;
 
     public StopWatch(String name) {
@@ -13,6 +13,6 @@ public class StopWatch {
     }
 
     public void stop() {
-        LOG.finest(String.format("%s : %d", name, (System.currentTimeMillis() - start)));
+        LOG.finest(() -> String.format("%s : %d", name, (System.currentTimeMillis() - start)));
     }
 }
