@@ -1,6 +1,17 @@
 language: java
 jdk:
 - oraclejdk8
+addons:
+  sonarqube:
+    organization: "bytekeeper-github"
+    token:
+      secure: "I4h52nLHQP+is/knbKyAXmuzQZBIz99IKD2HJota1IrAkpj1uVikca0UtTWu9SQnGdD/sOV2xgVbIP0kUlAVHSlOHXfSEdGLxP5ix49Yo+si8nvaSKsQPaIXsPF2De98+qyHasvYOhawUcMctR6+FWtxwj0hymAgNWQXnVKK1lQ="
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+    - '$HOME/.gradle'
+    - '.gradle'
 env:
 - secure: Nyb7rKKSkUQRZfk84UvAG1XxqA6Ze3iHZ3BQ5FVI4K92tRMXzjwPBVG7hPzkHWFgXkRqhlW6XkSXmGHQBJ+8bKJ9X9dNcviuEx65oDDzv7SoEm+mMP4sTVwQyv62lkv2zKQ9rG/xRX2ElElPrT6keS3ssVwuldhLpKwyXw8cJ0U=
 - 
