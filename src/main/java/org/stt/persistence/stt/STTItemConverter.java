@@ -47,7 +47,7 @@ class STTItemConverter {
                 });
 
         String oneLineComment = item.getActivity();
-        oneLineComment = oneLineComment.replaceAll("\n", "\\\\n");
+        oneLineComment = oneLineComment.replaceAll("\r\n|\r|\n", "\\\\n");
         builder.append(oneLineComment);
 
         return builder.toString();

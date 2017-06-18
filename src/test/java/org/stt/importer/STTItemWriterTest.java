@@ -121,7 +121,7 @@ public class STTItemWriterTest {
 
         // GIVEN
         TimeTrackingItem theItem = new TimeTrackingItem(
-                "this is\n a multiline\n string\n with different separators",
+                "this is\r\n a multiline\r string\n with different separators",
                 LocalDateTime.now());
 
         // WHEN
