@@ -3,6 +3,9 @@ jdk:
 - oraclejdk8
 addons:
   sonarqube:
+    branches:
+      - dev
+      - master
     organization: "bytekeeper-github"
     token:
       secure: "I4h52nLHQP+is/knbKyAXmuzQZBIz99IKD2HJota1IrAkpj1uVikca0UtTWu9SQnGdD/sOV2xgVbIP0kUlAVHSlOHXfSEdGLxP5ix49Yo+si8nvaSKsQPaIXsPF2De98+qyHasvYOhawUcMctR6+FWtxwj0hymAgNWQXnVKK1lQ="
