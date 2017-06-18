@@ -94,7 +94,7 @@ class FormatConverter {
         }
     }
 
-    private class InvalidSourceFormatException extends RuntimeException {
+    private static class InvalidSourceFormatException extends RuntimeException {
         InvalidSourceFormatException(String message) {
             super(message);
         }
