@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +41,10 @@ public class BaseModule {
 
         if (!sttFile.exists()) {
             try {
-                sttFile.createNewFile();
+                boolean newFile = sttFile.createNewFile();
+                if (!newFile) {
+                    throw new AssertionError("'activities' file claimed to exist and *not* exist!");
+                }
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -65,7 +69,7 @@ public class BaseModule {
         if (!createdParentDir) {
             renameAndFailIfnotPossible(tempFile, oldFile, String.format("Couldn't create parent %s. Also, couldn't rename %s back to %s - sorry.",
                     parentDir.getAbsolutePath(), tempFile.getAbsolutePath(), oldFile.getAbsolutePath()));
-            throw new RuntimeException(String.format("Couldn't create parent %s.", parentDir.getAbsolutePath()));
+            throw new MigrationException(String.format("Couldn't create parent %s.", parentDir.getAbsolutePath()));
         }
 
         renameAndFailIfnotPossible(tempFile, newFile, String.format("Couldn't rename to %s.", newFile.getAbsolutePath()));
@@ -74,7 +78,7 @@ public class BaseModule {
     private static void renameAndFailIfnotPossible(File fromFile, File toFile, String message) {
         boolean revertedRename = fromFile.renameTo(toFile);
         if (!revertedRename) {
-            throw new RuntimeException(message);
+            throw new MigrationException(message);
         }
     }
 
@@ -88,9 +92,9 @@ public class BaseModule {
             LOG.info("Created directory " + file.getParentFile().getAbsolutePath());
         }
         try {
-            return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8")),
+            return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8)),
                     true);
-        } catch (UnsupportedEncodingException | FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -127,5 +131,11 @@ public class BaseModule {
     @Named("commit hash")
     static String provideCommitHash(@Named("applicationMetadata") Properties applicationMetadata) {
         return applicationMetadata.getProperty("app.hash");
+    }
+
+    public static class MigrationException extends RuntimeException {
+        public MigrationException(String message) {
+            super(message);
+        }
     }
 }

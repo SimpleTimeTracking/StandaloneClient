@@ -10,6 +10,7 @@ import org.stt.persistence.ItemWriter;
 
 import javax.inject.Provider;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by dante on 03.12.14.
@@ -42,8 +43,8 @@ public abstract class STTPersistenceModule {
     static Reader provideReader(@STTFile File sttFile) {
         try {
             return new InputStreamReader(
-                    new FileInputStream(sttFile), "UTF-8");
-        } catch (UnsupportedEncodingException | FileNotFoundException e) {
+                    new FileInputStream(sttFile), StandardCharsets.UTF_8);
+        } catch (FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
     }
@@ -52,8 +53,8 @@ public abstract class STTPersistenceModule {
     @STTFile
     static Writer provideWriter(@STTFile File sttFile) {
         try {
-            return new OutputStreamWriter(new FileOutputStream(sttFile, false), "UTF-8");
-        } catch (UnsupportedEncodingException | FileNotFoundException e) {
+            return new OutputStreamWriter(new FileOutputStream(sttFile, false), StandardCharsets.UTF_8);
+        } catch (FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
     }

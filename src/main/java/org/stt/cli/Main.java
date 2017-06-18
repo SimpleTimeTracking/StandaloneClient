@@ -1,21 +1,23 @@
 package org.stt.cli;
 
-import org.stt.command.*;
-import org.stt.config.CliConfig;
+import org.stt.command.Activities;
+import org.stt.command.Command;
+import org.stt.command.CommandFormatter;
+import org.stt.command.CommandHandler;
 import org.stt.config.ConfigRoot;
-import org.stt.config.PathSetting;
-import org.stt.config.YamlConfigService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 
 import javax.inject.Inject;
-import java.io.*;
-import java.time.LocalDateTime;
+import java.io.ByteArrayInputStream;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 
@@ -109,7 +111,7 @@ public class Main {
      */
     public static void main(String[] args) throws Exception {
         //switch off logging (the quick & dirty way)
-        LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(".level = SEVERE".getBytes("UTF-8")));
+        LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(".level = SEVERE".getBytes(StandardCharsets.UTF_8)));
 
         CLIApplication cliApplication = DaggerCLIApplication.create();
         // accept the desired encoding for all System.out calls

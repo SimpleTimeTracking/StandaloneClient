@@ -28,6 +28,7 @@ import static java.util.Objects.requireNonNull;
 
 public class InfoController {
     private static final Logger LOG = Logger.getLogger(InfoController.class.getName());
+    public static final String URL_PROJECT = "https://github.com/SimpleTimeTracking/StandaloneClient/";
     private final BorderPane panel;
     private final ResourceBundle localization;
     private final UpdateChecker updateChecker;
@@ -101,9 +102,7 @@ public class InfoController {
     private void openHomepage() {
         executorService.execute(() -> {
             try {
-                Desktop.getDesktop()
-                        .browse(new URI(
-                                "https://github.com/SimpleTimeTracking/StandaloneClient/"));
+                Desktop.getDesktop().browse(new URI(URL_PROJECT));
             } catch (IOException | URISyntaxException ex) {
                 LOG.log(Level.SEVERE, "Couldn't open homepage", ex);
             }

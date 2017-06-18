@@ -19,7 +19,7 @@ import org.controlsfx.property.editor.PropertyEditor;
 import org.stt.config.*;
 
 import javax.inject.Inject;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 public class SettingsController {
@@ -66,16 +66,12 @@ public class SettingsController {
             @Override
             protected ObjectBinding<PasswordSetting> getObservableValue() {
                 StringProperty textProperty = getEditor().textProperty();
-                return Bindings.createObjectBinding(() -> textProperty.getValue() == null ? null : PasswordSetting.fromPassword(textProperty.getValue().getBytes("UTF-8")), textProperty);
+                return Bindings.createObjectBinding(() -> textProperty.getValue() == null ? null : PasswordSetting.fromPassword(textProperty.getValue().getBytes(StandardCharsets.UTF_8)), textProperty);
             }
 
             @Override
             public void setValue(PasswordSetting value) {
-                try {
-                    getEditor().setText(value == null ? null : new String(value.getPassword(), "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    throw new IllegalStateException(e);
-                }
+                getEditor().setText(value == null ? null : new String(value.getPassword(), StandardCharsets.UTF_8));
             }
         };
     }

@@ -22,6 +22,7 @@ import org.stt.time.DateTimes;
 
 import javax.inject.Provider;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
@@ -69,8 +70,8 @@ public class CommandFormatterTest {
         File tempFile = tempFolder.newFile();
         Supplier<Reader> readerSupplier = () -> {
             try {
-                return new InputStreamReader(new FileInputStream(tempFile), "UTF8");
-            } catch (UnsupportedEncodingException | FileNotFoundException e) {
+                return new InputStreamReader(new FileInputStream(tempFile), StandardCharsets.UTF_8);
+            } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
         };

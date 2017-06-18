@@ -20,6 +20,7 @@ import org.stt.text.WorktimeCategorizer;
 
 import javax.inject.Provider;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -50,7 +51,7 @@ public class MainTest {
 
         Provider<Reader> sttReader = () -> {
             try {
-                return new InputStreamReader(new FileInputStream(currentSttFile), "UTF8");
+                return new InputStreamReader(new FileInputStream(currentSttFile), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -58,7 +59,7 @@ public class MainTest {
 
         Provider<Writer> sttWriter = () -> {
             try {
-                return new OutputStreamWriter(new FileOutputStream(currentSttFile), "UTF8");
+                return new OutputStreamWriter(new FileOutputStream(currentSttFile), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -83,17 +84,17 @@ public class MainTest {
 		String command = "on " + expectedComment;
 		args.addAll(Arrays.asList(command.split(" ")));
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		PrintStream ps = new PrintStream(baos, true, "UTF-8");
+        PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8.name());
 
 		// WHEN
 		sut.prepareAndExecuteCommand(args, ps);
 
 		// THEN
 		List<String> readLines = IOUtils.readLines(new InputStreamReader(
-				new FileInputStream(currentSttFile), "UTF-8"));
+                new FileInputStream(currentSttFile), StandardCharsets.UTF_8));
         assertThat(readLines, contains(containsString(expectedComment)));
 
-		String returned = baos.toString("UTF-8");
+        String returned = baos.toString(StandardCharsets.UTF_8.name());
         assertThat(returned, containsString(expectedComment));
 
 		ps.close();

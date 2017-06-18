@@ -6,6 +6,7 @@ import org.stt.time.DateTimes;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -69,7 +70,7 @@ public class WorkingtimeItemProvider {
 	private void populateHoursMapsFromFile(File workingTimesFile) {
 
 		try (BufferedReader wtReader = new BufferedReader(
-				new InputStreamReader(constructReaderFrom(workingTimesFile), "UTF-8"))) {
+				new InputStreamReader(constructReaderFrom(workingTimesFile), StandardCharsets.UTF_8))) {
 
 			String currentLine;
 			while ((currentLine = wtReader.readLine()) != null) {

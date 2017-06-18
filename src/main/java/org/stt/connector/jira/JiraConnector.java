@@ -6,7 +6,7 @@ import org.stt.config.JiraConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -29,18 +29,14 @@ public class JiraConnector implements Service {
             client = null;
             return;
         }
-        try {
-            if (configuration.getJiraUsername() != null
-                    && !configuration.getJiraUsername().isEmpty()
-                    && configuration.getJiraPassword() != null) {
-                client = new JiraClient(jiraURI,
-                        new BasicCredentials(configuration.getJiraUsername(),
-                                new String(configuration.getJiraPassword().getPassword(), "UTF-8")));
-            } else {
-                client = new JiraClient(jiraURI);
-            }
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
+        if (configuration.getJiraUsername() != null
+                && !configuration.getJiraUsername().isEmpty()
+                && configuration.getJiraPassword() != null) {
+            client = new JiraClient(jiraURI,
+                    new BasicCredentials(configuration.getJiraUsername(),
+                            new String(configuration.getJiraPassword().getPassword(), StandardCharsets.UTF_8)));
+        } else {
+            client = new JiraClient(jiraURI);
         }
     }
 

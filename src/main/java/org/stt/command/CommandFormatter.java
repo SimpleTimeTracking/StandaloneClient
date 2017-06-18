@@ -18,6 +18,7 @@ public class CommandFormatter {
 
     @Inject
     public CommandFormatter() {
+        // Required by Dagger
     }
 
     public Command parse(String command) {

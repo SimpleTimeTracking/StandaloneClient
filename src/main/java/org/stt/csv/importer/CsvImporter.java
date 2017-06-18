@@ -56,7 +56,7 @@ public class CsvImporter implements ItemReader {
                 if (!line.trim().isEmpty()) {
                     TimeTrackingItem constructedItem = constructFrom(line, nextStartTime);
                     if (constructedItem != null) {
-                        nextStartTime = constructedItem.getEnd().get();
+                        nextStartTime = constructedItem.getEnd().orElse(null);
                         return Optional.of(constructedItem);
                     }
                 }

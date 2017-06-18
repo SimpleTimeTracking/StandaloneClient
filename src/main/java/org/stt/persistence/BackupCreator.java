@@ -115,9 +115,10 @@ public class BackupCreator implements Service {
 		Collections.reverse(backupList);
 		for (int i = 0; i < backupList.size(); i++) {
 			if (i >= retentionCount) {
-				boolean success = backupList.get(i).delete();
-                LOG.info(String.format("deleting old backup file %s because of configured retention count. Deleted successfully? %s",
-                        backupList.get(i).getAbsolutePath(), success));
+                File oldBackupFile = backupList.get(i);
+                boolean success = oldBackupFile.delete();
+                LOG.info(() -> String.format("deleting old backup file %s because of configured retention count. Deleted successfully? %s",
+                        oldBackupFile.getAbsolutePath(), success));
             }
         }
     }

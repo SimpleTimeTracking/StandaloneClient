@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Base64;
@@ -46,7 +47,7 @@ public class YamlConfigService implements Service {
     private void writeConfig() {
         LOG.info("Writing config to " + sttYaml.getName());
         try (FileOutputStream out = new FileOutputStream(sttYaml);
-             Writer writer = new OutputStreamWriter(out, "UTF8")) {
+             Writer writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(FlowStyle.BLOCK);
             yaml().dump(config, writer);

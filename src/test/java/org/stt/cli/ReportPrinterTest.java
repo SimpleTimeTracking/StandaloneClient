@@ -18,6 +18,7 @@ import javax.inject.Provider;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -65,7 +66,7 @@ public class ReportPrinterTest {
 			throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
 
         LocalDateTime dateTime = LocalDate.now().atStartOfDay();
         LocalDateTime twoDaysAgo = dateTime.minusDays(2);
@@ -79,17 +80,17 @@ public class ReportPrinterTest {
 		sut.report(Collections.singleton(""), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("comment"));
-		assertThat(result, not(containsString("yesterday")));
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(result, containsString("comment"));
+        assertThat(result, not(containsString("yesterday")));
 	}
 
 	@Test
 	public void shouldParseSince() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
-		ItemReaderTestHelper.givenReaderReturns(itemReader,
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
+        ItemReaderTestHelper.givenReaderReturns(itemReader,
                 new TimeTrackingItem("comment", LocalDateTime.now().minusHours(2),
                         LocalDateTime.now().minusHours(1)));
 
@@ -97,22 +98,22 @@ public class ReportPrinterTest {
 		sut.report(Collections.singleton("since 2013-01-01"), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("comment"));
-	}
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(result, containsString("comment"));
+    }
 
 	@Test
 	public void shouldParseDays() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
-		ItemReaderTestHelper.givenReaderReturns(itemReader);
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
+        ItemReaderTestHelper.givenReaderReturns(itemReader);
 
 		// WHEN
 		sut.report(Collections.singleton("10 days"), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
         String expected = DateTimes.prettyPrintDate(LocalDate.now()
                 .minusDays(10));
         assertThat(result, containsString(expected));
@@ -122,8 +123,8 @@ public class ReportPrinterTest {
 	public void shouldParseAt() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
-		ItemReaderTestHelper.givenReaderReturns(itemReader,
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
+        ItemReaderTestHelper.givenReaderReturns(itemReader,
                 new TimeTrackingItem("comment", LocalDateTime.of(2014, 1, 1, 10, 0,
                         0), LocalDateTime.of(2014, 1, 1, 12, 0, 0)));
 
@@ -131,32 +132,32 @@ public class ReportPrinterTest {
 		sut.report(Collections.singleton("at 2014-01-01"), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("comment"));
-	}
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(result, containsString("comment"));
+    }
 
 	@Test
 	public void shouldParseSearchFilter() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
-		ItemReaderTestHelper.givenReaderReturns(itemReader,
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
+        ItemReaderTestHelper.givenReaderReturns(itemReader,
                 new TimeTrackingItem("comment blub and stuff", LocalDateTime.now()));
 
 		// WHEN
 		sut.report(Collections.singleton("blub"), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("comment blub"));
-	}
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(result, containsString("comment blub"));
+    }
 
 	@Test
 	public void shouldParseSearchFilterAllTime()
 			throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
 
         LocalDateTime twoDaysBefore = LocalDateTime.now().minusDays(2);
         ItemReaderTestHelper.givenReaderReturns(itemReader,
@@ -167,16 +168,16 @@ public class ReportPrinterTest {
 		sut.report(Collections.singleton("blub"), printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("comment blub yesterday"));
-	}
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(result, containsString("comment blub yesterday"));
+    }
 
 	@Test
 	public void shouldParseFromTo() throws UnsupportedEncodingException {
 		// GIVEN
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		PrintStream printStream = new PrintStream(out, true, "UTF8");
-		TimeTrackingItem expected1 = new TimeTrackingItem(
+        PrintStream printStream = new PrintStream(out, true, StandardCharsets.UTF_8.name());
+        TimeTrackingItem expected1 = new TimeTrackingItem(
                 "comment blub and stuff", LocalDateTime.of(2014, 10, 10, 0, 0, 0),
                 LocalDateTime.of(2014, 10, 10, 1, 0, 0));
         TimeTrackingItem expected2 = new TimeTrackingItem("other stuff",
@@ -191,8 +192,8 @@ public class ReportPrinterTest {
 				printStream);
 
 		// THEN
-		String result = new String(out.toByteArray(), "UTF8");
-		assertThat(result, containsString("comment blub"));
-		assertThat(result, containsString("other stuff"));
+        String result = new String(out.toByteArray(), StandardCharsets.UTF_8);
+        assertThat(result, containsString("comment blub"));
+        assertThat(result, containsString("other stuff"));
 	}
 }

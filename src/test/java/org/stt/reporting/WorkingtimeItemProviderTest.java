@@ -12,6 +12,7 @@ import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -36,8 +37,8 @@ public class WorkingtimeItemProviderTest {
 
 		// populate test file
 		FileUtils.write(tempFile,
-                "2014-01-01 14\n2014-02-02 10 14", "UTF8");
-        // end populate
+				"2014-01-01 14\n2014-02-02 10 14", StandardCharsets.UTF_8);
+		// end populate
 
         configuration.setWorkingTimesFile(new PathSetting(tempFile.getAbsolutePath()));
 

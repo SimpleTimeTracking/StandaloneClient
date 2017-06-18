@@ -16,6 +16,7 @@ import org.stt.time.DateTimes;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Collection;
 
@@ -41,7 +42,7 @@ public class BackupCreatorTest {
 		currentTempFolder = tempFolder.newFolder();
 		currentSttFile = tempFolder.newFile();
         try (PrintWriter out = new PrintWriter(
-                currentSttFile, "UTF8")) {
+                currentSttFile, StandardCharsets.UTF_8.name())) {
             out.print("blubb, just a test line");
         }
 

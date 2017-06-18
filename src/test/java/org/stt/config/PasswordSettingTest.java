@@ -3,6 +3,7 @@ package org.stt.config;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -12,7 +13,7 @@ public class PasswordSettingTest {
     @Test
     public void shouldEncryptAndDecryptPassword() throws UnsupportedEncodingException {
         // GIVEN
-        byte[] originalPassword = "Hello World".getBytes("UTF-8");
+        byte[] originalPassword = "Hello World".getBytes(StandardCharsets.UTF_8);
 
         // WHEN
         PasswordSetting passwordSetting = PasswordSetting.fromPassword(originalPassword);
@@ -24,7 +25,7 @@ public class PasswordSettingTest {
     @Test
     public void shouldNotStorePlainPassword() throws UnsupportedEncodingException {
         // GIVEN
-        byte[] originalPassword = "Hello World".getBytes("UTF-8");
+        byte[] originalPassword = "Hello World".getBytes(StandardCharsets.UTF_8);
 
         // WHEN
         PasswordSetting passwordSetting = PasswordSetting.fromPassword(originalPassword);

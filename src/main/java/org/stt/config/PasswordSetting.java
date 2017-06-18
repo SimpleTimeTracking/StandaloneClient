@@ -3,7 +3,7 @@ package org.stt.config;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -23,11 +23,7 @@ public class PasswordSetting {
             throw new IllegalStateException(e);
         }
         byte[] key;
-        try {
-            key = Arrays.copyOf(md.digest("ImagineAReallyStrongPasswordHere".getBytes("UTF-8")), 16);
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
+        key = Arrays.copyOf(md.digest("ImagineAReallyStrongPasswordHere".getBytes(StandardCharsets.UTF_8)), 16);
         secretKey = new SecretKeySpec(key, "AES");
     }
 

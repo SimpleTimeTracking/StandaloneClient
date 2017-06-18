@@ -18,6 +18,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 
     @Inject
     public CommonPrefixGrouper() {
+        // Required by Dagger
     }
 
     @Override

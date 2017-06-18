@@ -9,6 +9,7 @@ import org.stt.persistence.stt.STTItemWriter;
 import org.stt.ti.importer.TiImporter;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,22 +57,22 @@ public class FormatConverter {
 		try {
 			if (output == null) {
 				return new STTItemWriter(new OutputStreamWriter(System.out,
-						"UTF-8"));
+						StandardCharsets.UTF_8));
 			}
             return new STTItemWriter(
-                    new OutputStreamWriter(new FileOutputStream(output), "UTF-8"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+					new OutputStreamWriter(new FileOutputStream(output), StandardCharsets.UTF_8));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
         }
     }
 
 	private ItemReader getReaderFrom(File input, String sourceFormat) {
         Reader inputReader;
         try {
-			inputReader = new InputStreamReader(System.in, "UTF-8");
+			inputReader = new InputStreamReader(System.in, StandardCharsets.UTF_8);
 			if (input != null) {
 				inputReader = new InputStreamReader(new FileInputStream(input),
-						"UTF-8");
+						StandardCharsets.UTF_8);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
