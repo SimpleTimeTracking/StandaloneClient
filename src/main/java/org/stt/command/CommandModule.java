@@ -23,7 +23,7 @@ public class CommandModule {
     @Provides
     public static CommandTextParser provideCommandTextParser() {
         return new CommandTextParser(
-                new DateTimeFormatterBuilder().parseLenient().appendLocalized(null, FormatStyle.SHORT).toFormatter(),
-                new DateTimeFormatterBuilder().parseLenient().appendLocalized(FormatStyle.SHORT, FormatStyle.SHORT).toFormatter());
+                new DateTimeFormatterBuilder().parseLenient().appendLocalized(null, FormatStyle.MEDIUM).toFormatter(),
+                new DateTimeFormatterBuilder().parseLenient().appendLocalized(FormatStyle.MEDIUM, FormatStyle.MEDIUM).toFormatter());
     }
 }
