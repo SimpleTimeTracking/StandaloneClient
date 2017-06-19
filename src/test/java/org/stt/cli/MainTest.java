@@ -8,6 +8,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.MockitoAnnotations;
 import org.stt.command.Activities;
 import org.stt.command.CommandFormatter;
+import org.stt.command.CommandTextParser;
 import org.stt.config.ConfigRoot;
 import org.stt.persistence.ItemPersister;
 import org.stt.persistence.ItemReader;
@@ -21,6 +22,8 @@ import org.stt.text.WorktimeCategorizer;
 import javax.inject.Provider;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +73,7 @@ public class MainTest {
         ItemCategorizer categorizer = new WorktimeCategorizer(configRoot.getWorktime());
         ReportPrinter reportPrinter = new ReportPrinter(queries, configRoot.getCli(), worktimeItemProvider, categorizer);
         ItemPersister persister = new STTItemPersister(sttReader, sttWriter);
-        CommandFormatter commandFormatter = new CommandFormatter();
+        CommandFormatter commandFormatter = new CommandFormatter(new CommandTextParser(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)));
         Activities activities = new Activities(persister, queries, Optional.empty());
         sut = new Main(queries, reportPrinter, commandFormatter, activities);
     }

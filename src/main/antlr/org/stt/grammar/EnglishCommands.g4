@@ -12,7 +12,7 @@ import org.stt.model.*;
 private static final DateTimeFormatter LOCAL_DATE_PATTERN = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 }
 
-anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL | RESUME | LAST;
+anyToken: DAYS | HOURS | MINUTES | SECONDS | NUMBER | ID | AGO | SINCE | COLON | FROM | TO | DOT | AT | FIN | MINUS | UNTIL | RESUME | LAST | SLASH;
 activity: anyToken*?;
 
 timeUnit:
@@ -25,11 +25,11 @@ agoFormat returns [int amount] :
 	SINCE a=NUMBER timeUnit AGO? { $amount = $a.int; }
 	| a=NUMBER timeUnit AGO { $amount = $a.int; };
 
-date returns [int year, int month, int day]: y=NUMBER (DOT|MINUS) m=NUMBER (DOT|MINUS) d=NUMBER
-	{ $year = $y.int; $month = $m.int; $day = $d.int; };
+date: (NUMBER|DOT|MINUS|SLASH)+;
 
-dateTime returns [ int hour, int minute, int second]: date? h=NUMBER COLON m=NUMBER (COLON s=NUMBER { $second = $s.int; })?
-	{ $hour = $h.int; $minute = $m.int; };
+dateTimeInternal: (NUMBER|DOT|MINUS|SLASH|COLON)+;
+
+dateTime returns [String text]: txt=dateTimeInternal { $text = $txt.text; };
 
 sinceFormat: (SINCE|AT) start=dateTime
 	(UNTIL end=dateTime)?;
@@ -86,6 +86,7 @@ reportStart returns [LocalDate from_date, LocalDate to_date]:
 COLON: ':';
 DOT: '.';
 MINUS: '-';
+SLASH: '/';
 
 // WORDS
 AGO: 'ago';

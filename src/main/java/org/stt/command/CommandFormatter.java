@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class CommandFormatter {
-    private CommandTextParser commandTextParser = new CommandTextParser();
+    private final CommandTextParser commandTextParser;
 
     @Inject
-    public CommandFormatter() {
-        // Required by Dagger
+    public CommandFormatter(CommandTextParser commandTextParser) {
+        this.commandTextParser = commandTextParser;
     }
 
     public Command parse(String command) {
@@ -42,11 +42,24 @@ public class CommandFormatter {
 
     public String asNewItemCommandText(TimeTrackingItem item) {
         Objects.requireNonNull(item);
-        String startFormatted = DateTimes.prettyPrintTime(item.getStart());
+        String start;
+        if (DateTimes.isToday(item.getStart())) {
+            start = commandTextParser.format(item.getStart().toLocalTime());
+        } else {
+            start = commandTextParser.format(item.getStart());
+        }
         return item.getEnd()
-                .map(endDateTime ->
-                        String.format("%s from %s to %s", item.getActivity(), startFormatted, DateTimes.prettyPrintTime(endDateTime)))
-                .orElseGet(() -> String.format("%s since %s", item.getActivity(), startFormatted));
+                .map(endDateTime -> {
+                            String end;
+                            if (DateTimes.isToday(endDateTime)) {
+                                end = commandTextParser.format(endDateTime.toLocalTime());
+                            } else {
+                                end = commandTextParser.format(endDateTime);
+                            }
+                            return String.format("%s from %s to %s", item.getActivity(), start, end);
+                        }
+                )
+                .orElseGet(() -> String.format("%s since %s", item.getActivity(), start));
     }
 
     /**

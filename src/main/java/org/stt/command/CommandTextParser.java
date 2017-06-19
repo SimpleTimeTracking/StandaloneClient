@@ -9,26 +9,51 @@ import org.stt.model.TimeTrackingItem;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 import static org.stt.grammar.EnglishCommandsParser.CommandContext;
 
-class CommandTextParser {
-    private EnglishCommandsVisitor<Object> parserVisitor = new MyEnglishCommandsBaseVisitor();
+public class CommandTextParser {
+    private final DateTimeFormatter timeFormatter;
+    private final DateTimeFormatter dateTimeFormatter;
+    private EnglishCommandsVisitor<Object> parserVisitor;
 
-    public Object walk(CommandContext commandContext) {
+    public CommandTextParser(DateTimeFormatter timeFormatter, DateTimeFormatter dateTimeFormatter) {
+
+        this.timeFormatter = timeFormatter;
+        this.dateTimeFormatter = dateTimeFormatter;
+        parserVisitor = new MyEnglishCommandsBaseVisitor();
+    }
+
+    Object walk(CommandContext commandContext) {
         return commandContext.accept(parserVisitor);
     }
 
-    private static class MyEnglishCommandsBaseVisitor extends EnglishCommandsBaseVisitor<Object> {
+    public String format(LocalDateTime localDateTime) {
+        return localDateTime.format(dateTimeFormatter);
+    }
+
+    public String format(LocalTime localTime) {
+        return localTime.format(timeFormatter);
+    }
+
+    private class MyEnglishCommandsBaseVisitor extends EnglishCommandsBaseVisitor<Object> {
         @Override
         public LocalDate visitDate(EnglishCommandsParser.DateContext ctx) {
-            return LocalDate.of(ctx.year, ctx.month, ctx.day);
+            ctx.getText();
+            return LocalDate.parse(ctx.getText());
         }
 
         @Override
         public LocalDateTime visitDateTime(EnglishCommandsParser.DateTimeContext ctx) {
-            LocalDate date = ctx.date() != null ? visitDate(ctx.date()) : LocalDate.now();
-            return date.atStartOfDay().withHour(ctx.hour).withMinute(ctx.minute).withSecond(ctx.second);
+            try {
+                return LocalTime.parse(ctx.text, timeFormatter).atDate(LocalDate.now());
+            } catch (DateTimeParseException e) {
+                // Might include date as well
+            }
+            return LocalDateTime.parse(ctx.text, dateTimeFormatter);
         }
 
         @Override

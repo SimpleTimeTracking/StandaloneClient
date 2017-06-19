@@ -18,13 +18,13 @@ import org.stt.persistence.ItemReader;
 import org.stt.persistence.stt.STTItemPersister;
 import org.stt.persistence.stt.STTItemReader;
 import org.stt.query.TimeTrackingItemQueries;
-import org.stt.time.DateTimes;
 
 import javax.inject.Provider;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -38,6 +38,8 @@ import static org.junit.Assert.assertThat;
 
 @RunWith(Theories.class)
 public class CommandFormatterTest {
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("y.M.d H:m[:s]");
+    public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("H:m[:s]");
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
@@ -86,7 +88,8 @@ public class CommandFormatterTest {
                 });
         timeTrackingItemQueries = new TimeTrackingItemQueries(itemReaderProvider, Optional.empty());
         activities = new Activities(itemWriter, timeTrackingItemQueries, Optional.empty());
-        sut = new CommandFormatter();
+        sut = new CommandFormatter(new CommandTextParser(TIME_FORMATTER,
+                DATE_TIME_FORMATTER));
     }
 
 
@@ -100,7 +103,7 @@ public class CommandFormatterTest {
         String result = sut.asNewItemCommandText(item);
 
         // THEN
-        assertThat(result, is("test since 2000.01.01 01:01:01"));
+        assertThat(result, is("test since 2000.1.1 1:1:1"));
     }
 
     @Test
@@ -114,7 +117,7 @@ public class CommandFormatterTest {
 
         // THEN
         assertThat(result,
-                is("test from 2000.01.01 01:01:01 to 2000.01.01 01:01:01"));
+                is("test from 2000.1.1 1:1:1 to 2000.1.1 1:1:1"));
     }
 
     @Test
@@ -129,10 +132,8 @@ public class CommandFormatterTest {
         String result = sut.asNewItemCommandText(item);
 
         // THEN
-        String startString = DateTimes.DATE_TIME_FORMATTER_HH_MM_SS
-                .format(expectedStart);
-        String endString = DateTimes.DATE_TIME_FORMATTER_YYYY_MM_DD_HH_MM_SS
-                .format(expectedEnd);
+        String startString = TIME_FORMATTER.format(expectedStart);
+        String endString = DATE_TIME_FORMATTER.format(expectedEnd);
         assertThat(result, is("test from " + startString + " to " + endString));
     }
 
