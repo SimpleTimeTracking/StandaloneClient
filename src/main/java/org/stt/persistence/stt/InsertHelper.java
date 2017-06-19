@@ -4,14 +4,15 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
 import org.stt.persistence.ItemWriter;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 class InsertHelper {
     private final ItemReader reader;
     private final ItemWriter writer;
     private final TimeTrackingItem itemToInsert;
+    private Optional<TimeTrackingItem> lastReadItem;
 
     InsertHelper(ItemReader reader, ItemWriter writer,
                  TimeTrackingItem itemToInsert) {
@@ -21,88 +22,49 @@ class InsertHelper {
     }
 
     void performInsert() {
-        Optional<TimeTrackingItem> lastReadItem = copyAllNonIntersectingItemsBeforeItemToInsert();
-        adjustEndOfLastItemReadAndWrite(lastReadItem);
+        copyAllItemsEndingAtOrBeforeItemToInsert();
+        lastReadItem.ifPresent(this::adjustEndOfLastItemReadAndWrite);
         writer.write(itemToInsert);
-        lastReadItem = skipAllItemsCompletelyCoveredByItemToInsert(lastReadItem);
-        adjustStartOfLastItemReadAndWrite(lastReadItem);
+        skipAllItemsCompletelyCoveredByItemToInsert();
+        lastReadItem.ifPresent(this::adjustStartOfLastItemReadAndWrite);
         copyRemainingItems();
     }
 
-    private void adjustStartOfLastItemReadAndWrite(
-            Optional<TimeTrackingItem> lastReadItem) {
-        if (!lastReadItem.isPresent()) {
-            return;
-        }
-        TimeTrackingItem item = lastReadItem.get();
-        if (endOfReadItemIsAfterEndOfItemToInsert(item)) {
-            if (startOfReadItemIsBeforeEndOfItemToInsert(item)) {
-                TimeTrackingItem itemAfterItemToInsert = item
-                        .withStart(itemToInsert.getEnd().get());
-                writer.write(itemAfterItemToInsert);
-            } else {
-                writer.write(item);
-            }
-        }
+    private void copyAllItemsEndingAtOrBeforeItemToInsert() {
+        copyWhile(item -> item.endsAtOrBefore(itemToInsert.getStart()));
     }
 
-    private void adjustEndOfLastItemReadAndWrite(
-            Optional<TimeTrackingItem> lastReadItem) {
-        if (lastReadItem.isPresent()
-                && startOfReadItemIsBeforeStartOfItemToInsert(lastReadItem
-                .get())) {
-            TimeTrackingItem itemBeforeItemToInsert = lastReadItem.get()
+    private void adjustStartOfLastItemReadAndWrite(TimeTrackingItem item) {
+        TimeTrackingItem itemToWrite = itemToInsert.getEnd()
+                .map(end -> end.isAfter(item.getStart()) ? item.withStart(end) : null)
+                .orElse(item);
+        writer.write(itemToWrite);
+    }
+
+    private void adjustEndOfLastItemReadAndWrite(TimeTrackingItem item) {
+        if (item.getStart().isBefore(itemToInsert.getStart())) {
+            TimeTrackingItem itemBeforeItemToInsert = item
                     .withEnd(itemToInsert.getStart());
             writer.write(itemBeforeItemToInsert);
         }
     }
 
     private void copyRemainingItems() {
-        Optional<TimeTrackingItem> lastReadItem;
-        while ((lastReadItem = reader.read()).isPresent()) {
-            writer.write(lastReadItem.get());
-        }
+        copyWhile(item -> true);
     }
 
-    private Optional<TimeTrackingItem> skipAllItemsCompletelyCoveredByItemToInsert(
-            Optional<TimeTrackingItem> lastReadItem) {
+    private void skipAllItemsCompletelyCoveredByItemToInsert() {
         Optional<TimeTrackingItem> currentItem = lastReadItem;
-        while (currentItem.isPresent()
-                && !endOfReadItemIsAfterEndOfItemToInsert(currentItem.get())) {
+        while (currentItem.isPresent() && itemToInsert.endsSameOrAfter(currentItem.get())) {
             currentItem = reader.read();
         }
-        return currentItem;
+        lastReadItem = currentItem;
     }
 
-    private Optional<TimeTrackingItem> copyAllNonIntersectingItemsBeforeItemToInsert() {
-        Optional<TimeTrackingItem> lastReadItem;
+    private void copyWhile(Function<TimeTrackingItem, Boolean> condition) {
         while ((lastReadItem = reader.read()).isPresent()
-                && endOfReadItemIsBeforeOrEqualToStartOfItemToInsert(lastReadItem.get())) {
+                && condition.apply(lastReadItem.get())) {
             writer.write(lastReadItem.get());
         }
-        return lastReadItem;
-    }
-
-    private boolean startOfReadItemIsBeforeEndOfItemToInsert(TimeTrackingItem item) {
-        return item.getStart().isBefore(itemToInsert.getEnd().get());
-    }
-
-
-    private boolean startOfReadItemIsBeforeStartOfItemToInsert(TimeTrackingItem lastReadItem) {
-        return lastReadItem.getStart().isBefore(itemToInsert.getStart());
-    }
-
-    private boolean endOfReadItemIsAfterEndOfItemToInsert(
-            TimeTrackingItem lastReadItem) {
-        Optional<LocalDateTime> endOfLastReadItem = lastReadItem.getEnd();
-        Optional<LocalDateTime> endOfItemToInsert = itemToInsert.getEnd();
-        return endOfItemToInsert.isPresent() && (!endOfLastReadItem.isPresent() || endOfLastReadItem.get().isAfter(endOfItemToInsert.get()));
-    }
-
-    private boolean endOfReadItemIsBeforeOrEqualToStartOfItemToInsert(
-            TimeTrackingItem lastReadItem) {
-        Optional<LocalDateTime> endOfLastReadItem = lastReadItem.getEnd();
-        return endOfLastReadItem.isPresent()
-                && !endOfLastReadItem.get().isAfter(itemToInsert.getStart());
     }
 }

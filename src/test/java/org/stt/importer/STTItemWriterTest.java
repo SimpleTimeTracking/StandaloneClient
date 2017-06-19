@@ -433,4 +433,24 @@ public class STTItemWriterTest {
         assertThatFileMatches("2010-10-10_11:12:13 2010-10-10_11:14:13 old item");
     }
 
+    @Test
+    public void shouldNotWriteLaterItemBeforeNewItem() throws IOException {
+        // GIVEN
+        TimeTrackingItem oldItem = new TimeTrackingItem("old item",
+                LocalDateTime.of(2010, 10, 10, 11, 12, 13),
+                LocalDateTime.of(2010, 10, 10, 11, 14, 13));
+        sut.persist(oldItem);
+
+        TimeTrackingItem newItem = new TimeTrackingItem("new item",
+                LocalDateTime.of(2010, 10, 10, 10, 12, 13),
+                LocalDateTime.of(2010, 10, 10, 10, 14, 13));
+
+        // WHEN
+        sut.persist(newItem);
+
+        // THEN
+        assertThatFileMatches(
+                "2010-10-10_10:12:13 2010-10-10_10:14:13 new item",
+                "2010-10-10_11:12:13 2010-10-10_11:14:13 old item");
+    }
 }

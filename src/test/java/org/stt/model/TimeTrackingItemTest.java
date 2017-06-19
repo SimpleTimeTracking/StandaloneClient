@@ -100,4 +100,274 @@ public class TimeTrackingItemTest {
         assertThat(newItem, not(is(sut)));
         assertThat(newItem.getActivity(), is("11"));
     }
+
+    @Test
+    public void shouldReturnTrueForSameStart() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        TimeTrackingItem b = a.withEnd(LocalDateTime.now().plusDays(2));
+
+        // WHEN
+        boolean result = a.sameStartAs(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseForDifferentStart() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1));
+
+        // WHEN
+        boolean result = a.sameStartAs(b);
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueForSameActivity() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("Activity", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1));
+
+        // WHEN
+        boolean result = a.sameActivityAs(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseForDifferentActivity() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("Activity", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1)).withActivity("Other");
+
+        // WHEN
+        boolean result = a.sameActivityAs(b);
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueForSameEnd() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1));
+
+        // WHEN
+        boolean result = a.sameEndAs(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueForBothOngoing() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now());
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1));
+
+        // WHEN
+        boolean result = a.sameEndAs(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseForOnlyOneOngoing() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now());
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1)).withEnd(LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.sameEndAs(b);
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnFalseForDifferentEnds() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(2));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusSeconds(1)).withEnd(LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.sameEndAs(b);
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueForPartialOverlap() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(2));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusDays(1)).withEnd(LocalDateTime.now().plusDays(2));
+
+        // WHEN
+        boolean result = a.intersects(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueForEnclosingInterval() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(3));
+        TimeTrackingItem b = a.withStart(LocalDateTime.now().plusDays(1)).withEnd(LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.intersects(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueForEqualInterval() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(3));
+
+        // WHEN
+        boolean result = a.intersects(a);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseForStartMatchingOtherEnd() {
+        // GIVEN
+        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now()).withEnd(end);
+        TimeTrackingItem b = a.withEnd(LocalDateTime.now().plusDays(2)).withStart(end);
+
+        // WHEN
+        boolean result = a.intersects(b);
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueIfOngoingAndOtherIsNot() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now());
+        TimeTrackingItem b = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.endsSameOrAfter(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueIfBothAreOngoing() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now());
+        TimeTrackingItem b = new TimeTrackingItem("", LocalDateTime.now());
+
+        // WHEN
+        boolean result = a.endsSameOrAfter(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueIfEndsAfterOther() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(2));
+        TimeTrackingItem b = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.endsSameOrAfter(b);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseIfEndsBeforeOther() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        TimeTrackingItem b = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(2));
+
+        // WHEN
+        boolean result = a.endsSameOrAfter(b);
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnTrueIfEndsAtSameTime() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.endsSameOrAfter(a);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueIfEndsBeforeDate() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        boolean result = a.endsAtOrBefore(LocalDateTime.now().plusDays(2));
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnTrueIfEndsAtDate() {
+        // GIVEN
+        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), end);
+
+        // WHEN
+        boolean result = a.endsAtOrBefore(end);
+
+        // THEN
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseIfEndsAfter() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(2));
+
+        // WHEN
+        boolean result = a.endsAtOrBefore(LocalDateTime.now().plusDays(1));
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void shouldReturnFalseIfOngoing() {
+        // GIVEN
+        TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now());
+
+        // WHEN
+        boolean result = a.endsAtOrBefore(LocalDateTime.now());
+
+        // THEN
+        assertThat(result, is(false));
+    }
+
 }

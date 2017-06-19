@@ -37,6 +37,36 @@ public final class TimeTrackingItem {
         this.end = Optional.empty();
     }
 
+    public boolean sameEndAs(TimeTrackingItem other) {
+        return getEnd()
+                .map(endA -> other.getEnd().map(endA::equals).orElse(false))
+                .orElse(!other.getEnd().isPresent());
+    }
+
+    public boolean sameActivityAs(TimeTrackingItem other) {
+        return getActivity().equals(other.getActivity());
+    }
+
+    public boolean sameStartAs(TimeTrackingItem other) {
+        return getStart().equals(other.getStart());
+    }
+
+    public boolean intersects(TimeTrackingItem other) {
+        return other.getEnd().map(actualEnd -> actualEnd.isAfter(start)).orElse(true)
+                && end.map(actualEnd -> actualEnd.isAfter(other.start)).orElse(true);
+    }
+
+    public boolean endsSameOrAfter(TimeTrackingItem other) {
+        return end.map(actualEnd -> other.getEnd().map(otherEnd -> !actualEnd.isBefore(otherEnd))
+                .orElse(false))
+                .orElse(true);
+    }
+
+    public boolean endsAtOrBefore(LocalDateTime dateTime) {
+        return end.map(actualEnd -> !dateTime.isBefore(actualEnd))
+                .orElse(false);
+    }
+
     public String getActivity() {
         return activity;
     }
@@ -49,13 +79,13 @@ public final class TimeTrackingItem {
         return end;
     }
 
+
     @Override
     public String toString() {
         return start.toString() + " - "
                 + (end.isPresent() ? end.get().toString() : "null") + " : "
                 + activity;
     }
-
 
     @Override
     public boolean equals(Object o) {

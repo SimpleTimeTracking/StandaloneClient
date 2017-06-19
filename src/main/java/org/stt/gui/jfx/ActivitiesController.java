@@ -72,13 +72,12 @@ import static org.fxmisc.wellbehaved.event.InputMap.consume;
 import static org.fxmisc.wellbehaved.event.InputMap.sequence;
 import static org.stt.Strings.commonPrefix;
 import static org.stt.gui.jfx.STTOptionDialogs.Result;
-import static org.stt.model.TimeTrackingItems.*;
 
 public class ActivitiesController implements ActionsHandler {
 
     private static final Logger LOG = Logger.getLogger(ActivitiesController.class
             .getName());
-    public static final String WIKI_URL = "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI";
+    private static final String WIKI_URL = "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI";
     final ObservableList<TimeTrackingItem> allItems = FXCollections
             .observableArrayList();
     private final CommandFormatter commandFormatter;
@@ -521,8 +520,8 @@ public class ActivitiesController implements ActionsHandler {
             try {
                 TimeTrackingItem beforeUpdate = event.beforeUpdate;
                 TimeTrackingItem afterUpdate = event.afterUpdate;
-                if (!sameStart(beforeUpdate, afterUpdate)
-                        || sameActivity(beforeUpdate, afterUpdate)
+                if (!beforeUpdate.sameStartAs(afterUpdate)
+                        || beforeUpdate.sameActivityAs(afterUpdate)
                         || !sameEndOrWasOngoing(beforeUpdate, afterUpdate)) {
                     return;
                 }
@@ -541,7 +540,7 @@ public class ActivitiesController implements ActionsHandler {
         }
 
         private boolean sameEndOrWasOngoing(TimeTrackingItem beforeUpdate, TimeTrackingItem afterUpdate) {
-            return sameEnd(beforeUpdate, afterUpdate)
+            return beforeUpdate.sameEndAs(afterUpdate)
                     || !beforeUpdate.getEnd().isPresent();
         }
     }
