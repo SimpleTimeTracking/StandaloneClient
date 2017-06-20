@@ -1,9 +1,13 @@
 package org.stt.gui.jfx.text;
 
-import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.fxmisc.richtext.StyleClassedTextArea;
+import org.stt.command.CaseInsensitiveInputStream;
 import org.stt.grammar.EnglishCommandsBaseVisitor;
 import org.stt.grammar.EnglishCommandsLexer;
 import org.stt.grammar.EnglishCommandsParser;
@@ -21,7 +25,7 @@ public class CommandHighlighter {
     }
 
     public void update() {
-        CharStream input = new ANTLRInputStream(textArea.getText());
+        CharStream input = new CaseInsensitiveInputStream(textArea.getText());
         EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);

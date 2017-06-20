@@ -26,7 +26,7 @@ public class SettingsController {
     private Pane pane;
 
     @Inject
-    public SettingsController(ConfigRoot configRoot,
+    public SettingsController(ConfigRoot configRoot, // NOSONAR
                               ActivitiesConfig activitiesConfig,
                               BackupConfig backupConfig,
                               CliConfig cliConfig,
@@ -57,12 +57,7 @@ public class SettingsController {
     }
 
     private PropertyEditor<?> createPasswordSettingsEditor(PropertySheet.Item property) {
-        return new AbstractPropertyEditor<PasswordSetting, PasswordField>(property, new PasswordField()) {
-
-            {
-                enableAutoSelectAll(getEditor());
-            }
-
+        AbstractPropertyEditor<PasswordSetting, PasswordField> propertyEditor = new AbstractPropertyEditor<PasswordSetting, PasswordField>(property, new PasswordField()) {
             @Override
             protected ObjectBinding<PasswordSetting> getObservableValue() {
                 StringProperty textProperty = getEditor().textProperty();
@@ -74,15 +69,12 @@ public class SettingsController {
                 getEditor().setText(value == null ? null : new String(value.getPassword(), StandardCharsets.UTF_8));
             }
         };
+        enableAutoSelectAll(propertyEditor.getEditor());
+        return propertyEditor;
     }
 
     private static AbstractPropertyEditor<PathSetting, TextField> createPathSettingsEditor(PropertySheet.Item property) {
-        return new AbstractPropertyEditor<PathSetting, TextField>(property, new TextField()) {
-
-            {
-                enableAutoSelectAll(getEditor());
-            }
-
+        AbstractPropertyEditor<PathSetting, TextField> propertyEditor = new AbstractPropertyEditor<PathSetting, TextField>(property, new TextField()) {
             @Override
             protected ObjectBinding<PathSetting> getObservableValue() {
                 StringProperty textProperty = getEditor().textProperty();
@@ -94,6 +86,8 @@ public class SettingsController {
                 getEditor().setText(value.path());
             }
         };
+        enableAutoSelectAll(propertyEditor.getEditor());
+        return propertyEditor;
     }
 
     private static void enableAutoSelectAll(final TextInputControl control) {

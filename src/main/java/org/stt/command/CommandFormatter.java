@@ -1,7 +1,8 @@
 package org.stt.command;
 
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
 import org.stt.grammar.EnglishCommandsLexer;
 import org.stt.grammar.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
@@ -29,8 +30,7 @@ public class CommandFormatter {
 
     public Command parse(String command) {
         Objects.requireNonNull(command);
-        CharStream inputStream;
-        inputStream = new CaseInsensitiveInputStream(command);
+        CharStream inputStream = new CaseInsensitiveInputStream(command);
         EnglishCommandsLexer lexer = new EnglishCommandsLexer(inputStream);
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
@@ -68,67 +68,6 @@ public class CommandFormatter {
                         }
                 )
                 .orElseGet(() -> String.format("%s since %s", item.getActivity(), start));
-    }
-
-    /**
-     * Use case insensitive lookaheads but leave case of tokens.
-     */
-    private static class CaseInsensitiveInputStream implements CharStream {
-
-        private final CodePointCharStream delegate;
-
-        CaseInsensitiveInputStream(String input) {
-            delegate = CharStreams.fromString(input);
-        }
-
-        @Override
-        public void consume() {
-            delegate.consume();
-        }
-
-        @Override
-        public int LA(int i) {
-            int la = delegate.LA(i);
-            if (Character.isAlphabetic(la)) {
-                return Character.toLowerCase(la);
-            }
-            return la;
-        }
-
-        @Override
-        public int mark() {
-            return delegate.mark();
-        }
-
-        @Override
-        public void release(int marker) {
-            delegate.release(marker);
-        }
-
-        @Override
-        public int index() {
-            return delegate.index();
-        }
-
-        @Override
-        public void seek(int index) {
-            delegate.seek(index);
-        }
-
-        @Override
-        public int size() {
-            return delegate.size();
-        }
-
-        @Override
-        public String getSourceName() {
-            return delegate.getSourceName();
-        }
-
-        @Override
-        public String getText(Interval interval) {
-            return delegate.getText(interval);
-        }
     }
 
 }

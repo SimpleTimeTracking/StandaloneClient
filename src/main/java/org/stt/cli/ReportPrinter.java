@@ -1,7 +1,7 @@
 package org.stt.cli;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.stt.command.CaseInsensitiveInputStream;
 import org.stt.config.CliConfig;
 import org.stt.grammar.EnglishCommandsLexer;
 import org.stt.grammar.EnglishCommandsParser;
@@ -65,7 +65,7 @@ public class ReportPrinter {
             String argsString = String.join(" ", args);
 
             EnglishCommandsLexer lexer = new EnglishCommandsLexer(
-                    new ANTLRInputStream(argsString));
+                    new CaseInsensitiveInputStream(argsString));
             EnglishCommandsParser parser = new EnglishCommandsParser(
                     new CommonTokenStream(lexer));
 
