@@ -9,16 +9,11 @@ import javax.inject.Singleton;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
 @Singleton
 public class JiraConnector implements Service {
-
-    private static final Logger LOG = Logger.getLogger(JiraConnector.class.getName());
-
-
     private final JiraClient client;
     private Set<String> projectsCache;
 
@@ -43,10 +38,12 @@ public class JiraConnector implements Service {
 
     @Override
     public void start() throws Exception {
+        // no further initialization needed
     }
 
     @Override
     public void stop() {
+        // no cleanup
     }
 
     public Optional<Issue> getIssue(String issueKey) throws InvalidCredentialsException, IssueDoesNotExistException, AccessDeniedException {
@@ -69,11 +66,10 @@ public class JiraConnector implements Service {
             if (e.getCause() instanceof RestException) {
                 RestException cause = (RestException) e.getCause();
                 int httpStatusCode = cause.getHttpStatusCode();
-                switch (httpStatusCode) {
-                    case 404:
-                        throw new IssueDoesNotExistException(String.format("Couldn't find issue %s.", issueKey), e);
-                    case 401:
-                        throw new AccessDeniedException(String.format("You don't have permission to see %s.", issueKey), e);
+                if (404 == httpStatusCode) {
+                    throw new IssueDoesNotExistException(String.format("Couldn't find issue %s.", issueKey), e);
+                } else if (401 == httpStatusCode) {
+                    throw new AccessDeniedException(String.format("You don't have permission to see %s.", issueKey), e);
                 }
             }
             throw new JiraConnectorException(String.format("Error while retrieving issue %s: %s", issueKey, e.getCause().getLocalizedMessage()), e);

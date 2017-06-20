@@ -11,9 +11,9 @@ import java.util.Arrays;
 import static java.util.Objects.requireNonNull;
 
 public class PasswordSetting {
-    public static final String CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
+    private static final String CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding";
     private static SecretKey secretKey;
-    public final byte[] encodedPassword;
+    final byte[] encodedPassword;
 
     static {
         MessageDigest md;

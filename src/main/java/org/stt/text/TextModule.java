@@ -24,8 +24,9 @@ public class TextModule {
     }
 
     @Provides
-    static Collection<ExpansionProvider> provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper) {
-        return Arrays.asList(commonPrefixGrouper);
+    static Collection<ExpansionProvider> provideExpansionProvider(CommonPrefixGrouper commonPrefixGrouper,
+                                                                  JiraExpansionProvider jiraExpansionProvider) {
+        return Arrays.asList(commonPrefixGrouper, jiraExpansionProvider);
     }
 
     @Provides
