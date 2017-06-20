@@ -8,15 +8,23 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.time.DateTimes;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class CommandFormatter {
     private final CommandTextParser commandTextParser;
+    private final DateTimeFormatter dateTimeFormatter;
+    private final DateTimeFormatter timeFormatter;
 
     @Inject
-    public CommandFormatter(CommandTextParser commandTextParser) {
+    public CommandFormatter(CommandTextParser commandTextParser,
+                            @Named("dateTimeFormatter") DateTimeFormatter dateTimeFormatter,
+                            @Named("timeFormatter") DateTimeFormatter timeFormatter) {
         this.commandTextParser = commandTextParser;
+        this.dateTimeFormatter = dateTimeFormatter;
+        this.timeFormatter = timeFormatter;
     }
 
     public Command parse(String command) {
@@ -44,17 +52,17 @@ public class CommandFormatter {
         Objects.requireNonNull(item);
         String start;
         if (DateTimes.isToday(item.getStart())) {
-            start = commandTextParser.format(item.getStart().toLocalTime());
+            start = timeFormatter.format(item.getStart().toLocalTime());
         } else {
-            start = commandTextParser.format(item.getStart());
+            start = dateTimeFormatter.format(item.getStart());
         }
         return item.getEnd()
                 .map(endDateTime -> {
                             String end;
                             if (DateTimes.isToday(endDateTime)) {
-                                end = commandTextParser.format(endDateTime.toLocalTime());
+                                end = timeFormatter.format(endDateTime.toLocalTime());
                             } else {
-                                end = commandTextParser.format(endDateTime);
+                                end = dateTimeFormatter.format(endDateTime);
                             }
                             return String.format("%s from %s to %s", item.getActivity(), start, end);
                         }

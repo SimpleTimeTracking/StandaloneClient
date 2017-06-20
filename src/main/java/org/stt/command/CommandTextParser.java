@@ -12,31 +12,25 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 import static org.stt.grammar.EnglishCommandsParser.CommandContext;
 
 public class CommandTextParser {
-    private final DateTimeFormatter timeFormatter;
-    private final DateTimeFormatter dateTimeFormatter;
+    private final List<DateTimeFormatter> formatters;
     private EnglishCommandsVisitor<Object> parserVisitor;
 
-    public CommandTextParser(DateTimeFormatter timeFormatter, DateTimeFormatter dateTimeFormatter) {
-
-        this.timeFormatter = timeFormatter;
-        this.dateTimeFormatter = dateTimeFormatter;
+    public CommandTextParser(DateTimeFormatter... formatters) {
+        this.formatters = Arrays.asList(formatters);
         parserVisitor = new MyEnglishCommandsBaseVisitor();
     }
 
     Object walk(CommandContext commandContext) {
         return commandContext.accept(parserVisitor);
-    }
-
-    public String format(LocalDateTime localDateTime) {
-        return localDateTime.format(dateTimeFormatter);
-    }
-
-    public String format(LocalTime localTime) {
-        return localTime.format(timeFormatter);
     }
 
     private class MyEnglishCommandsBaseVisitor extends EnglishCommandsBaseVisitor<Object> {
@@ -48,12 +42,20 @@ public class CommandTextParser {
 
         @Override
         public LocalDateTime visitDateTime(EnglishCommandsParser.DateTimeContext ctx) {
-            try {
-                return LocalTime.parse(ctx.text, timeFormatter).atDate(LocalDate.now());
-            } catch (DateTimeParseException e) {
-                // Might include date as well
-            }
-            return LocalDateTime.parse(ctx.text, dateTimeFormatter);
+            TemporalAccessor temporalAccessor = formatters.stream()
+                    .map(formatter -> {
+                        try {
+                            return formatter.parse(ctx.text);
+                        } catch (DateTimeParseException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElseThrow(() -> new DateTimeParseException("Invalid date format", ctx.text, 0));
+            LocalDate date = temporalAccessor.query(TemporalQueries.localDate());
+            LocalTime time = temporalAccessor.query(TemporalQueries.localTime());
+            return LocalDateTime.of(date != null ? date : LocalDate.now(), time);
         }
 
         @Override

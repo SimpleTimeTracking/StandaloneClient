@@ -73,7 +73,9 @@ public class MainTest {
         ItemCategorizer categorizer = new WorktimeCategorizer(configRoot.getWorktime());
         ReportPrinter reportPrinter = new ReportPrinter(queries, configRoot.getCli(), worktimeItemProvider, categorizer);
         ItemPersister persister = new STTItemPersister(sttReader, sttWriter);
-        CommandFormatter commandFormatter = new CommandFormatter(new CommandTextParser(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT), DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)));
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT);
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+        CommandFormatter commandFormatter = new CommandFormatter(new CommandTextParser(timeFormatter, dateTimeFormatter), dateTimeFormatter, timeFormatter);
         Activities activities = new Activities(persister, queries, Optional.empty());
         sut = new Main(queries, reportPrinter, commandFormatter, activities);
     }

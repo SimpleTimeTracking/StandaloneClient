@@ -89,7 +89,7 @@ public class CommandFormatterTest {
         timeTrackingItemQueries = new TimeTrackingItemQueries(itemReaderProvider, Optional.empty());
         activities = new Activities(itemWriter, timeTrackingItemQueries, Optional.empty());
         sut = new CommandFormatter(new CommandTextParser(TIME_FORMATTER,
-                DATE_TIME_FORMATTER));
+                DATE_TIME_FORMATTER), DATE_TIME_FORMATTER, TIME_FORMATTER);
     }
 
 
