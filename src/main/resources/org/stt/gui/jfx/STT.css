@@ -1,0 +1,73 @@
+* {
+    -group-color: MIDNIGHTBLUE;
+}
+
+#insert {
+    -fx-text-fill: derive(cornflowerblue, -20%);
+}
+
+.table-cell {
+    -fx-border-color: transparent;
+    -fx-padding: 1em;
+}
+
+.keyword {
+    -fx-fill: darkblue;
+    -fx-font-weight: bold;
+}
+
+.timeUnit {
+    -fx-fill: purple;
+    -fx-font-style: italic;
+}
+
+.value { -fx-fill: blue; }
+
+.dateTime {
+    -fx-fill: purple;
+    -fx-font-style: italic;
+}
+
+.matchedGroup {
+    -fx-fill: white;
+}
+
+.group0 {
+    -rtfx-background-color: -group-color;
+}
+
+.group1 {
+    -rtfx-background-color: derive(-group-color, 30%);
+}
+
+.group2 {
+    -rtfx-background-color: derive(-group-color, 60%);
+}
+
+.group3 {
+    -rtfx-background-color: derive(-group-color, 90%);
+}
+
+.group4 {
+    -rtfx-background-color: derive(-group-color, 120%);
+}
+
+.reportGroup0 {
+    -fx-fill: derive(-group-color, -30%);
+}
+
+.reportGroup1 {
+    -fx-fill: derive(-group-color, 0%);
+}
+
+.reportGroup2 {
+    -fx-fill: derive(-group-color, 30%);
+}
+
+.reportGroup3 {
+    -fx-fill: derive(-group-color, 60%);
+}
+
+.reportGroup4 {
+    -fx-fill: derive(-group-color, 90%);
+}

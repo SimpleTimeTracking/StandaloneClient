@@ -66,7 +66,6 @@ public class ReportController {
 
     private final DurationRounder rounder;
     private final ItemGrouper itemGrouper;
-    private final Color[] groupColors;
     private final ResourceBundle localization;
     private ReportConfig config;
 
@@ -116,12 +115,6 @@ public class ReportController {
         this.fontaweSome = requireNonNull(fontaweSome);
         this.eventBus = requireNonNull(eventBus);
 
-        List<String> colorStrings = config.getGroupColors();
-        groupColors = new Color[colorStrings.size()];
-        for (int i = 0; i < colorStrings.size(); i++) {
-            groupColors[i] = Color.web(colorStrings.get(i));
-        }
-
         loadAndInjectFXML();
     }
 
@@ -135,7 +128,6 @@ public class ReportController {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        reportPane.getStylesheets().add("org/stt/gui/jfx/Reports.css");
         panel = new NotificationPane(reportPane);
         notificationPause.setOnFinished(event -> panel.hide());
     }
@@ -336,7 +328,7 @@ public class ReportController {
     }
 
     private void setItemGroupingCellFactory() {
-        columnForComment.setCellFactory(param -> new CommentTableCell());
+        columnForComment.setCellFactory(param -> new ActivityTableCell());
     }
 
     private void setClipboard(String comment) {
@@ -395,7 +387,7 @@ public class ReportController {
         addClickToCopy(columnForRoundedDuration, (item, event) -> copyDurationToClipboard(item.getRoundedDuration()));
     }
 
-    private class CommentTableCell extends TableCell<ListItem, String> {
+    private class ActivityTableCell extends TableCell<ListItem, String> {
         private TextFlow textFlow = new TextFlow() {
             // Textflow bug: Tries to place each character on a separate line if != USE_COMPUTED_SIZE by delivering width < -1...
             @Override
@@ -403,7 +395,7 @@ public class ReportController {
                 if (width > USE_COMPUTED_SIZE) {
                     return super.computePrefHeight(width);
                 }
-                CommentTableCell parent = (CommentTableCell) getParent();
+                ActivityTableCell parent = (ActivityTableCell) getParent();
                 double prefWidth = parent.computePrefWidth(USE_COMPUTED_SIZE);
                 Insets insets = parent.getInsets();
                 // See javafx.scene.control.Control.layoutChildren()
@@ -412,11 +404,12 @@ public class ReportController {
             }
         };
 
-        CommentTableCell() {
+        ActivityTableCell() {
+            getStyleClass().add("activity-table-cell");
             setGraphic(textFlow);
 
             setOnMouseClicked(event -> {
-                ListItem item = (ListItem) CommentTableCell.this.getTableRow().getItem();
+                ListItem item = (ListItem) ActivityTableCell.this.getTableRow().getItem();
                 if (item == null) {
                     return;
                 }
@@ -432,7 +425,8 @@ public class ReportController {
             } else {
                 ObservableList<Node> textList = textFlow.getChildren();
                 textList.clear();
-                final List<String> itemGroups = itemGrouper.getGroupsOf(item);
+                final List<String> itemGroups = itemGrouper.getGroupsOf(item)
+                        .stream().map(g -> g.content).collect(Collectors.toList());
                 for (int i = 0; i < itemGroups.size(); i++) {
                     String partToShow;
                     String part = itemGroups.get(i);
@@ -443,9 +437,7 @@ public class ReportController {
                     }
                     final Text partLabel = new Text(partToShow);
                     addClickListener(itemGroups, partLabel, i);
-                    if (i < groupColors.length) {
-                        partLabel.setFill(groupColors[i]);
-                    }
+                    partLabel.getStyleClass().addAll("reportGroup", "reportGroup" + i);
                     textList.add(partLabel);
                 }
                 setGraphic(textFlow);

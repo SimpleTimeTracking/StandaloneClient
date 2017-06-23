@@ -11,8 +11,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.command.*;
 import org.stt.config.ActivitiesConfig;
+import org.stt.config.ReportConfig;
 import org.stt.event.ShuttingDown;
 import org.stt.fun.AchievementService;
+import org.stt.gui.jfx.text.CommandHighlighter;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.query.WorkTimeQueries;
@@ -78,7 +80,7 @@ public class ActivitiesControllerTest {
         sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
                 Collections.singleton(expansionProvider), resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
-                worktimePane, Stream::of);
+                worktimePane, Stream::of, new CommandHighlighter.Factory(text -> Collections.emptyList(), new ReportConfig()));
         sut.commandText = new StyleClassedTextArea();
     }
 

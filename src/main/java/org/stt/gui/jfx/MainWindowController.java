@@ -63,6 +63,7 @@ public class MainWindowController {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        rootNode.getStylesheets().add("org/stt/gui/jfx/STT.css");
 
         eventBus.subscribe(this);
     }

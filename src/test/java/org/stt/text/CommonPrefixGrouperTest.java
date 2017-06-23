@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -72,21 +73,25 @@ public class CommonPrefixGrouperTest {
         sut.scanForGroups(stream);
 
 		// WHEN
-		List<String> result = sut.getGroupsOf("t");
+        List<String> result = groupsAsString("t");
 
 		// THEN
         assertThat(result, is(Collections.singletonList("t")));
     }
 
-	@Test
-	public void shouldFindGroupsWithSpaces() {
-		// GIVEN
+    private List<String> groupsAsString(String t) {
+        return sut.getGroupsOf(t).stream().map(g -> g.content).collect(Collectors.toList());
+    }
+
+    @Test
+    public void shouldFindGroupsWithSpaces() {
+        // GIVEN
 		String firstComment = "group subgroup one";
 		givenReaderReturnsItemsWithComment(firstComment, "group subgroup two");
         sut.scanForGroups(stream);
 
 		// WHEN
-		List<String> result = sut.getGroupsOf(firstComment);
+        List<String> result = groupsAsString(firstComment);
 
 		// THEN
 		assertThat(result, is(Arrays.asList("group subgroup", "one")));
@@ -103,8 +108,8 @@ public class CommonPrefixGrouperTest {
         sut.scanForGroups(stream);
 
 		// WHEN
-		List<String> withThreeGroups = sut.getGroupsOf(firstComment);
-		List<String> withTwoGroups = sut.getGroupsOf(thirdComment);
+        List<String> withThreeGroups = groupsAsString(firstComment);
+        List<String> withTwoGroups = groupsAsString(thirdComment);
 
 		// THEN
 		assertThat(withThreeGroups,
@@ -120,7 +125,7 @@ public class CommonPrefixGrouperTest {
         sut.scanForGroups(stream);
 
 		// WHEN
-		List<String> groups = sut.getGroupsOf(firstComment);
+        List<String> groups = groupsAsString(firstComment);
 
 		// THEN
 		assertThat(groups, is(Arrays.asList("group", "one")));
@@ -135,7 +140,7 @@ public class CommonPrefixGrouperTest {
         sut.scanForGroups(stream);
 
 		// WHEN
-		List<String> groups = sut.getGroupsOf(firstComment);
+        List<String> groups = groupsAsString(firstComment);
 
 		// THEN
         assertThat(groups, is(Collections.singletonList(firstComment)));
@@ -150,7 +155,7 @@ public class CommonPrefixGrouperTest {
 		sut.learnLine("aaaa bbbb cccc");
 
 		// WHEN
-		List<String> result = sut.getGroupsOf("aaaa bbbb cccc dddd");
+        List<String> result = groupsAsString("aaaa bbbb cccc dddd");
 
 		// THEN
 		assertThat(result, is(Arrays.asList("aaaa", "bbbb", "cccc", "dddd")));

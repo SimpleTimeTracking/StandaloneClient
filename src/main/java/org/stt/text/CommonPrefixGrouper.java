@@ -1,5 +1,6 @@
 package org.stt.text;
 
+import org.stt.IntRange;
 import org.stt.model.TimeTrackingItem;
 
 import javax.inject.Inject;
@@ -14,6 +15,7 @@ import java.util.stream.Stream;
  */
 @Singleton
 class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
+    public static final int MINIMUM_GROUP_LENGTH = 3;
     private final RadixTreeNode root = new RadixTreeNode();
 
     @Inject
@@ -22,7 +24,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
     }
 
     @Override
-    public List<String> getGroupsOf(String text) {
+    public List<Group> getGroupsOf(String text) {
         Objects.requireNonNull(text);
         return root.findGroupsFor(text);
     }
@@ -74,20 +76,22 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
             }
         }
 
-        public List<String> findGroupsFor(String comment) {
-            return addGroupOfCommentTo(comment, new ArrayList<>());
+        public List<Group> findGroupsFor(String comment) {
+            return addGroupOfCommentTo(comment, new ArrayList<>(), 0);
         }
 
-        private List<String> addGroupOfCommentTo(String comment,
-                                                 ArrayList<String> result) {
-            Match match = findChildWithLongestCommonPrefix(comment);
+        private List<Group> addGroupOfCommentTo(String comment,
+                                                ArrayList<Group> result, int position) {
+            Match match = comment.length() >= MINIMUM_GROUP_LENGTH ? findChildWithLongestCommonPrefix(comment) : null;
             if (match != null && match.isMatchingCompletePrefix()
-                    && comment.length() > match.prefixLength) {
-                result.add(match.group.prefix);
-                match.group.addGroupOfCommentTo(
-                        comment.substring(match.prefixLength + 1), result);
+                    && comment.length() >= match.prefixLength) {
+                result.add(new Group(Type.MATCH, match.group.prefix, new IntRange(position, position + match.prefixLength)));
+                if (comment.length() > match.prefixLength) {
+                    match.group.addGroupOfCommentTo(
+                            comment.substring(match.prefixLength + 1), result, position + match.prefixLength + 1);
+                }
             } else {
-                result.add(comment);
+                result.add(new Group(Type.REMAINDER, comment, new IntRange(position, position + comment.length())));
             }
             return result;
         }
@@ -148,7 +152,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
 
         private int lengthOfValidLongestCommonPrefix(String text) {
             int currentLength = lengthOfLongestCommonPrefix(text);
-            if (currentLength >= 3) {
+            if (currentLength >= MINIMUM_GROUP_LENGTH) {
                 return currentLength;
             }
             return 0;
@@ -201,5 +205,4 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
             return group.prefix.length() == prefixLength;
         }
     }
-
 }

@@ -8,31 +8,51 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.fxmisc.richtext.StyleClassedTextArea;
 import org.stt.command.CaseInsensitiveInputStream;
+import org.stt.config.ReportConfig;
 import org.stt.grammar.EnglishCommandsBaseVisitor;
 import org.stt.grammar.EnglishCommandsLexer;
 import org.stt.grammar.EnglishCommandsParser;
 import org.stt.grammar.EnglishCommandsVisitor;
+import org.stt.text.ItemGrouper;
 
+import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 
 public class CommandHighlighter {
+    private final ItemGrouper itemGrouper;
+    private final ReportConfig config;
     private StyleClassedTextArea textArea;
     private EnglishCommandsVisitor<Void> visitor = new Highlighter();
 
-    public CommandHighlighter(StyleClassedTextArea styleClassedTextArea) {
+    public CommandHighlighter(ItemGrouper itemGrouper,
+                              ReportConfig config,
+                              StyleClassedTextArea styleClassedTextArea) {
+        this.itemGrouper = itemGrouper;
+        this.config = config;
         this.textArea = Objects.requireNonNull(styleClassedTextArea);
     }
 
     public void update() {
-        CharStream input = new CaseInsensitiveInputStream(textArea.getText());
+        if (textArea.getLength() == 0) {
+            return;
+        }
+        textArea.clearStyle(0, textArea.getLength());
+        String text = textArea.getText();
+        CharStream input = new CaseInsensitiveInputStream(text);
         EnglishCommandsLexer lexer = new EnglishCommandsLexer(input);
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
-        if (textArea.getLength() > 0) {
-            textArea.clearStyle(0, textArea.getLength());
-        }
         parser.command().accept(visitor);
+        ItemGrouper.Group[] groups = itemGrouper.getGroupsOf(text).stream().toArray(ItemGrouper.Group[]::new);
+        for (int i = 0; i < groups.length && i < 5; i++) {
+            ItemGrouper.Group group = groups[i];
+            if (group.type == ItemGrouper.Type.MATCH) {
+                textArea.setStyle(group.range.start, group.range.end, Arrays.asList("matchedGroup", "group" + i));
+            }
+        }
+        textArea.setStyle("-fx-fill: red;");
     }
 
     private class Highlighter extends EnglishCommandsBaseVisitor<Void> {
@@ -78,13 +98,33 @@ public class CommandHighlighter {
                         break;
                 }
             }
-            for (int i = 0; i < ctx.getChildCount(); i++) {
-                markKeyWords(ctx.getChild(i));
+            if (ctx instanceof EnglishCommandsParser.DateTimeContext) {
+                EnglishCommandsParser.DateTimeContext dateTimeContext = (EnglishCommandsParser.DateTimeContext) ctx;
+                addHighlight(dateTimeContext.start, dateTimeContext.stop, "dateTime");
+            } else {
+                for (int i = 0; i < ctx.getChildCount(); i++) {
+                    markKeyWords(ctx.getChild(i));
+                }
             }
         }
 
         private void addHighlight(Token start, Token stop, String style) {
-            textArea.setStyle(start.getStartIndex(), stop.getStopIndex() + 1, Collections.singletonList(style));
+            textArea.setStyle(start.getStartIndex(), stop.getStopIndex() + 1, Collections.singleton(style));
+        }
+    }
+
+    public static class Factory {
+        private final ItemGrouper itemGrouper;
+        private final ReportConfig config;
+
+        @Inject
+        public Factory(ItemGrouper itemGrouper, ReportConfig config) {
+            this.itemGrouper = itemGrouper;
+            this.config = config;
+        }
+
+        public CommandHighlighter create(StyleClassedTextArea textArea) {
+            return new CommandHighlighter(itemGrouper, config, textArea);
         }
     }
 }

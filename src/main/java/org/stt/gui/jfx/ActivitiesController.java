@@ -10,10 +10,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
@@ -90,6 +90,7 @@ public class ActivitiesController implements ActionsHandler {
     private final BorderPane panel;
     private final ActivitiesConfig activitiesConfig;
     private final ActivityTextDisplayProcessor labelToNodeMapper;
+    private final CommandHighlighter.Factory commandHighlighterFactory;
     private STTOptionDialogs sttOptionDialogs;
     private ItemAndDateValidator validator;
     private TimeTrackingItemQueries queries;
@@ -125,7 +126,8 @@ public class ActivitiesController implements ActionsHandler {
                          CommandHandler activities,
                          @Named("glyph") Font fontAwesome,
                          WorktimePane worktimePane,
-                         @Named("activityToText") ActivityTextDisplayProcessor labelToNodeMapper) {
+                         @Named("activityToText") ActivityTextDisplayProcessor labelToNodeMapper,
+                         CommandHighlighter.Factory commandHighlighterFactory) {
         this.worktimePane = requireNonNull(worktimePane);
         this.activitiesConfig = requireNonNull(activitiesConfig);
         this.executorService = requireNonNull(executorService);
@@ -140,6 +142,7 @@ public class ActivitiesController implements ActionsHandler {
         this.activities = requireNonNull(activities);
         this.fontAwesome = requireNonNull(fontAwesome);
         this.labelToNodeMapper = labelToNodeMapper;
+        this.commandHighlighterFactory = requireNonNull(commandHighlighterFactory);
         eventBus.subscribe(this);
         eventBus.subscribe(new BulkRenameHelper());
         filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
@@ -153,8 +156,6 @@ public class ActivitiesController implements ActionsHandler {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-
-        panel.getStylesheets().add("org/stt/gui/jfx/Activities.css");
     }
 
     @Handler
@@ -372,8 +373,9 @@ public class ActivitiesController implements ActionsHandler {
     private void addCommandText() {
         commandText = new StyleClassedTextArea();
         commandText.requestFocus();
+        commandText.setId("commandText");
 
-        CommandHighlighter commandHighlighter = new CommandHighlighter(commandText);
+        CommandHighlighter commandHighlighter = commandHighlighterFactory.create(commandText);
         commandText.textProperty().addListener((observable, oldValue, newValue)
                 -> commandHighlighter.update());
 
@@ -396,7 +398,9 @@ public class ActivitiesController implements ActionsHandler {
     }
 
     private void addInsertButton() {
-        FramelessButton insertButton = new FramelessButton(Glyph.glyph(fontAwesome, Glyph.CHEVRON_CIRCLE_RIGHT, 60, Color.CORNFLOWERBLUE));
+        Label glyph = Glyph.glyph(fontAwesome, Glyph.ARROW_CIRCLE_RIGHT, 60);
+        glyph.setId("insert");
+        FramelessButton insertButton = new FramelessButton(glyph);
         insertButton.setBackground(commandText.getBackground());
         insertButton.setTooltip(new Tooltip(localization.getString("activities.command.insert")));
         insertButton.setOnAction(event -> executeCommand());

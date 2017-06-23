@@ -6,7 +6,9 @@ import dagger.multibindings.IntoSet;
 import dagger.multibindings.Multibinds;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.stt.text.ItemGrouper;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -19,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -44,9 +45,9 @@ public abstract class JFXModule {
     @Named("activityToText")
     static ActivityTextDisplayProcessor provideActivityToTextMapper(Set<ActivityTextDisplayProcessor> mappers) {
         return o -> {
-            Stream<Object> stream = Stream.of(o);
-            for (Function<Object, Stream<Object>> mapper : mappers) {
-                stream = stream.flatMap(mapper);
+            Stream<Object> stream = o;
+            for (ActivityTextDisplayProcessor mapper : mappers) {
+                stream = mapper.apply(stream);
             }
             return stream;
         };
@@ -54,35 +55,80 @@ public abstract class JFXModule {
 
     @Provides
     @IntoSet
-    static ActivityTextDisplayProcessor hyperlinkMapper(ExecutorService executorService) {
-        return o -> {
-            if (o instanceof String) {
-                List<Object> result = new ArrayList<>();
-                String string = (String) o;
-                Matcher matcher = URL_PATTERN.matcher(string);
-                int index = 0;
-                while (matcher.find(index)) {
-                    String preamble = string.substring(index, matcher.start());
-                    if (!preamble.isEmpty()) {
-                        result.add(preamble);
-                    }
-                    String uri = string.substring(matcher.start(), matcher.end());
-                    Hyperlink hyperlink = new Hyperlink(uri);
-                    hyperlink.setOnAction(event -> executorService.submit(() -> {
-                        try {
-                            Desktop.getDesktop().browse(URI.create(uri));
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    }));
-                    result.add(hyperlink);
-                    index = matcher.end();
+    static ActivityTextDisplayProcessor groupingMapper(ItemGrouper grouper) {
+
+        return in -> {
+            Boolean[] first = {true};
+            return in.flatMap(o -> {
+                if (!first[0]) {
+                    return Stream.of(o);
                 }
-                result.add(string.substring(index));
-                return result.stream();
+                first[0] = false;
+                if (o instanceof String) {
+                    return dissect(grouper, (String) o);
+                }
+                return Stream.of(o);
+            });
+        };
+    }
+
+    private static Stream<?> dissect(ItemGrouper grouper, String o) {
+        List<Object> result = new ArrayList<>();
+        List<ItemGrouper.Group> groups = grouper.getGroupsOf(o);
+        for (int i = 0; i < groups.size(); i++) {
+            ItemGrouper.Group group = groups.get(i);
+            if (i > 0) {
+                result.add(" ");
+            }
+            Text text = new Text(group.content);
+            text.getStyleClass().add("reportGroup" + i);
+            boolean notLast = i < groups.size() - 1;
+            if (notLast) {
+                result.add("\u3018");
+            }
+            result.add(text);
+            if (notLast) {
+                result.add("\u3019");
+            }
+        }
+        return result.stream();
+    }
+
+    @Provides
+    @IntoSet
+    static ActivityTextDisplayProcessor hyperlinkMapper(ExecutorService executorService) {
+        return in -> in.flatMap(o -> {
+            if (o instanceof String) {
+                return toHyperlink(executorService, (String) o);
             }
             return Stream.of(o);
-        };
+        });
+    }
+
+    private static Stream<?> toHyperlink(ExecutorService executorService, String o) {
+        List<Object> result = new ArrayList<>();
+        String string = o;
+        Matcher matcher = URL_PATTERN.matcher(string);
+        int index = 0;
+        while (matcher.find(index)) {
+            String preamble = string.substring(index, matcher.start());
+            if (!preamble.isEmpty()) {
+                result.add(preamble);
+            }
+            String uri = string.substring(matcher.start(), matcher.end());
+            Hyperlink hyperlink = new Hyperlink(uri);
+            hyperlink.setOnAction(event -> executorService.submit(() -> {
+                try {
+                    Desktop.getDesktop().browse(URI.create(uri));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }));
+            result.add(hyperlink);
+            index = matcher.end();
+        }
+        result.add(string.substring(index));
+        return result.stream();
     }
 
     @Provides

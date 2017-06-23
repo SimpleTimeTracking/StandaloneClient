@@ -47,7 +47,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     private final BorderPane lastItemOnDayPane;
 
     private final Node newDayNode;
-    private final Function<Object, Stream<Object>> labelToNodeMapper;
+    private final Function<Stream<Object>, Stream<Object>> labelToNodeMapper;
 
     TimeTrackingItemCell(Font fontAwesome,
                          ResourceBundle localization,
@@ -160,7 +160,7 @@ class TimeTrackingItemCell extends ListCell<TimeTrackingItem> {
     }
 
     private void applyLabelForComment() {
-        List<Node> textNodes = labelToNodeMapper.apply(getItem().getActivity())
+        List<Node> textNodes = labelToNodeMapper.apply(Stream.of(getItem().getActivity()))
                 .map(o -> {
                     if (o instanceof String) {
                         return new Text((String) o);
