@@ -437,7 +437,9 @@ public class ReportController {
                     }
                     final Text partLabel = new Text(partToShow);
                     addClickListener(itemGroups, partLabel, i);
-                    partLabel.getStyleClass().addAll("reportGroup", "reportGroup" + i);
+                    if (i < itemGroups.size() - 1) {
+                        partLabel.getStyleClass().addAll("reportGroup", "reportGroup" + i);
+                    }
                     textList.add(partLabel);
                 }
                 setGraphic(textFlow);

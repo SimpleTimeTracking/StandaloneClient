@@ -76,18 +76,18 @@ public abstract class JFXModule {
         List<Object> result = new ArrayList<>();
         List<ItemGrouper.Group> groups = grouper.getGroupsOf(o);
         for (int i = 0; i < groups.size(); i++) {
-            ItemGrouper.Group group = groups.get(i);
             if (i > 0) {
                 result.add(" ");
             }
-            Text text = new Text(group.content);
-            text.getStyleClass().add("reportGroup" + i);
-            boolean notLast = i < groups.size() - 1;
-            if (notLast) {
+            ItemGrouper.Group group = groups.get(i);
+            boolean last = i >= groups.size() - 1;
+            if (last) {
+                result.add(group.content);
+            } else {
+                Text text = new Text(group.content);
+                text.getStyleClass().add("reportGroup" + i);
                 result.add("\u3018");
-            }
-            result.add(text);
-            if (notLast) {
+                result.add(text);
                 result.add("\u3019");
             }
         }
