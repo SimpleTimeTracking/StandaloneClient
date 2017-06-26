@@ -86,9 +86,9 @@ public abstract class JFXModule {
             } else {
                 Text text = new Text(group.content);
                 text.getStyleClass().add("reportGroup" + i);
-                result.add("\u3018");
+                result.add("\u2768");
                 result.add(text);
-                result.add("\u3019");
+                result.add("\u2769");
             }
         }
         return result.stream();
