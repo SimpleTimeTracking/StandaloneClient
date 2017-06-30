@@ -46,7 +46,7 @@ public class CommandHighlighter {
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
         parser.command().accept(visitor);
         ItemGrouper.Group[] groups = itemGrouper.getGroupsOf(text).stream().toArray(ItemGrouper.Group[]::new);
-        for (int i = 0; i < groups.length && i < 5; i++) {
+        for (int i = 0; i < groups.length - 1; i++) {
             ItemGrouper.Group group = groups[i];
             if (group.type == ItemGrouper.Type.MATCH) {
                 textArea.setStyle(group.range.start, group.range.end, Arrays.asList("matchedGroup", "group" + i));

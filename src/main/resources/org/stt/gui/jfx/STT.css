@@ -33,23 +33,23 @@
 }
 
 .group0 {
-    -rtfx-background-color: -group-color;
+    -fx-fill: derive(-group-color, -30%);
 }
 
 .group1 {
-    -rtfx-background-color: derive(-group-color, 30%);
+    -fx-fill: derive(-group-color, 0%);
 }
 
 .group2 {
-    -rtfx-background-color: derive(-group-color, 60%);
+    -fx-fill: derive(-group-color, 30%);
 }
 
 .group3 {
-    -rtfx-background-color: derive(-group-color, 90%);
+    -fx-fill: derive(-group-color, 60%);
 }
 
 .group4 {
-    -rtfx-background-color: derive(-group-color, 120%);
+    -fx-fill: derive(-group-color, 90%);
 }
 
 .reportGroup0 {
