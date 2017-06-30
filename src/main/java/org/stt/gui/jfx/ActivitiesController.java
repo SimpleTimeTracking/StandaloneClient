@@ -526,7 +526,7 @@ public class ActivitiesController implements ActionsHandler {
                 TimeTrackingItem afterUpdate = event.afterUpdate;
                 if (!beforeUpdate.sameStartAs(afterUpdate)
                         || beforeUpdate.sameActivityAs(afterUpdate)
-                        || !sameEndOrWasOngoing(beforeUpdate, afterUpdate)) {
+                        || !sameEndAndWasNotOngoing(beforeUpdate, afterUpdate)) {
                     return;
                 }
                 Criteria criteria = new Criteria().withActivityIs(beforeUpdate.getActivity());
@@ -543,9 +543,8 @@ public class ActivitiesController implements ActionsHandler {
             }
         }
 
-        private boolean sameEndOrWasOngoing(TimeTrackingItem beforeUpdate, TimeTrackingItem afterUpdate) {
-            return beforeUpdate.sameEndAs(afterUpdate)
-                    || !beforeUpdate.getEnd().isPresent();
+        private boolean sameEndAndWasNotOngoing(TimeTrackingItem beforeUpdate, TimeTrackingItem afterUpdate) {
+            return beforeUpdate.sameEndAs(afterUpdate) && beforeUpdate.getEnd().isPresent();
         }
     }
 }

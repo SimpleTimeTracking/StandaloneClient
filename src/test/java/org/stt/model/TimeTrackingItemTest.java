@@ -102,6 +102,19 @@ public class TimeTrackingItemTest {
     }
 
     @Test
+    public void withActivityShouldCreateNewItemForOngoing() {
+        // GIVEN
+        TimeTrackingItem sut = new TimeTrackingItem("", LocalDateTime.now());
+
+        // WHEN
+        TimeTrackingItem newItem = sut.withActivity("11");
+
+        // THEN
+        assertThat(newItem, not(is(sut)));
+        assertThat(newItem.getActivity(), is("11"));
+    }
+
+    @Test
     public void shouldReturnTrueForSameStart() {
         // GIVEN
         TimeTrackingItem a = new TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1));

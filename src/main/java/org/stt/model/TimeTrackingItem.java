@@ -125,6 +125,6 @@ public final class TimeTrackingItem {
     public TimeTrackingItem withActivity(String newActivity) {
         requireNonNull(newActivity);
         return end.map(time -> new TimeTrackingItem(newActivity, start, time))
-                .orElse(new TimeTrackingItem(activity, start));
+                .orElse(new TimeTrackingItem(newActivity, start));
     }
 }
