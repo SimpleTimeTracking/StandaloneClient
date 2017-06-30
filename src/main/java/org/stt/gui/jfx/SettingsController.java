@@ -1,8 +1,8 @@
 package org.stt.gui.jfx;
 
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
@@ -59,9 +59,16 @@ public class SettingsController {
     private PropertyEditor<?> createPasswordSettingsEditor(PropertySheet.Item property) {
         AbstractPropertyEditor<PasswordSetting, PasswordField> propertyEditor = new AbstractPropertyEditor<PasswordSetting, PasswordField>(property, new PasswordField()) {
             @Override
-            protected ObjectBinding<PasswordSetting> getObservableValue() {
+            protected ObservableValue<PasswordSetting> getObservableValue() {
                 StringProperty textProperty = getEditor().textProperty();
-                return Bindings.createObjectBinding(() -> textProperty.getValue() == null ? null : PasswordSetting.fromPassword(textProperty.getValue().getBytes(StandardCharsets.UTF_8)), textProperty);
+                ObjectProperty<PasswordSetting> passwordSettingProperty = new SimpleObjectProperty<>();
+                applyValue(passwordSettingProperty, textProperty.getValue());
+                textProperty.addListener((observable, oldValue, newValue) -> applyValue(passwordSettingProperty, newValue));
+                return passwordSettingProperty;
+            }
+
+            private void applyValue(ObjectProperty<PasswordSetting> passwordSettingProperty, String newValue) {
+                passwordSettingProperty.setValue(newValue == null ? null : PasswordSetting.fromPassword(newValue.getBytes(StandardCharsets.UTF_8)));
             }
 
             @Override
@@ -76,9 +83,16 @@ public class SettingsController {
     private static AbstractPropertyEditor<PathSetting, TextField> createPathSettingsEditor(PropertySheet.Item property) {
         AbstractPropertyEditor<PathSetting, TextField> propertyEditor = new AbstractPropertyEditor<PathSetting, TextField>(property, new TextField()) {
             @Override
-            protected ObjectBinding<PathSetting> getObservableValue() {
+            protected ObservableValue<PathSetting> getObservableValue() {
                 StringProperty textProperty = getEditor().textProperty();
-                return Bindings.createObjectBinding(() -> new PathSetting(textProperty.getValue()), textProperty);
+                ObjectProperty<PathSetting> pathSettingProperty = new SimpleObjectProperty<>();
+                applyValue(pathSettingProperty, textProperty.getValue());
+                textProperty.addListener((observable, oldValue, newValue) -> applyValue(pathSettingProperty, newValue));
+                return pathSettingProperty;
+            }
+
+            private void applyValue(ObjectProperty<PathSetting> pathSettingProperty, String newValue) {
+                pathSettingProperty.setValue(new PathSetting(newValue));
             }
 
             @Override
