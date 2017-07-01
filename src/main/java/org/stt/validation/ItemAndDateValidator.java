@@ -1,6 +1,5 @@
 package org.stt.validation;
 
-import org.stt.model.TimeTrackingItem;
 import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.time.DateTimes;
@@ -35,16 +34,4 @@ public class ItemAndDateValidator {
         }
         return !LocalDateTime.now().isBefore(start);
     }
-
-    public int validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
-        Criteria criteria = new Criteria();
-        criteria.withStartNotBefore(newItem.getStart());
-        criteria.withActivityIsNot(newItem.getActivity());
-        newItem.getEnd().ifPresent(criteria::withEndNotAfter);
-        return (int) timeTrackingItemQueries.queryItems(criteria)
-                .filter(item -> !newItem.getStart().equals(item.getStart())
-                        || !newItem.getEnd().equals(item.getEnd()))
-                .count();
-    }
-
 }

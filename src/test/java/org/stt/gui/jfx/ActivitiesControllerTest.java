@@ -16,6 +16,7 @@ import org.stt.event.ShuttingDown;
 import org.stt.fun.AchievementService;
 import org.stt.gui.jfx.text.CommandHighlighter;
 import org.stt.model.TimeTrackingItem;
+import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
 import org.stt.query.WorkTimeQueries;
 import org.stt.text.ExpansionProvider;
@@ -77,10 +78,11 @@ public class ActivitiesControllerTest {
         ActivitiesConfig activitiesConfig = new ActivitiesConfig();
         activitiesConfig.setAskBeforeDeleting(false);
         activitiesConfig.setDeleteClosesGaps(false);
-        sut = new ActivitiesController(new STTOptionDialogs(resourceBundle), eventBus, commandFormatter,
+        ActivityTextDisplayProcessor labelToNodeMapper = Stream::of;
+        sut = new ActivitiesController(new STTOptionDialogs(resourceBundle, fontAwesome, labelToNodeMapper), eventBus, commandFormatter,
                 Collections.singleton(expansionProvider), resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, achievementService, executorService, commandHandler, fontAwesome,
-                worktimePane, Stream::of, new CommandHighlighter.Factory(text -> Collections.emptyList(), new ReportConfig()));
+                worktimePane, labelToNodeMapper, new CommandHighlighter.Factory(text -> Collections.emptyList(), new ReportConfig()));
         sut.commandText = new StyleClassedTextArea();
     }
 
@@ -171,6 +173,7 @@ public class ActivitiesControllerTest {
     @Test
     public void shouldClearCommandAreaOnExecuteCommand() throws Exception {
         // GIVEN
+        given(timeTrackingItemQueries.queryItems(Matchers.any(Criteria.class))).willReturn(Stream.of());
         givenCommand("test");
         given(commandFormatter.parse(anyString())).willReturn(new NewActivity(new TimeTrackingItem("", LocalDateTime.now())));
 

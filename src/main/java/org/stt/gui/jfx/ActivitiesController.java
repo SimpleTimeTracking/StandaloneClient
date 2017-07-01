@@ -30,7 +30,7 @@ import org.stt.event.ShuttingDown;
 import org.stt.fun.Achievement;
 import org.stt.fun.AchievementService;
 import org.stt.fun.AchievementsUpdated;
-import org.stt.gui.jfx.TimeTrackingItemCell.ActionsHandler;
+import org.stt.gui.jfx.TimeTrackingItemCellWithActions.ActionsHandler;
 import org.stt.gui.jfx.binding.MappedSetBinding;
 import org.stt.gui.jfx.binding.TimeTrackingListFilter;
 import org.stt.gui.jfx.text.CommandHighlighter;
@@ -506,8 +506,17 @@ public class ActivitiesController implements ActionsHandler {
         }
 
         private boolean validateItemWouldCoverOtherItems(TimeTrackingItem newItem) {
-            int numberOfCoveredItems = validator.validateItemWouldCoverOtherItems(newItem);
-            return numberOfCoveredItems == 0 || sttOptionDialogs.showItemCoversOtherItemsDialog(numberOfCoveredItems) == Result.PERFORM_ACTION;
+            Criteria criteria = new Criteria();
+            criteria.withStartNotBefore(newItem.getStart());
+            criteria.withActivityIsNot(newItem.getActivity());
+            newItem.getEnd().ifPresent(criteria::withEndNotAfter);
+            Predicate<TimeTrackingItem> notSameInterval = newItem::sameStartAs;
+            notSameInterval = notSameInterval.and(newItem::sameEndAs);
+            notSameInterval = notSameInterval.negate();
+            List<TimeTrackingItem> coveredItems = queries.queryItems(criteria).filter(notSameInterval)
+                    .collect(Collectors.toList());
+
+            return coveredItems.isEmpty() || sttOptionDialogs.showItemCoversOtherItemsDialog(coveredItems) == Result.PERFORM_ACTION;
         }
     }
 

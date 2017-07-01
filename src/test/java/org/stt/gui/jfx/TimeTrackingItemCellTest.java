@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.stt.gui.jfx.TimeTrackingItemCell.ActionsHandler;
+import org.stt.gui.jfx.TimeTrackingItemCellWithActions.ActionsHandler;
 import org.stt.model.TimeTrackingItem;
 
 import java.time.LocalDateTime;
@@ -16,8 +16,8 @@ import static org.mockito.Mockito.verify;
 
 public class TimeTrackingItemCellTest {
 
-	private TimeTrackingItemCell sut;
-	@Mock
+    private TimeTrackingItemCellWithActions sut;
+    @Mock
     private ActionsHandler actionsHandler;
     private Font fontAwesome;
 
@@ -29,7 +29,7 @@ public class TimeTrackingItemCellTest {
 		ResourceBundle resourceBundle = ResourceBundle
 				.getBundle("org.stt.gui.Application");
 
-        sut = new TimeTrackingItemCell(fontAwesome, resourceBundle, a -> false, actionsHandler, a -> a) {
+        sut = new TimeTrackingItemCellWithActions(fontAwesome, resourceBundle, a -> false, actionsHandler, a -> a) {
 
 			@Override
 			protected void setupTooltips(ResourceBundle localization) {

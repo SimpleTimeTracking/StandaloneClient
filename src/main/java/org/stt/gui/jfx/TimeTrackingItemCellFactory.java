@@ -4,7 +4,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.text.Font;
 import javafx.util.Callback;
-import org.stt.gui.jfx.TimeTrackingItemCell.ActionsHandler;
+import org.stt.gui.jfx.TimeTrackingItemCellWithActions.ActionsHandler;
 import org.stt.model.TimeTrackingItem;
 
 import java.util.ResourceBundle;
@@ -36,6 +36,6 @@ class TimeTrackingItemCellFactory implements
 
 	@Override
 	public ListCell<TimeTrackingItem> call(ListView<TimeTrackingItem> arg0) {
-        return new TimeTrackingItemCell(fontAwesome, resourceBundle, lastItemOfDay, actionsHandler, labelToNodeMapper);
+        return new TimeTrackingItemCellWithActions(fontAwesome, resourceBundle, lastItemOfDay, actionsHandler, labelToNodeMapper);
     }
 }
