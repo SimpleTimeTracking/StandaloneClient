@@ -114,8 +114,6 @@ public class ReportController {
         this.itemGrouper = requireNonNull(itemGrouper);
         this.fontaweSome = requireNonNull(fontaweSome);
         this.eventBus = requireNonNull(eventBus);
-
-        loadAndInjectFXML();
     }
 
     private void loadAndInjectFXML() {
@@ -133,6 +131,7 @@ public class ReportController {
     }
 
     Node getPanel() {
+        loadAndInjectFXML();
         return panel;
     }
 

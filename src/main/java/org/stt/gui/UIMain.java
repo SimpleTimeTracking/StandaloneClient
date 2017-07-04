@@ -41,6 +41,9 @@ public class UIMain extends Application {
 
     @Override
     public void init() throws Exception {
+//        Logger rootLogger = Logger.getLogger("");
+//        rootLogger.getHandlers()[0].setLevel(Level.FINEST);
+//        Logger.getLogger("org.stt").setLevel(Level.FINEST);
         LOG.info("Starting STT in UI mode");
 
         LOG.info("Starting injector");
@@ -61,12 +64,6 @@ public class UIMain extends Application {
         LOG.info("Setting up event bus");
         eventBus = uiApplication.eventBus();
         eventBus.subscribe(this);
-        new Timer(true).schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Platform.runLater(() -> eventBus.publish(new TimePassedEvent()));
-            }
-        }, 0, 1000);
     }
 
     @Handler(priority = -999)
@@ -101,5 +98,17 @@ public class UIMain extends Application {
         });
         LOG.info("Showing window");
         mainWindowController.show(primaryStage);
+
+        scheduleOneUpdatePerSecond();
+        LOG.fine("Window is now shown");
+    }
+
+    private void scheduleOneUpdatePerSecond() {
+        new Timer(true).schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> eventBus.publish(new TimePassedEvent()));
+            }
+        }, 0, 1000);
     }
 }

@@ -2,6 +2,7 @@ package org.stt.query;
 
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
+import org.stt.StopWatch;
 import org.stt.model.ItemModified;
 import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemReader;
@@ -113,13 +114,15 @@ public class TimeTrackingItemQueries {
     private synchronized void validateCache() {
         if (cachedItems == null) {
             LOG.fine("Rebuilding cache");
-            cachedItems = new ArrayList<>();
+            StopWatch stopWatch = new StopWatch("Query cache rebuild");
+            cachedItems = new ArrayList<>(2000);
             try (ItemReader reader = provider.get()) {
                 Optional<TimeTrackingItem> itemOptional;
                 while ((itemOptional = reader.read()).isPresent()) {
                     cachedItems.add(itemOptional.get());
                 }
             }
+            stopWatch.stop();
         }
     }
 

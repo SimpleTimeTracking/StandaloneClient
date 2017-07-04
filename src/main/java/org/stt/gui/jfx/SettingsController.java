@@ -23,6 +23,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 public class SettingsController {
+    private final ConfigRoot configRoot;
+    private final ActivitiesConfig activitiesConfig;
+    private final BackupConfig backupConfig;
+    private final CliConfig cliConfig;
+    private final CommonPrefixGrouperConfig commonPrefixGrouperConfig;
+    private final ReportConfig reportConfig;
+    private final WorktimeConfig worktimeConfig;
+    private final JiraConfig jiraConfig;
     private Pane pane;
 
     @Inject
@@ -34,26 +42,14 @@ public class SettingsController {
                               ReportConfig reportConfig,
                               WorktimeConfig worktimeConfig,
                               JiraConfig jiraConfig) {
-        PropertySheet propertySheet = new PropertySheet();
-        Callback<PropertySheet.Item, PropertyEditor<?>> defaultEditorFactory = propertySheet.getPropertyEditorFactory();
-        propertySheet.setPropertyEditorFactory(item -> {
-            Class<?> type = item.getType();
-            if (PathSetting.class.isAssignableFrom(type)) {
-                return createPathSettingsEditor(item);
-            }
-            if (PasswordSetting.class.isAssignableFrom(type)) {
-                return createPasswordSettingsEditor(item);
-            }
-            return defaultEditorFactory.call(item);
-        });
-        Stream.of(configRoot, activitiesConfig, backupConfig, cliConfig, commonPrefixGrouperConfig,
-                reportConfig, worktimeConfig, jiraConfig)
-                .forEach(o -> propertySheet.getItems().addAll(BeanPropertyUtils.getProperties(o,
-                        propertyDescriptor -> {
-                            Class<?> propertyType = propertyDescriptor.getPropertyType();
-                            return !(ConfigurationContainer.class.isAssignableFrom(propertyType));
-                        })));
-        pane = new BorderPane(propertySheet);
+        this.configRoot = configRoot;
+        this.activitiesConfig = activitiesConfig;
+        this.backupConfig = backupConfig;
+        this.cliConfig = cliConfig;
+        this.commonPrefixGrouperConfig = commonPrefixGrouperConfig;
+        this.reportConfig = reportConfig;
+        this.worktimeConfig = worktimeConfig;
+        this.jiraConfig = jiraConfig;
     }
 
     private PropertyEditor<?> createPasswordSettingsEditor(PropertySheet.Item property) {
@@ -113,6 +109,30 @@ public class SettingsController {
     }
 
     public Node getPanel() {
+        initialize();
         return pane;
+    }
+
+    private void initialize() {
+        PropertySheet propertySheet = new PropertySheet();
+        Callback<PropertySheet.Item, PropertyEditor<?>> defaultEditorFactory = propertySheet.getPropertyEditorFactory();
+        propertySheet.setPropertyEditorFactory(item -> {
+            Class<?> type = item.getType();
+            if (PathSetting.class.isAssignableFrom(type)) {
+                return createPathSettingsEditor(item);
+            }
+            if (PasswordSetting.class.isAssignableFrom(type)) {
+                return createPasswordSettingsEditor(item);
+            }
+            return defaultEditorFactory.call(item);
+        });
+        Stream.of(configRoot, activitiesConfig, backupConfig, cliConfig, commonPrefixGrouperConfig,
+                reportConfig, worktimeConfig, jiraConfig)
+                .forEach(o -> propertySheet.getItems().addAll(BeanPropertyUtils.getProperties(o,
+                        propertyDescriptor -> {
+                            Class<?> propertyType = propertyDescriptor.getPropertyType();
+                            return !(ConfigurationContainer.class.isAssignableFrom(propertyType));
+                        })));
+        pane = new BorderPane(propertySheet);
     }
 }

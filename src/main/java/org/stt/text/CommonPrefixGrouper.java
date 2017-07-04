@@ -1,12 +1,15 @@
 package org.stt.text;
 
 import org.stt.IntRange;
+import org.stt.StopWatch;
+import org.stt.config.YamlConfigService;
 import org.stt.model.TimeTrackingItem;
+import org.stt.query.TimeTrackingItemQueries;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * Learns common prefixes and uses them to determine groups.
@@ -16,193 +19,155 @@ import java.util.stream.Stream;
 @Singleton
 class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
     public static final int MINIMUM_GROUP_LENGTH = 3;
-    private final RadixTreeNode root = new RadixTreeNode();
+    private final TimeTrackingItemQueries queries;
+    private final YamlConfigService yamlConfig;
+    private boolean initialized;
+    private PrefixTree root = new PrefixTree();
 
     @Inject
-    public CommonPrefixGrouper() {
-        // Required by Dagger
+    public CommonPrefixGrouper(TimeTrackingItemQueries queries,
+                               YamlConfigService yamlConfig) {
+        this.queries = Objects.requireNonNull(queries);
+        this.yamlConfig = Objects.requireNonNull(yamlConfig);
     }
 
     @Override
     public List<Group> getGroupsOf(String text) {
         Objects.requireNonNull(text);
-        return root.findGroupsFor(text);
+        checkInitialized();
+        ArrayList<Group> groups = new ArrayList<>();
+        char[] chars = text.toCharArray();
+        int n = chars.length;
+        PrefixTree node = root;
+        int i = 0;
+        int start = 0;
+        while (i < n && node != null) {
+            char lastChar = (char) -1;
+            while (i < n && node != null && (node.numChildren() <= 1 || i < start + 3)) {
+                lastChar = chars[i];
+                node = node.child(lastChar);
+                i++;
+            }
+            while (i < n && node != null && lastChar != ' ') {
+                lastChar = chars[i];
+                node = node.child(lastChar);
+                i++;
+            }
+            groups.add(new Group(Type.MATCH, text.substring(start, i), new IntRange(start, i)));
+            start = i;
+        }
+        if (i < n) {
+            groups.add(new Group(Type.REMAINDER, text.substring(i, n), new IntRange(i, n)));
+        }
+        return groups;
     }
+
+    private void checkInitialized() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+
+        StopWatch stopWatch = new StopWatch("Item grouper");
+        queries.queryAllItems()
+                .map(TimeTrackingItem::getActivity)
+                .forEach(this::insert);
+
+        yamlConfig.getConfig().getPrefixGrouper().getBaseLine()
+                .forEach(this::insert);
+
+
+        stopWatch.stop();
+    }
+
+    public void insert(String item) {
+        PrefixTree node = root;
+        int i = 0;
+        int n = item.length();
+
+        char[] chars = item.toCharArray();
+        while (i < n) {
+            PrefixTree child = node.child(chars[i]);
+            if (child != null) {
+                node = child;
+                i++;
+            } else {
+                break;
+            }
+        }
+        while (i < n) {
+            PrefixTree newChild = new PrefixTree();
+            node.child(chars[i], newChild);
+            i++;
+            node = newChild;
+        }
+        node.child(null, null);
+    }
+
 
     @Override
     public List<String> getPossibleExpansions(String text) {
         Objects.requireNonNull(text);
-        return root.findExpansions(text);
-    }
+        checkInitialized();
 
-    public void scanForGroups(Stream<TimeTrackingItem> items) {
-        Objects.requireNonNull(items);
-
-        items.map(TimeTrackingItem::getActivity)
-                .forEach(this::learnLine);
-    }
-
-    public void learnLine(String comment) {
-        root.insert(comment);
+        char[] chars = text.toCharArray();
+        PrefixTree node = root;
+        int i = 0;
+        int n = chars.length;
+        while (i < n && node != null) {
+            node = node.child(chars[i]);
+            i++;
+        }
+        return node == null ? Collections.emptyList() :
+                node.allChildren().stream()
+                        .map(entry -> {
+                            PrefixTree tree = entry.getValue();
+                            StringBuilder current = new StringBuilder();
+                            current.append(entry.getKey());
+                            while (tree != null && tree.numChildren() == 1) {
+                                Character childChar = tree.anyChild();
+                                tree = tree.child(childChar);
+                                if (childChar != null) {
+                                    current.append(childChar);
+                                }
+                            }
+                            return current.toString();
+                        })
+                        .collect(Collectors.toList());
     }
 
     @Override
     public String toString() {
-        return root.toString();
+        return "";
     }
 
-    private static class RadixTreeNode {
-        private final Set<RadixTreeNode> children = new HashSet<>();
-        private String prefix = "";
+    private static class PrefixTree {
+        private Map<Character, PrefixTree> child;
 
-        public void insert(String comment) {
-            if (comment.isEmpty()) {
-                return;
+        protected PrefixTree child(Character c) {
+            if (child == null) {
+                child = new HashMap<>();
             }
-            Match bestMatch = findChildWithLongestCommonPrefix(comment);
-            if (bestMatch != null) {
-                RadixTreeNode groupForRemaining = bestMatch.group;
-                if (!bestMatch.isMatchingCompletePrefix()) {
-                    groupForRemaining = splitChildAt(bestMatch.group,
-                            bestMatch.prefixLength);
-                }
-                if (comment.length() > bestMatch.prefixLength) {
-                    String remainingComment = comment
-                            .substring(bestMatch.prefixLength + 1);
-                    groupForRemaining.insert(remainingComment);
-                }
-            } else {
-                addChildWithPrefix(comment);
+            return child.get(c);
+        }
+
+        public void child(Character c, PrefixTree newChild) {
+            if (child == null) {
+                child = new HashMap<>();
             }
+            child.put(c, newChild);
         }
 
-        public List<Group> findGroupsFor(String comment) {
-            return addGroupOfCommentTo(comment, new ArrayList<>(), 0);
+        public int numChildren() {
+            return child == null ? 0 : child.size();
         }
 
-        private List<Group> addGroupOfCommentTo(String comment,
-                                                ArrayList<Group> result, int position) {
-            Match match = comment.length() >= MINIMUM_GROUP_LENGTH ? findChildWithLongestCommonPrefix(comment) : null;
-            if (match != null && match.isMatchingCompletePrefix()
-                    && comment.length() >= match.prefixLength) {
-                result.add(new Group(Type.MATCH, match.group.prefix, new IntRange(position, position + match.prefixLength)));
-                if (comment.length() > match.prefixLength) {
-                    match.group.addGroupOfCommentTo(
-                            comment.substring(match.prefixLength + 1), result, position + match.prefixLength + 1);
-                }
-            } else {
-                result.add(new Group(Type.REMAINDER, comment, new IntRange(position, position + comment.length())));
-            }
-            return result;
+        public Character anyChild() {
+            return child.keySet().iterator().next();
         }
 
-        private RadixTreeNode splitChildAt(RadixTreeNode group, int position) {
-            String newChildPrefix = group.prefix.substring(0, position);
-            RadixTreeNode newChild = addChildWithPrefix(newChildPrefix);
-
-            group.prefix = group.prefix.substring(position + 1);
-            moveChildTo(group, newChild);
-            return newChild;
-        }
-
-        private void moveChildTo(RadixTreeNode group, RadixTreeNode newParent) {
-            children.remove(group);
-            newParent.children.add(group);
-        }
-
-        private RadixTreeNode addChildWithPrefix(String newChildPrefix) {
-            RadixTreeNode newChild = new RadixTreeNode();
-            newChild.prefix = newChildPrefix;
-            children.add(newChild);
-            return newChild;
-        }
-
-        public List<String> findExpansions(String comment) {
-            List<String> result = new ArrayList<>();
-            addExpansionsTo(result, comment);
-            return result;
-        }
-
-        private void addExpansionsTo(List<String> result, String comment) {
-            int matchLength = lengthOfCommonPrefix(comment);
-            if (matchLength == prefix.length()
-                    && matchLength <= comment.length()) {
-                String remaining = comment.substring(matchLength).trim();
-                for (RadixTreeNode child : children) {
-                    child.addExpansionsTo(result, remaining);
-                }
-            } else if (matchLength == comment.length()
-                    && matchLength < prefix.length()) {
-                result.add(prefix.substring(matchLength));
-            }
-        }
-
-        private Match findChildWithLongestCommonPrefix(String comment) {
-            Match match = new Match();
-            for (RadixTreeNode grp : children) {
-                int currentLength = grp
-                        .lengthOfValidLongestCommonPrefix(comment);
-                if (currentLength > match.prefixLength) {
-                    match.prefixLength = currentLength;
-                    match.group = grp;
-                }
-            }
-            return match.prefixLength == 0 ? null : match;
-        }
-
-        private int lengthOfValidLongestCommonPrefix(String text) {
-            int currentLength = lengthOfLongestCommonPrefix(text);
-            if (currentLength >= MINIMUM_GROUP_LENGTH) {
-                return currentLength;
-            }
-            return 0;
-        }
-
-        private int lengthOfLongestCommonPrefix(String text) {
-            int lastDelimitedPrefix = 0;
-            int i = 0;
-            for (; i < prefix.length() && i < text.length(); i++) {
-                if (text.charAt(i) != prefix.charAt(i)) {
-                    return lastDelimitedPrefix;
-                }
-                if (text.charAt(i) == ' ') {
-                    lastDelimitedPrefix = i;
-                }
-            }
-            if (i == text.length() || text.charAt(i) == ' ') {
-                lastDelimitedPrefix = i;
-            }
-            return lastDelimitedPrefix;
-        }
-
-        private int lengthOfCommonPrefix(String other) {
-            int i = 0;
-            for (; i < other.length() && i < prefix.length(); i++) {
-                if (other.charAt(i) != prefix.charAt(i)) {
-                    return i;
-                }
-            }
-            return i;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder out = new StringBuilder();
-            for (RadixTreeNode child : children) {
-                out.append('\'').append(child.prefix).append("' = [");
-                out.append(child.toString());
-                out.append(']');
-            }
-            return out.toString();
-        }
-    }
-
-    private static class Match {
-        protected RadixTreeNode group;
-        protected int prefixLength;
-
-        protected boolean isMatchingCompletePrefix() {
-            return group.prefix.length() == prefixLength;
+        public Set<Map.Entry<Character, PrefixTree>> allChildren() {
+            return child == null ? Collections.emptySet() : child.entrySet();
         }
     }
 }

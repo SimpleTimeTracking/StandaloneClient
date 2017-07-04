@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
 public class InfoController {
     private static final Logger LOG = Logger.getLogger(InfoController.class.getName());
     public static final String URL_PROJECT = "https://github.com/SimpleTimeTracking/StandaloneClient/";
-    private final BorderPane panel;
+    private BorderPane panel;
     private final ResourceBundle localization;
     private final UpdateChecker updateChecker;
 
@@ -59,14 +59,6 @@ public class InfoController {
         this.appVersion = requireNonNull(appVersion);
         this.commitHash = requireNonNull(commitHash);
         this.executorService = requireNonNull(executorService);
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                "/org/stt/gui/jfx/InfoPanel.fxml"), localization);
-        loader.setController(this);
-        try {
-            panel = loader.load();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @FXML
@@ -76,7 +68,19 @@ public class InfoController {
     }
 
     public Pane getPanel() {
+        loadAndInjectFXML();
         return panel;
+    }
+
+    private void loadAndInjectFXML() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                "/org/stt/gui/jfx/InfoPanel.fxml"), localization);
+        loader.setController(this);
+        try {
+            panel = loader.load();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @FXML

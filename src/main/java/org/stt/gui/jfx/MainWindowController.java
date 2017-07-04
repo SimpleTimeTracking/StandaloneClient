@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ResourceBundle;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
 
@@ -76,9 +77,12 @@ public class MainWindowController {
     @FXML
     public void initialize() {
         activitiesTab.setContent(activitiesController.getNode());
-        reportTab.setContent(reportController.getPanel());
-        settingsTab.setContent(settingsController.getPanel());
-        infoTab.setContent(infoController.getPanel());
+        CompletableFuture.supplyAsync(reportController::getPanel)
+                .thenAcceptAsync(reportTab::setContent, Platform::runLater);
+        CompletableFuture.supplyAsync(settingsController::getPanel)
+                .thenAcceptAsync(settingsTab::setContent, Platform::runLater);
+        CompletableFuture.supplyAsync(infoController::getPanel)
+                .thenAcceptAsync(infoTab::setContent, Platform::runLater);
     }
 
     public void show(Stage stage) {

@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -87,7 +88,7 @@ public class ActivitiesController implements ActionsHandler {
     private final boolean filterDuplicatesWhenSearching;
     private final CommandHandler activities;
     private final Font fontAwesome;
-    private final BorderPane panel;
+    private BorderPane panel;
     private final ActivitiesConfig activitiesConfig;
     private final ActivityTextDisplayProcessor labelToNodeMapper;
     private final CommandHighlighter.Factory commandHighlighterFactory;
@@ -143,19 +144,8 @@ public class ActivitiesController implements ActionsHandler {
         this.fontAwesome = requireNonNull(fontAwesome);
         this.labelToNodeMapper = labelToNodeMapper;
         this.commandHighlighterFactory = requireNonNull(commandHighlighterFactory);
-        eventBus.subscribe(this);
-        eventBus.subscribe(new BulkRenameHelper());
+
         filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching();
-
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(
-                "/org/stt/gui/jfx/ActivitiesPanel.fxml"), localization);
-        loader.setController(this);
-
-        try {
-            panel = loader.load();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @Handler
@@ -242,8 +232,9 @@ public class ActivitiesController implements ActionsHandler {
     }
 
     private void updateItems() {
-        List<TimeTrackingItem> updateWith = queries.queryAllItems().collect(Collectors.toList());
-        Platform.runLater(() -> allItems.setAll(updateWith));
+        CompletableFuture
+                .supplyAsync(() -> queries.queryAllItems().collect(Collectors.toList()))
+                .thenAcceptAsync(allItems::setAll, Platform::runLater);
     }
 
     @Override
@@ -446,7 +437,23 @@ public class ActivitiesController implements ActionsHandler {
     }
 
     public Node getNode() {
+        loadAndInjectFXML();
         return panel;
+    }
+
+    private void loadAndInjectFXML() {
+        eventBus.subscribe(this);
+        eventBus.subscribe(new BulkRenameHelper());
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(
+                "/org/stt/gui/jfx/ActivitiesPanel.fxml"), localization);
+        loader.setController(this);
+
+        try {
+            panel = loader.load();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private void clearCommand() {
