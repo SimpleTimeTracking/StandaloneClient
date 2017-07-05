@@ -41,9 +41,9 @@ public class UIMain extends Application {
 
     @Override
     public void init() throws Exception {
-//        Logger rootLogger = Logger.getLogger("");
-//        rootLogger.getHandlers()[0].setLevel(Level.FINEST);
-//        Logger.getLogger("org.stt").setLevel(Level.FINEST);
+        Logger rootLogger = Logger.getLogger("");
+        rootLogger.getHandlers()[0].setLevel(Level.FINEST);
+        Logger.getLogger("org.stt").setLevel(Level.FINEST);
         LOG.info("Starting STT in UI mode");
 
         LOG.info("Starting injector");
