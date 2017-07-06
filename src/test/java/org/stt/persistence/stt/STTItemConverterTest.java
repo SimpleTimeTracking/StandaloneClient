@@ -14,7 +14,7 @@ public class STTItemConverterTest {
     private STTItemConverter sut = new STTItemConverter();
 
     @Test(timeout = 10000)
-    public void shouldPerformSufficiently() {
+    public void shouldReadFastEnough() {
         // GIVEN
         String lineToTest = "2017-05-08_18:15:49 2017-05-08_19:00:00 3333333333333333333333";
 
@@ -25,6 +25,20 @@ public class STTItemConverterTest {
 
         // THEN
     }
+
+    @Test(timeout = 10000)
+    public void shouldWriteFastEnough() {
+        // GIVEN
+        TimeTrackingItem item = new TimeTrackingItem("test \n activity", LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        // WHEN
+        for (int i = 0; i < 5000000; i++) {
+            sut.timeTrackingItemToLine(item);
+        }
+
+        // THEN
+    }
+
 
     @Test
     public void shouldParseStartToEnd() {

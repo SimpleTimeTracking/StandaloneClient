@@ -3,12 +3,8 @@ package org.stt.persistence.stt;
 import org.stt.model.TimeTrackingItem;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 class STTItemConverter {
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd_HH:mm:ss");
-
     TimeTrackingItem lineToTimeTrackingItem(String line) {
         LocalDateTime start = parseDate(line.substring(0, 19));
         LocalDateTime end = line.length() >= 39 ? parseDate(line.substring(20, 39)) : null;
@@ -76,19 +72,65 @@ class STTItemConverter {
     }
 
     String timeTrackingItemToLine(TimeTrackingItem item) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(item.getStart().format(dateFormat));
+        StringBuilder builder = new StringBuilder(80);
+        LocalDateTime start = item.getStart();
+        appendDateTime(builder, start);
         builder.append(' ');
         item.getEnd()
                 .ifPresent(endDateTime -> {
-                    builder.append(endDateTime.format(dateFormat));
+                    appendDateTime(builder, endDateTime);
                     builder.append(' ');
                 });
 
-        String oneLineComment = item.getActivity();
-        oneLineComment = oneLineComment.replaceAll("\r\n|\r|\n", "\\\\n");
-        builder.append(oneLineComment);
-
+        escape(builder, item.getActivity());
         return builder.toString();
+    }
+
+    private void escape(StringBuilder b, String activity) {
+        char[] chars = activity.toCharArray();
+        int n = chars.length;
+        int i = 0;
+        while (i < n) {
+            char next = chars[i];
+            if (next == '\r') {
+                b.append("\\n");
+                if (i + 1 < n && chars[i + 1] == '\n') {
+                    i++;
+                }
+            } else if (next == '\n') {
+                b.append("\\n");
+            } else {
+                b.append(next);
+            }
+            i++;
+        }
+    }
+
+    private void appendDateTime(StringBuilder b, LocalDateTime dt) {
+        int y = dt.getYear();
+        int mo = dt.getMonthValue();
+        int d = dt.getDayOfMonth();
+        int h = dt.getHour();
+        int mi = dt.getMinute();
+        int s = dt.getSecond();
+        b.append((char) (y / 1000 % 10 + '0'));
+        b.append((char) (y / 100 % 10 + '0'));
+        b.append((char) (y / 10 % 10 + '0'));
+        b.append((char) (y % 10 + '0'));
+        b.append('-');
+        b.append((char) (mo / 10 % 10 + '0'));
+        b.append((char) (mo % 10 + '0'));
+        b.append('-');
+        b.append((char) (d / 10 % 10 + '0'));
+        b.append((char) (d % 10 + '0'));
+        b.append('_');
+        b.append((char) (h / 10 % 10 + '0'));
+        b.append((char) (h % 10 + '0'));
+        b.append(':');
+        b.append((char) (mi / 10 % 10 + '0'));
+        b.append((char) (mi % 10 + '0'));
+        b.append(':');
+        b.append((char) (s / 10 % 10 + '0'));
+        b.append((char) (s % 10 + '0'));
     }
 }
