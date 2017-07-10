@@ -19,7 +19,7 @@ public class STTItemConverterTest {
         String lineToTest = "2017-05-08_18:15:49 2017-05-08_19:00:00 3333333333333333333333";
 
         // WHEN
-        for (int i = 0; i < 2000000; i++) {
+        for (int i = 0; i < 10000000; i++) {
             sut.lineToTimeTrackingItem(lineToTest + i);
         }
 

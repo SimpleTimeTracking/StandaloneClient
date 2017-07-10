@@ -24,7 +24,7 @@ public final class TimeTrackingItem {
         this.start = requireNonNull(start, "start must not be null");
         this.end = Optional.of(DateTimes.preciseToSecond(end));
         requireThat(!end.isBefore(DateTimes.preciseToSecond(start)),
-                "end must not be before start for item " + this.toString());
+                "end must not be before start for item!");
     }
 
     /**
