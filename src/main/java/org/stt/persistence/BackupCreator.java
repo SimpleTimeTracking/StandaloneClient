@@ -14,12 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -82,11 +80,13 @@ public class BackupCreator implements Service {
 
 		String sttFileName = sttFile.getName();
 
-        Collection<File> backedUpFiles = Files.list(backupLocation.toPath())
+        Collection<File> backedUpFiles;
+        try (Stream<File> backupedFileStream = Files.list(backupLocation.toPath())
                 .filter(path -> path.getFileName().toString().matches(sttFileName
                         + "-[0-9]{4}-[0-9]{2}-[0-9]{2}"))
-                .map(Path::toFile)
-                .collect(Collectors.toList());
+                .map(Path::toFile)) {
+            backedUpFiles = backupedFileStream.collect(Collectors.toList());
+        }
 
 		if (backupNeeded(backedUpFiles, backupInterval, sttFile, backupLocation)) {
 
@@ -129,18 +129,18 @@ public class BackupCreator implements Service {
 	private boolean backupNeeded(Collection<File> backedUpFiles,
 			int backupInterval, File sttFile, File backupLocation) {
 
-		for (int i = 0; i < backupInterval; i++) {
-
-			File backupFile = new File(backupLocation, getBackupFileName(
+        Set<File> existingAbsoluteBackupFiles = backedUpFiles.stream()
+                .map(File::getAbsoluteFile)
+                .collect(Collectors.toSet());
+        for (int i = 0; i < backupInterval; i++) {
+            File backupFile = new File(backupLocation, getBackupFileName(
                     sttFile, LocalDate.now().minusDays(i))).getAbsoluteFile();
 
 			// files are only equal if getAbsoluteFile is called
-			for (File currentFile : backedUpFiles) {
-				if (currentFile.getAbsoluteFile().equals(backupFile)) {
-					return false;
-				}
-			}
-		}
+            if (existingAbsoluteBackupFiles.contains(backupFile)) {
+                return false;
+            }
+        }
 		return true;
 	}
 
