@@ -9,6 +9,7 @@ import org.stt.time.DateTimes;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,8 +20,9 @@ import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class JsonConfigService implements Service {
-    private static final Logger LOG = Logger.getLogger(YamlConfigService.class
+@Singleton
+public class JsonConfigService implements ConfigService, Service {
+    private static final Logger LOG = Logger.getLogger(JsonConfigService.class
             .getName());
     private final File sttJson;
     private ConfigRoot config;
@@ -29,6 +31,18 @@ public class JsonConfigService implements Service {
     @Inject
     public JsonConfigService(@Named("homePath") String homePath) {
         sttJson = new File(homePath + "/.stt", "stt.json");
+    }
+
+    public boolean isNewConfig() {
+        return newConfig;
+    }
+
+    public ConfigRoot getConfig() {
+        return config;
+    }
+
+    @Override
+    public void start() throws Exception {
         boolean mkdirs = sttJson.getParentFile().mkdirs();
         if (mkdirs) {
             LOG.finest("Created base dir.");
@@ -55,18 +69,7 @@ public class JsonConfigService implements Service {
             LocalTime asLocalTime = LocalTime.MIDNIGHT.plus(duration);
             s.writeVal(DateTimes.DATE_TIME_FORMATTER_HH_MM_SS.format(asLocalTime));
         });
-    }
 
-    public boolean isNewConfig() {
-        return newConfig;
-    }
-
-    public ConfigRoot getConfig() {
-        return config;
-    }
-
-    @Override
-    public void start() throws Exception {
         try {
             LOG.info("Loading " + sttJson.getName());
             config = JsonIterator.deserialize(Files.readAllBytes(sttJson.toPath()), ConfigRoot.class);
@@ -79,6 +82,7 @@ public class JsonConfigService implements Service {
     private void createNewConfig() {
         LOG.info("Creating new config");
         config = new ConfigRoot();
+        newConfig = true;
     }
 
     @Override

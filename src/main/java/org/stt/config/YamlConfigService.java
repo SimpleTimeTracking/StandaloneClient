@@ -26,7 +26,7 @@ import java.util.logging.Logger;
 
 
 @Singleton
-public class YamlConfigService implements Service {
+public class YamlConfigService implements Service, ConfigService {
     static final Tag TAG_DURATION = new Tag("!duration");
     static final Tag TAG_ENCRYPTED = new Tag("!encrypted");
     static final Tag TAG_PATH = new Tag("!path");
@@ -38,10 +38,6 @@ public class YamlConfigService implements Service {
     @Inject
     public YamlConfigService(@Named("homePath") String homePath) {
         sttYaml = new File(homePath + "/.stt", "stt.yaml");
-        boolean mkdirs = sttYaml.getParentFile().mkdirs();
-        if (mkdirs) {
-            LOG.finest("Created base dir.");
-        }
     }
 
     private void writeConfig() {
@@ -56,12 +52,18 @@ public class YamlConfigService implements Service {
         }
     }
 
+    @Override
     public ConfigRoot getConfig() {
         return config;
     }
 
     @Override
     public void start() throws Exception {
+        boolean mkdirs = sttYaml.getParentFile().mkdirs();
+        if (mkdirs) {
+            LOG.finest("Created base dir.");
+        }
+
         try (FileInputStream fileInputStream = new FileInputStream(sttYaml)) {
             LOG.info("Loading " + sttYaml.getName());
             Yaml yaml = yaml();

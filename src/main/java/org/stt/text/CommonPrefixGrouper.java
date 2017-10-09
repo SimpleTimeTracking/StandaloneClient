@@ -2,7 +2,7 @@ package org.stt.text;
 
 import org.stt.IntRange;
 import org.stt.StopWatch;
-import org.stt.config.YamlConfigService;
+import org.stt.config.CommonPrefixGrouperConfig;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 
@@ -20,15 +20,15 @@ import java.util.stream.Collectors;
 class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
     public static final int MINIMUM_GROUP_LENGTH = 3;
     private final TimeTrackingItemQueries queries;
-    private final YamlConfigService yamlConfig;
+    private final CommonPrefixGrouperConfig config;
     private boolean initialized;
     private PrefixTree root = new PrefixTree();
 
     @Inject
     public CommonPrefixGrouper(TimeTrackingItemQueries queries,
-                               YamlConfigService yamlConfig) {
+                               CommonPrefixGrouperConfig config) {
         this.queries = Objects.requireNonNull(queries);
-        this.yamlConfig = Objects.requireNonNull(yamlConfig);
+        this.config = Objects.requireNonNull(config);
     }
 
     @Override
@@ -73,7 +73,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
                 .map(TimeTrackingItem::getActivity)
                 .forEach(this::insert);
 
-        yamlConfig.getConfig().getPrefixGrouper().getBaseLine()
+        config.getBaseLine()
                 .forEach(this::insert);
 
 

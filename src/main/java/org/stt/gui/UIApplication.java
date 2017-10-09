@@ -6,8 +6,7 @@ import org.stt.BaseModule;
 import org.stt.I18NModule;
 import org.stt.command.CommandModule;
 import org.stt.config.ConfigModule;
-import org.stt.config.JsonConfigService;
-import org.stt.config.YamlConfigService;
+import org.stt.config.ConfigServiceFacade;
 import org.stt.event.EventBusModule;
 import org.stt.event.ItemLogService;
 import org.stt.fun.AchievementModule;
@@ -28,9 +27,7 @@ import java.util.concurrent.ExecutorService;
 public interface UIApplication {
     MBassador<Object> eventBus();
 
-    YamlConfigService configService();
-
-    JsonConfigService jsonConfigService();
+    ConfigServiceFacade configService();
 
     BackupCreator backupCreator();
 

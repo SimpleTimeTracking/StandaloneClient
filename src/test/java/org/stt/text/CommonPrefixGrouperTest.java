@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.stt.config.ConfigRoot;
-import org.stt.config.YamlConfigService;
+import org.stt.config.ConfigService;
 import org.stt.model.TimeTrackingItem;
 import org.stt.query.TimeTrackingItemQueries;
 
@@ -25,15 +25,14 @@ public class CommonPrefixGrouperTest {
     @Mock
     private TimeTrackingItemQueries queries;
     @Mock
-    private YamlConfigService configService;
+    private ConfigService configService;
     private CommonPrefixGrouper sut;
 
     @Before
     public void setup() {
 		MockitoAnnotations.initMocks(this);
-        given(configService.getConfig()).willReturn(new ConfigRoot());
 
-        sut = new CommonPrefixGrouper(queries, configService);
+        sut = new CommonPrefixGrouper(queries, new ConfigRoot().getPrefixGrouper());
     }
 
 	@Test

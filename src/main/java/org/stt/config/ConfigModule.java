@@ -13,7 +13,7 @@ public class ConfigModule {
     }
 
     @Provides
-    static ConfigRoot provideConfigRoot(YamlConfigService configService) {
+    static ConfigRoot provideConfigRoot(ConfigServiceFacade configService) {
         return configService.getConfig();
     }
 

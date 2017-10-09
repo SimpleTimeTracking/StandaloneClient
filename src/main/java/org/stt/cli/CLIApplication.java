@@ -4,7 +4,7 @@ import dagger.Component;
 import org.stt.BaseModule;
 import org.stt.command.CommandModule;
 import org.stt.config.ConfigModule;
-import org.stt.config.YamlConfigService;
+import org.stt.config.ConfigServiceFacade;
 import org.stt.persistence.BackupCreator;
 import org.stt.persistence.stt.STTPersistenceModule;
 import org.stt.text.TextModule;
@@ -16,7 +16,7 @@ import javax.inject.Singleton;
 public interface CLIApplication {
     BackupCreator backupCreator();
 
-    YamlConfigService configService();
+    ConfigServiceFacade configService();
 
     Main main();
 }
