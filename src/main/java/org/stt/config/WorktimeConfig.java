@@ -7,18 +7,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 public class WorktimeConfig implements ConfigurationContainer {
     private List<String> breakActivities = Arrays.asList("pause", "break", "coffee");
-    private Map<DayOfWeek, Duration> workingHours;
+    private Map<String, Duration> workingHours;
     private PathSetting workingTimesFile = new PathSetting("$HOME$/.stt/worktimes");
 
     public WorktimeConfig() {
         workingHours = Arrays.stream(DayOfWeek.values())
                 .collect(
-                        toMap(identity(),
+                        toMap(DayOfWeek::name,
                                 dayOfWeek -> dayOfWeek != DayOfWeek.SUNDAY
                                         ? Duration.ofHours(8) : Duration.ZERO,
                                 (u, v) -> {
@@ -35,11 +34,12 @@ public class WorktimeConfig implements ConfigurationContainer {
         this.breakActivities = breakActivities;
     }
 
-    public Map<DayOfWeek, Duration> getWorkingHours() {
+    public Map<String, Duration> getWorkingHours() {
         return workingHours;
+
     }
 
-    public void setWorkingHours(Map<DayOfWeek, Duration> workingHours) {
+    public void setWorkingHours(Map<String, Duration> workingHours) {
         this.workingHours = workingHours;
     }
 

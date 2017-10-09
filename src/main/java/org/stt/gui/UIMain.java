@@ -53,6 +53,7 @@ public class UIMain extends Application {
         startEventBus(uiApplication);
 
         startService(uiApplication.configService());
+        startService(uiApplication.jsonConfigService());
         startService(uiApplication.backupCreator());
         startService(uiApplication.itemLogService());
 

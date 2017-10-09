@@ -62,7 +62,7 @@ public class WorkingtimeItemProvider {
 	public WorkingtimeItem getWorkingTimeFor(LocalDate date) {
         WorkingtimeItem workingHours = workingHoursPerDay.get(date);
         if (workingHours == null) {
-            return fromDuration(config.getWorkingHours().getOrDefault(date.getDayOfWeek(), Duration.ZERO));
+            return fromDuration(config.getWorkingHours().getOrDefault(date.getDayOfWeek().name(), Duration.ZERO));
         }
         return workingHours;
     }

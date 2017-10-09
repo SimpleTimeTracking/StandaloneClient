@@ -22,7 +22,7 @@ import static org.stt.gui.jfx.Glyph.glyph;
 
 class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL);
 
     private final HBox cellPane = new HBox(2);
     final Button editButton;

@@ -6,6 +6,7 @@ import org.stt.BaseModule;
 import org.stt.I18NModule;
 import org.stt.command.CommandModule;
 import org.stt.config.ConfigModule;
+import org.stt.config.JsonConfigService;
 import org.stt.config.YamlConfigService;
 import org.stt.event.EventBusModule;
 import org.stt.event.ItemLogService;
@@ -28,6 +29,8 @@ public interface UIApplication {
     MBassador<Object> eventBus();
 
     YamlConfigService configService();
+
+    JsonConfigService jsonConfigService();
 
     BackupCreator backupCreator();
 

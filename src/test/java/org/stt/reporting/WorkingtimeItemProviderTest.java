@@ -61,7 +61,7 @@ public class WorkingtimeItemProviderTest {
 	@Test
 	public void configuredHoursForMondayIsUsed() {
 		// GIVEN
-        configuration.getWorkingHours().put(DayOfWeek.MONDAY, Duration.ofHours(10));
+        configuration.getWorkingHours().put(DayOfWeek.MONDAY.name(), Duration.ofHours(10));
 
 		// WHEN
         WorkingtimeItem workingTimeFor = sut.getWorkingTimeFor(LocalDate.of(
