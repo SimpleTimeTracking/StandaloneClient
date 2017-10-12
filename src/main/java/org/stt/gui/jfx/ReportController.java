@@ -1,5 +1,6 @@
 package org.stt.gui.jfx;
 
+import com.sun.javafx.scene.control.skin.DatePickerSkin;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.*;
@@ -47,15 +48,11 @@ import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.TemporalField;
-import java.time.temporal.WeekFields;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -80,6 +77,8 @@ public class ReportController {
     @FXML
     private BorderPane borderPane;
     @FXML
+    private BorderPane left;
+    @FXML
     private Label startOfReport;
     @FXML
     private Label endOfReport;
@@ -87,16 +86,12 @@ public class ReportController {
     private Label uncoveredTime;
     @FXML
     private Label roundedDurationSum;
-    @FXML
     private DatePicker datePicker;
-    @FXML
-    private ToolBar toolbar;
 
     private NotificationPane panel;
     private Font fontaweSome;
     private final MBassador<Object> eventBus;
     private PauseTransition notificationPause = new PauseTransition(javafx.util.Duration.seconds(2));
-    private TemporalField dayOfWeekField = WeekFields.of(Locale.getDefault()).dayOfWeek();
     private Set<LocalDate> trackedDays;
 
     @Inject
@@ -191,7 +186,7 @@ public class ReportController {
     }
 
     private void setupNavigation() {
-        datePicker.setValue(LocalDate.now());
+        datePicker = new DatePicker(LocalDate.now());
         trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet());
         datePicker.setDayCellFactory(picker ->
                 new DateCell() {
@@ -206,45 +201,8 @@ public class ReportController {
                 }
         );
         datePicker.valueProperty().addListener(observable -> trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet()));
-
-        FramelessButton oneDayBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_LEFT, Glyph.GLYPH_SIZE_LARGE));
-        oneDayBack.setOnAction(event -> datePicker.setValue(findNextTrackedDay(datePicker.getValue(), date -> date.minusDays(1))));
-        Tooltips.install(oneDayBack, localization.getString("report.backADay.tooltip"));
-
-        FramelessButton oneWeekBack = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_LEFT, Glyph.GLYPH_SIZE_LARGE));
-        oneWeekBack.setOnAction(event -> {
-            LocalDate selectedDate = datePicker.getValue();
-            LocalDate startOfWeek = selectedDate.with(dayOfWeekField, 1);
-            if (startOfWeek.equals(selectedDate)) {
-                datePicker.setValue(startOfWeek.minusDays(7));
-            } else {
-                datePicker.setValue(startOfWeek);
-            }
-        });
-        Tooltips.install(oneWeekBack, localization.getString("report.backAWeek.tooltip"));
-
-        FramelessButton oneDayForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_RIGHT, Glyph.GLYPH_SIZE_LARGE));
-        oneDayForward.setOnAction(event -> datePicker.setValue(findNextTrackedDay(datePicker.getValue(), date -> date.plusDays(1))));
-        Tooltips.install(oneDayForward, localization.getString("report.forwardADay.tooltip"));
-
-        FramelessButton oneWeekForward = new FramelessButton(Glyph.glyph(fontaweSome, Glyph.ANGLE_DOUBLE_RIGHT, Glyph.GLYPH_SIZE_LARGE));
-        oneWeekForward.setOnAction(event -> datePicker.setValue(datePicker.getValue().with(dayOfWeekField, 1).plusDays(7)));
-        Tooltips.install(oneWeekForward, localization.getString("report.forwardAWeek.tooltip"));
-        toolbar.getItems().add(0, oneDayBack);
-        toolbar.getItems().add(0, oneWeekBack);
-        toolbar.getItems().add(oneDayForward);
-        toolbar.getItems().add(oneWeekForward);
-    }
-
-    private LocalDate findNextTrackedDay(LocalDate startFrom, Function<LocalDate, LocalDate> nextDayFunction) {
-        LocalDate nextDay = nextDayFunction.apply(startFrom);
-        for (int attempt = 0; attempt < 5; attempt++) {
-            if (trackedDays.contains(nextDay)) {
-                return nextDay;
-            }
-            nextDay = nextDayFunction.apply(nextDay);
-        }
-        return nextDayFunction.apply(startFrom);
+        Node popupContent = new DatePickerSkin(datePicker).getPopupContent();
+        left.setTop(popupContent);
     }
 
     private ObjectBinding<Report> createReportModel() {
