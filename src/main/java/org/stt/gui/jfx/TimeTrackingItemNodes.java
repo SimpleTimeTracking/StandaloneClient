@@ -1,16 +1,24 @@
 package org.stt.gui.jfx;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.controlsfx.control.decoration.Decorator;
+import org.controlsfx.control.decoration.GraphicDecoration;
+import org.controlsfx.validation.decoration.GraphicValidationDecoration;
 import org.stt.gui.UIMain;
 import org.stt.model.TimeTrackingItem;
+import org.stt.time.DateTimes;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,13 +36,15 @@ import static org.stt.gui.jfx.Glyph.glyph;
  * Created by dante on 01.07.17.
  */
 public class TimeTrackingItemNodes {
+    private static final Image WARNING_IMAGE = new Image(GraphicValidationDecoration.class.getResource("/impl/org/controlsfx/control/validation/decoration-warning.png").toExternalForm()); //$NON-NLS-1$
+
     private final Function<Stream<Object>, Stream<Object>> labelToNodeMapper;
     private final TextFlow labelForComment = new TextFlow();
     private final HBox timePane = new HBox();
     private final Label labelForStart = new Label();
     private final Label labelForEnd = new Label();
     private final Node startToFinishActivityGraphics;
-    private final Node ongoingActivityGraphics;
+    private final Control ongoingActivityGraphics;
     private final DateTimeFormatter dateTimeFormatter;
     private final Pane space;
     private final Pane labelArea;
@@ -68,7 +78,7 @@ public class TimeTrackingItemNodes {
         }
     }
 
-    void applyLabelForComment(String activity) {
+    private void applyLabelForComment(String activity) {
         List<Node> textNodes = labelToNodeMapper.apply(Stream.of(activity))
                 .map(o -> {
                     if (o instanceof String) {
@@ -103,6 +113,12 @@ public class TimeTrackingItemNodes {
             timePane.getChildren().setAll(labelForStart, startToFinishActivityGraphics, labelForEnd);
         } else {
             timePane.getChildren().setAll(labelForStart, ongoingActivityGraphics);
+            Decorator.removeAllDecorations(ongoingActivityGraphics);
+            if (!DateTimes.isOnSameDay(item.getStart(), LocalDateTime.now())) {
+                Platform.runLater(() -> {
+                    Decorator.addDecoration(ongoingActivityGraphics, new GraphicDecoration(new ImageView(WARNING_IMAGE), Pos.TOP_RIGHT));
+                });
+            }
         }
     }
 
