@@ -21,6 +21,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -77,7 +78,7 @@ public class ReportController {
     @FXML
     private BorderPane borderPane;
     @FXML
-    private BorderPane left;
+    private VBox left;
     @FXML
     private Label startOfReport;
     @FXML
@@ -202,7 +203,7 @@ public class ReportController {
         );
         datePicker.valueProperty().addListener(observable -> trackedDays = timeTrackingItemQueries.queryAllTrackedDays().collect(Collectors.toSet()));
         Node popupContent = new DatePickerSkin(datePicker).getPopupContent();
-        left.setTop(popupContent);
+        left.getChildren().add(0, popupContent);
     }
 
     private ObjectBinding<Report> createReportModel() {

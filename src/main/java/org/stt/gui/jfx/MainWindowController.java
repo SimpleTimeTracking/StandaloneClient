@@ -14,16 +14,21 @@ import net.engio.mbassy.listener.Handler;
 import org.controlsfx.control.Notifications;
 import org.stt.event.NotifyUser;
 import org.stt.event.ShuttingDown;
+import org.stt.gui.UIMain;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ResourceBundle;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static java.util.Objects.requireNonNull;
 
 public class MainWindowController {
+    private static final Logger LOG = Logger.getLogger(UIMain.class
+            .getName());
 
     private final Parent rootNode;
     private final ResourceBundle localization;
@@ -78,11 +83,24 @@ public class MainWindowController {
     public void initialize() {
         activitiesTab.setContent(activitiesController.getNode());
         CompletableFuture.supplyAsync(reportController::getPanel)
-                .thenAcceptAsync(reportTab::setContent, Platform::runLater);
+                .thenAcceptAsync(reportTab::setContent, Platform::runLater)
+                .handle((x, t) -> {
+                    if (t != null) LOG.log(Level.SEVERE, "Error while building report controller", t);
+                    return t.getMessage();
+                });
         CompletableFuture.supplyAsync(settingsController::getPanel)
-                .thenAcceptAsync(settingsTab::setContent, Platform::runLater);
+                .thenAcceptAsync(settingsTab::setContent, Platform::runLater)
+                .handle((x, t) -> {
+                    if (t != null) LOG.log(Level.SEVERE, "Error while building settings controller", t);
+                    return t.getMessage();
+                });
+
         CompletableFuture.supplyAsync(infoController::getPanel)
-                .thenAcceptAsync(infoTab::setContent, Platform::runLater);
+                .thenAcceptAsync(infoTab::setContent, Platform::runLater)
+                .handle((x, t) -> {
+                    if (t != null) LOG.log(Level.SEVERE, "Error while building info controller", t);
+                    return t.getMessage();
+                });
     }
 
     public void show(Stage stage) {

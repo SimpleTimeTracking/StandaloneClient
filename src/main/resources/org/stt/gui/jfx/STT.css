@@ -72,11 +72,14 @@
 }
 
 .info {
-    -fx-background-color: white;
-    -fx-background-radius: 5.0;
-    -fx-background-insets: 0.0 5.0 5.0 5.0;
-    -fx-border-color: lightgray;
-    -fx-border-width: 1px;
-    -fx-border-insets: 0.0 5.0 5.0 5.0;
-    -fx-border-radius: 5.0;
+    -fx-background-color: -fx-box-border, -fx-control-inner-background;
+    -fx-background-insets: 0, 1;
+    -fx-padding: 1;
+}
+
+.date-picker-popup {
+    -fx-background-color: -fx-box-border, -fx-control-inner-background;
+    -fx-effect: none;
+    -fx-padding: 1;
+    -fx-background-insets: 0, 1;
 }
