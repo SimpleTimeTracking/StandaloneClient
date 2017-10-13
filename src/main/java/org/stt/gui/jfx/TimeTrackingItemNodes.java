@@ -1,6 +1,5 @@
 package org.stt.gui.jfx;
 
-import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -13,8 +12,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.controlsfx.control.decoration.Decorator;
-import org.controlsfx.control.decoration.GraphicDecoration;
 import org.controlsfx.validation.decoration.GraphicValidationDecoration;
 import org.stt.gui.UIMain;
 import org.stt.model.TimeTrackingItem;
@@ -24,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,6 +43,7 @@ public class TimeTrackingItemNodes {
     private final Label labelForEnd = new Label();
     private final Node startToFinishActivityGraphics;
     private final Control ongoingActivityGraphics;
+    private final ResourceBundle localization;
     private final DateTimeFormatter dateTimeFormatter;
     private final Pane space;
     private final Pane labelArea;
@@ -53,9 +52,11 @@ public class TimeTrackingItemNodes {
                                  DateTimeFormatter dateTimeFormatter,
                                  Font fontAwesome,
                                  int labelAreaWidth,
-                                 int timePaneWidth) {
+                                 int timePaneWidth,
+                                 ResourceBundle localization) {
         this.labelToNodeMapper = requireNonNull(labelToNodeMapper);
         this.dateTimeFormatter = requireNonNull(dateTimeFormatter);
+        this.localization = requireNonNull(localization);
 
         startToFinishActivityGraphics = glyph(fontAwesome, Glyph.FAST_FORWARD, GLYPH_SIZE_MEDIUM);
         ongoingActivityGraphics = glyph(fontAwesome, Glyph.FORWARD, GLYPH_SIZE_MEDIUM);
@@ -112,12 +113,16 @@ public class TimeTrackingItemNodes {
             labelForEnd.setText(dateTimeFormatter.format(end.get()));
             timePane.getChildren().setAll(labelForStart, startToFinishActivityGraphics, labelForEnd);
         } else {
-            timePane.getChildren().setAll(labelForStart, ongoingActivityGraphics);
-            Decorator.removeAllDecorations(ongoingActivityGraphics);
+
             if (!DateTimes.isOnSameDay(item.getStart(), LocalDateTime.now())) {
-                Platform.runLater(() -> {
-                    Decorator.addDecoration(ongoingActivityGraphics, new GraphicDecoration(new ImageView(WARNING_IMAGE), Pos.TOP_RIGHT));
-                });
+                StackPane stackPane = new StackPane(ongoingActivityGraphics);
+                Node hallo = new ImageView(WARNING_IMAGE);
+                Tooltips.install(stackPane, localization.getString("ongoingActivityDidntStartToday"));
+                stackPane.getChildren().add(hallo);
+                StackPane.setAlignment(hallo, Pos.TOP_RIGHT);
+                timePane.getChildren().setAll(labelForStart, stackPane);
+            } else {
+                timePane.getChildren().setAll(labelForStart, ongoingActivityGraphics);
             }
         }
     }

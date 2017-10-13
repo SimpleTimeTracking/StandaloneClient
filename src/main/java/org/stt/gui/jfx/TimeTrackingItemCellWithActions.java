@@ -43,7 +43,7 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
                                     ActivityTextDisplayProcessor labelToNodeMapper) {
         requireNonNull(fontAwesome);
         requireNonNull(actionsHandler);
-        itemNodes = new TimeTrackingItemNodes(labelToNodeMapper, TIME_FORMATTER, fontAwesome, 450, 180);
+        itemNodes = new TimeTrackingItemNodes(labelToNodeMapper, TIME_FORMATTER, fontAwesome, 450, 180, localization);
         editButton = new FramelessButton(glyph(fontAwesome, Glyph.PENCIL, GLYPH_SIZE_MEDIUM));
         continueButton = new FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE_MEDIUM, Color.DARKGREEN));
         deleteButton = new FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE_MEDIUM, Color.web("e26868")));

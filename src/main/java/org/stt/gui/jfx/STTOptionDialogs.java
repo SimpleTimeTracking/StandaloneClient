@@ -62,7 +62,7 @@ public class STTOptionDialogs {
 
         ListView<TimeTrackingItem> coveredItemsList = new ListView<>();
         coveredItemsList.setCellFactory(listview -> {
-            TimeTrackingItemNodes itemNodes = new TimeTrackingItemNodes(labelToNodeMapper, DATE_TIME_FORMATTER, glyphFont, 400, 360);
+            TimeTrackingItemNodes itemNodes = new TimeTrackingItemNodes(labelToNodeMapper, DATE_TIME_FORMATTER, glyphFont, 400, 360, localization);
             ListCell<TimeTrackingItem> cell = new ListCell<TimeTrackingItem>() {
                 @Override
                 protected void updateItem(TimeTrackingItem item, boolean empty) {
