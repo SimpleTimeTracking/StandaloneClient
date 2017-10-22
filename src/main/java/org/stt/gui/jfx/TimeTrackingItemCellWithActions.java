@@ -1,10 +1,19 @@
 package org.stt.gui.jfx;
 
+import com.sun.javafx.geom.BaseBounds;
+import com.sun.javafx.geom.transform.BaseTransform;
+import com.sun.javafx.jmx.MXNodeAlgorithm;
+import com.sun.javafx.jmx.MXNodeAlgorithmContext;
+import com.sun.javafx.sg.prism.NGNode;
+import javafx.animation.FadeTransition;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
@@ -15,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static org.stt.gui.jfx.Glyph.GLYPH_SIZE_MEDIUM;
@@ -66,6 +76,12 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
                 deleteButton);
         cellPane.setAlignment(Pos.CENTER_LEFT);
 
+        DoubleProperty opacityProperty = fadeOnHoverProperty();
+
+        Stream.of(continueButton, editButton, deleteButton, stopButton)
+                .map(Node::opacityProperty)
+                .forEach(p -> p.bind(opacityProperty));
+
         lastItemOnDayPane = new BorderPane();
 
         newDayNode = createDateSubheader(fontAwesome);
@@ -73,18 +89,34 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
         setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
     }
 
+    private DoubleProperty fadeOnHoverProperty() {
+        Node placeHolder = new DummyNode();
+        placeHolder.setOpacity(0);
+
+        FadeTransition fade = new FadeTransition();
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        fade.setNode(placeHolder);
+        cellPane.hoverProperty().addListener((observable, oldValue, newValue) -> {
+            fade.setRate(newValue ? 1 : -1);
+            fade.play();
+        });
+        return placeHolder.opacityProperty();
+    }
+
     private Node createDateSubheader(Font fontAwesome) {
         HBox newDayHbox = new HBox(5);
         newDayHbox.setPadding(new Insets(2));
         Label calenderIcon = glyph(fontAwesome, Glyph.CALENDAR);
-        calenderIcon.setTextFill(Color.CORNFLOWERBLUE);
+        calenderIcon.setTextFill(Color.BLACK);
         newDayHbox.getChildren().add(calenderIcon);
         Label dayLabel = new Label();
-        dayLabel.setTextFill(Color.CORNFLOWERBLUE);
+        dayLabel.setTextFill(Color.BLACK);
         dayLabel.textProperty().bind(Bindings.createStringBinding(
                 () -> itemProperty().get() == null ? "" : DATE_FORMATTER.format(itemProperty().get().getStart()),
                 itemProperty()));
         newDayHbox.getChildren().add(dayLabel);
+        newDayHbox.setBackground(new Background(new BackgroundFill(Color.LIGHTSTEELBLUE, null, null)));
         return newDayHbox;
     }
 
@@ -136,5 +168,27 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
         void delete(TimeTrackingItem item);
 
         void stop(TimeTrackingItem item);
+    }
+
+    private static class DummyNode extends Node {
+        @Override
+        protected NGNode impl_createPeer() {
+            return null;
+        }
+
+        @Override
+        public BaseBounds impl_computeGeomBounds(BaseBounds bounds, BaseTransform tx) {
+            return null;
+        }
+
+        @Override
+        protected boolean impl_computeContains(double localX, double localY) {
+            return false;
+        }
+
+        @Override
+        public Object impl_processMXNode(MXNodeAlgorithm alg, MXNodeAlgorithmContext ctx) {
+            return null;
+        }
     }
 }
