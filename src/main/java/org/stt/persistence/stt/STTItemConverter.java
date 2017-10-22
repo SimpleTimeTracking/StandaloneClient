@@ -29,7 +29,7 @@ class STTItemConverter {
                 if (chars[i] == 'n') {
                     b.append('\n');
                 } else {
-                    b.append('\\').append(chars[i]);
+                    b.append(chars[i]);
                 }
             } else {
                 b.append(next);
@@ -99,6 +99,8 @@ class STTItemConverter {
                 }
             } else if (next == '\n') {
                 b.append("\\n");
+            } else if (next == '\\') {
+                b.append("\\\\");
             } else {
                 b.append(next);
             }

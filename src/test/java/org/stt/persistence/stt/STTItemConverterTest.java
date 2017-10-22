@@ -11,6 +11,7 @@ import static org.junit.Assert.assertThat;
 /**
  */
 public class STTItemConverterTest {
+    private static final LocalDateTime LDT_FOR_TEST = LocalDateTime.of(2019, 1, 10, 10, 11, 12);
     private STTItemConverter sut = new STTItemConverter();
 
     @Test(timeout = 10000)
@@ -63,8 +64,7 @@ public class STTItemConverterTest {
         TimeTrackingItem item = sut.lineToTimeTrackingItem(lineToTest);
 
         // THEN
-        assertThat(item, is(new TimeTrackingItem("Some Activity",
-                LocalDateTime.of(2019, 1, 10, 10, 11, 12))));
+        assertThat(item, is(new TimeTrackingItem("Some Activity", LDT_FOR_TEST)));
     }
 
     @Test
@@ -76,8 +76,32 @@ public class STTItemConverterTest {
         TimeTrackingItem item = sut.lineToTimeTrackingItem(lineToTest);
 
         // THEN
-        assertThat(item, is(new TimeTrackingItem("Some\nActivity",
-                LocalDateTime.of(2019, 1, 10, 10, 11, 12))));
+        assertThat(item, is(new TimeTrackingItem("Some\nActivity", LDT_FOR_TEST)));
     }
+
+    @Test
+    public void shouldIgnoreEscapedBackslash() {
+        // GIVEN
+        String lineToTest = "2019-01-10_10:11:12 Some\\\\nActivity";
+
+        // WHEN
+        TimeTrackingItem item = sut.lineToTimeTrackingItem(lineToTest);
+
+        // THEN
+        assertThat(item, is(new TimeTrackingItem("Some\\nActivity", LDT_FOR_TEST)));
+    }
+
+    @Test
+    public void shouldEscapeBackslash() {
+        // GIVEN
+        TimeTrackingItem activity = new TimeTrackingItem("\\n", LDT_FOR_TEST);
+
+        // WHEN
+        String line = sut.timeTrackingItemToLine(activity);
+
+        // THEN
+        assertThat(line, is("2019-01-10_10:11:12 \\\\n"));
+    }
+
 
 }
