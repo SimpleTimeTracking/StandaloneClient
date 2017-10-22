@@ -114,7 +114,7 @@ public class TimeTrackingItemNodes {
             timePane.getChildren().setAll(labelForStart, startToFinishActivityGraphics, labelForEnd);
         } else {
 
-            if (!DateTimes.isOnSameDay(item.getStart(), LocalDateTime.now())) {
+            if (!DateTimes.isOnSameDay(item.getStart(), item.getEnd().orElseGet(LocalDateTime::now))) {
                 StackPane stackPane = new StackPane(ongoingActivityGraphics);
                 Node hallo = new ImageView(WARNING_IMAGE);
                 Tooltips.install(stackPane, localization.getString("ongoingActivityDidntStartToday"));
