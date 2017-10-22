@@ -480,31 +480,27 @@ public class ActivitiesController implements ActionsHandler {
 
         @Override
         public void removeActivity(RemoveActivity command) {
-            activities.removeActivity(command);
-            clearCommand();
+            throw new IllegalStateException();
         }
 
         @Override
         public void removeActivityAndCloseGap(RemoveActivity command) {
-            activities.removeActivityAndCloseGap(command);
-            clearCommand();
+            throw new IllegalStateException();
         }
 
         @Override
         public void resumeActivity(ResumeActivity command) {
-            activities.resumeActivity(command);
+            throw new IllegalStateException();
         }
 
         @Override
         public void resumeLastActivity(ResumeLastActivity command) {
-            activities.resumeLastActivity(command);
-            clearCommand();
-
+            throw new IllegalStateException();
         }
 
         @Override
         public void bulkChangeActivity(Collection<TimeTrackingItem> itemsToChange, String activity) {
-            activities.bulkChangeActivity(itemsToChange, activity);
+            throw new IllegalStateException();
         }
 
         private boolean validateItemIsFirstItemAndLater(LocalDateTime start) {

@@ -185,22 +185,6 @@ public class ActivitiesControllerTest {
     }
 
     @Test
-    public void shouldDelegateCommandExecutionToCommandHandler()
-            throws Exception {
-        // GIVEN
-        String testCommand = "test";
-
-        givenCommand(testCommand);
-        given(commandFormatter.parse(anyString())).willReturn(new RemoveActivity(new TimeTrackingItem("", LocalDateTime.now())));
-
-        // WHEN
-        sut.executeCommand();
-
-        // THEN
-        verify(commandFormatter).parse(testCommand);
-    }
-
-    @Test
     public void shouldNotCloseWindowOnSimpleCommandExecution() {
         // GIVEN
         givenCommand("Hello World");

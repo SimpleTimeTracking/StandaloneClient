@@ -1,6 +1,9 @@
 package org.stt.command;
 
+import net.engio.mbassy.bus.BusRuntime;
+import net.engio.mbassy.bus.IMessagePublication;
 import net.engio.mbassy.bus.MBassador;
+import net.engio.mbassy.bus.common.PubSubSupport;
 import org.stt.model.ItemDeleted;
 import org.stt.model.ItemInserted;
 import org.stt.model.ItemReplaced;
@@ -8,6 +11,7 @@ import org.stt.model.TimeTrackingItem;
 import org.stt.persistence.ItemPersister;
 import org.stt.query.Criteria;
 import org.stt.query.TimeTrackingItemQueries;
+import org.stt.time.DateTimes;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,13 +27,14 @@ import static java.util.Objects.requireNonNull;
 public class Activities implements CommandHandler {
     private ItemPersister persister;
     private final TimeTrackingItemQueries queries;
-    private Optional<MBassador<Object>> eventBus;
+    private final PubSubSupport<Object> publisher;
 
     @Inject
     public Activities(ItemPersister persister,
                       TimeTrackingItemQueries queries,
-                      Optional<MBassador<Object>> eventBus) {
-        this.eventBus = requireNonNull(eventBus);
+                      Optional<MBassador<Object>> publisher) {
+        this.publisher = requireNonNull(publisher).map(PubSubSupport.class::cast)
+                .orElseGet(DoNotPublish::new);
         this.persister = requireNonNull(persister);
         this.queries = requireNonNull(queries);
     }
@@ -46,10 +51,10 @@ public class Activities implements CommandHandler {
         if (potentialItemToReplace.isPresent()) {
             TimeTrackingItem itemToReplace = potentialItemToReplace.get();
             persister.replace(itemToReplace, command.newItem);
-            eventBus.ifPresent(eb -> eb.publish(new ItemReplaced(itemToReplace, command.newItem)));
+            publisher.publish(new ItemReplaced(itemToReplace, command.newItem));
         } else {
             persister.persist(command.newItem);
-            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(command.newItem)));
+            publisher.publish(new ItemInserted(command.newItem));
         }
     }
 
@@ -74,7 +79,7 @@ public class Activities implements CommandHandler {
                 .ifPresent(item -> {
                     TimeTrackingItem derivedItem = item.withEnd(command.endAt);
                     persister.replace(item, derivedItem);
-                    eventBus.ifPresent(eb -> eb.publish(new ItemReplaced(item, derivedItem)));
+                    publisher.publish(new ItemReplaced(item, derivedItem));
                 });
     }
 
@@ -82,7 +87,7 @@ public class Activities implements CommandHandler {
     public void removeActivity(RemoveActivity command) {
         requireNonNull(command);
         persister.delete(command.itemToDelete);
-        eventBus.ifPresent(eb -> eb.publish(new ItemDeleted(command.itemToDelete)));
+        publisher.publish(new ItemDeleted(command.itemToDelete));
     }
 
     @Override
@@ -96,11 +101,13 @@ public class Activities implements CommandHandler {
             TimeTrackingItem replaceAllWith = next.get().getEnd()
                     .map(previous.get()::withEnd).orElse(previous.get().withPendingEnd());
             persister.persist(replaceAllWith);
-            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(replaceAllWith)));
-        } else if (previous.isPresent() && !command.itemToDelete.getEnd().isPresent()) {
+            publisher.publish(new ItemInserted(replaceAllWith));
+        } else if (previous.isPresent()
+                && DateTimes.isOnSameDay(previous.get().getStart(), command.itemToDelete.getStart())
+                && !command.itemToDelete.getEnd().isPresent()) {
             TimeTrackingItem replaceAllWith = previous.get().withPendingEnd();
             persister.persist(replaceAllWith);
-            eventBus.ifPresent(eb -> eb.publish(new ItemInserted(replaceAllWith)));
+            publisher.publish(new ItemInserted(replaceAllWith));
         } else {
             removeActivity(command);
         }
@@ -118,7 +125,7 @@ public class Activities implements CommandHandler {
                 .withPendingEnd()
                 .withStart(command.beginningWith);
         persister.persist(resumedItem);
-        eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
+        publisher.publish(new ItemInserted(resumedItem));
     }
 
     @Override
@@ -130,7 +137,7 @@ public class Activities implements CommandHandler {
             lastTimeTrackingItem.ifPresent(timeTrackingItem -> {
                 TimeTrackingItem resumedItem = timeTrackingItem.withPendingEnd().withStart(command.resumeAt);
                 persister.persist(resumedItem);
-                eventBus.ifPresent(eb -> eb.publish(new ItemInserted(resumedItem)));
+                publisher.publish(new ItemInserted(resumedItem));
             });
         }
     }
@@ -140,8 +147,30 @@ public class Activities implements CommandHandler {
         requireNonNull(itemsToChange);
         requireNonNull(activity);
         Collection<ItemPersister.UpdatedItem> updatedItems = persister.updateActivitities(itemsToChange, activity);
-        eventBus.ifPresent(eb -> updatedItems.stream()
+        updatedItems.stream()
                 .map(updatedItem -> new ItemReplaced(updatedItem.original, updatedItem.updated))
-                .forEach(eb::publish));
+                .forEach(publisher::publish);
+    }
+
+    private static class DoNotPublish implements PubSubSupport<Object> {
+        @Override
+        public void subscribe(Object listener) {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public boolean unsubscribe(Object listener) {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public IMessagePublication publish(Object message) {
+            return null;
+        }
+
+        @Override
+        public BusRuntime getRuntime() {
+            throw new IllegalStateException();
+        }
     }
 }

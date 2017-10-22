@@ -108,6 +108,28 @@ public class ActivitiesTest {
     }
 
     @Test
+    public void shouldNotFillGapIfPreviousItemStartsOnDifferentDay() {
+        // GIVEN
+        TimeTrackingItem before = new TimeTrackingItem("expected",
+                LocalDateTime.of(2000, 10, 9, 10, 9),
+                LocalDateTime.of(2000, 10, 10, 10, 10));
+        TimeTrackingItem itemToDelete = new TimeTrackingItem("toDelete",
+                LocalDateTime.of(2000, 10, 10, 10, 10));
+
+        given(queries.getAdjacentItems(itemToDelete)).willReturn(new TimeTrackingItemQueries.AdjacentItems(before, null));
+
+        RemoveActivity removeActivity = new RemoveActivity(itemToDelete);
+
+        // WHEN
+        sut.removeActivityAndCloseGap(removeActivity);
+
+        // THEN
+        verify(persister).delete(itemToDelete);
+        verifyNoMoreInteractions(persister);
+    }
+
+
+    @Test
     public void shouldDeletedWithoutPrevious() {
         // GIVEN
         TimeTrackingItem itemToDelete = new TimeTrackingItem("toDelete",
