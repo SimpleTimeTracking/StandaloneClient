@@ -99,7 +99,7 @@ public class CommonPrefixGrouperTest {
         List<String> result = groupsAsString(firstComment);
 
 		// THEN
-        assertThat(result, is(Arrays.asList("group subgroup ", "one")));
+        assertThat(result, is(Arrays.asList("group subgroup", "one")));
 
 	}
 
@@ -117,8 +117,8 @@ public class CommonPrefixGrouperTest {
 
 		// THEN
 		assertThat(withThreeGroups,
-                is(Arrays.asList("group subgroup ", "one")));
-        assertThat(withTwoGroups, is(Arrays.asList("group subgroup2 ", "one")));
+                is(Arrays.asList("group subgroup", "one")));
+        assertThat(withTwoGroups, is(Arrays.asList("group subgroup2", "one")));
     }
 
 	@Test
@@ -131,7 +131,7 @@ public class CommonPrefixGrouperTest {
         List<String> groups = groupsAsString(firstComment);
 
 		// THEN
-        assertThat(groups, is(Arrays.asList("group ", "one")));
+        assertThat(groups, is(Arrays.asList("group", "one")));
 
 	}
 
@@ -161,7 +161,7 @@ public class CommonPrefixGrouperTest {
         List<String> result = groupsAsString("aaaa bbbb cccc dddd");
 
 		// THEN
-        assertThat(result, is(Arrays.asList("aaaa ", "bbbb ", "cccc ", "dddd")));
+        assertThat(result, is(Arrays.asList("aaaa", "bbbb", "cccc", "dddd")));
     }
 
     private void givenReaderReturnsItemsWithComment(

@@ -42,18 +42,29 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
         int i = 0;
         int start = 0;
         while (i < n && node != null) {
-            char lastChar = (char) -1;
-            while (i < n && node != null && (node.numChildren() <= 1 || i < start + 3)) {
-                lastChar = chars[i];
-                node = node.child(lastChar);
+            int lastGood = i;
+            do {
+                if (!Character.isWhitespace(chars[i])) {
+                    lastGood = i;
+                }
+                node = node.child(chars[i]);
+                i++;
+            } while (i < n && node != null && node.numChildren() <= 1);
+            do {
+                if (lastGood >= i && node != null) {
+                    node = node.child(chars[i]);
+                    i++;
+                }
+                lastGood++;
+            }
+            while (lastGood < n && (!Character.isWhitespace(chars[lastGood]) || lastGood - start < 3));
+            groups.add(new Group(Type.MATCH, text.substring(start, lastGood), new IntRange(start, lastGood)));
+            while (i < n && Character.isWhitespace(chars[i])) {
+                if (node != null) {
+                    node = node.child(chars[i]);
+                }
                 i++;
             }
-            while (i < n && node != null && lastChar != ' ') {
-                lastChar = chars[i];
-                node = node.child(lastChar);
-                i++;
-            }
-            groups.add(new Group(Type.MATCH, text.substring(start, i), new IntRange(start, i)));
             start = i;
         }
         if (i < n) {
