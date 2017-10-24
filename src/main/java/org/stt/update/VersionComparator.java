@@ -7,8 +7,8 @@ import java.util.Comparator;
 public class VersionComparator implements Comparator<String>, Serializable {
     @Override
     public int compare(String a, String b) {
-        int[] aVersionParts = Arrays.stream(a.split("\\.|-")).mapToInt(this::asVersionPart).toArray();
-        int[] bVersionParts = Arrays.stream(b.split("\\.|-")).mapToInt(this::asVersionPart).toArray();
+        int[] aVersionParts = Arrays.stream(a.split("[.-]")).mapToInt(this::asVersionPart).toArray();
+        int[] bVersionParts = Arrays.stream(b.split("[.-]")).mapToInt(this::asVersionPart).toArray();
         for (int i = 0; i < Math.min(aVersionParts.length, bVersionParts.length); i++) {
             if (aVersionParts[i] < bVersionParts[i]) {
                 return -1;

@@ -105,17 +105,16 @@ public abstract class JFXModule {
         });
     }
 
-    private static Stream<?> toHyperlink(ExecutorService executorService, String o) {
+    private static Stream<?> toHyperlink(ExecutorService executorService, String activity) {
         List<Object> result = new ArrayList<>();
-        String string = o;
-        Matcher matcher = URL_PATTERN.matcher(string);
+        Matcher matcher = URL_PATTERN.matcher(activity);
         int index = 0;
         while (matcher.find(index)) {
-            String preamble = string.substring(index, matcher.start());
+            String preamble = activity.substring(index, matcher.start());
             if (!preamble.isEmpty()) {
                 result.add(preamble);
             }
-            String uri = string.substring(matcher.start(), matcher.end());
+            String uri = activity.substring(matcher.start(), matcher.end());
             Hyperlink hyperlink = new Hyperlink(uri);
             hyperlink.setOnAction(event -> executorService.submit(() -> {
                 try {
@@ -127,7 +126,7 @@ public abstract class JFXModule {
             result.add(hyperlink);
             index = matcher.end();
         }
-        result.add(string.substring(index));
+        result.add(activity.substring(index));
         return result.stream();
     }
 

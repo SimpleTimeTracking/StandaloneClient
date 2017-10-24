@@ -195,7 +195,7 @@ public class TimeTrackingItemQueriesTest {
         Collection<TimeTrackingItem> result = sut.queryItems(criteria).collect(toList());
 
         // THEN
-        assertThat(mapItemToStartDateTime(result), Matchers.is(Arrays.asList(new LocalDateTime[]{_500})));
+        assertThat(mapItemToStartDateTime(result), Matchers.is(Arrays.asList(_500)));
     }
 
     @Test
@@ -210,7 +210,7 @@ public class TimeTrackingItemQueriesTest {
         Collection<TimeTrackingItem> result = sut.queryItems(criteria).collect(toList());
 
         // THEN
-        assertThat(mapItemToStartDateTime(result), Matchers.is(Arrays.asList(new LocalDateTime[]{_100})));
+        assertThat(mapItemToStartDateTime(result), Matchers.is(Arrays.asList(_100)));
     }
 
     @Test
@@ -225,7 +225,7 @@ public class TimeTrackingItemQueriesTest {
         Collection<TimeTrackingItem> result = sut.queryItems(criteria).collect(toList());
 
         // THEN
-        assertThat(mapItemToStartDateTime(result), Matchers.is(Arrays.asList(new LocalDateTime[]{_1000, _1500})));
+        assertThat(mapItemToStartDateTime(result), Matchers.is(Arrays.asList(_1000, _1500)));
     }
 
     @Test

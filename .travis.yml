@@ -2,7 +2,7 @@ language: java
 jdk:
 - oraclejdk8
 addons:
-  sonarqube:
+  sonarcloud:
     branches:
       - dev
       - master

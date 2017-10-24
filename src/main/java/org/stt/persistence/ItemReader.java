@@ -3,7 +3,6 @@ package org.stt.persistence;
 import org.stt.model.TimeTrackingItem;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -22,7 +21,6 @@ public interface ItemReader extends Closeable {
 	 * 
 	 * @return An {@link Optional} of the {@link TimeTrackingItem} or absent if
 	 *         none is available
-	 * @throws IOException
 	 */
 	Optional<TimeTrackingItem> read();
 

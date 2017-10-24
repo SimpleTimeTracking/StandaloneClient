@@ -55,7 +55,6 @@ public class WorkingtimeItemProvider {
 
 	/**
 	 * 
-	 * @param date
 	 * @return the configured duration to be worked without producing positive
 	 *         or negative overtime
 	 */

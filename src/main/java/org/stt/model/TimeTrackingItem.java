@@ -3,6 +3,7 @@ package org.stt.model;
 import org.stt.time.DateTimes;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
@@ -12,7 +13,7 @@ import static org.stt.States.requireThat;
 public final class TimeTrackingItem {
     private final String activity;
     private final LocalDateTime start;
-    private final Optional<LocalDateTime> end;
+    private final LocalDateTime end;
 
     /**
      * @param activity activity string describing this item.
@@ -21,9 +22,9 @@ public final class TimeTrackingItem {
      */
     public TimeTrackingItem(String activity, LocalDateTime start, LocalDateTime end) {
         this.activity = requireNonNull(activity);
-        this.start = requireNonNull(start, "start must not be null");
-        this.end = Optional.of(DateTimes.preciseToSecond(end));
-        requireThat(!end.isBefore(DateTimes.preciseToSecond(start)),
+        this.start = DateTimes.preciseToSecond(requireNonNull(start, "start must not be null"));
+        this.end = DateTimes.preciseToSecond(requireNonNull(end, "end must not be null"));
+        requireThat(!end.isBefore(start),
                 "end must not be before start for item!");
     }
 
@@ -34,13 +35,12 @@ public final class TimeTrackingItem {
     public TimeTrackingItem(String activity, LocalDateTime start) {
         this.activity = requireNonNull(activity);
         this.start = DateTimes.preciseToSecond(requireNonNull(start));
-        this.end = Optional.empty();
+        this.end = null;
     }
 
     public boolean sameEndAs(TimeTrackingItem other) {
-        return getEnd()
-                .map(endA -> other.getEnd().map(endA::equals).orElse(false))
-                .orElse(!other.getEnd().isPresent());
+        return end == other.end
+                || end != null && end.equals(other.end);
     }
 
     public boolean sameActivityAs(TimeTrackingItem other) {
@@ -52,19 +52,16 @@ public final class TimeTrackingItem {
     }
 
     public boolean intersects(TimeTrackingItem other) {
-        return other.getEnd().map(actualEnd -> actualEnd.isAfter(start)).orElse(true)
-                && end.map(actualEnd -> actualEnd.isAfter(other.start)).orElse(true);
+        return (end == null || end.isAfter(other.start))
+                && (other.end == null || other.end.isAfter(start));
     }
 
     public boolean endsSameOrAfter(TimeTrackingItem other) {
-        return end.map(actualEnd -> other.getEnd().map(otherEnd -> !actualEnd.isBefore(otherEnd))
-                .orElse(false))
-                .orElse(true);
+        return end == null || other.end != null && !end.isBefore(other.end);
     }
 
     public boolean endsAtOrBefore(LocalDateTime dateTime) {
-        return end.map(actualEnd -> !dateTime.isBefore(actualEnd))
-                .orElse(false);
+        return end != null && !dateTime.isBefore(end);
     }
 
     public String getActivity() {
@@ -76,14 +73,14 @@ public final class TimeTrackingItem {
     }
 
     public Optional<LocalDateTime> getEnd() {
-        return end;
+        return Optional.ofNullable(end);
     }
 
 
     @Override
     public String toString() {
         return start.toString() + " - "
-                + (end.isPresent() ? end.get().toString() : "null") + " : "
+                + (end == null ? "null" : end.toString()) + " : "
                 + activity;
     }
 
@@ -91,20 +88,15 @@ public final class TimeTrackingItem {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         TimeTrackingItem that = (TimeTrackingItem) o;
-
-        if (!activity.equals(that.activity)) return false;
-        if (!start.equals(that.start)) return false;
-        return end.equals(that.end);
+        return Objects.equals(activity, that.activity) &&
+                Objects.equals(start, that.start) &&
+                Objects.equals(end, that.end);
     }
 
     @Override
     public int hashCode() {
-        int result = activity.hashCode();
-        result = 31 * result + start.hashCode();
-        result = 31 * result + end.hashCode();
-        return result;
+        return Objects.hash(activity, start, end);
     }
 
     public TimeTrackingItem withEnd(LocalDateTime newEnd) {
@@ -118,13 +110,13 @@ public final class TimeTrackingItem {
 
     public TimeTrackingItem withStart(LocalDateTime newStart) {
         requireNonNull(newStart);
-        return end.map(time -> new TimeTrackingItem(activity, newStart, time))
-                .orElse(new TimeTrackingItem(activity, newStart));
+        return end != null ? new TimeTrackingItem(activity, newStart, end)
+                : new TimeTrackingItem(activity, newStart);
     }
 
     public TimeTrackingItem withActivity(String newActivity) {
         requireNonNull(newActivity);
-        return end.map(time -> new TimeTrackingItem(newActivity, start, time))
-                .orElse(new TimeTrackingItem(newActivity, start));
+        return end != null ? new TimeTrackingItem(newActivity, start, end)
+                : new TimeTrackingItem(newActivity, start);
     }
 }

@@ -33,8 +33,6 @@ public class OvertimeReportGenerator {
 
 	/**
 	 * @return overtime information from the given time to the other given time
-     * @param from
-     * @param to
      */
     public Map<LocalDate, Duration> getOvertime(LocalDate from, LocalDate to) {
         Map<LocalDate, Duration> result = new TreeMap<>();

@@ -45,7 +45,7 @@ public class CommandHighlighter {
         TokenStream tokenStream = new CommonTokenStream(lexer);
         EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
         parser.command().accept(visitor);
-        ItemGrouper.Group[] groups = itemGrouper.getGroupsOf(text).stream().toArray(ItemGrouper.Group[]::new);
+        ItemGrouper.Group[] groups = itemGrouper.getGroupsOf(text).toArray(new ItemGrouper.Group[0]);
         for (int i = 0; i < groups.length - 1; i++) {
             ItemGrouper.Group group = groups[i];
             if (group.type == ItemGrouper.Type.MATCH) {

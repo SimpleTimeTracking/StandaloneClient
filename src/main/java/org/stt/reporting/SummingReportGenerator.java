@@ -79,7 +79,7 @@ public class SummingReportGenerator {
             reportList.add(new ReportingItem(e.getValue(), e.getKey()));
         }
 
-        Collections.sort(reportList, comparing(ReportingItem::getComment));
+        reportList.sort(comparing(ReportingItem::getComment));
         return new Report(reportList, startOfReport, endOfReport,
                 uncoveredDuration);
     }

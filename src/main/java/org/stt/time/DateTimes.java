@@ -43,9 +43,6 @@ public class DateTimes {
     }
 
     /**
-     * @param source
-     * @param from
-     * @param to
      * @return if source is between from and to (both inclusive)
      */
     public static boolean isBetween(LocalDate source, LocalDate from, LocalDate to) {
@@ -69,7 +66,6 @@ public class DateTimes {
     /**
      * returns the formatted date in asNewItemCommandText "yyyy-MM-dd"
      *
-     * @param date
      */
     public static String prettyPrintDate(LocalDate date) {
         if (LocalDate.MIN.equals(date)) {

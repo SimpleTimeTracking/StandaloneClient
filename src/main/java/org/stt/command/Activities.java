@@ -97,25 +97,28 @@ public class Activities implements CommandHandler {
         Optional<TimeTrackingItem> previous = adjacentItems.previousItem();
         Optional<TimeTrackingItem> next = adjacentItems.nextItem();
 
-        if (previousAndNextActivitiesMatch(previous, next)) {
-            TimeTrackingItem replaceAllWith = next.get().getEnd()
-                    .map(previous.get()::withEnd).orElse(previous.get().withPendingEnd());
-            persister.persist(replaceAllWith);
-            publisher.publish(new ItemInserted(replaceAllWith));
-        } else if (previous.isPresent()
-                && DateTimes.isOnSameDay(previous.get().getStart(), command.itemToDelete.getStart())
-                && !command.itemToDelete.getEnd().isPresent()) {
-            TimeTrackingItem replaceAllWith = previous.get().withPendingEnd();
-            persister.persist(replaceAllWith);
-            publisher.publish(new ItemInserted(replaceAllWith));
-        } else {
-            removeActivity(command);
+        if (previous.isPresent()) {
+            TimeTrackingItem previousItem = previous.get();
+            if (next.isPresent() && previousAndNextActivitiesMatch(previousItem, next.get())) {
+                TimeTrackingItem replaceAllWith = next.get().getEnd()
+                        .map(previousItem::withEnd).orElse(previousItem.withPendingEnd());
+                persister.persist(replaceAllWith);
+                publisher.publish(new ItemInserted(replaceAllWith));
+                return;
+            }
+            if (DateTimes.isOnSameDay(previousItem.getStart(), command.itemToDelete.getStart())
+                    && !command.itemToDelete.getEnd().isPresent()) {
+                TimeTrackingItem replaceAllWith = previousItem.withPendingEnd();
+                persister.persist(replaceAllWith);
+                publisher.publish(new ItemInserted(replaceAllWith));
+                return;
+            }
         }
+        removeActivity(command);
     }
 
-    private boolean previousAndNextActivitiesMatch(Optional<TimeTrackingItem> previous, Optional<TimeTrackingItem> next) {
-        return previous.isPresent() && next.isPresent()
-                && previous.get().getActivity().equals(next.get().getActivity());
+    private boolean previousAndNextActivitiesMatch(TimeTrackingItem previousItem, TimeTrackingItem nextItem) {
+        return previousItem.getActivity().equals(nextItem.getActivity());
     }
 
     @Override
