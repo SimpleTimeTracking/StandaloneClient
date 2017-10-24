@@ -18,15 +18,15 @@ import java.util.stream.Collectors;
  */
 @Singleton
 class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
-    public static final int MINIMUM_GROUP_LENGTH = 3;
+    static final int MINIMUM_GROUP_LENGTH = 3;
     private final TimeTrackingItemQueries queries;
     private final CommonPrefixGrouperConfig config;
     private boolean initialized;
     private PrefixTree root = new PrefixTree();
 
     @Inject
-    public CommonPrefixGrouper(TimeTrackingItemQueries queries,
-                               CommonPrefixGrouperConfig config) {
+    CommonPrefixGrouper(TimeTrackingItemQueries queries,
+                        CommonPrefixGrouperConfig config) {
         this.queries = Objects.requireNonNull(queries);
         this.config = Objects.requireNonNull(config);
     }
@@ -35,42 +35,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
     public List<Group> getGroupsOf(String text) {
         Objects.requireNonNull(text);
         checkInitialized();
-        ArrayList<Group> groups = new ArrayList<>();
-        char[] chars = text.toCharArray();
-        int n = chars.length;
-        PrefixTree node = root;
-        int i = 0;
-        int start = 0;
-        while (i < n && node != null) {
-            int lastGood = i;
-            do {
-                if (!Character.isWhitespace(chars[i])) {
-                    lastGood = i;
-                }
-                node = node.child(chars[i]);
-                i++;
-            } while (i < n && node != null && node.numChildren() <= 1);
-            do {
-                if (lastGood >= i && node != null) {
-                    node = node.child(chars[i]);
-                    i++;
-                }
-                lastGood++;
-            }
-            while (lastGood < n && (!Character.isWhitespace(chars[lastGood]) || lastGood - start < 3));
-            groups.add(new Group(Type.MATCH, text.substring(start, lastGood), new IntRange(start, lastGood)));
-            while (i < n && Character.isWhitespace(chars[i])) {
-                if (node != null) {
-                    node = node.child(chars[i]);
-                }
-                i++;
-            }
-            start = i;
-        }
-        if (i < n) {
-            groups.add(new Group(Type.REMAINDER, text.substring(i, n), new IntRange(i, n)));
-        }
-        return groups;
+        return new GroupHelper(text, root).parse();
     }
 
     private void checkInitialized() {
@@ -91,7 +56,7 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
         stopWatch.stop();
     }
 
-    public void insert(String item) {
+    void insert(String item) {
         PrefixTree node = root;
         int i = 0;
         int n = item.length();
@@ -155,30 +120,93 @@ class CommonPrefixGrouper implements ItemGrouper, ExpansionProvider {
     private static class PrefixTree {
         private Map<Character, PrefixTree> child;
 
-        protected PrefixTree child(Character c) {
+        PrefixTree child(Character c) {
             if (child == null) {
                 child = new HashMap<>();
             }
             return child.get(c);
         }
 
-        public void child(Character c, PrefixTree newChild) {
+        void child(Character c, PrefixTree newChild) {
             if (child == null) {
                 child = new HashMap<>();
             }
             child.put(c, newChild);
         }
 
-        public int numChildren() {
+        int numChildren() {
             return child == null ? 0 : child.size();
         }
 
-        public Character anyChild() {
+        Character anyChild() {
             return child.keySet().iterator().next();
         }
 
-        public Set<Map.Entry<Character, PrefixTree>> allChildren() {
+        Set<Map.Entry<Character, PrefixTree>> allChildren() {
             return child == null ? Collections.emptySet() : child.entrySet();
+        }
+    }
+
+    private static class GroupHelper {
+        private final String text;
+        private final List<Group> groups = new ArrayList<>();
+        private final char[] chars;
+        private final int n;
+        private PrefixTree node;
+        private int i = 0;
+        private int start = 0;
+        private int lastGood;
+
+        GroupHelper(String text, PrefixTree root) {
+            this.text = text;
+            this.chars = text.toCharArray();
+            this.n = chars.length;
+            this.node = root;
+        }
+
+        public List<Group> parse() {
+            while (i < n && node != null) {
+                lastGood = start;
+                parseToNextBranch();
+                setLastGoodToNextWhitespace();
+                i = Math.max(i, lastGood);
+                skipWhitespace();
+                groups.add(new Group(Type.MATCH, text.substring(start, lastGood), new IntRange(start, lastGood)));
+                start = i;
+            }
+            if (start < n) {
+                groups.add(new Group(Type.REMAINDER, text.substring(start, n), new IntRange(start, n)));
+            }
+            return groups;
+        }
+
+        private void skipWhitespace() {
+            while (i < n && Character.isWhitespace(chars[i])) {
+                if (node != null) {
+                    node = node.child(chars[i]);
+                }
+                i++;
+            }
+        }
+
+        private void setLastGoodToNextWhitespace() {
+            do {
+                if (lastGood >= i && node != null) {
+                    node = node.child(chars[lastGood]);
+                }
+                lastGood++;
+            }
+            while (lastGood < n && (!Character.isWhitespace(chars[lastGood]) || lastGood - start < MINIMUM_GROUP_LENGTH));
+        }
+
+        private void parseToNextBranch() {
+            do {
+                if (!Character.isWhitespace(chars[i])) {
+                    lastGood = i;
+                }
+                node = node.child(chars[i]);
+                i++;
+            } while (i < n && node != null && node.numChildren() <= 1);
         }
     }
 }

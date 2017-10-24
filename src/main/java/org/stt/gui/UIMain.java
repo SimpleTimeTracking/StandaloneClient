@@ -2,6 +2,7 @@ package org.stt.gui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import net.engio.mbassy.bus.MBassador;
 import net.engio.mbassy.listener.Handler;
@@ -91,6 +92,7 @@ public class UIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/Logo.png")));
         Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
             LOG.log(Level.SEVERE, "Uncaught exception", e);
             eventBus.publish(e);
