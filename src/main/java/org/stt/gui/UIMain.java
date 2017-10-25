@@ -21,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 public class UIMain extends Application {
     /**
@@ -92,7 +93,10 @@ public class UIMain extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("/Logo.png")));
+        Stream.of("/Logo32.png", "/Logo64.png", "/Logo.png")
+                .map(getClass()::getResourceAsStream)
+                .map(Image::new)
+                .forEach(primaryStage.getIcons()::add);
         Thread.currentThread().setUncaughtExceptionHandler((t, e) -> {
             LOG.log(Level.SEVERE, "Uncaught exception", e);
             eventBus.publish(e);
