@@ -4,7 +4,15 @@ import javafx.beans.binding.ListBinding;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.tree.RuleNode;
 import org.stt.Streams;
+import org.stt.command.CaseInsensitiveInputStream;
+import org.stt.grammar.EnglishCommandsBaseVisitor;
+import org.stt.grammar.EnglishCommandsLexer;
+import org.stt.grammar.EnglishCommandsParser;
 import org.stt.model.TimeTrackingItem;
 
 import java.util.ArrayList;
@@ -41,8 +49,9 @@ public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
 		if (filter.isEmpty()) {
 			result = new ArrayList<>(allItems);
 		} else {
+            String parsed = parseActivityPart(filter);
             Stream<TimeTrackingItem> processingStream = allItems.stream()
-                    .filter(item -> item.getActivity().toLowerCase().contains(filter));
+                    .filter(item -> item.getActivity().toLowerCase().contains(parsed != null ? parsed : filter));
             if (filterDuplicates) {
                 processingStream = processingStream.filter(Streams.distinctByKey(TimeTrackingItem::getActivity));
             }
@@ -51,4 +60,23 @@ public class TimeTrackingListFilter extends ListBinding<TimeTrackingItem> {
         Collections.reverse(result);
         return result;
 	}
+
+    private String parseActivityPart(String filter) {
+        CharStream inputStream = new CaseInsensitiveInputStream(filter);
+        EnglishCommandsLexer lexer = new EnglishCommandsLexer(inputStream);
+        TokenStream tokenStream = new CommonTokenStream(lexer);
+        EnglishCommandsParser parser = new EnglishCommandsParser(tokenStream);
+        EnglishCommandsBaseVisitor<String> visitor = new EnglishCommandsBaseVisitor<String>() {
+            @Override
+            protected boolean shouldVisitNextChild(RuleNode node, String currentResult) {
+                return currentResult == null;
+            }
+
+            @Override
+            public String visitItemWithComment(EnglishCommandsParser.ItemWithCommentContext ctx) {
+                return ctx.text;
+            }
+        };
+        return visitor.visit(parser.command());
+    }
 }
