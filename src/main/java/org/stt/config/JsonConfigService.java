@@ -41,6 +41,10 @@ public class JsonConfigService implements ConfigService, Service {
         return config;
     }
 
+    public void setConfig(ConfigRoot config) {
+        this.config = config;
+    }
+
     @Override
     public void start() throws Exception {
         boolean mkdirs = sttJson.getParentFile().mkdirs();

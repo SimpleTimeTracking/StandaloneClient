@@ -22,6 +22,7 @@ public class ConfigServiceFacade implements ConfigService, Service {
         jsonConfigService.start();
         if (jsonConfigService.isNewConfig()) {
             yamlConfigService.start();
+            jsonConfigService.setConfig(yamlConfigService.getConfig());
         } else {
             skipYaml = true;
         }
