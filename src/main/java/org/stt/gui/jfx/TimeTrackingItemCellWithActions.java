@@ -7,15 +7,14 @@ import com.sun.javafx.jmx.MXNodeAlgorithmContext;
 import com.sun.javafx.sg.prism.NGNode;
 import javafx.animation.FadeTransition;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import org.stt.model.TimeTrackingItem;
@@ -24,7 +23,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static org.stt.gui.jfx.Glyph.GLYPH_SIZE_MEDIUM;
@@ -44,7 +42,7 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
 
     private final Node newDayNode;
     private final TimeTrackingItemNodes itemNodes;
-    private final int buttonIndex;
+    private final HBox actions;
 
     TimeTrackingItemCellWithActions(Font fontAwesome,
                                     ResourceBundle localization,
@@ -66,21 +64,18 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
         deleteButton.setOnAction(event -> actionsHandler.delete(getItem()));
         stopButton.setOnAction(event -> actionsHandler.stop(getItem()));
 
-        itemNodes.appendNodesTo(cellPane.getChildren());
+        actions = new HBox(continueButton, editButton, deleteButton);
+        StackPane.setAlignment(actions, Pos.CENTER);
+        StackPane timeOrActions = new StackPaneWithoutResize();
 
-        buttonIndex = cellPane.getChildren().size();
+        actions.opacityProperty().bind(fadeOnHoverProperty());
+        SimpleDoubleProperty one = new SimpleDoubleProperty(1);
+        DoubleBinding timePaneOpacity = one.subtract(Bindings.min(one, fadeOnHoverProperty().multiply(2)));
+        itemNodes.appendNodesTo(timeOrActions, timePaneOpacity, cellPane.getChildren());
+        timeOrActions.getChildren().add(actions);
 
-        cellPane.getChildren().addAll(
-                continueButton,
-                editButton,
-                deleteButton);
         cellPane.setAlignment(Pos.CENTER_LEFT);
 
-        DoubleProperty opacityProperty = fadeOnHoverProperty();
-
-        Stream.of(continueButton, editButton, deleteButton, stopButton)
-                .map(Node::opacityProperty)
-                .forEach(p -> p.bind(opacityProperty));
 
         lastItemOnDayPane = new BorderPane();
 
@@ -137,7 +132,7 @@ class TimeTrackingItemCellWithActions extends ListCell<TimeTrackingItem> {
         if (empty) {
             setGraphic(null);
         } else {
-            cellPane.getChildren().set(buttonIndex, item.getEnd().isPresent() ? continueButton : stopButton);
+            actions.getChildren().set(0, item.getEnd().isPresent() ? continueButton : stopButton);
             itemNodes.setItem(item);
             if (lastItemOfDay.test(item)) {
                 setupLastItemOfDayPane();

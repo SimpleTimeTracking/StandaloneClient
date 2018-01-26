@@ -1,5 +1,6 @@
 package org.stt.gui.jfx;
 
+import javafx.beans.binding.DoubleBinding;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -97,7 +98,12 @@ public class TimeTrackingItemNodes {
 
     public void appendNodesTo(ObservableList<Node> parent) {
         parent.addAll(labelArea, space, timePane);
+    }
 
+    public void appendNodesTo(Pane timePaneContainer, DoubleBinding timePaneOpacity, ObservableList<Node> parent) {
+        timePane.opacityProperty().bind(timePaneOpacity);
+        timePaneContainer.getChildren().add(timePane);
+        parent.addAll(labelArea, space, timePaneContainer);
     }
 
     public void setItem(TimeTrackingItem item) {
@@ -116,10 +122,10 @@ public class TimeTrackingItemNodes {
 
             if (!DateTimes.isOnSameDay(item.getStart(), item.getEnd().orElseGet(LocalDateTime::now))) {
                 StackPane stackPane = new StackPane(ongoingActivityGraphics);
-                Node hallo = new ImageView(WARNING_IMAGE);
+                Node ongoingActivityWarning = new ImageView(WARNING_IMAGE);
                 Tooltips.install(stackPane, localization.getString("ongoingActivityDidntStartToday"));
-                stackPane.getChildren().add(hallo);
-                StackPane.setAlignment(hallo, Pos.TOP_RIGHT);
+                stackPane.getChildren().add(ongoingActivityWarning);
+                StackPane.setAlignment(ongoingActivityWarning, Pos.TOP_RIGHT);
                 timePane.getChildren().setAll(labelForStart, stackPane);
             } else {
                 timePane.getChildren().setAll(labelForStart, ongoingActivityGraphics);
