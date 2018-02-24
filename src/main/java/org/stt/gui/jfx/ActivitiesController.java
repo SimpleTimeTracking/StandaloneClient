@@ -229,6 +229,7 @@ public class ActivitiesController implements ActionsHandler {
         commandFormatter
                 .parse(text)
                 .accept(new ValidatingCommandHandler());
+        Platform.runLater(() -> commandText.requestFocus());
     }
 
     private void updateItems() {
@@ -373,7 +374,7 @@ public class ActivitiesController implements ActionsHandler {
         commandPane.setCenter(new VirtualizedScrollPane<>(commandText));
         Tooltip.install(commandText, new Tooltip(localization.getString("activities.command.tooltip")));
         Nodes.addInputMap(commandText, sequence(
-                consume(keyPressed(ENTER, CONTROL_DOWN), event -> done()),
+                consume(keyPressed(ENTER, CONTROL_DOWN), event -> executeCommand()),
                 consume(keyPressed(SPACE, CONTROL_DOWN), event -> expandCurrentCommand()),
                 consume(keyPressed(F1), event -> help())));
     }
@@ -429,11 +430,6 @@ public class ActivitiesController implements ActionsHandler {
     private void setupCellFactory(Predicate<TimeTrackingItem> lastItemOfDay) {
         activityList.setCellFactory(new TimeTrackingItemCellFactory(
                 ActivitiesController.this, lastItemOfDay, localization, fontAwesome, labelToNodeMapper));
-    }
-
-    private void done() {
-        executeCommand();
-        shutdown();
     }
 
     public Node getNode() {
