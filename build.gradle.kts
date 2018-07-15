@@ -10,8 +10,8 @@ plugins {
     jacoco
     idea
     antlr
-    id("net.ltgt.apt-idea").version("0.13")
-    id("org.sonarqube").version("2.6.1")
+    id("net.ltgt.apt-idea").version("0.17")
+    id("org.sonarqube").version("2.6.2")
     id("com.github.ben-manes.versions").version("0.20.0")
 }
 
@@ -52,15 +52,15 @@ dependencies {
 
     antlr(group = "org.antlr", name = "antlr4", version = "4.7.1")
     compile(group = "org.antlr", name = "antlr4-runtime", version = "4.7.1")
-    compile(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.8.1")
-    compile("org.yaml:snakeyaml:1.19")
-    compile("com.google.dagger:dagger:2.14.1")
+    compile(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.9.0")
+    compile("org.yaml:snakeyaml:1.21")
+    compile("com.google.dagger:dagger:2.16")
     compile("javax.inject:javax.inject:1")
-    apt("com.google.dagger:dagger-compiler:2.14.1")
-    compile("net.engio:mbassador:1.3.1")
+    apt("com.google.dagger:dagger-compiler:2.16")
+    compile("net.engio:mbassador:1.3.2")
     compile("org.controlsfx:controlsfx:8.40.14")
     compile("net.rcarz:jira-client:0.5")
-    compile("com.jsoniter:jsoniter:0.9.21")
+    compile("com.jsoniter:jsoniter:0.9.23")
 
     testCompile("commons-io:commons-io:2.6")
     testCompile("junit:junit-dep:4.11")
