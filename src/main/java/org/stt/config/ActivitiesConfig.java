@@ -7,6 +7,16 @@ public class ActivitiesConfig implements ConfigurationContainer {
     private boolean closeOnContinue = true;
     private boolean deleteClosesGaps = true;
 
+    private boolean groupItems = true;
+
+    public boolean isGroupItems() {
+        return groupItems;
+    }
+
+    public void setGroupItems(boolean groupItems) {
+        this.groupItems = groupItems;
+    }
+
     public boolean isAutoCompletionPopup() {
         return autoCompletionPopup;
     }

@@ -31,7 +31,7 @@ import net.engio.mbassy.listener.Handler;
 import net.engio.mbassy.listener.Listener;
 import net.engio.mbassy.listener.References;
 import org.controlsfx.control.NotificationPane;
-import org.stt.config.ReportConfig;
+import org.stt.config.ActivitiesConfig;
 import org.stt.gui.jfx.binding.MappedListBinding;
 import org.stt.gui.jfx.binding.ReportBinding;
 import org.stt.gui.jfx.binding.STTBindings;
@@ -65,7 +65,7 @@ public class ReportController {
     private final DurationRounder rounder;
     private final ItemGrouper itemGrouper;
     private final ResourceBundle localization;
-    private ReportConfig config;
+    private ActivitiesConfig activitiesConfig;
 
     @FXML
     private TableColumn<ListItem, String> columnForRoundedDuration;
@@ -100,11 +100,11 @@ public class ReportController {
                      TimeTrackingItemQueries searcher,
                      DurationRounder rounder,
                      ItemGrouper itemGrouper,
-                     ReportConfig config,
+                     ActivitiesConfig config,
                      @Named("glyph") Font fontaweSome,
                      MBassador<Object> eventBus) {
         this.localization = requireNonNull(localization);
-        this.config = requireNonNull(config);
+        this.activitiesConfig = requireNonNull(config);
         this.timeTrackingItemQueries = requireNonNull(searcher);
         this.rounder = requireNonNull(rounder);
         this.itemGrouper = requireNonNull(itemGrouper);
@@ -265,7 +265,7 @@ public class ReportController {
         columnForComment
                 .setCellValueFactory(new PropertyValueFactory<>(
                         "comment"));
-        if (config.isGroupItems()) {
+        if (activitiesConfig.isGroupItems()) {
             setItemGroupingCellFactory();
         } else {
             addClickToCopy(columnForComment, (item, event) -> setClipboard(item.getComment()));

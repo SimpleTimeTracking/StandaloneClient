@@ -8,6 +8,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.stt.config.ActivitiesConfig;
 import org.stt.text.ItemGrouper;
 
 import javax.inject.Named;
@@ -55,7 +56,7 @@ public abstract class JFXModule {
 
     @Provides
     @IntoSet
-    static ActivityTextDisplayProcessor groupingMapper(ItemGrouper grouper) {
+    static ActivityTextDisplayProcessor groupingMapper(ActivitiesConfig activitiesConfig, ItemGrouper grouper) {
 
         return in -> {
             Boolean[] first = {true};
@@ -64,7 +65,7 @@ public abstract class JFXModule {
                     return Stream.of(o);
                 }
                 first[0] = false;
-                if (o instanceof String) {
+                if (o instanceof String && activitiesConfig.isGroupItems()) {
                     return dissect(grouper, (String) o);
                 }
                 return Stream.of(o);
