@@ -11,4 +11,19 @@
         <Class name="org.stt.text.CommonPrefixGrouper"/>
         <Bug code="UC"/>
     </Match>
+    <Match>
+        <Bug code="RCN"/>
+    </Match>
+    <Match>
+        <Bug code="NP"/>
+    </Match>
+    <Match>
+        <Bug code="BC"/>
+    </Match>
+    <Match>
+        <Bug code="Se"/>
+    </Match>
+    <Match>
+        <Bug code="OBL"/>
+    </Match>
 </FindBugsFilter>

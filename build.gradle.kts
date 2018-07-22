@@ -1,18 +1,24 @@
+import com.github.spotbugs.SpotBugsTask
 import org.apache.tools.ant.filters.ReplaceTokens
+import org.jetbrains.kotlin.gradle.internal.KaptTask
+import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
 import org.sonarqube.gradle.SonarQubeTask
 import sun.tools.jar.resources.jar
 import java.net.URI
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 
 plugins {
+    val kotlin_version = "1.2.51"
     application
-    findbugs
-    pmd
     jacoco
     idea
     antlr
-    id("net.ltgt.apt-idea").version("0.17")
-    id("org.sonarqube").version("2.6.2")
-    id("com.github.ben-manes.versions").version("0.20.0")
+    kotlin("jvm") version kotlin_version
+    kotlin("kapt") version kotlin_version
+    id("org.sonarqube") version "2.6.2"
+    id("com.github.ben-manes.versions") version "0.20.0"
+    id("com.github.spotbugs") version "1.6.2"
 }
 
 repositories {
@@ -38,8 +44,15 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
-findbugs {
-    setExcludeFilter(file("config/findbugs/excludeFilter.xml"))
+spotbugs {
+    excludeFilter = file("config/findbugs/excludeFilter.xml")
+}
+
+tasks.withType<SpotBugsTask> {
+    reports {
+        xml.setEnabled(false)
+        html.setEnabled(true)
+    }
 }
 
 configurations {
@@ -49,24 +62,30 @@ configurations {
 }
 
 dependencies {
-
     antlr(group = "org.antlr", name = "antlr4", version = "4.7.1")
     compile(group = "org.antlr", name = "antlr4-runtime", version = "4.7.1")
     compile(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.9.0")
     compile("org.yaml:snakeyaml:1.21")
     compile("com.google.dagger:dagger:2.16")
     compile("javax.inject:javax.inject:1")
-    apt("com.google.dagger:dagger-compiler:2.16")
+    kapt("com.google.dagger:dagger-compiler:2.16")
     compile("net.engio:mbassador:1.3.2")
     compile("org.controlsfx:controlsfx:8.40.14")
     compile("net.rcarz:jira-client:0.5")
     compile("com.jsoniter:jsoniter:0.9.23")
+    compile(kotlin("stdlib-jdk8"))
 
     testCompile("commons-io:commons-io:2.6")
     testCompile("junit:junit-dep:4.11")
     testCompile("org.hamcrest:hamcrest-core:1.3")
     testCompile("org.hamcrest:hamcrest-library:1.3")
-    testCompile("org.mockito:mockito-all:2.0.2-beta")
+    testCompile("org.mockito:mockito-core:2.19.1")
+}
+
+distributions.getByName("main") {
+    contents {
+        include("**/STT*")
+    }
 }
 
 tasks.withType<Jar> {
@@ -76,6 +95,8 @@ tasks.withType<Jar> {
         attributes += "JavaFX-Feature-Proxy" to "None"
     }
 }
+
+tasks.withType<KaptTask> { dependsOn(tasks.withType<AntlrTask>()) }
 
 tasks.withType<ProcessResources> {
     filesMatching("version.info") {
@@ -129,11 +150,15 @@ fun getCheckedOutGitCommitHash(): String {
 
     if (isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
 
-    val refHead = file(".git/" + head[1].trim()) // .git/refs/heads/master
+    val refHead = file(".git/logs/" + head[1].trim()) // .git/refs/heads/master
     return refHead.readText().trim().take(takeFromHash)
 }
 
 tasks.withType<SonarQubeTask> {
     properties += "sonar.projectName" to "SimpleTimeTracking"
     properties += "sonar.projectKey" to "org.stt:stt"
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }
