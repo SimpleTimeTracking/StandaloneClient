@@ -208,11 +208,11 @@ class TimeTrackingItemQueriesTest {
         // GIVEN
         val expectedResult = TimeTrackingItem("", _800, _1000)
         givenReaderReturns(expectedResult, TimeTrackingItem("", _1000, _1200))
-        val Criteria = Criteria()
-        Criteria.withEndNotAfter(_1000)
+        val criteria = Criteria()
+        criteria.withEndNotAfter(_1000)
 
         // WHEN
-        val result = sut.queryItems(Criteria).toList()
+        val result = sut.queryItems(criteria).toList()
 
         // THEN
         assertThat<Collection<TimeTrackingItem>>(result, CoreMatchers.`is`(listOf(expectedResult)))

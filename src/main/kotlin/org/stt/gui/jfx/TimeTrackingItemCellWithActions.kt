@@ -106,7 +106,7 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         return newDayHbox
     }
 
-    protected open fun setupTooltips(localization: ResourceBundle) {
+    fun setupTooltips(localization: ResourceBundle) {
         editButton.tooltip = Tooltip(localization
                 .getString("itemList.edit"))
         continueButton.tooltip = Tooltip(localization

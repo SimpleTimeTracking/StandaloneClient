@@ -25,7 +25,7 @@ class BackupCreator @Inject
 constructor(private val backupConfig: BackupConfig,
             @param:STTFile private val sttFile: File,
             @param:Named("homePath") private val homePath: String) : Service {
-    private val LOG = Logger.getLogger(BackupCreator::class.java.name)
+    private val log = Logger.getLogger(BackupCreator::class.java.name)
 
     override fun stop() {
         // No default behavior
@@ -42,7 +42,7 @@ constructor(private val backupConfig: BackupConfig,
         val backupInterval = backupConfig.backupInterval
 
         if (backupInterval < 1) {
-            LOG.info("Backup is disabled (see backupInterval setting).")
+            log.info("Backup is disabled (see backupInterval setting).")
             return
         }
 
@@ -96,7 +96,7 @@ constructor(private val backupConfig: BackupConfig,
             if (i >= retentionCount) {
                 val oldBackupFile = backupList[i]
                 val success = oldBackupFile.delete()
-                LOG.info {
+                log.info {
                     String.format("deleting old backup file %s because of configured retention count. Deleted successfully? %s",
                             oldBackupFile.absolutePath, success)
                 }

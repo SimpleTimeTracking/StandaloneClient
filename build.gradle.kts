@@ -9,13 +9,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
-    val kotlin_version = "1.2.51"
+    val kotlinVersion = "1.2.51"
     application
     jacoco
     idea
     antlr
-    kotlin("jvm") version kotlin_version
-    kotlin("kapt") version kotlin_version
+    kotlin("jvm") version kotlinVersion
+    kotlin("kapt") version kotlinVersion
     id("org.sonarqube") version "2.6.2"
     id("com.github.ben-manes.versions") version "0.20.0"
     id("com.github.spotbugs") version "1.6.2"

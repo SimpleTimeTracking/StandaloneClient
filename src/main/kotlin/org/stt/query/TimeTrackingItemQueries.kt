@@ -3,7 +3,6 @@ package org.stt.query
 import net.engio.mbassy.bus.MBassador
 import net.engio.mbassy.listener.Handler
 import org.stt.StopWatch
-import org.stt.Streams.distinctByKey
 import org.stt.model.ItemModified
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
@@ -18,6 +17,7 @@ import javax.inject.Singleton
 @Singleton
 class TimeTrackingItemQueries @Inject constructor(private val provider: Provider<ItemReader>,
                                                   eventbus: Optional<MBassador<Any>>) {
+    private val log = Logger.getLogger(TimeTrackingItemQueries::class.java.simpleName)
     private var cachedItems: MutableList<TimeTrackingItem>? = null
 
     /**
@@ -40,7 +40,7 @@ class TimeTrackingItemQueries @Inject constructor(private val provider: Provider
     @Synchronized
     fun sourceChanged(event: ItemModified?) {
         cachedItems = null
-        LOG.fine("Clearing query cache")
+        log.fine("Clearing query cache")
     }
 
     /**
@@ -77,11 +77,6 @@ class TimeTrackingItemQueries @Inject constructor(private val provider: Provider
                 .distinct()
     }
 
-    fun queryFirstItemsOfDays(): Stream<TimeTrackingItem> {
-        return queryAllItems()
-                .filter(distinctByKey { item -> item.start.toLocalDate() })
-    }
-
     /**
      * @return a [Stream] containing all time tracking items matching the given criteria, be sure to [Stream.close] it!
      */
@@ -99,7 +94,7 @@ class TimeTrackingItemQueries @Inject constructor(private val provider: Provider
     @Synchronized
     private fun validateCache() {
         if (cachedItems == null) {
-            LOG.fine("Rebuilding cache")
+            log.fine("Rebuilding cache")
             val stopWatch = StopWatch("Query cache rebuild")
             cachedItems = ArrayList(2000)
             provider.get().use { reader ->
@@ -113,8 +108,4 @@ class TimeTrackingItemQueries @Inject constructor(private val provider: Provider
     }
 
     class AdjacentItems(val previousItem: TimeTrackingItem?, val nextItem: TimeTrackingItem?)
-
-    companion object {
-        private val LOG = Logger.getLogger(TimeTrackingItemQueries::class.java.simpleName)
-    }
 }

@@ -68,20 +68,20 @@ internal constructor(private val localization: ResourceBundle,
         activitiesTab.content = activitiesController.node
         CompletableFuture.supplyAsync { reportController.panel }
                 .thenAcceptAsync({ reportTab.content = it }, { Platform.runLater(it) })
-                .handle<String> { _, t ->
+                .handle { _, t ->
                     if (t != null) LOG.log(Level.SEVERE, "Error while building report controller", t)
                     t!!.message
                 }
         CompletableFuture.supplyAsync { settingsController.panel }
                 .thenAcceptAsync({ settingsTab.content = it }, { Platform.runLater(it) })
-                .handle<String> { _, t ->
+                .handle { _, t ->
                     if (t != null) LOG.log(Level.SEVERE, "Error while building settings controller", t)
                     t!!.message
                 }
 
         CompletableFuture.supplyAsync { infoController.getPanel() }
                 .thenAcceptAsync({ infoTab.content = it }, { Platform.runLater(it) })
-                .handle<String> { _, t ->
+                .handle { _, t ->
                     if (t != null) LOG.log(Level.SEVERE, "Error while building info controller", t)
                     t!!.message
                 }

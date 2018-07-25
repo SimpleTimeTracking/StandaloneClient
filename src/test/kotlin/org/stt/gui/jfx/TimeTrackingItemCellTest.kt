@@ -27,10 +27,7 @@ class TimeTrackingItemCellTest {
         val resourceBundle = ResourceBundle
                 .getBundle("org.stt.gui.Application")
 
-        sut = object : TimeTrackingItemCellWithActions(fontAwesome!!, resourceBundle, Predicate { false }, actionsHandler!!, { it }) {
-
-            override fun setupTooltips(localization: ResourceBundle) {}
-        }
+        sut = TimeTrackingItemCellWithActions(fontAwesome!!, resourceBundle, Predicate { false }, actionsHandler!!, { it })
     }
 
     @Test

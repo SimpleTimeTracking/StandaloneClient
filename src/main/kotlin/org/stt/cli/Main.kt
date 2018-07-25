@@ -145,7 +145,7 @@ class Main @Inject constructor(private val timeTrackingItemQueries: TimeTracking
             it.sorted { o1, o2 -> o2.start.compareTo(o1.start) }
                     .map(TimeTrackingItem::activity)
                     .distinct()
-                    .forEach(printTo::println);
+                    .forEach(printTo::println)
         }
     }
 

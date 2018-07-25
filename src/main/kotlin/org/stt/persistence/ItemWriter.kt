@@ -6,6 +6,4 @@ import java.io.Closeable
 
 interface ItemWriter : Closeable {
     fun write(item: TimeTrackingItem)
-
-    override fun close()
 }
