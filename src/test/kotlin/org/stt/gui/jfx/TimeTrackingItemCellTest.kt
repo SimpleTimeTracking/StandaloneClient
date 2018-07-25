@@ -20,7 +20,6 @@ class TimeTrackingItemCellTest {
     private var fontAwesome: Font? = null
 
     @Before
-    @Throws(Throwable::class)
     fun setup() {
         TestFX.installTK()
         fontAwesome = Font.loadFont(javaClass.getResourceAsStream("/fontawesome-webfont.ttf"), 0.0)

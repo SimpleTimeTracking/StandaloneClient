@@ -36,7 +36,6 @@ class OvertimeReportGeneratorTest {
     private lateinit var queries: TimeTrackingItemQueries
 
     @Before
-    @Throws(Exception::class)
     fun setUp() {
         MockitoAnnotations.initMocks(this)
 

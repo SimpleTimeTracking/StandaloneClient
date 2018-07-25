@@ -15,7 +15,6 @@ import org.stt.model.ItemModified
 import org.stt.query.WorkTimeQueries
 import java.time.Duration
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.concurrent.Callable
 import javax.inject.Inject
 
@@ -31,7 +30,7 @@ constructor(private val i18n: ResourceBundle,
     private val weekWorktime = SimpleObjectProperty(Duration.ZERO)
 
     init {
-        requireNonNull(eventbus).subscribe(this)
+        eventbus.subscribe(this)
 
         build()
     }

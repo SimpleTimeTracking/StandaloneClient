@@ -22,13 +22,12 @@ import org.stt.model.TimeTrackingItem
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.concurrent.Callable
 import java.util.function.Predicate
 
 internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
                                                     localization: ResourceBundle,
-                                                    lastItemOfDay: Predicate<TimeTrackingItem>,
+                                                    private val lastItemOfDay: Predicate<TimeTrackingItem>,
                                                     actionsHandler: ActionsHandler,
                                                     labelToNodeMapper: ActivityTextDisplayProcessor) : ListCell<TimeTrackingItem>() {
 
@@ -37,7 +36,6 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
     val continueButton: Button
     val deleteButton: Button
     val stopButton: Button
-    private val lastItemOfDay: Predicate<TimeTrackingItem>
     private val lastItemOnDayPane: BorderPane
 
     private val newDayNode: Node
@@ -50,7 +48,6 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         continueButton = FramelessButton(glyph(fontAwesome, Glyph.PLAY_CIRCLE, GLYPH_SIZE_MEDIUM, Color.DARKGREEN))
         deleteButton = FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE_MEDIUM, Color.web("e26868")))
         stopButton = FramelessButton(glyph(fontAwesome, Glyph.STOP_CIRCLE, GLYPH_SIZE_MEDIUM, Color.GOLDENROD))
-        this.lastItemOfDay = requireNonNull(lastItemOfDay)
         setupTooltips(localization)
 
         continueButton.setOnAction { actionsHandler.continueItem(item) }

@@ -20,7 +20,6 @@ class JiraExpansionProviderTest {
     internal lateinit var issue: Issue
 
     @Before
-    @Throws(Exception::class)
     fun setUp() {
         MockitoAnnotations.initMocks(this)
 
@@ -29,7 +28,6 @@ class JiraExpansionProviderTest {
     }
 
     @After
-    @Throws(Exception::class)
     fun tearDown() {
     }
 

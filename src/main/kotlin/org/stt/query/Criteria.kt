@@ -4,7 +4,6 @@ import org.stt.model.TimeTrackingItem
 import org.stt.time.Interval
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
 
 /**
  * All present conditions in the clause must be valid for a match.
@@ -78,7 +77,6 @@ class Criteria {
     }
 
     fun matches(item: TimeTrackingItem): Boolean {
-        Objects.requireNonNull(item)
         if (!item.start.isBefore(startBefore)) {
             return false
         }

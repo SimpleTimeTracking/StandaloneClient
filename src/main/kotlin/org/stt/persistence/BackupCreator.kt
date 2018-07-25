@@ -10,7 +10,6 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.time.LocalDate
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.logging.Logger
 import javax.inject.Inject
 import javax.inject.Named
@@ -23,19 +22,10 @@ import kotlin.streams.toList
  */
 @Singleton
 class BackupCreator @Inject
-constructor(backupConfig: BackupConfig,
-            @STTFile sttFile: File,
-            @Named("homePath") homePath: String) : Service {
-
-    private val backupConfig: BackupConfig
-    private val sttFile: File
-    private val homePath: String
-
-    init {
-        this.backupConfig = requireNonNull(backupConfig)
-        this.sttFile = requireNonNull(sttFile)
-        this.homePath = requireNonNull(homePath)
-    }
+constructor(private val backupConfig: BackupConfig,
+            @param:STTFile private val sttFile: File,
+            @param:Named("homePath") private val homePath: String) : Service {
+    private val LOG = Logger.getLogger(BackupCreator::class.java.name)
 
     override fun stop() {
         // No default behavior
@@ -48,7 +38,6 @@ constructor(backupConfig: BackupConfig,
      *
      *  * if so, copy the current .stt file to the backup location
      */
-    @Throws(IOException::class)
     override fun start() {
         val backupInterval = backupConfig.backupInterval
 
@@ -141,10 +130,5 @@ constructor(backupConfig: BackupConfig,
      */
     private fun getBackupFileName(sttFile: File, date: LocalDate): String {
         return sttFile.name + "-" + DateTimes.prettyPrintDate(date)
-    }
-
-    companion object {
-
-        private val LOG = Logger.getLogger(BackupCreator::class.java.name)
     }
 }

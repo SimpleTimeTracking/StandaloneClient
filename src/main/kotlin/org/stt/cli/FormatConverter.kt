@@ -45,7 +45,6 @@ internal class FormatConverter(args: MutableList<String>) {
         }
     }
 
-    @Throws(FileNotFoundException::class)
     private fun getWriterFrom(output: File?): ItemWriter {
         return if (output == null) {
             STTItemWriter(OutputStreamWriter(System.out, StandardCharsets.UTF_8)) // NOSONAR not logging
@@ -53,7 +52,6 @@ internal class FormatConverter(args: MutableList<String>) {
                 OutputStreamWriter(FileOutputStream(output), StandardCharsets.UTF_8))
     }
 
-    @Throws(IOException::class)
     private fun getReaderFrom(input: File?, sourceFormat: String?): ItemReader {
         val inputReader: Reader
         if (input == null) {

@@ -12,7 +12,6 @@ import org.junit.experimental.theories.Theory
 import org.junit.runner.RunWith
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.stt.STTItemPersister
-import java.io.IOException
 import java.io.StringReader
 import java.io.StringWriter
 import java.time.LocalDateTime
@@ -31,7 +30,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun writeCommentSucceeds() {
 
         // GIVEN
@@ -47,7 +45,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun writeStartSucceeds() {
 
         // GIVEN
@@ -63,7 +60,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun writeEndSucceeds() {
 
         // GIVEN
@@ -81,7 +77,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun writeCompleteEntrySucceeds() {
 
         // GIVEN
@@ -101,7 +96,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun writeMultiLineEntrySucceeds() {
 
         // GIVEN
@@ -120,7 +114,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun itemsCanBeDeleted() {
 
         // GIVEN
@@ -140,7 +133,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun itemCanBeReplaced() {
 
         // GIVEN
@@ -159,7 +151,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldWriteItemsWithMultipleWhitespaces() {
         // GIVEN
         val theItem = TimeTrackingItem("item with 2  spaces",
@@ -217,7 +208,6 @@ class STTItemWriterTest {
     }
 
     @Theory
-    @Throws(IOException::class)
     fun shouldRemoveCoveredTimeIntervalsIfCoveredByNewItem(
             startOfNewItem: LocalDateTime) {
         val startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13)
@@ -241,7 +231,6 @@ class STTItemWriterTest {
     }
 
     @Theory
-    @Throws(IOException::class)
     fun shouldSplitOverlappingTimeIntervalWithEndIfNewItemEndsBefore(
             startOfNewItem: LocalDateTime) {
         val startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13)
@@ -270,7 +259,6 @@ class STTItemWriterTest {
     }
 
     @Theory
-    @Throws(IOException::class)
     fun shouldSplitOverlappingTimeIntervalWithoutEndIfNewItemEndsBefore(
             startOfNewItem: LocalDateTime) {
         val startOfExistingItem = LocalDateTime.of(2011, 10, 10, 11, 12, 13)
@@ -296,7 +284,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldChangeEndOfIntervalBeforeRemoveOverlappingIntervalAndChangeStartOfIntervalAfter() {
         // GIVEN
         val itemBeforeBefore = TimeTrackingItem(
@@ -344,7 +331,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldSplitCoveringExistingItem() {
         // GIVEN
         val coveringItem = TimeTrackingItem("covering",
@@ -365,7 +351,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldNotChangeOldNonOverlappingItem() {
         // GIVEN
         val oldItem = TimeTrackingItem("old item",
@@ -424,7 +409,6 @@ class STTItemWriterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldNotWriteLaterItemBeforeNewItem() {
         // GIVEN
         val oldItem = TimeTrackingItem("old item",

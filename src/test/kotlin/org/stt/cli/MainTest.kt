@@ -35,7 +35,6 @@ class MainTest {
     private var currentSttFile: File? = null
 
     @Before
-    @Throws(IOException::class)
     fun setup() {
         MockitoAnnotations.initMocks(this)
 
@@ -76,7 +75,6 @@ class MainTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun startingWorkWritesToConfiguredFile() {
 
         // GIVEN

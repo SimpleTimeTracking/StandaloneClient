@@ -21,7 +21,6 @@ import org.stt.text.ItemCategorizer.ItemCategory
 import org.stt.time.DateTimes
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import java.io.UnsupportedEncodingException
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.LocalDate
@@ -59,7 +58,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldReportCurrentDayOnNoOptions() {
         // GIVEN
         val out = ByteArrayOutputStream()
@@ -83,7 +81,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldParseSince() {
         // GIVEN
         val out = ByteArrayOutputStream()
@@ -101,7 +98,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldParseDays() {
         // GIVEN
         val out = ByteArrayOutputStream()
@@ -119,7 +115,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldParseAt() {
         // GIVEN
         val out = ByteArrayOutputStream()
@@ -137,7 +132,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldParseSearchFilter() {
         // GIVEN
         val out = ByteArrayOutputStream()
@@ -154,7 +148,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldParseSearchFilterAllTime() {
         // GIVEN
         val out = ByteArrayOutputStream()
@@ -174,7 +167,6 @@ class ReportPrinterTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldParseFromTo() {
         // GIVEN
         val out = ByteArrayOutputStream()

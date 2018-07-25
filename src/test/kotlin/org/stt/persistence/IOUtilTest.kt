@@ -12,7 +12,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.stt.importer.IOUtil
 import org.stt.model.TimeTrackingItem
-import java.io.IOException
 import java.time.LocalDateTime
 import java.util.*
 
@@ -20,7 +19,6 @@ import java.util.*
 class IOUtilTest {
 
     @Theory
-    @Throws(IOException::class)
     fun readAllShouldReadAll(
             @TestedOn(ints = intArrayOf(0, 1, 10, 100)) numberOfItems: Int) {
         // GIVEN

@@ -11,7 +11,6 @@ import org.mockito.MockitoAnnotations
 import org.stt.config.PathSetting
 import org.stt.config.WorktimeConfig
 import org.stt.reporting.WorkingtimeItemProvider.WorkingtimeItem
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.time.DayOfWeek
 import java.time.Duration
@@ -28,7 +27,6 @@ class WorkingtimeItemProviderTest {
     var tempFolder = TemporaryFolder()
 
     @Before
-    @Throws(IOException::class)
     fun setUp() {
         MockitoAnnotations.initMocks(this)
 

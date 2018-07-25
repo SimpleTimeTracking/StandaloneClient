@@ -52,7 +52,6 @@ constructor(@Named("homePath") homePath: String) : Service, ConfigService {
 
     }
 
-    @Throws(Exception::class)
     override fun start() {
         val mkdirs = sttYaml.parentFile.mkdirs()
         if (mkdirs) {

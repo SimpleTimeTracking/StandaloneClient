@@ -5,17 +5,10 @@ import org.stt.query.TimeTrackingItemQueries
 import org.stt.time.DateTimes
 import org.stt.time.until
 import java.time.LocalDateTime
-import java.util.Objects.requireNonNull
 import javax.inject.Inject
 
 class ItemAndDateValidator @Inject
-constructor(timeTrackingItemQueries: TimeTrackingItemQueries) {
-    private val timeTrackingItemQueries: TimeTrackingItemQueries
-
-    init {
-        this.timeTrackingItemQueries = requireNonNull(timeTrackingItemQueries)
-    }
-
+constructor(private val timeTrackingItemQueries: TimeTrackingItemQueries) {
     fun validateItemIsFirstItemAndLater(start: LocalDateTime): Boolean {
         if (!DateTimes.isToday(start)) {
             return true
@@ -27,8 +20,6 @@ constructor(timeTrackingItemQueries: TimeTrackingItemQueries) {
         val hasEarlierItem = timeTrackingItemQueries.queryItems(criteria)
                 .findAny()
                 .isPresent
-        return if (hasEarlierItem) {
-            true
-        } else !LocalDateTime.now().isBefore(start)
+        return hasEarlierItem || !LocalDateTime.now().isBefore(start)
     }
 }

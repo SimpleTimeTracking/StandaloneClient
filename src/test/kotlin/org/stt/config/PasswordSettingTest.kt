@@ -4,12 +4,10 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.junit.Assert.assertThat
 import org.junit.Test
-import java.io.UnsupportedEncodingException
 import java.nio.charset.StandardCharsets
 
 class PasswordSettingTest {
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldEncryptAndDecryptPassword() {
         // GIVEN
         val originalPassword = "Hello World".toByteArray(StandardCharsets.UTF_8)
@@ -22,7 +20,6 @@ class PasswordSettingTest {
     }
 
     @Test
-    @Throws(UnsupportedEncodingException::class)
     fun shouldNotStorePlainPassword() {
         // GIVEN
         val originalPassword = "Hello World".toByteArray(StandardCharsets.UTF_8)

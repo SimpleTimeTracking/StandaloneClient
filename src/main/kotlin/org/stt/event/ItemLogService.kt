@@ -46,7 +46,6 @@ constructor(@Named("itemLog") val out: PrintWriter,
         log("after_update", event.afterUpdate)
     }
 
-    @Throws(Exception::class)
     override fun start() = eventBus.subscribe(this)
 
     override fun stop() = out.close()

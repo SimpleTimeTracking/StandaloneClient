@@ -31,7 +31,6 @@ constructor(@Named("homePath") homePath: String) : ConfigService, Service {
         sttJson = File("$homePath/.stt", "stt.json")
     }
 
-    @Throws(Exception::class)
     override fun start() {
         val mkdirs = sttJson.parentFile.mkdirs()
         if (mkdirs) {

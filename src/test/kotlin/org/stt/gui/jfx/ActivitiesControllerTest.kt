@@ -31,7 +31,6 @@ import org.stt.query.TimeTrackingItemQueries
 import org.stt.query.WorkTimeQueries
 import org.stt.text.ExpansionProvider
 import org.stt.validation.ItemAndDateValidator
-import java.io.IOException
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -138,7 +137,6 @@ class ActivitiesControllerTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldDeleteItemIfRequested() {
         // GIVEN
         val item = TimeTrackingItem("", LocalDateTime.now())
@@ -167,7 +165,6 @@ class ActivitiesControllerTest {
     }
 
     @Test
-    @Throws(Exception::class)
     fun shouldClearCommandAreaOnExecuteCommand() {
         // GIVEN
         given(timeTrackingItemQueries.queryItems(any())).willReturn(Stream.of())

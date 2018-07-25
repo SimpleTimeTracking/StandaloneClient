@@ -39,7 +39,6 @@ constructor(configuration: JiraConfig) : Service {
     }
 
 
-    @Throws(Exception::class)
     override fun start() {
         // no further initialization needed
     }
@@ -48,7 +47,6 @@ constructor(configuration: JiraConfig) : Service {
         // no cleanup
     }
 
-    @Throws(InvalidCredentialsException::class, IssueDoesNotExistException::class, Exceptions::class)
     fun getIssue(issueKey: String): Optional<Issue> {
         if (client == null) {
             return Optional.empty()
@@ -80,7 +78,6 @@ constructor(configuration: JiraConfig) : Service {
 
     }
 
-    @Throws(InvalidCredentialsException::class)
     private fun projectExists(projectKey: String): Boolean {
         return projectNames!!.contains(projectKey)
     }
@@ -98,7 +95,6 @@ constructor(configuration: JiraConfig) : Service {
         return projectKey
     }
 
-    @Throws(InvalidCredentialsException::class)
     private fun internalGetProjectNames(): Set<String> {
         try {
             return client!!.projects

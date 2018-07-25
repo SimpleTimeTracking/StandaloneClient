@@ -25,7 +25,6 @@ class UIMain : Application() {
     private lateinit var mainWindowController: MainWindowController
     private lateinit var executorService: ExecutorService
 
-    @Throws(Exception::class)
     override fun init() {
         val rootLogger = Logger.getLogger("")
         rootLogger.handlers[0].level = Level.FINEST
@@ -67,7 +66,6 @@ class UIMain : Application() {
         }
     }
 
-    @Throws(Exception::class)
     private fun startService(serviceInstance: Service) {
         val stopWatch = StopWatch(serviceInstance.javaClass.simpleName)
         LOG.info("Starting " + serviceInstance.javaClass.simpleName)

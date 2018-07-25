@@ -13,7 +13,6 @@ constructor(private val yamlConfigService: YamlConfigService, private val jsonCo
     override val config: ConfigRoot
         get() = if (skipYaml) jsonConfigService.config else yamlConfigService.config
 
-    @Throws(Exception::class)
     override fun start() {
         jsonConfigService.start()
         if (jsonConfigService.isNewConfig) {

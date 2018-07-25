@@ -46,7 +46,6 @@ import java.io.UncheckedIOException
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -56,20 +55,13 @@ import javax.inject.Named
 import kotlin.streams.toList
 
 class ReportController @Inject
-internal constructor(localization: ResourceBundle,
-                     searcher: TimeTrackingItemQueries,
-                     rounder: DurationRounder,
-                     itemGrouper: @JvmSuppressWildcards ItemGrouper,
-                     config: ActivitiesConfig,
-                     @Named("glyph") fontaweSome: Font,
-                     eventBus: MBassador<Any>) {
-    private val timeTrackingItemQueries: TimeTrackingItemQueries
-
-    private val rounder: DurationRounder
-    private val itemGrouper: ItemGrouper
-    private val localization: ResourceBundle
-    private val activitiesConfig: ActivitiesConfig
-
+internal constructor(private val localization: ResourceBundle,
+                     private val timeTrackingItemQueries: TimeTrackingItemQueries,
+                     private val rounder: DurationRounder,
+                     private val itemGrouper: @JvmSuppressWildcards ItemGrouper,
+                     private val activitiesConfig: ActivitiesConfig,
+                     @param:Named("glyph") private val fontaweSome: Font,
+                     private val eventBus: MBassador<Any>) {
     @FXML
     private lateinit var columnForRoundedDuration: TableColumn<ListItem, String>
     @FXML
@@ -92,23 +84,13 @@ internal constructor(localization: ResourceBundle,
     private lateinit var roundedDurationSum: Label
     private lateinit var datePicker: DatePicker
 
-    private lateinit var panel: NotificationPane
-    private val fontaweSome: Font
-    private val eventBus: MBassador<Any>
+    internal val panel: NotificationPane by lazy {
+        loadAndInjectFXML()
+    }
     private val notificationPause = PauseTransition(javafx.util.Duration.seconds(2.0))
     private lateinit var trackedDays: Set<LocalDate>
 
-    init {
-        this.localization = requireNonNull(localization)
-        this.activitiesConfig = requireNonNull(config)
-        this.timeTrackingItemQueries = requireNonNull(searcher)
-        this.rounder = requireNonNull(rounder)
-        this.itemGrouper = requireNonNull(itemGrouper)
-        this.fontaweSome = requireNonNull(fontaweSome)
-        this.eventBus = requireNonNull(eventBus)
-    }
-
-    private fun loadAndInjectFXML() {
+    private fun loadAndInjectFXML(): NotificationPane {
         val loader = FXMLLoader(javaClass.getResource(
                 "/org/stt/gui/jfx/ReportPanel.fxml"), localization)
         loader.setController(this)
@@ -119,13 +101,8 @@ internal constructor(localization: ResourceBundle,
             throw UncheckedIOException(e)
         }
 
-        panel = NotificationPane(reportPane)
         notificationPause.setOnFinished { panel.hide() }
-    }
-
-    internal fun getPanel(): Node? {
-        loadAndInjectFXML()
-        return panel
+        return NotificationPane(reportPane)
     }
 
     @FXML

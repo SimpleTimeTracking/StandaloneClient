@@ -4,19 +4,12 @@ import net.engio.mbassy.bus.MBassador
 import org.stt.connector.jira.*
 import org.stt.event.NotifyUser
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.logging.Logger
 import javax.inject.Inject
 
 class JiraExpansionProvider @Inject
-constructor(connector: JiraConnector,
+constructor(private val jiraConnector: JiraConnector,
             private val eventBus: Optional<MBassador<Any>>) : ExpansionProvider {
-
-    private val jiraConnector: JiraConnector
-
-    init {
-        this.jiraConnector = requireNonNull(connector)
-    }
 
     override fun getPossibleExpansions(text: String): List<String> {
         var queryText = text.trim { it <= ' ' }

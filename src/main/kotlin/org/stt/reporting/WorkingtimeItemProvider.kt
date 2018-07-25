@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.logging.Logger
 import javax.inject.Inject
 import javax.inject.Named
@@ -18,9 +17,8 @@ import javax.inject.Named
  * and aggregates them into [WorkingtimeItem]s
  */
 class WorkingtimeItemProvider @Inject
-constructor(config: WorktimeConfig,
+constructor(private val config: WorktimeConfig,
             @Named("homePath") homePath: String) {
-    private val config: WorktimeConfig
     private val workingHoursPerDay = HashMap<LocalDate, WorkingtimeItem>()
 
     /**
@@ -41,8 +39,6 @@ constructor(config: WorktimeConfig,
         }
 
     init {
-        this.config = requireNonNull(config)
-
         val workingTimesFile = config.workingTimesFile.file(homePath)
         if (workingTimesFile.exists()) {
             populateHoursMapsFromFile(workingTimesFile)
@@ -80,7 +76,6 @@ constructor(config: WorktimeConfig,
                 }
     }
 
-    @Throws(FileNotFoundException::class)
     private fun constructReaderFrom(workingTimesFile: File): InputStream {
         return if (workingTimesFile.name.equals("-", ignoreCase = true)) {
             System.`in`

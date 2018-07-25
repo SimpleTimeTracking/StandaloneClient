@@ -2,14 +2,11 @@ package org.stt
 
 import org.stt.gui.UIMain
 import java.io.File
-import java.lang.reflect.InvocationTargetException
-import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLClassLoader
 
 object StartWithJFX {
 
-    @Throws(MalformedURLException::class, IllegalAccessException::class, InvocationTargetException::class, ClassNotFoundException::class, NoSuchMethodException::class)
     @JvmStatic
     fun main(args: Array<String>) {
         try {
@@ -24,7 +21,6 @@ object StartWithJFX {
         UIMain.main(args)
     }
 
-    @Throws(NoSuchMethodException::class, IllegalAccessException::class, InvocationTargetException::class, MalformedURLException::class)
     private fun addUrlToURLClassLoader(jfxrt: File,
                                        systemClassLoader: URLClassLoader) {
         val addUrlMethod = URLClassLoader::class.java.getDeclaredMethod("addURL",

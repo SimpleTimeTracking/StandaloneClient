@@ -43,13 +43,11 @@ import org.stt.text.ExpansionProvider
 import org.stt.validation.ItemAndDateValidator
 import java.awt.Desktop
 import java.io.IOException
-import java.io.UncheckedIOException
 import java.net.URI
 import java.net.URISyntaxException
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.function.Predicate
@@ -64,36 +62,23 @@ import javax.security.auth.callback.Callback
 import kotlin.streams.toList
 
 class ActivitiesController @Inject
-internal constructor(sttOptionDialogs: STTOptionDialogs, // NOSONAR
-                     eventBus: MBassador<Any>,
-                     commandFormatter: CommandFormatter,
-                     expansionProviders: Collection<@JvmSuppressWildcards ExpansionProvider>,
-                     resourceBundle: ResourceBundle,
-                     activitiesConfig: ActivitiesConfig,
-                     validator: ItemAndDateValidator,
-                     queries: TimeTrackingItemQueries,
-                     executorService: ExecutorService,
-                     activities: CommandHandler,
-                     @Named("glyph") fontAwesome: Font,
+internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
+                     private val eventBus: MBassador<Any>,
+                     private val commandFormatter: CommandFormatter,
+                     private val expansionProviders: Collection<@JvmSuppressWildcards ExpansionProvider>,
+                     private val localization: ResourceBundle,
+                     private val activitiesConfig: ActivitiesConfig,
+                     private val validator: ItemAndDateValidator,
+                     private val queries: TimeTrackingItemQueries,
+                     private val executorService: ExecutorService,
+                     private val activities: CommandHandler,
+                     @param:Named("glyph") private val fontAwesome: Font,
                      private val worktimePane: WorktimePane,
                      @param:Named("activityToText") private val labelToNodeMapper: @JvmSuppressWildcards ActivityTextDisplayProcessor,
-                     commandHighlighterFactory: CommandHighlighter.Factory) : ActionsHandler {
+                     private val commandHighlighterFactory: CommandHighlighter.Factory) : ActionsHandler {
     internal val allItems = FXCollections
             .observableArrayList<TimeTrackingItem>()
-    private val commandFormatter: CommandFormatter
-    private val expansionProviders: Collection<ExpansionProvider>
-    private val localization: ResourceBundle
-    private val eventBus: MBassador<Any>
-    private val filterDuplicatesWhenSearching: Boolean
-    private val activities: CommandHandler
-    private val fontAwesome: Font
-    private var panel: BorderPane? = null
-    private val activitiesConfig: ActivitiesConfig
-    private val commandHighlighterFactory: CommandHighlighter.Factory
-    private val sttOptionDialogs: STTOptionDialogs
-    private val validator: ItemAndDateValidator
-    private val queries: TimeTrackingItemQueries
-    private val executorService: ExecutorService
+    private val filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching
     internal lateinit var commandText: StyleClassedTextArea
 
     @FXML
@@ -117,30 +102,11 @@ internal constructor(sttOptionDialogs: STTOptionDialogs, // NOSONAR
     private val textFromStartToCaret: String
         get() = commandText.getText(0, commandText.caretPosition)
 
-    val node: Node?
-        get() {
-            loadAndInjectFXML()
-            return panel
-        }
-
-
-    init {
-        this.activitiesConfig = requireNonNull(activitiesConfig)
-        this.executorService = requireNonNull(executorService)
-        this.queries = requireNonNull(queries)
-        this.sttOptionDialogs = requireNonNull(sttOptionDialogs)
-        this.validator = requireNonNull(validator)
-        this.eventBus = requireNonNull(eventBus)
-        this.expansionProviders = requireNonNull(expansionProviders)
-        this.commandFormatter = requireNonNull(commandFormatter)
-        this.localization = requireNonNull(resourceBundle)
-        this.activities = requireNonNull(activities)
-        this.fontAwesome = requireNonNull(fontAwesome)
-        this.commandHighlighterFactory = requireNonNull(commandHighlighterFactory)
-
-        filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching
+    private val panel: BorderPane by lazy {
+        loadAndInjectFXML()
     }
 
+    val node: Node get() = panel
 
     @Handler
     fun onItemChange(event: ItemModified) {
@@ -190,7 +156,6 @@ internal constructor(sttOptionDialogs: STTOptionDialogs, // NOSONAR
     }
 
     override fun continueItem(item: TimeTrackingItem) {
-        requireNonNull(item)
         LOG.fine { "Continuing item: $item" }
         activities.resumeActivity(ResumeActivity(item, LocalDateTime.now()))
         clearCommand()
@@ -205,13 +170,11 @@ internal constructor(sttOptionDialogs: STTOptionDialogs, // NOSONAR
     }
 
     override fun edit(item: TimeTrackingItem) {
-        requireNonNull(item)
         LOG.fine { "Editing item: $item" }
         setCommandText(commandFormatter.asNewItemCommandText(item), 0, item.activity.length)
     }
 
     override fun delete(item: TimeTrackingItem) {
-        requireNonNull(item)
         LOG.fine { "Deleting item: $item" }
         if (!activitiesConfig.isAskBeforeDeleting || sttOptionDialogs.showDeleteOrKeepDialog(item) == Result.PERFORM_ACTION) {
             val command = RemoveActivity(item)
@@ -383,7 +346,7 @@ internal constructor(sttOptionDialogs: STTOptionDialogs, // NOSONAR
         }
     }
 
-    private fun loadAndInjectFXML() {
+    private fun loadAndInjectFXML(): BorderPane {
         eventBus.subscribe(this)
         eventBus.subscribe(BulkRenameHelper())
 
@@ -391,12 +354,7 @@ internal constructor(sttOptionDialogs: STTOptionDialogs, // NOSONAR
                 "/org/stt/gui/jfx/ActivitiesPanel.fxml"), localization)
         loader.setController(this)
 
-        try {
-            panel = loader.load<BorderPane>()
-        } catch (e: IOException) {
-            throw UncheckedIOException(e)
-        }
-
+        return loader.load<BorderPane>()
     }
 
     private fun clearCommand() {

@@ -66,7 +66,7 @@ internal constructor(private val localization: ResourceBundle,
     @FXML
     fun initialize() {
         activitiesTab.content = activitiesController.node
-        CompletableFuture.supplyAsync { reportController.getPanel() }
+        CompletableFuture.supplyAsync { reportController.panel }
                 .thenAcceptAsync({ reportTab.content = it }, { Platform.runLater(it) })
                 .handle<String> { _, t ->
                     if (t != null) LOG.log(Level.SEVERE, "Error while building report controller", t)

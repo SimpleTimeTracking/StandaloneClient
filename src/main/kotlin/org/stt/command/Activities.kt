@@ -13,7 +13,6 @@ import org.stt.query.Criteria
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.time.DateTimes
 import java.util.*
-import java.util.Objects.requireNonNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,12 +28,8 @@ constructor(private val persister: ItemPersister,
     private val publisher: PubSubSupport<Any> = publisher.map { it as PubSubSupport<Any> }.orElseGet { DoNotPublish() }
 
     override fun addNewActivity(command: NewActivity) {
-        requireNonNull(command)
         val newItem = command.newItem
-        var potentialItemToReplace = ongoingItemThatWouldEnd(newItem)
-        if (potentialItemToReplace == null) {
-            potentialItemToReplace = itemWithEditedActivity(newItem)
-        }
+        val potentialItemToReplace = ongoingItemThatWouldEnd(newItem) ?: itemWithEditedActivity(newItem)
 
         if (potentialItemToReplace != null) {
             persister.replace(potentialItemToReplace, command.newItem)
@@ -59,7 +54,6 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun endCurrentActivity(command: EndCurrentItem) {
-        requireNonNull(command)
         queries.ongoingItem?.let {
             val derivedItem = it.withEnd(command.endAt)
             persister.replace(it, derivedItem)
@@ -68,13 +62,11 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun removeActivity(command: RemoveActivity) {
-        requireNonNull(command)
         persister.delete(command.itemToDelete)
         publisher.publish(ItemDeleted(command.itemToDelete))
     }
 
     override fun removeActivityAndCloseGap(command: RemoveActivity) {
-        requireNonNull(command)
         val adjacentItems = queries.getAdjacentItems(command.itemToDelete)
         val previous = adjacentItems.previousItem
         val next = adjacentItems.nextItem
@@ -101,7 +93,6 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun resumeActivity(command: ResumeActivity) {
-        requireNonNull(command)
         val resumedItem = command.itemToResume
                 .withPendingEnd()
                 .withStart(command.beginningWith)
@@ -110,8 +101,6 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun resumeLastActivity(command: ResumeLastActivity) {
-        requireNonNull(command)
-
         val lastTimeTrackingItem = queries.lastItem
         if (lastTimeTrackingItem?.end != null) {
             val resumedItem = lastTimeTrackingItem.withPendingEnd().withStart(command.resumeAt)
@@ -121,8 +110,6 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun bulkChangeActivity(itemsToChange: Collection<TimeTrackingItem>, activity: String) {
-        requireNonNull(itemsToChange)
-        requireNonNull(activity)
         val updatedItems = persister.updateActivitities(itemsToChange, activity)
         updatedItems.stream()
                 .map { updatedItem -> ItemReplaced(updatedItem.original, updatedItem.updated) }

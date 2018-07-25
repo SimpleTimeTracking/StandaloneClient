@@ -13,7 +13,6 @@ import org.stt.config.ConfigRoot
 import org.stt.config.PathSetting
 import org.stt.time.DateTimes
 import java.io.File
-import java.io.IOException
 import java.io.PrintWriter
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
@@ -33,7 +32,6 @@ class BackupCreatorTest {
     private var sut: BackupCreator? = null
 
     @Before
-    @Throws(IOException::class)
     fun setup() {
         MockitoAnnotations.initMocks(this)
 
@@ -48,7 +46,6 @@ class BackupCreatorTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun existingBackupShouldPreventNewBackup() {
         // GIVEN
         val threeDaysAgo = DateTimes.prettyPrintDate(LocalDate.now()
@@ -71,7 +68,6 @@ class BackupCreatorTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun oldBackupShouldBeDeleted() {
         // GIVEN
         for (i in 0 until backupConfig.backupRetentionCount) {
@@ -98,7 +94,6 @@ class BackupCreatorTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun initialBackupShouldBeCreated() {
         // GIVEN
         val currentDate = DateTimes.prettyPrintDate(LocalDate.now())
@@ -116,7 +111,6 @@ class BackupCreatorTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun existingFileShouldNotBeOverwritten() {
         // GIVEN
         val currentDate = DateTimes.prettyPrintDate(LocalDate.now())
@@ -134,7 +128,6 @@ class BackupCreatorTest {
                 FileUtils.contentEquals(currentSttFile, existingFile))
     }
 
-    @Throws(IOException::class)
     private fun createNewFile(toCreate: File) {
         Assert.assertTrue(
                 "could not create test file " + toCreate.absolutePath,

@@ -21,7 +21,6 @@ import org.stt.ItemReaderTestHelper
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
 import org.stt.time.until
-import java.io.IOException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -255,7 +254,6 @@ class TimeTrackingItemQueriesTest {
             items.map { it.start }.toList()
 
     @Test
-    @Throws(IOException::class)
     fun shouldFilterUsingQuery() {
         // GIVEN
         val from = LocalDateTime.of(2000, 1, 1, 0, 0)
@@ -273,7 +271,6 @@ class TimeTrackingItemQueriesTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun itemContainingSubstringGetsFound() {
 
         // GIVEN
@@ -290,7 +287,6 @@ class TimeTrackingItemQueriesTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun itemNotContainingSubstringGetsNotFound() {
         // GIVEN
         givenReaderReturns(TimeTrackingItem("the comment", LocalDateTime.now()))
@@ -306,7 +302,6 @@ class TimeTrackingItemQueriesTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun emptyCriteriaReturnsAllItems() {
 
         // GIVEN

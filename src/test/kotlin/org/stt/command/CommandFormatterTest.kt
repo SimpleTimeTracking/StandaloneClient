@@ -20,7 +20,10 @@ import org.stt.persistence.ItemReader
 import org.stt.persistence.stt.STTItemPersister
 import org.stt.persistence.stt.STTItemReader
 import org.stt.query.TimeTrackingItemQueries
-import java.io.*
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -45,7 +48,6 @@ class CommandFormatterTest {
     private lateinit var activities: Activities
 
     @Before
-    @Throws(IOException::class)
     fun setup() {
         MockitoAnnotations.initMocks(this)
         val tempFile = tempFolder.newFile()
@@ -272,7 +274,6 @@ class CommandFormatterTest {
 
 
     @Test
-    @Throws(IOException::class)
     fun shouldEndCurrentItemOnFINCommand() {
         // GIVEN
         val unfinished = createUnfinishedItem()
@@ -291,7 +292,6 @@ class CommandFormatterTest {
     }
 
     @Test
-    @Throws(IOException::class)
     fun shouldWriteCommandsAsNewItems() {
         // GIVEN
 
@@ -301,7 +301,6 @@ class CommandFormatterTest {
         assertThatNewItemWasWritten("test")
     }
 
-    @Throws(IOException::class)
     private fun assertThatNewItemWasWritten(testComment: String) {
         val (activity) = retrieveWrittenTimeTrackingItem()
         assertThat(activity, `is`(testComment))

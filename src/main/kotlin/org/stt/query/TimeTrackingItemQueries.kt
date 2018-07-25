@@ -9,7 +9,6 @@ import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
 import java.time.LocalDate
 import java.util.*
-import java.util.Objects.requireNonNull
 import java.util.logging.Logger
 import java.util.stream.Stream
 import javax.inject.Inject
@@ -17,9 +16,8 @@ import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
-class TimeTrackingItemQueries @Inject constructor(provider: Provider<ItemReader>,
+class TimeTrackingItemQueries @Inject constructor(private val provider: Provider<ItemReader>,
                                                   eventbus: Optional<MBassador<Any>>) {
-    private val provider: Provider<ItemReader>
     private var cachedItems: MutableList<TimeTrackingItem>? = null
 
     /**
@@ -35,7 +33,6 @@ class TimeTrackingItemQueries @Inject constructor(provider: Provider<ItemReader>
         }
 
     init {
-        this.provider = requireNonNull(provider)
         eventbus.ifPresent { bus -> bus.subscribe(this) }
     }
 
