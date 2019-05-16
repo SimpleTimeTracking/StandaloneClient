@@ -1,34 +1,28 @@
 import com.github.spotbugs.SpotBugsTask
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.gradle.internal.KaptTask
-import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
-import org.sonarqube.gradle.SonarQubeTask
-import sun.tools.jar.resources.jar
-import java.net.URI
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.sonarqube.gradle.SonarQubeTask
 
 
 plugins {
-    val kotlinVersion = "1.2.51"
+    val kotlinVersion = "1.3.31"
     application
     jacoco
     idea
     antlr
     kotlin("jvm") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("org.sonarqube") version "2.6.2"
-    id("com.github.ben-manes.versions") version "0.20.0"
-    id("com.github.spotbugs") version "1.6.2"
+    id("org.sonarqube") version "2.7.1"
+    id("com.github.ben-manes.versions") version "0.21.0"
+    id("com.github.spotbugs") version "2.0.0"
 }
 
 repositories {
     mavenCentral()
-    maven {
-        url = URI("http://oss.sonatype.org/content/groups/public/")
-    }
-    maven {
-        url = URI("http://maven.atlassian.com/content/repositories/atlassian-public/")
-    }
+    maven("https://dl.bintray.com/spekframework/spek/")
+    maven("http://oss.sonatype.org/content/groups/public/")
+    maven("http://maven.atlassian.com/content/repositories/atlassian-public/")
 }
 
 
@@ -48,6 +42,10 @@ spotbugs {
     excludeFilter = file("config/findbugs/excludeFilter.xml")
 }
 
+kapt {
+    correctErrorTypes = true
+}
+
 tasks.withType<SpotBugsTask> {
     reports {
         xml.setEnabled(false)
@@ -61,25 +59,26 @@ configurations {
     }
 }
 
-dependencies {
-    antlr(group = "org.antlr", name = "antlr4", version = "4.7.1")
-    compile(group = "org.antlr", name = "antlr4-runtime", version = "4.7.1")
-    compile(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.9.0")
-    compile("org.yaml:snakeyaml:1.21")
-    compile("com.google.dagger:dagger:2.16")
-    compile("javax.inject:javax.inject:1")
-    kapt("com.google.dagger:dagger-compiler:2.16")
-    compile("net.engio:mbassador:1.3.2")
-    compile("org.controlsfx:controlsfx:8.40.14")
-    compile("net.rcarz:jira-client:0.5")
-    compile("com.jsoniter:jsoniter:0.9.23")
-    compile(kotlin("stdlib-jdk8"))
+val spek_version = "2.0.4"
 
-    testCompile("commons-io:commons-io:2.6")
-    testCompile("junit:junit-dep:4.11")
-    testCompile("org.hamcrest:hamcrest-core:1.3")
-    testCompile("org.hamcrest:hamcrest-library:1.3")
-    testCompile("org.mockito:mockito-core:2.19.1")
+dependencies {
+    antlr(group = "org.antlr", name = "antlr4", version = "4.7.2")
+    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.7.2")
+    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.0")
+    implementation("org.yaml:snakeyaml:1.24")
+    implementation("com.google.dagger:dagger:2.22.1")
+    implementation("javax.inject:javax.inject:1")
+    kapt("com.google.dagger:dagger-compiler:2.22.1")
+    implementation("net.engio:mbassador:1.3.2")
+    implementation("org.controlsfx:controlsfx:8.40.15")
+    implementation("net.rcarz:jira-client:0.5")
+    implementation("com.jsoniter:jsoniter:0.9.23")
+    implementation(kotlin("stdlib-jdk8"))
+
+    testImplementation("commons-io:commons-io:2.6")
+    testImplementation("org.mockito:mockito-core:2.27.0")
+    testImplementation("org.assertj:assertj-core:3.11.1")
+    testImplementation("junit:junit-dep:4.11")
 }
 
 distributions.getByName("main") {
@@ -89,7 +88,7 @@ distributions.getByName("main") {
 }
 
 tasks.withType<Jar> {
-    from(configurations.compile.resolve().map { if (it.isDirectory()) it else zipTree(it) })
+    from(configurations.compile.get().resolve().map { if (it.isDirectory()) it else zipTree(it) })
     manifest {
         attributes += "Main-Class" to "org.stt.StartWithJFX"
         attributes += "JavaFX-Feature-Proxy" to "None"
@@ -112,11 +111,6 @@ tasks.withType<FindBugs> {
         xml.setEnabled(false)
         html.setEnabled(true)
     }
-}
-
-
-tasks.withType<Wrapper> {
-    gradleVersion = "4.8.1"
 }
 
 task("release") {

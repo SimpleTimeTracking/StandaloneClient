@@ -1,7 +1,6 @@
 package org.stt.model
 
-import org.hamcrest.CoreMatchers.*
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.stt.time.preciseToSecond
 import java.time.LocalDateTime
@@ -14,10 +13,10 @@ class TimeTrackingItemTest {
         // GIVEN
 
         // WHEN
-        val (_, _, end) = TimeTrackingItem("", LocalDateTime.now())
+        val (_, _, end) = TimeTrackingItem("", now())
 
         // THEN
-        assertThat<LocalDateTime>(end, `is`(nullValue()))
+        assertThat(end).isNull()
     }
 
     @Test
@@ -25,10 +24,10 @@ class TimeTrackingItemTest {
         // GIVEN
 
         // WHEN
-        val (_, start) = TimeTrackingItem("", LocalDateTime.now())
+        val (_, start) = TimeTrackingItem("", now())
 
         // THEN
-        assertThat(start, notNullValue())
+        assertThat(start).isNotNull()
     }
 
     @Test
@@ -36,348 +35,348 @@ class TimeTrackingItemTest {
         // GIVEN
 
         // WHEN
-        val (_, start) = TimeTrackingItem("", LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(1))
+        val (_, start) = TimeTrackingItem("", now(),
+                now().plusMinutes(1))
 
         // THEN
-        assertThat(start, notNullValue())
+        assertThat(start).isNotNull()
     }
 
     @Test
     fun withEndShouldCreateNewItem() {
         // GIVEN
-        val sut = TimeTrackingItem("", LocalDateTime.now())
+        val sut = TimeTrackingItem("", now())
 
         // WHEN
         val newEndTime = now().preciseToSecond().plusMinutes(2)
         val newItem = sut.withEnd(newEndTime)
 
         // THEN
-        assertThat(newItem, not(`is`(sut)))
-        assertThat<LocalDateTime>(sut.end, `is`(nullValue()))
-        assertThat<LocalDateTime>(newItem.end, `is`(newEndTime))
+        assertThat(newItem).isNotEqualTo(sut)
+        assertThat(sut.end).isNull()
+        assertThat(newItem.end).isEqualTo(newEndTime)
     }
 
     @Test
     fun withStartShouldCreateNewItem() {
         // GIVEN
-        val sut = TimeTrackingItem("", LocalDateTime.now())
+        val sut = TimeTrackingItem("", now())
 
         // WHEN
         val newStartTime = now().plusMinutes(2).preciseToSecond()
         val newItem = sut.withStart(newStartTime)
 
         // THEN
-        assertThat(newItem, not(`is`(sut)))
-        assertThat(newItem.start, `is`(newStartTime))
+        assertThat(newItem).isNotEqualTo(sut)
+        assertThat(newItem.start).isEqualTo(newStartTime)
     }
 
     @Test
     fun withPendingEndShouldCreateNewItem() {
         // GIVEN
-        val sut = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        val sut = TimeTrackingItem("", now(), now().plusDays(1))
 
         // WHEN
         val newItem = sut.withPendingEnd()
 
         // THEN
-        assertThat(newItem, not(`is`(sut)))
-        assertThat(newItem.end, `is`(nullValue()))
+        assertThat(newItem).isNotEqualTo(sut)
+        assertThat(newItem.end).isNull()
     }
 
     @Test
     fun withActivityShouldCreateNewItem() {
         // GIVEN
-        val sut = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        val sut = TimeTrackingItem("", now(), now().plusDays(1))
 
         // WHEN
         val newItem = sut.withActivity("11")
 
         // THEN
-        assertThat(newItem, not(`is`(sut)))
-        assertThat(newItem.activity, `is`("11"))
+        assertThat(newItem).isNotEqualTo(sut)
+        assertThat(newItem.activity).isEqualTo("11")
     }
 
     @Test
     fun withActivityShouldCreateNewItemForOngoing() {
         // GIVEN
-        val sut = TimeTrackingItem("", LocalDateTime.now())
+        val sut = TimeTrackingItem("", now())
 
         // WHEN
         val newItem = sut.withActivity("11")
 
         // THEN
-        assertThat(newItem, not(`is`(sut)))
-        assertThat(newItem.activity, `is`("11"))
+        assertThat(newItem).isNotEqualTo(sut)
+        assertThat(newItem.activity).isEqualTo("11")
     }
 
     @Test
     fun shouldReturnTrueForSameStart() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
-        val b = a.withEnd(LocalDateTime.now().plusDays(2))
+        val a = TimeTrackingItem("", now(), now().plusDays(1))
+        val b = a.withEnd(now().plusDays(2))
 
         // WHEN
         val result = a.sameStartAs(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnFalseForDifferentStart() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1))
+        val a = TimeTrackingItem("", now(), now().plusDays(1))
+        val b = a.withStart(now().plusSeconds(1))
 
         // WHEN
         val result = a.sameStartAs(b)
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnTrueForSameActivity() {
         // GIVEN
-        val a = TimeTrackingItem("Activity", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1))
+        val a = TimeTrackingItem("Activity", now(), now().plusDays(1))
+        val b = a.withStart(now().plusSeconds(1))
 
         // WHEN
         val result = a.sameActivityAs(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnFalseForDifferentActivity() {
         // GIVEN
-        val a = TimeTrackingItem("Activity", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1)).withActivity("Other")
+        val a = TimeTrackingItem("Activity", now(), now().plusDays(1))
+        val b = a.withStart(now().plusSeconds(1)).withActivity("Other")
 
         // WHEN
         val result = a.sameActivityAs(b)
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnTrueForSameEnd() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1))
+        val a = TimeTrackingItem("", now(), now().plusDays(1))
+        val b = a.withStart(now().plusSeconds(1))
 
         // WHEN
         val result = a.sameEndAs(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueForBothOngoing() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now())
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1))
+        val a = TimeTrackingItem("", now())
+        val b = a.withStart(now().plusSeconds(1))
 
         // WHEN
         val result = a.sameEndAs(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnFalseForOnlyOneOngoing() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now())
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1)).withEnd(LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now())
+        val b = a.withStart(now().plusSeconds(1)).withEnd(now().plusDays(1))
 
         // WHEN
         val result = a.sameEndAs(b)
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnFalseForDifferentEnds() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(2))
-        val b = a.withStart(LocalDateTime.now().plusSeconds(1)).withEnd(LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now()).withEnd(now().plusDays(2))
+        val b = a.withStart(now().plusSeconds(1)).withEnd(now().plusDays(1))
 
         // WHEN
         val result = a.sameEndAs(b)
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnTrueForPartialOverlap() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(2))
-        val b = a.withStart(LocalDateTime.now().plusDays(1)).withEnd(LocalDateTime.now().plusDays(2))
+        val a = TimeTrackingItem("", now()).withEnd(now().plusDays(2))
+        val b = a.withStart(now().plusDays(1)).withEnd(now().plusDays(2))
 
         // WHEN
         val result = a.intersects(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueForEnclosingInterval() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(3))
-        val b = a.withStart(LocalDateTime.now().plusDays(1)).withEnd(LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now()).withEnd(now().plusDays(3))
+        val b = a.withStart(now().plusDays(1)).withEnd(now().plusDays(1))
 
         // WHEN
         val result = a.intersects(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueForEqualInterval() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now()).withEnd(LocalDateTime.now().plusDays(3))
+        val a = TimeTrackingItem("", now()).withEnd(now().plusDays(3))
 
         // WHEN
         val result = a.intersects(a)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnFalseForStartMatchingOtherEnd() {
         // GIVEN
-        val end = LocalDateTime.now().plusDays(1)
-        val a = TimeTrackingItem("", LocalDateTime.now()).withEnd(end)
-        val b = a.withEnd(LocalDateTime.now().plusDays(2)).withStart(end)
+        val end = now().plusDays(1)
+        val a = TimeTrackingItem("", now()).withEnd(end)
+        val b = a.withEnd(now().plusDays(2)).withStart(end)
 
         // WHEN
         val result = a.intersects(b)
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnTrueIfOngoingAndOtherIsNot() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now())
-        val b = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now())
+        val b = TimeTrackingItem("", now(), now().plusDays(1))
 
         // WHEN
         val result = a.endsSameOrAfter(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueIfBothAreOngoing() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now())
-        val b = TimeTrackingItem("", LocalDateTime.now())
+        val a = TimeTrackingItem("", now())
+        val b = TimeTrackingItem("", now())
 
         // WHEN
         val result = a.endsSameOrAfter(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueIfEndsAfterOther() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(2))
-        val b = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now(), now().plusDays(2))
+        val b = TimeTrackingItem("", now(), now().plusDays(1))
 
         // WHEN
         val result = a.endsSameOrAfter(b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnFalseIfEndsBeforeOther() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
-        val b = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(2))
+        val a = TimeTrackingItem("", now(), now().plusDays(1))
+        val b = TimeTrackingItem("", now(), now().plusDays(2))
 
         // WHEN
         val result = a.endsSameOrAfter(b)
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnTrueIfEndsAtSameTime() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now(), now().plusDays(1))
 
         // WHEN
         val result = a.endsSameOrAfter(a)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueIfEndsBeforeDate() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        val a = TimeTrackingItem("", now(), now().plusDays(1))
 
         // WHEN
-        val result = a.endsAtOrBefore(LocalDateTime.now().plusDays(2))
+        val result = a.endsAtOrBefore(now().plusDays(2))
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnTrueIfEndsAtDate() {
         // GIVEN
-        val end = LocalDateTime.now().plusDays(1)
-        val a = TimeTrackingItem("", LocalDateTime.now(), end)
+        val end = now().plusDays(1)
+        val a = TimeTrackingItem("", now(), end)
 
         // WHEN
         val result = a.endsAtOrBefore(end)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
     @Test
     fun shouldReturnFalseIfEndsAfter() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now(), LocalDateTime.now().plusDays(2))
+        val a = TimeTrackingItem("", now(), now().plusDays(2))
 
         // WHEN
-        val result = a.endsAtOrBefore(LocalDateTime.now().plusDays(1))
+        val result = a.endsAtOrBefore(now().plusDays(1))
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
     @Test
     fun shouldReturnFalseIfOngoing() {
         // GIVEN
-        val a = TimeTrackingItem("", LocalDateTime.now())
+        val a = TimeTrackingItem("", now())
 
         // WHEN
-        val result = a.endsAtOrBefore(LocalDateTime.now())
+        val result = a.endsAtOrBefore(now())
 
         // THEN
-        assertThat(result, `is`(false))
+        assertThat(result).isFalse()
     }
 
 }

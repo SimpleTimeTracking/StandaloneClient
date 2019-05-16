@@ -1,8 +1,6 @@
 package org.stt.cli
 
-import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.CoreMatchers.not
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -76,8 +74,8 @@ class ReportPrinterTest {
 
         // THEN
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
-        assertThat(result, containsString("comment"))
-        assertThat(result, not(containsString("yesterday")))
+        assertThat(result).contains("comment")
+        assertThat(result).doesNotContain("yesterday")
     }
 
     @Test
@@ -94,7 +92,7 @@ class ReportPrinterTest {
 
         // THEN
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
-        assertThat(result, containsString("comment"))
+        assertThat(result).contains("comment")
     }
 
     @Test
@@ -111,7 +109,7 @@ class ReportPrinterTest {
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
         val expected = DateTimes.prettyPrintDate(LocalDate.now()
                 .minusDays(10))
-        assertThat(result, containsString(expected))
+        assertThat(result).contains(expected)
     }
 
     @Test
@@ -128,7 +126,7 @@ class ReportPrinterTest {
 
         // THEN
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
-        assertThat(result, containsString("comment"))
+        assertThat(result).contains("comment")
     }
 
     @Test
@@ -144,7 +142,7 @@ class ReportPrinterTest {
 
         // THEN
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
-        assertThat(result, containsString("comment blub"))
+        assertThat(result).contains("comment blub")
     }
 
     @Test
@@ -163,7 +161,7 @@ class ReportPrinterTest {
 
         // THEN
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
-        assertThat(result, containsString("comment blub yesterday"))
+        assertThat(result).contains("comment blub yesterday")
     }
 
     @Test
@@ -187,7 +185,7 @@ class ReportPrinterTest {
 
         // THEN
         val result = String(out.toByteArray(), StandardCharsets.UTF_8)
-        assertThat(result, containsString("comment blub"))
-        assertThat(result, containsString("other stuff"))
+        assertThat(result).contains("comment blub")
+        assertThat(result).contains("other stuff")
     }
 }

@@ -1,8 +1,7 @@
 package org.stt.cli
 
 import org.apache.commons.io.IOUtils
-import org.hamcrest.Matchers.*
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -42,9 +41,9 @@ class MainTest {
 
         currentSttFile = configRoot.sttFile.file(tempFolder.newFolder().absolutePath)
         val mkdirs = currentSttFile!!.parentFile.mkdirs()
-        assertThat(mkdirs, `is`(true))
+        assertThat(mkdirs).isTrue()
         val newFile = currentSttFile!!.createNewFile()
-        assertThat(newFile, `is`(true))
+        assertThat(newFile).isTrue()
 
         val sttReader = Provider<Reader> {
             try {
@@ -91,10 +90,13 @@ class MainTest {
         // THEN
         val readLines = IOUtils.readLines(InputStreamReader(
                 FileInputStream(currentSttFile!!), StandardCharsets.UTF_8))
-        assertThat(readLines, contains(containsString(expectedComment)))
+        assertThat(readLines)
+                .anyMatch {
+                    it.contains(expectedComment)
+                }
 
         val returned = baos.toString(StandardCharsets.UTF_8.name())
-        assertThat(returned, containsString(expectedComment))
+        assertThat(returned).containsSequence(expectedComment)
 
         ps.close()
     }

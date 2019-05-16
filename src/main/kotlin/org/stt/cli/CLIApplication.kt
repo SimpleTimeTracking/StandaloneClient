@@ -12,7 +12,7 @@ import org.stt.text.TextModule
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [(STTPersistenceModule::class), (ConfigModule::class), (BaseModule::class), (TextModule::class), (CommandModule::class)])
+@Component(modules = [STTPersistenceModule::class, ConfigModule::class, BaseModule::class, TextModule::class, CommandModule::class])
 interface CLIApplication {
     fun backupCreator(): BackupCreator
 

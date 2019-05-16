@@ -1,13 +1,6 @@
 package org.stt.query
 
-import org.hamcrest.CoreMatchers
-import org.hamcrest.CoreMatchers.*
-import org.hamcrest.Matchers
-import org.hamcrest.Matchers.`is`
-import org.hamcrest.Matchers.nullValue
-import org.hamcrest.collection.IsCollectionWithSize
-import org.junit.Assert
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.junit.experimental.theories.Theories
@@ -52,7 +45,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.ongoingItem
 
         // THEN
-        assertThat(result, `is`(nullValue()))
+        assertThat(result).isNull()
     }
 
     @Test
@@ -67,7 +60,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.ongoingItem
 
         // THEN
-        assertThat(result!!, `is`(unfinishedItem))
+        assertThat(result!!).isEqualTo(unfinishedItem)
     }
 
     @Test
@@ -82,7 +75,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.ongoingItem
 
         // THEN
-        assertThat(result, `is`(nullValue()))
+        assertThat(result).isNull()
     }
 
     @Test
@@ -98,7 +91,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.ongoingItem
 
         // THEN
-        assertThat(result!!, `is`(unfinishedItem))
+        assertThat(result!!).isEqualTo(unfinishedItem)
     }
 
     private fun givenReaderReturns(vararg items: TimeTrackingItem) {
@@ -118,7 +111,7 @@ class TimeTrackingItemQueriesTest {
         // THEN
         var last: LocalDate? = null
         for (current in result) {
-            assertThat<LocalDate>(last, anyOf(nullValue(), not(`is`<Any>(current))))
+            assertThat(last).isIn(null, current)
             last = current
         }
     }
@@ -140,13 +133,13 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryAllTrackedDays().toList()
 
         // THEN
-        assertThat<Collection<LocalDate>>(result, IsCollectionWithSize.hasSize(days))
+        assertThat(result).hasSize(days)
         val resultIt = result.iterator()
         val timesForItemsIt = timesForItems.iterator()
         while (resultIt.hasNext() || timesForItemsIt.hasNext()) {
             val trackedDay = resultIt.next()
             val trackedItem = timesForItemsIt.next()
-            assertThat(trackedDay, `is`(trackedItem.toLocalDate()))
+            assertThat(trackedDay).isEqualTo(trackedItem.toLocalDate())
         }
     }
 
@@ -170,7 +163,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryItems(criteria).toList()
 
         // THEN
-        assertThat(mapItemToStartDateTime(result), Matchers.`is`<Collection<LocalDateTime>>(Arrays.asList(_500)))
+        assertThat(mapItemToStartDateTime(result)).isEqualTo(Arrays.asList(_500))
     }
 
     @Test
@@ -185,7 +178,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryItems(criteria).toList()
 
         // THEN
-        assertThat(mapItemToStartDateTime(result), Matchers.`is`(Arrays.asList(_100)))
+        assertThat(mapItemToStartDateTime(result)).isEqualTo(Arrays.asList(_100))
     }
 
     @Test
@@ -200,7 +193,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryItems(criteria).toList()
 
         // THEN
-        assertThat(mapItemToStartDateTime(result), Matchers.`is`(listOf(_1000, _1500)))
+        assertThat(mapItemToStartDateTime(result)).isEqualTo(listOf(_1000, _1500))
     }
 
     @Test
@@ -215,7 +208,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryItems(criteria).toList()
 
         // THEN
-        assertThat<Collection<TimeTrackingItem>>(result, CoreMatchers.`is`(listOf(expectedResult)))
+        assertThat(result).isEqualTo(listOf(expectedResult))
     }
 
     @Test
@@ -230,7 +223,7 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryItems(criteria).toList()
 
         // THEN
-        assertThat<Collection<TimeTrackingItem>>(result, CoreMatchers.`is`(listOf(expectedResult)))
+        assertThat(result).isEqualTo(listOf(expectedResult))
     }
 
     @Test
@@ -246,7 +239,7 @@ class TimeTrackingItemQueriesTest {
 
 
         // THEN
-        assertThat<Collection<TimeTrackingItem>>(result, CoreMatchers.`is`(listOf(expectedResult)))
+        assertThat(result).isEqualTo(listOf(expectedResult))
     }
 
 
@@ -266,8 +259,8 @@ class TimeTrackingItemQueriesTest {
         val result = sut.queryAllItems().toList()
 
         // THEN
-        assertThat<Collection<TimeTrackingItem>>(result, IsCollectionWithSize.hasSize(1))
-        assertThat(result.iterator().next().start, `is`(from))
+        assertThat(result).hasSize(1)
+        assertThat(result).first().extracting { it.start }.isEqualTo(from)
     }
 
     @Test
@@ -283,7 +276,7 @@ class TimeTrackingItemQueriesTest {
         val read = sut.queryItems(criteria).findFirst()
 
         // THEN
-        Assert.assertEquals("the comment", read.get().activity)
+        assertThat("the comment").isEqualTo(read.get().activity)
     }
 
     @Test
@@ -298,7 +291,7 @@ class TimeTrackingItemQueriesTest {
         val read = sut.queryItems(criteria).findFirst()
 
         // THEN
-        Assert.assertEquals(Optional.empty<TimeTrackingItem>(), read)
+        assertThat(Optional.empty<TimeTrackingItem>()).isEqualTo(read)
     }
 
     @Test
@@ -313,7 +306,7 @@ class TimeTrackingItemQueriesTest {
         val read = sut.queryItems(criteria).findFirst()
 
         // THEN
-        Assert.assertEquals("the comment", read.get().activity)
+        assertThat("the comment").isEqualTo(read.get().activity)
     }
 
     @Test
@@ -331,8 +324,8 @@ class TimeTrackingItemQueriesTest {
 
         // THEN
         val secondCall = sut.queryAllItems().toList()
-        Assert.assertThat(secondCall, IsCollectionWithSize.hasSize(2))
-        Assert.assertThat(secondCall, hasItems(expected1, expected2))
+        assertThat(secondCall).hasSize(2)
+        assertThat(secondCall).contains(expected1, expected2)
     }
 
     @Test
@@ -346,7 +339,7 @@ class TimeTrackingItemQueriesTest {
         val adjacentItems = sut.getAdjacentItems(itemToSearch)
 
         // THEN
-        assertThat(adjacentItems.previousItem, `is`(nullValue()))
+        assertThat(adjacentItems.previousItem).isNull()
     }
 
     @Test
@@ -362,7 +355,7 @@ class TimeTrackingItemQueriesTest {
         val adjacentItems = sut.getAdjacentItems(itemToSearch)
 
         // THEN
-        assertThat(adjacentItems.previousItem, `is`(expected))
+        assertThat(adjacentItems.previousItem).isEqualTo(expected)
     }
 
     @Test
@@ -378,7 +371,7 @@ class TimeTrackingItemQueriesTest {
         val adjacentItems = sut.getAdjacentItems(itemToSearch)
 
         // THEN
-        assertThat(adjacentItems.nextItem, `is`(expected))
+        assertThat(adjacentItems.nextItem).isEqualTo(expected)
     }
 
     @Test
@@ -396,8 +389,8 @@ class TimeTrackingItemQueriesTest {
         val adjacentItems = sut.getAdjacentItems(itemToSearch)
 
         // THEN
-        assertThat(adjacentItems.previousItem, `is`(expectedPrevious))
-        assertThat(adjacentItems.nextItem, `is`(expectedNext))
+        assertThat(adjacentItems.previousItem).isEqualTo(expectedPrevious)
+        assertThat(adjacentItems.nextItem).isEqualTo(expectedNext)
     }
 
     @Test
@@ -415,8 +408,8 @@ class TimeTrackingItemQueriesTest {
         val adjacentItems = sut.getAdjacentItems(itemToSearch)
 
         // THEN
-        assertThat(adjacentItems.previousItem, `is`(nullValue()))
-        assertThat(adjacentItems.nextItem, `is`(nullValue()))
+        assertThat(adjacentItems.previousItem).isNull()
+        assertThat(adjacentItems.nextItem).isNull()
     }
 
     @Test
@@ -432,7 +425,7 @@ class TimeTrackingItemQueriesTest {
         val read = sut.queryItems(criteria).findFirst()
 
         // THEN
-        Assert.assertEquals("not to be filtered", read.map { it.activity }.get())
+        assertThat("not to be filtered").isEqualTo(read.map { it.activity }.get())
     }
 
     companion object {

@@ -1,7 +1,6 @@
 package org.stt.importer
 
-import org.hamcrest.Matchers.*
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.stt.ti.importer.TiImporter
 import java.io.StringReader
@@ -34,7 +33,7 @@ class TiImporterTest {
         val readItems = IOUtil.readAll(importer)
 
         // THEN
-        Assert.assertEquals(3, readItems.size.toLong())
+        assertThat(3).isEqualTo(readItems.size.toLong())
     }
 
     @Test
@@ -47,12 +46,8 @@ class TiImporterTest {
         val readItems = IOUtil.readAll(importer)
 
         // THEN
-        Assert.assertThat(
-                readItems,
-                contains(
-                        hasProperty("activity",
-                                `is`("the long comment")),
-                        hasProperty("activity",
-                                `is`("the long comment2"))))
+        assertThat(readItems)
+                .extracting("activity")
+                .contains("the long comment", "the long comment2")
     }
 }

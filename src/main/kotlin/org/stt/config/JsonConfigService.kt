@@ -44,10 +44,7 @@ constructor(@Named("homePath") homePath: String) : ConfigService, Service {
         }
         JsoniterSpi.registerTypeDecoder(PathSetting::class.java) { d -> PathSetting(d.readString()) }
         JsoniterSpi.registerTypeDecoder(PasswordSetting::class.java) { d ->
-            val encodedPassword = d.readString()
-            if (encodedPassword == null) {
-                return@registerTypeDecoder null
-            }
+            val encodedPassword = d.readString() ?: return@registerTypeDecoder null
             PasswordSetting.fromEncryptedPassword(Base64.getDecoder().decode(encodedPassword))
         }
 

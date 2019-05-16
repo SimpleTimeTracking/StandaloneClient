@@ -1,8 +1,6 @@
 package org.stt.text
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.hasItems
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.BDDMockito.given
@@ -38,7 +36,7 @@ class CommonPrefixGrouperTest {
         val expansions = sut.getPossibleExpansions("gr")
 
         // THEN
-        assertThat(expansions, `is`(listOf("oup subgroup ")))
+        assertThat(expansions).isEqualTo(listOf("oup subgroup "))
     }
 
     @Test
@@ -51,7 +49,7 @@ class CommonPrefixGrouperTest {
         val expansions = sut.getPossibleExpansions("group subgroup o")
 
         // THEN
-        assertThat(expansions, `is`(listOf("ne")))
+        assertThat(expansions).isEqualTo(listOf("ne"))
     }
 
     @Test
@@ -63,7 +61,7 @@ class CommonPrefixGrouperTest {
         val expansions = sut.getPossibleExpansions("group subgroup ")
 
         // THEN
-        assertThat(expansions, hasItems("two", "one"))
+        assertThat(expansions).contains("two", "one")
     }
 
     @Test
@@ -75,7 +73,7 @@ class CommonPrefixGrouperTest {
         val result = groupsAsString("t")
 
         // THEN
-        assertThat(result, `is`(listOf("t")))
+        assertThat(result).isEqualTo(listOf("t"))
     }
 
     private fun groupsAsString(t: String): List<String> {
@@ -92,7 +90,7 @@ class CommonPrefixGrouperTest {
         val result = groupsAsString(firstComment)
 
         // THEN
-        assertThat(result, `is`(Arrays.asList("group subgroup", "one")))
+        assertThat(result).isEqualTo(Arrays.asList("group subgroup", "one"))
 
     }
 
@@ -109,9 +107,8 @@ class CommonPrefixGrouperTest {
         val withTwoGroups = groupsAsString(thirdComment)
 
         // THEN
-        assertThat(withThreeGroups,
-                `is`(Arrays.asList("group subgroup", "one")))
-        assertThat(withTwoGroups, `is`(Arrays.asList("group subgroup2", "one")))
+        assertThat(withThreeGroups).isEqualTo(Arrays.asList("group subgroup", "one"))
+        assertThat(withTwoGroups).isEqualTo(Arrays.asList("group subgroup2", "one"))
     }
 
     @Test
@@ -124,7 +121,7 @@ class CommonPrefixGrouperTest {
         val groups = groupsAsString(firstComment)
 
         // THEN
-        assertThat(groups, `is`(Arrays.asList("group", "one")))
+        assertThat(groups).isEqualTo(Arrays.asList("group", "one"))
 
     }
 
@@ -138,7 +135,7 @@ class CommonPrefixGrouperTest {
         val groups = groupsAsString(firstComment)
 
         // THEN
-        assertThat(groups, `is`(listOf(firstComment)))
+        assertThat(groups).isEqualTo(listOf(firstComment))
     }
 
     @Test
@@ -153,7 +150,7 @@ class CommonPrefixGrouperTest {
         val result = groupsAsString("aaaa bbbb cccc dddd")
 
         // THEN
-        assertThat(result, `is`(Arrays.asList("aaaa", "bbbb", "cccc", "dddd")))
+        assertThat(result).isEqualTo(Arrays.asList("aaaa", "bbbb", "cccc", "dddd"))
     }
 
     private fun givenReaderReturnsItemsWithComment(

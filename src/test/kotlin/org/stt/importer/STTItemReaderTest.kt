@@ -1,7 +1,6 @@
 package org.stt.importer
 
-import org.hamcrest.Matchers
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.stt.persistence.stt.STTItemReader
 import java.io.StringReader
@@ -21,9 +20,7 @@ class STTItemReaderTest {
         val readItem = theReader.read()
 
         // THEN
-        Assert.assertEquals(
-                "this is\n a multiline\n string\n",
-                readItem!!.activity)
+        assertThat("this is\n a multiline\n string\n").isEqualTo(readItem!!.activity)
     }
 
     @Test
@@ -38,7 +35,7 @@ class STTItemReaderTest {
 
         // THEN
         val time = LocalDateTime.of(2012, 10, 10, 22, 0, 0)
-        Assert.assertThat(time, Matchers.equalTo(readItem!!.start))
+        assertThat(time).isEqualTo(readItem!!.start)
     }
 
     @Test
@@ -54,8 +51,7 @@ class STTItemReaderTest {
 
         // THEN
         val time = LocalDateTime.of(2012, 10, 10, 22, 0, 0)
-        Assert.assertThat(time, Matchers.equalTo(readItem!!.start))
-        Assert.assertThat("the long comment",
-                Matchers.equalTo(readItem.activity))
+        assertThat(time).isEqualTo(readItem!!.start)
+        assertThat("the long comment").isEqualTo(readItem.activity)
     }
 }

@@ -1,8 +1,7 @@
 package org.stt.reporting
 
 import org.apache.commons.io.FileUtils
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,8 +50,8 @@ class WorkingtimeItemProviderTest {
                 2014, 7, 1))
 
         // THEN
-        assertThat(Duration.ofHours(8),
-                `is`(workingTimeFor.min))
+        assertThat(Duration.ofHours(8))
+                .isEqualTo(workingTimeFor.min)
     }
 
     @Test
@@ -66,8 +65,8 @@ class WorkingtimeItemProviderTest {
 
         // THEN
 
-        assertThat(Duration.ofHours(10),
-                `is`(workingTimeFor.min))
+        assertThat(Duration.ofHours(10))
+                .isEqualTo(workingTimeFor.min)
     }
 
     @Test
@@ -79,8 +78,8 @@ class WorkingtimeItemProviderTest {
                 2014, 1, 1))
 
         // THEN
-        assertThat(Duration.ofHours(14),
-                `is`(workingTimeFor.min))
+        assertThat(Duration.ofHours(14))
+                .isEqualTo(workingTimeFor.min)
     }
 
     @Test
@@ -94,6 +93,6 @@ class WorkingtimeItemProviderTest {
         // THEN
         val min = Duration.ofHours(10)
         val max = Duration.ofHours(14)
-        assertThat(WorkingtimeItem(min, max), `is`(workingTimeFor))
+        assertThat(WorkingtimeItem(min, max)).isEqualTo(workingTimeFor)
     }
 }

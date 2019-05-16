@@ -1,7 +1,6 @@
 package org.stt.time
 
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.time.LocalDateTime
 
@@ -16,7 +15,7 @@ class DateTimesTest {
         val result = DateTimes.isOnSameDay(a, b)
 
         // THEN
-        assertThat(result, `is`(true))
+        assertThat(result).isTrue()
     }
 
 }

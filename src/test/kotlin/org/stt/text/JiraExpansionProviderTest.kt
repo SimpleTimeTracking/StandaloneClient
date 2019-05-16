@@ -1,8 +1,8 @@
 package org.stt.text
 
 import net.rcarz.jiraclient.Issue
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.BDDMockito.given
@@ -41,9 +41,9 @@ class JiraExpansionProviderTest {
 
 
         // THEN
-        assertEquals(1, matches.size.toLong())
+        assertThat(1).isEqualTo(matches.size.toLong())
 
-        assertEquals(": Testing Issue", matches[0])
+        assertThat(matches[0]).isEqualTo(": Testing Issue")
     }
 
     @Test
@@ -55,9 +55,9 @@ class JiraExpansionProviderTest {
         val matches = sut.getPossibleExpansions("Test JRA-7")
 
         // THEN
-        assertEquals(1, matches.size.toLong())
+        assertThat(1).isEqualTo(matches.size.toLong())
 
-        assertEquals(": Testing Issue", matches[0])
+        assertThat(matches[0]).isEqualTo(": Testing Issue")
     }
 
     @Test
@@ -69,9 +69,9 @@ class JiraExpansionProviderTest {
         val matches = sut.getPossibleExpansions(" JRA-7 ")
 
         // THEN
-        assertEquals(1, matches.size.toLong())
+        assertThat(1).isEqualTo(matches.size.toLong())
 
-        assertEquals(": Testing Issue", matches[0])
+        assertThat(matches[0]).isEqualTo(": Testing Issue")
     }
 
 }

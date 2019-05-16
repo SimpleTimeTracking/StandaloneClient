@@ -1,8 +1,6 @@
 package org.stt.config
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.not
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 
@@ -16,7 +14,7 @@ class PasswordSettingTest {
         val passwordSetting = PasswordSetting.fromPassword(originalPassword)
 
         // THEN
-        assertThat(passwordSetting.password, `is`(originalPassword))
+        assertThat(passwordSetting.password).isEqualTo(originalPassword)
     }
 
     @Test
@@ -28,7 +26,7 @@ class PasswordSettingTest {
         val passwordSetting = PasswordSetting.fromPassword(originalPassword)
 
         // THEN
-        assertThat(passwordSetting.encodedPassword, `is`(not(originalPassword)))
+        assertThat(passwordSetting.encodedPassword).isNotEqualTo(originalPassword)
     }
 
 }

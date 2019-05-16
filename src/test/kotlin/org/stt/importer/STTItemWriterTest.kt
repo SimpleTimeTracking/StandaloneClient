@@ -1,8 +1,6 @@
 package org.stt.importer
 
-import org.hamcrest.Matchers.*
-import org.junit.Assert
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
@@ -40,8 +38,7 @@ class STTItemWriterTest {
         sut.persist(theItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                containsString("the comment"))
+        assertThat(stringWriter.toString()).contains("the comment")
     }
 
     @Test
@@ -55,8 +52,7 @@ class STTItemWriterTest {
         sut.persist(theItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                containsString("2011-10-12_13:14:15"))
+        assertThat(stringWriter.toString()).contains("2011-10-12_13:14:15")
     }
 
     @Test
@@ -72,8 +68,7 @@ class STTItemWriterTest {
         sut.persist(theItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                containsString("2012-10-12_13:14:15"))
+        assertThat(stringWriter.toString()).contains("2012-10-12_13:14:15")
     }
 
     @Test
@@ -90,9 +85,7 @@ class STTItemWriterTest {
         sut.persist(theItem)
 
         // THEN
-        Assert.assertThat(
-                stringWriter.toString(),
-                containsString("2011-10-12_13:14:15 2012-10-12_13:14:15 the comment"))
+        assertThat(stringWriter.toString()).contains("2011-10-12_13:14:15 2012-10-12_13:14:15 the comment")
     }
 
     @Test
@@ -107,9 +100,7 @@ class STTItemWriterTest {
         sut.persist(theItem)
 
         // THEN
-        Assert.assertThat(
-                stringWriter.toString(),
-                endsWith("this is\\n a multiline\\n string\\n with different separators$LINE_SEPARATOR"))
+        assertThat(stringWriter.toString()).endsWith("this is\\n a multiline\\n string\\n with different separators$LINE_SEPARATOR")
 
     }
 
@@ -128,8 +119,8 @@ class STTItemWriterTest {
         sut.delete(theItem2)
 
         // then
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 2014-10-10_11:12:13 testitem$LINE_SEPARATOR"))
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 2014-10-10_11:12:13 testitem$LINE_SEPARATOR")
     }
 
     @Test
@@ -146,8 +137,8 @@ class STTItemWriterTest {
         sut.replace(theItem2, theItem)
 
         // then
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 testitem$LINE_SEPARATOR"))
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 testitem$LINE_SEPARATOR")
     }
 
     @Test
@@ -160,8 +151,8 @@ class STTItemWriterTest {
         sut.persist(theItem)
 
         // then
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 item with 2  spaces$LINE_SEPARATOR"))
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 item with 2  spaces$LINE_SEPARATOR")
     }
 
     @Theory
@@ -182,8 +173,8 @@ class STTItemWriterTest {
         sut.persist(newItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 testitem2$LINE_SEPARATOR"))
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 testitem2$LINE_SEPARATOR")
     }
 
     @Test
@@ -200,10 +191,10 @@ class STTItemWriterTest {
         sut.persist(newItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 2011-10-10_11:12:14 testitem"
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 2011-10-10_11:12:14 testitem"
                         + LINE_SEPARATOR + "2011-10-10_11:12:14 testitem2"
-                        + LINE_SEPARATOR))
+                        + LINE_SEPARATOR)
 
     }
 
@@ -226,8 +217,8 @@ class STTItemWriterTest {
         sut.persist(newItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 2020-10-10_11:12:13 new item$LINE_SEPARATOR"))
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 2020-10-10_11:12:13 new item$LINE_SEPARATOR")
     }
 
     @Theory
@@ -250,12 +241,11 @@ class STTItemWriterTest {
         sut.persist(newItem)
 
         // THEN
-        Assert.assertThat(
-                stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
                         + LINE_SEPARATOR
                         + "2020-10-10_11:12:13 2020-10-10_11:13:13 existing item"
-                        + LINE_SEPARATOR))
+                        + LINE_SEPARATOR)
     }
 
     @Theory
@@ -277,10 +267,10 @@ class STTItemWriterTest {
         sut.persist(newItem)
 
         // THEN
-        Assert.assertThat(stringWriter.toString(),
-                `is`("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
+        assertThat(stringWriter.toString())
+                .isEqualTo("2011-10-10_11:12:13 2020-10-10_11:12:13 new item"
                         + LINE_SEPARATOR + "2020-10-10_11:12:13 existing item"
-                        + LINE_SEPARATOR))
+                        + LINE_SEPARATOR)
     }
 
     @Test
@@ -316,9 +306,8 @@ class STTItemWriterTest {
 
         // THEN
 
-        Assert.assertThat(
-                stringWriter.toString(),
-                `is`("2010-10-10_11:12:13 2010-10-10_11:14:13 Item before before"
+        assertThat(stringWriter.toString())
+                .isEqualTo("2010-10-10_11:12:13 2010-10-10_11:14:13 Item before before"
                         + LINE_SEPARATOR
                         + "2020-10-10_11:12:13 2020-10-10_11:13:13 Item before"
                         + LINE_SEPARATOR
@@ -327,7 +316,7 @@ class STTItemWriterTest {
                         + "2020-10-10_11:16:13 2020-10-10_11:17:13 Item after"
                         + LINE_SEPARATOR
                         + "2020-10-10_11:17:13 2020-10-10_11:19:13 Item even after"
-                        + LINE_SEPARATOR))
+                        + LINE_SEPARATOR)
     }
 
     @Test
@@ -375,7 +364,7 @@ class STTItemWriterTest {
         for (line in lines) {
             expectedText.append(line).append(LINE_SEPARATOR)
         }
-        assertThat(stringWriter.toString(), `is`(expectedText.toString()))
+        assertThat(stringWriter.toString()).isEqualTo(expectedText.toString())
     }
 
     @Test

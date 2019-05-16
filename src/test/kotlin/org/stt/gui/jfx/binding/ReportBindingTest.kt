@@ -6,16 +6,11 @@
 package org.stt.gui.jfx.binding
 
 import javafx.beans.property.SimpleObjectProperty
-import org.hamcrest.CoreMatchers
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.not
-import org.hamcrest.collection.IsEmptyCollection
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.mock
-import org.stt.model.ReportingItem
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
 import org.stt.query.TimeTrackingItemQueries
@@ -53,10 +48,10 @@ class ReportBindingTest {
         val result = sut!!.value
 
         // THEN
-        Assert.assertThat(result.start, CoreMatchers.nullValue())
-        Assert.assertThat(result.end, CoreMatchers.nullValue())
-        Assert.assertThat<List<ReportingItem>>(result.reportingItems, IsEmptyCollection.empty<ReportingItem>())
-        Assert.assertThat(result.uncoveredDuration, `is`(Duration.ZERO))
+        assertThat(result.start).isNull()
+        assertThat(result.end).isNull()
+        assertThat(result.reportingItems).isEmpty()
+        assertThat(result.uncoveredDuration).isEqualTo(Duration.ZERO)
     }
 
     @Test
@@ -68,10 +63,10 @@ class ReportBindingTest {
         val result = sut!!.value
 
         // THEN
-        Assert.assertThat(result.start, CoreMatchers.nullValue())
-        Assert.assertThat(result.end, CoreMatchers.nullValue())
-        Assert.assertThat<List<ReportingItem>>(result.reportingItems, IsEmptyCollection.empty<ReportingItem>())
-        Assert.assertThat(result.uncoveredDuration, `is`(Duration.ZERO))
+        assertThat(result.start).isNull()
+        assertThat(result.end).isNull()
+        assertThat(result.reportingItems).isEmpty()
+        assertThat(result.uncoveredDuration).isEqualTo(Duration.ZERO)
     }
 
     @Test
@@ -88,9 +83,9 @@ class ReportBindingTest {
         val result = sut!!.value
 
         // THEN
-        Assert.assertThat(result.start, `is`(start.atStartOfDay()))
-        Assert.assertThat(result.end, `is`(end.atStartOfDay()))
-        Assert.assertThat<List<ReportingItem>>(result.reportingItems, not<Collection<ReportingItem>>(IsEmptyCollection.empty<ReportingItem>()))
-        Assert.assertThat(result.uncoveredDuration, `is`(Duration.ZERO))
+        assertThat(result.start).isEqualTo(start.atStartOfDay())
+        assertThat(result.end).isEqualTo(end.atStartOfDay())
+        assertThat(result.reportingItems).isNotEmpty
+        assertThat(result.uncoveredDuration).isEqualTo(Duration.ZERO)
     }
 }

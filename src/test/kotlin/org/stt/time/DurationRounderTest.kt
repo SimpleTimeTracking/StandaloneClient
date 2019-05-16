@@ -1,7 +1,6 @@
 package org.stt.time
 
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.time.Duration
 
@@ -22,7 +21,7 @@ class DurationRounderTest {
         val result = sut.roundDuration(Duration.ofMillis(500))
 
         // THEN
-        assertThat(result, `is`(Duration.ZERO))
+        assertThat(result).isEqualTo(Duration.ZERO)
     }
 
     @Test
@@ -34,7 +33,7 @@ class DurationRounderTest {
         val result = sut.roundDuration(Duration.ofMillis(1500))
 
         // THEN
-        assertThat(result, `is`(Duration.ofSeconds(2)))
+        assertThat(result).isEqualTo(Duration.ofSeconds(2))
     }
 
     @Test
@@ -46,7 +45,7 @@ class DurationRounderTest {
         val result = sut.roundDuration(Duration.ofMinutes(5))
 
         // THEN
-        assertThat(result, `is`(Duration.ofMinutes(7)))
+        assertThat(result).isEqualTo(Duration.ofMinutes(7))
     }
 
     @Test
@@ -58,7 +57,7 @@ class DurationRounderTest {
         val result = sut.roundDuration(Duration.ofMinutes(30))
 
         // THEN
-        assertThat(result, `is`(Duration.ZERO))
+        assertThat(result).isEqualTo(Duration.ZERO)
     }
 
     @Test
@@ -70,6 +69,6 @@ class DurationRounderTest {
         val result = sut.roundDuration(Duration.ofHours(7))
 
         // THEN
-        assertThat(result, `is`(Duration.ofHours(5)))
+        assertThat(result).isEqualTo(Duration.ofHours(5))
     }
 }

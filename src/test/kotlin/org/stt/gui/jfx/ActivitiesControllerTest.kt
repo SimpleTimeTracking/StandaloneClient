@@ -3,10 +3,8 @@ package org.stt.gui.jfx
 import javafx.scene.text.Font
 import net.engio.mbassy.bus.MBassador
 import net.engio.mbassy.listener.Handler
+import org.assertj.core.api.Assertions.assertThat
 import org.fxmisc.richtext.StyleClassedTextArea
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.equalTo
-import org.junit.Assert.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers
@@ -93,7 +91,7 @@ class ActivitiesControllerTest {
         sut.expandCurrentCommand()
 
         // THEN
-        assertThat(sut.commandText.text, `is`("testblub"))
+        assertThat(sut.commandText.text).isEqualTo("testblub")
     }
 
     @Test
@@ -110,8 +108,8 @@ class ActivitiesControllerTest {
         sut.expandCurrentCommand()
 
         // THEN
-        assertThat(sut.commandText.text, `is`("alpha beta"))
-        assertThat(sut.commandText.caretPosition, `is`(5))
+        assertThat(sut.commandText.text).isEqualTo("alpha beta")
+        assertThat(sut.commandText.caretPosition).isEqualTo(5)
     }
 
     @Test
@@ -128,7 +126,7 @@ class ActivitiesControllerTest {
         sut.expandCurrentCommand()
 
         // THEN
-        assertThat(sut.commandText.text, `is`("testaa"))
+        assertThat(sut.commandText.text).isEqualTo("testaa")
     }
 
     private fun setTextAndPositionCaretAtEnd(currentText: String) {
@@ -175,7 +173,7 @@ class ActivitiesControllerTest {
         sut.executeCommand()
 
         // THEN
-        assertThat(sut.commandText.text, equalTo(""))
+        assertThat(sut.commandText.text).isEmpty()
     }
 
     @Test
@@ -188,7 +186,7 @@ class ActivitiesControllerTest {
         sut.executeCommand()
 
         // THEN
-        assertThat(shutdownCalled, `is`(false))
+        assertThat(shutdownCalled).isFalse()
     }
 
     @Handler

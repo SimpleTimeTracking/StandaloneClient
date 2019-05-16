@@ -1,9 +1,6 @@
 package org.stt.reporting
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.Matchers
-import org.junit.Assert
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.MockitoAnnotations
@@ -37,8 +34,7 @@ class SummingReportGeneratorTest {
         val report = sut!!.createReport()
 
         // THEN
-        assertThat(report.uncoveredDuration,
-                `is`(Duration.ofMinutes(1)))
+        assertThat(report.uncoveredDuration).isEqualTo(Duration.ofMinutes(1))
     }
 
     @Test
@@ -62,9 +58,9 @@ class SummingReportGeneratorTest {
         val items = report.reportingItems
 
         // THEN
-        Assert.assertThat(items, Matchers.containsInAnyOrder(ReportingItem(
+        assertThat(items).contains(ReportingItem(
                 Duration.ofMillis((60 * 1000 + 2 * 1000).toLong()), "first comment"),
-                ReportingItem(Duration.ofMillis((3 * 1000).toLong()), "first comment?")))
+                ReportingItem(Duration.ofMillis((3 * 1000).toLong()), "first comment?"))
     }
 
     @Test
@@ -85,9 +81,8 @@ class SummingReportGeneratorTest {
         val reportingItems = report.reportingItems
 
         // THEN
-        Assert.assertThat(reportingItems, Matchers
-                .containsInAnyOrder(ReportingItem(Duration.ofMillis(
-                        (60 * 1000 + 2 * 1000).toLong()), "")))
+        assertThat(reportingItems).contains(ReportingItem(Duration.ofMillis(
+                (60 * 1000 + 2 * 1000).toLong()), ""))
     }
 
     @Test
@@ -106,7 +101,7 @@ class SummingReportGeneratorTest {
         val report = sut!!.createReport()
 
         // THEN
-        Assert.assertThat<LocalDateTime>(report.start, `is`(startOfFirstItem))
-        Assert.assertThat<LocalDateTime>(report.end, `is`(endOfLastItem))
+        assertThat(report.start).isEqualTo(startOfFirstItem)
+        assertThat(report.end).isEqualTo(endOfLastItem)
     }
 }

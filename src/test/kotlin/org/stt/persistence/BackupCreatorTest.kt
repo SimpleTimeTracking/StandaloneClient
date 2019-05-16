@@ -2,8 +2,7 @@ package org.stt.persistence
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FileFileFilter
-import org.hamcrest.CoreMatchers.`is`
-import org.junit.Assert
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -62,9 +61,8 @@ class BackupCreatorTest {
         val files = FileUtils.listFiles(currentTempFolder!!,
                 FileFileFilter.FILE, null)
 
-        Assert.assertEquals(1, files.size.toLong())
-        Assert.assertThat(files.iterator().next().absoluteFile,
-                `is`(backedUp.absoluteFile))
+        assertThat(1).isEqualTo(files.size.toLong())
+        assertThat(files).first().isEqualTo(backedUp.absoluteFile)
     }
 
     @Test
@@ -89,8 +87,7 @@ class BackupCreatorTest {
         sut!!.start()
 
         // THEN
-        Assert.assertFalse("Old backup file should have been deleted",
-                oldFile.exists())
+        assertThat(oldFile).doesNotExist()
     }
 
     @Test
@@ -105,9 +102,7 @@ class BackupCreatorTest {
         sut!!.start()
 
         // THEN
-        Assert.assertTrue(
-                "Original and backed up files do not have the same contents",
-                FileUtils.contentEquals(currentSttFile, expectedFile))
+        assertThat(currentSttFile).hasSameContentAs(expectedFile)
     }
 
     @Test
@@ -123,14 +118,13 @@ class BackupCreatorTest {
         sut!!.start()
 
         // THEN
-        Assert.assertFalse(
-                "Original and backed up files do not have the same contents",
-                FileUtils.contentEquals(currentSttFile, existingFile))
+        assertThat(listOf(currentSttFile))
+                .noneSatisfy { file ->
+                    assertThat(file as File).hasSameContentAs(existingFile)
+                }
     }
 
     private fun createNewFile(toCreate: File) {
-        Assert.assertTrue(
-                "could not create test file " + toCreate.absolutePath,
-                toCreate.createNewFile())
+        assertThat(toCreate.createNewFile()).isTrue()
     }
 }

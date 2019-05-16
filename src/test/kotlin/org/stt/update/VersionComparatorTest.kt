@@ -1,8 +1,6 @@
 package org.stt.update
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.Matchers.greaterThan
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class VersionComparatorTest {
@@ -16,7 +14,7 @@ class VersionComparatorTest {
         val result = sut.compare("111", "99")
 
         // THEN
-        assertThat(result, greaterThan(0))
+        assertThat(result).isGreaterThan(0)
     }
 
     @Test
@@ -27,7 +25,7 @@ class VersionComparatorTest {
         val result = sut.compare("1.1.1", "1.1")
 
         // THEN
-        assertThat(result, greaterThan(0))
+        assertThat(result).isGreaterThan(0)
     }
 
     @Test
@@ -38,7 +36,7 @@ class VersionComparatorTest {
         val result = sut.compare("1.1.1", "1.1.1")
 
         // THEN
-        assertThat(result, `is`(0))
+        assertThat(result).isEqualTo(0)
     }
 
     @Test
@@ -49,7 +47,7 @@ class VersionComparatorTest {
         val result = sut.compare("2-SNAPSHOT", "1.1.1")
 
         // THEN
-        assertThat(result, `is`(1))
+        assertThat(result).isEqualTo(1)
     }
 
 }

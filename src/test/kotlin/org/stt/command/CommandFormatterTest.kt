@@ -1,9 +1,6 @@
 package org.stt.command
 
-import org.hamcrest.CoreMatchers.*
-import org.hamcrest.Matchers
-import org.hamcrest.collection.IsCollectionWithSize
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -27,7 +24,6 @@ import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.chrono.ChronoLocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
@@ -74,7 +70,7 @@ class CommandFormatterTest {
         val result = sut.asNewItemCommandText(item)
 
         // THEN
-        assertThat(result, `is`("test since 2000.1.1 1:1:1"))
+        assertThat(result).isEqualTo("test since 2000.1.1 1:1:1")
     }
 
     @Test
@@ -87,8 +83,7 @@ class CommandFormatterTest {
         val result = sut.asNewItemCommandText(item)
 
         // THEN
-        assertThat(result,
-                `is`("test from 2000.1.1 1:1:1 to 2000.1.1 1:1:1"))
+        assertThat(result).isEqualTo("test from 2000.1.1 1:1:1 to 2000.1.1 1:1:1")
     }
 
     @Test
@@ -105,7 +100,7 @@ class CommandFormatterTest {
         // THEN
         val startString = TIME_FORMATTER.format(expectedStart)
         val endString = DATE_TIME_FORMATTER.format(expectedEnd)
-        assertThat(result, `is`("test from $startString to $endString"))
+        assertThat(result).isEqualTo("test from $startString to $endString")
     }
 
     @Test
@@ -165,16 +160,16 @@ class CommandFormatterTest {
 
         // THEN
         val (_, start) = retrieveWrittenTimeTrackingItem()
-        assertThat(start, `is`(LocalDateTime.of(2000, 1, 1, 13, 37, 0)))
+        assertThat(start).isEqualTo(LocalDateTime.of(2000, 1, 1, 13, 37, 0))
     }
 
     private fun assertThatTimeIsTodayWith(time: LocalDateTime, hourOfDay: Int,
                                           minuteOfHour: Int, secondOfMinute: Int) {
-        assertThat(time.hour, `is`(hourOfDay))
-        assertThat(time.minute, `is`(minuteOfHour))
-        assertThat(time.second, `is`(secondOfMinute))
-        assertThat(time.get(ChronoField.MILLI_OF_SECOND), `is`(0))
-        assertThat(time.toLocalDate(), `is`(LocalDate.now()))
+        assertThat(time.hour).isEqualTo(hourOfDay)
+        assertThat(time.minute).isEqualTo(minuteOfHour)
+        assertThat(time.second).isEqualTo(secondOfMinute)
+        assertThat(time.get(ChronoField.MILLI_OF_SECOND)).isEqualTo(0)
+        assertThat(time.toLocalDate()).isEqualTo(LocalDate.now())
     }
 
     @Test
@@ -191,7 +186,7 @@ class CommandFormatterTest {
         val result = executeCommand("comment from 12:00 to 13:00")
 
         // THEN
-        assertThat(result, `is`(Optional.of(expectedItem)))
+        assertThat(result).isEqualTo(Optional.of(expectedItem))
     }
 
     @Test
@@ -207,7 +202,7 @@ class CommandFormatterTest {
         val result = executeCommand("comment since 12:00 until 13:00")
 
         // THEN
-        assertThat(result, `is`(Optional.of(expectedItem)))
+        assertThat(result).isEqualTo(Optional.of(expectedItem))
     }
 
     @Test
@@ -219,8 +214,8 @@ class CommandFormatterTest {
 
         // THEN
         val (_, start, end) = result.get()
-        assertThat(start, `is`(LocalDateTime.of(2014, 6, 22, 14, 43, 14)))
-        assertThat(end, `is`(LocalDateTime.of(2014, 6, 22, 14, 58, 41)))
+        assertThat(start).isEqualTo(LocalDateTime.of(2014, 6, 22, 14, 43, 14))
+        assertThat(end).isEqualTo(LocalDateTime.of(2014, 6, 22, 14, 58, 41))
     }
 
     @Test
@@ -237,7 +232,7 @@ class CommandFormatterTest {
         val result = executeCommand("com ment 12:00 to 13:00")
 
         // THEN
-        assertThat(result, `is`(Optional.of(expectedItem)))
+        assertThat(result).isEqualTo(Optional.of(expectedItem))
     }
 
     @Test
@@ -251,7 +246,7 @@ class CommandFormatterTest {
 
         // THEN
         val timeTrackingItem = timeTrackingItemQueries.ongoingItem
-        assertThat(timeTrackingItem, `is`(unfinishedItem))
+        assertThat(timeTrackingItem).isEqualTo(unfinishedItem)
     }
 
     @Test
@@ -267,9 +262,9 @@ class CommandFormatterTest {
 
         // THEN
         val timeTrackingItem = timeTrackingItemQueries.ongoingItem!!
-        assertThat(timeTrackingItem.activity, `is`("last item"))
-        assertThat(!timeTrackingItem.start.isAfter(LocalDateTime.now()), `is`(true))
-        assertThat(timeTrackingItem.end, `is`(nullValue()))
+        assertThat(timeTrackingItem.activity).isEqualTo("last item")
+        assertThat(!timeTrackingItem.start.isAfter(LocalDateTime.now())).isTrue()
+        assertThat(timeTrackingItem.end).isNull()
     }
 
 
@@ -284,7 +279,7 @@ class CommandFormatterTest {
 
         // THEN
         val (_, _, end) = retrieveWrittenTimeTrackingItem()
-        assertThat<LocalDateTime>(end, not(Optional.empty<Any>()))
+        assertThat(end).isNotNull()
     }
 
     private fun createUnfinishedItem(): TimeTrackingItem {
@@ -303,7 +298,7 @@ class CommandFormatterTest {
 
     private fun assertThatNewItemWasWritten(testComment: String) {
         val (activity) = retrieveWrittenTimeTrackingItem()
-        assertThat(activity, `is`(testComment))
+        assertThat(activity).isEqualTo(testComment)
     }
 
     @Theory
@@ -317,10 +312,8 @@ class CommandFormatterTest {
         val (_, start) = retrieveItemWhenCommandIsExecuted(command)
 
         // THEN
-        assertThat("Parameters: '$minutesAgo' '$command'",
-                start,
-                `is`<ChronoLocalDateTime<*>>(Matchers.lessThanOrEqualTo<ChronoLocalDateTime<*>>(LocalDateTime.now()
-                        .minusMinutes(minutesAgo.toLong()))))
+        assertThat(start).isBeforeOrEqualTo(LocalDateTime.now()
+                .minusMinutes(minutesAgo.toLong()))
     }
 
     @Theory
@@ -334,10 +327,8 @@ class CommandFormatterTest {
         val (_, start) = retrieveItemWhenCommandIsExecuted(command)
 
         // THEN
-        assertThat("Parameters: '$secondsAgo' '$command'",
-                start,
-                `is`<ChronoLocalDateTime<*>>(Matchers.lessThanOrEqualTo<ChronoLocalDateTime<*>>(LocalDateTime.now()
-                        .minusSeconds(secondsAgo.toLong()))))
+        assertThat(start).isBeforeOrEqualTo(LocalDateTime.now()
+                .minusSeconds(secondsAgo.toLong()))
     }
 
     @Theory
@@ -351,10 +342,7 @@ class CommandFormatterTest {
         val (_, start) = retrieveItemWhenCommandIsExecuted(command)
 
         // THEN
-        assertThat("Parameters: '$hoursAgo' '$command'",
-                start,
-                `is`<ChronoLocalDateTime<*>>(Matchers.lessThanOrEqualTo<ChronoLocalDateTime<*>>(LocalDateTime.now()
-                        .minusHours(hoursAgo.toLong()))))
+        assertThat(start).isBeforeOrEqualTo(LocalDateTime.now().minusHours(hoursAgo.toLong()))
     }
 
     @Test
@@ -368,7 +356,7 @@ class CommandFormatterTest {
         // THEN
         val timeTrackingItems = timeTrackingItemQueries.queryAllItems()
                 .toArray { arrayOfNulls<TimeTrackingItem>(it) }
-        assertThat(timeTrackingItems[1]!!.start.toLocalDate(), `is`(LocalDate.of(2014, 6, 22)))
+        assertThat(timeTrackingItems[1]!!.start.toLocalDate()).isEqualTo(LocalDate.of(2014, 6, 22))
     }
 
     private fun executeCommand(command: String): Optional<TimeTrackingItem> {
@@ -413,7 +401,7 @@ class CommandFormatterTest {
 
     private fun retrieveWrittenTimeTrackingItem(): TimeTrackingItem {
         val allItems = timeTrackingItemQueries.queryAllItems().toList()
-        assertThat<Collection<TimeTrackingItem>>(allItems, IsCollectionWithSize.hasSize(1))
+        assertThat(allItems).hasSize(1)
         return allItems.iterator().next()
     }
 

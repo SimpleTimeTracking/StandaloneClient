@@ -1,8 +1,6 @@
 package org.stt.reporting
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.Matchers
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -66,8 +64,8 @@ class OvertimeReportGeneratorTest {
         val overtime = sut.overtime
 
         // THEN
-        assertThat(overtime.entries, Matchers.hasSize(1))
-        assertThat(overtime.values.iterator().next(), `is`(Duration.ZERO))
+        assertThat(overtime.entries).hasSize(1)
+        assertThat(overtime.values).first().isEqualTo(Duration.ZERO)
     }
 
     @Test
@@ -88,8 +86,8 @@ class OvertimeReportGeneratorTest {
         val overtime = sut.overtime
 
         // THEN
-        assertThat(overtime.entries, Matchers.hasSize(1))
-        assertThat(overtime.values.iterator().next(), `is`(Duration.ZERO))
+        assertThat(overtime.entries).hasSize(1)
+        assertThat(overtime.values).first().isEqualTo(Duration.ZERO)
     }
 
     @Test
@@ -110,8 +108,8 @@ class OvertimeReportGeneratorTest {
         val overtime = sut.overtime
 
         // THEN
-        assertThat(overtime.entries, Matchers.hasSize(1))
-        assertThat(overtime.values.iterator().next(), `is`(Duration.ofHours(2)))
+        assertThat(overtime.entries).hasSize(1)
+        assertThat(overtime.values).first().isEqualTo(Duration.ofHours(2))
     }
 
     @Test
@@ -131,7 +129,7 @@ class OvertimeReportGeneratorTest {
         val overtime = sut.overtime
 
         // THEN
-        assertThat(overtime.entries, Matchers.hasSize(1))
-        assertThat(overtime.values.iterator().next(), `is`(Duration.ofHours(-12L)))
+        assertThat(overtime.entries).hasSize(1)
+        assertThat(overtime.values).first().isEqualTo(Duration.ofHours(-12L))
     }
 }

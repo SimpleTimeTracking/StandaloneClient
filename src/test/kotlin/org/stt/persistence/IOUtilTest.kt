@@ -1,7 +1,6 @@
 package org.stt.persistence
 
-import org.hamcrest.CoreMatchers.equalTo
-import org.junit.Assert.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.experimental.theories.Theories
 import org.junit.experimental.theories.Theory
 import org.junit.experimental.theories.suppliers.TestedOn
@@ -38,7 +37,7 @@ class IOUtilTest {
         val result = IOUtil.readAll(itemReader)
 
         // THEN
-        assertThat(result, equalTo<Collection<TimeTrackingItem>>(expectedItems))
+        assertThat(result).isEqualTo(expectedItems)
         verify(itemReader).close()
     }
 }
