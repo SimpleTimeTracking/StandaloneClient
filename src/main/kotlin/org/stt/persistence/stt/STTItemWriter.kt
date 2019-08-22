@@ -8,12 +8,8 @@ import javax.inject.Inject
 
 class STTItemWriter @Inject
 constructor(@STTFile out: Writer) : ItemWriter {
-    private val out: PrintWriter
+    private val out: PrintWriter = PrintWriter(out)
     private val converter = STTItemConverter()
-
-    init {
-        this.out = PrintWriter(out)
-    }
 
     override fun write(item: TimeTrackingItem) {
         out.println(converter.timeTrackingItemToLine(item))

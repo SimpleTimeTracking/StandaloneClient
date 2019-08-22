@@ -20,7 +20,7 @@ constructor(private val jiraConnector: JiraConnector,
 
         try {
             return jiraConnector.getIssue(queryText)
-                    .map { it.getSummary() }
+                    .map { it.summary }
                     .map { issue -> listOf(": $issue") }
                     .orElse(emptyList())
         } catch (e: JiraConnectorException) {

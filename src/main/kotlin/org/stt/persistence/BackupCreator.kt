@@ -90,8 +90,8 @@ constructor(private val backupConfig: BackupConfig,
         }
 
         val backupList = ArrayList(backedUpFiles)
-        Collections.sort(backupList)
-        Collections.reverse(backupList)
+        backupList.sort()
+        backupList.reverse()
         for (i in backupList.indices) {
             if (i >= retentionCount) {
                 val oldBackupFile = backupList[i]

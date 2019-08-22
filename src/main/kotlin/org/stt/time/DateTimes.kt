@@ -14,13 +14,13 @@ object DateTimes {
             .ofPattern("yyyy-MM-dd")
 
     val FORMATTER_PERIOD_HHh_MMm_SSs = { duration: Duration ->
-        val seconds = duration.getSeconds()
+        val seconds = duration.seconds
         String.format("%d:%02d:%02d",
                 seconds / 3600, seconds % 3600 / 60, seconds % 60)
     }
 
     val FORMATTER_PERIOD_H_M_S = { duration: Duration ->
-        val seconds = duration.getSeconds()
+        val seconds = duration.seconds
         String.format("%d:%d:%d",
                 seconds / 3600, seconds % 3600 / 60, seconds % 60)
     }
@@ -35,7 +35,7 @@ object DateTimes {
     }
 
     fun isOnSameDay(a: LocalDateTime?, b: LocalDateTime?): Boolean {
-        return if (a == null || b == null) false else a.toLocalDate() == b.toLocalDate()
+        return a != null && b != null && a.toLocalDate() == b.toLocalDate()
     }
 
     /**
@@ -50,12 +50,10 @@ object DateTimes {
      * today, "yyyy-MM-dd HH:mm:ss" if the given date is not today
      */
     fun prettyPrintTime(date: LocalDateTime): String {
-        return if (isToday(date)) {
-            DATE_TIME_FORMATTER_HH_MM_SS.format(date)
-        } else if (LocalDate.MIN == date.toLocalDate()) {
-            "beginning of time"
-        } else {
-            DATE_TIME_FORMATTER_YYYY_MM_DD_HH_MM_SS.format(date)
+        return when {
+            isToday(date) -> DATE_TIME_FORMATTER_HH_MM_SS.format(date)
+            LocalDate.MIN == date.toLocalDate() -> "beginning of time"
+            else -> DATE_TIME_FORMATTER_YYYY_MM_DD_HH_MM_SS.format(date)
         }
     }
 

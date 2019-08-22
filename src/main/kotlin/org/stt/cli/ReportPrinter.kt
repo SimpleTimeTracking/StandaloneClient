@@ -194,7 +194,7 @@ constructor(private val queries: TimeTrackingItemQueries,
                 }
                 builder.append(" ( ")
                 builder.append(DateTimes.prettyPrintDuration(Duration.between(
-                        start, if (end == null) LocalDateTime.now() else end)))
+                        start, end ?: LocalDateTime.now())))
                 builder.append(" ) ")
                 builder.append(" => ")
                 builder.append(comment)

@@ -22,14 +22,10 @@ import javax.inject.Singleton
 @Singleton
 class JsonConfigService @Inject
 constructor(@Named("homePath") homePath: String) : ConfigService, Service {
-    private val sttJson: File
+    private val sttJson: File = File("$homePath/.stt", "stt.json")
     override lateinit var config: ConfigRoot
     var isNewConfig: Boolean = false
         private set
-
-    init {
-        sttJson = File("$homePath/.stt", "stt.json")
-    }
 
     override fun start() {
         val mkdirs = sttJson.parentFile.mkdirs()

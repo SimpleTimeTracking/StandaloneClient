@@ -55,7 +55,7 @@ class UIMain : Application() {
     fun shutdown(request: ShuttingDown) {
         LOG.info("Shutting down")
         try {
-            Collections.reverse(servicesToShutdown)
+            servicesToShutdown.reverse()
             for (service in servicesToShutdown) {
                 LOG.info("Stopping " + service.javaClass.simpleName)
                 service.stop()

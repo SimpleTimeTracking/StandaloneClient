@@ -22,7 +22,7 @@ import java.util.logging.Logger
 class CsvImporter(input: Reader, private val datefieldIndex: Int, private val timefieldIndex: Int,
                   private val commentfieldIndex: Int) : ItemReader {
 
-    private val reader: BufferedReader
+    private val reader: BufferedReader = BufferedReader(input)
 
     private val formatter = DateTimeFormatter
             .ofPattern("dd.MM.yyyy")
@@ -30,10 +30,6 @@ class CsvImporter(input: Reader, private val datefieldIndex: Int, private val ti
             .ofPattern("HH:mm")
 
     private var nextStartTime: LocalDateTime? = null
-
-    init {
-        reader = BufferedReader(input)
-    }
 
     override fun read(): TimeTrackingItem? {
         try {

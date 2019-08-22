@@ -78,24 +78,20 @@ class CommonPrefixGrouper @Inject constructor(private val queries: TimeTrackingI
             node = node.child(chars[i])
             i++
         }
-        return if (node == null)
-            emptyList()
-        else
-            node.allChildren()
-                    .map { entry ->
-                        var tree: PrefixTree? = entry.value
-                        val current = StringBuilder()
-                        current.append(entry.key)
-                        while (tree != null && tree.numChildren() == 1) {
-                            val childChar = tree.anyChild()
-                            tree = tree.child(childChar)
-                            if (childChar != null) {
-                                current.append(childChar)
-                            }
-                        }
-                        current.toString()
-                    }
-                    .toList()
+        return node?.allChildren()?.map { entry ->
+            var tree: PrefixTree? = entry.value
+            val current = StringBuilder()
+            current.append(entry.key)
+            while (tree != null && tree.numChildren() == 1) {
+                val childChar = tree.anyChild()
+                tree = tree.child(childChar)
+                if (childChar != null) {
+                    current.append(childChar)
+                }
+            }
+            current.toString()
+        }?.toList()
+                ?: emptyList()
     }
 
     override fun toString(): String {
@@ -134,14 +130,13 @@ class CommonPrefixGrouper @Inject constructor(private val queries: TimeTrackingI
 
     private class GroupHelper internal constructor(private val text: String, private var node: PrefixTree?) {
         private val groups = ArrayList<Group>()
-        private val chars: CharArray
+        private val chars = text.toCharArray()
         private val n: Int
         private var i = 0
         private var start = 0
         private var lastGood: Int = 0
 
         init {
-            this.chars = text.toCharArray()
             this.n = chars.size
         }
 

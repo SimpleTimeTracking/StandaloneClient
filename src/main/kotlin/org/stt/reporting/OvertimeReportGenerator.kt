@@ -89,9 +89,9 @@ class OvertimeReportGenerator(private val queries: TimeTrackingItemQueries,
     private fun getOvertime(date: LocalDate, duration: Duration): Duration {
         val workingTimeForDate = workingtimeItemProvider
                 .getWorkingTimeFor(date)
-        if (duration.compareTo(workingTimeForDate.max) > 0) {
+        if (duration > workingTimeForDate.max) {
             return duration.minus(workingTimeForDate.max)
-        } else if (duration.compareTo(workingTimeForDate.min) < 0) {
+        } else if (duration < workingTimeForDate.min) {
             return duration.minus(workingTimeForDate.min)
         }
 

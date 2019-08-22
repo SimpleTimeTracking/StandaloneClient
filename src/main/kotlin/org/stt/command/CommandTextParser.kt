@@ -54,17 +54,14 @@ class CommandTextParser(private val formatters: List<DateTimeFormatter>) {
         }
 
         override fun visitAgoFormat(ctx: EnglishCommandsParser.AgoFormatContext): Array<LocalDateTime?> {
-            val duration: Duration
+
             val amount = ctx.amount
             val timeUnit = ctx.timeUnit()
-            if (timeUnit.HOURS() != null) {
-                duration = Duration.ofHours(amount.toLong())
-            } else if (timeUnit.MINUTES() != null) {
-                duration = Duration.ofMinutes(amount.toLong())
-            } else if (timeUnit.SECONDS() != null) {
-                duration = Duration.ofSeconds(amount.toLong())
-            } else {
-                throw IllegalStateException("Unknown ago unit: " + ctx.text)
+            val duration = when {
+                timeUnit.HOURS() != null -> Duration.ofHours(amount.toLong())
+                timeUnit.MINUTES() != null -> Duration.ofMinutes(amount.toLong())
+                timeUnit.SECONDS() != null -> Duration.ofSeconds(amount.toLong())
+                else -> throw IllegalStateException("Unknown ago unit: " + ctx.text)
             }
             return arrayOf(LocalDateTime.now().minus(duration), null)
         }

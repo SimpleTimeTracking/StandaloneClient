@@ -18,13 +18,9 @@ import java.time.format.DateTimeFormatter
  */
 class TiImporter(input: Reader) : ItemReader {
 
-    private val reader: BufferedReader
+    private val reader: BufferedReader = BufferedReader(input)
     private val dateFormat = DateTimeFormatter
             .ofPattern("yyyy-MM-dd_HH:mm:ss")
-
-    init {
-        reader = BufferedReader(input)
-    }
 
     override fun read(): TimeTrackingItem? {
         try {

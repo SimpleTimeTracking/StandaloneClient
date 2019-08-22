@@ -94,7 +94,7 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         val newDayHbox = HBox(5.0)
         newDayHbox.padding = Insets(2.0)
         val calenderIcon = glyph(fontAwesome, Glyph.CALENDAR)
-        calenderIcon.setTextFill(Color.BLACK)
+        calenderIcon.textFill = Color.BLACK
         newDayHbox.children.add(calenderIcon)
         val dayLabel = Label()
         dayLabel.textFill = Color.BLACK

@@ -130,7 +130,7 @@ internal constructor(private val localization: ResourceBundle,
         endOfReport.setOnMouseClicked { setClipboard(endBinding.get()) }
 
         val reportListModel = createReportingItemsListModel(reportModel)
-        tableForReport.setItems(reportListModel)
+        tableForReport.items = reportListModel
 
         roundedDurationSum
                 .textProperty()
@@ -248,9 +248,8 @@ internal constructor(private val localization: ResourceBundle,
     }
 
     private fun setCommentColumnCellFactory() {
-        columnForComment
-                .setCellValueFactory(PropertyValueFactory(
-                        "comment"))
+        columnForComment.cellValueFactory = PropertyValueFactory(
+                "comment")
         if (activitiesConfig.isGroupItems) {
             setItemGroupingCellFactory()
         } else {

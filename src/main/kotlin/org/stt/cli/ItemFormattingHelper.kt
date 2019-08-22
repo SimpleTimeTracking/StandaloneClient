@@ -25,10 +25,7 @@ internal object ItemFormattingHelper {
             builder.append(DateTimes.DATE_TIME_FORMATTER_HH_MM_SS.format(end))
         }
         builder.append(" ( ")
-        builder.append(DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs(Duration.between(start, if (end == null)
-            LocalDateTime.now()
-        else
-            end)))
+        builder.append(DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs(Duration.between(start, end ?: LocalDateTime.now())))
         builder.append(" ) ")
         builder.append(" => ")
         builder.append(comment)

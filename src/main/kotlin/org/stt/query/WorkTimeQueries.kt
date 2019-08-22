@@ -41,6 +41,6 @@ constructor(private val workingtimeItemProvider: WorkingtimeItemProvider,
                 .map { (_, start, end) ->
                     Duration.between(start, end ?: interval.end)
                 }
-                .reduce(Duration.ZERO, { obj, duration -> obj.plus(duration) })
+                .reduce(Duration.ZERO) { obj, duration -> obj + duration }
     }
 }

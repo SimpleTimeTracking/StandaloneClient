@@ -7,11 +7,10 @@ import javafx.stage.Popup
 import javafx.stage.Window
 
 class PopupAtCaretPlacer(textArea: TextArea, private val popup: Popup) {
-    private val path: Node
+    private val path: Node = textArea.lookup("Path")
     private val window: Window
 
     init {
-        path = textArea.lookup("Path")
         this.window = textArea.scene.window
 
         path.boundsInLocalProperty().addListener { _, _, newValue -> updatePopupLocation(newValue) }
