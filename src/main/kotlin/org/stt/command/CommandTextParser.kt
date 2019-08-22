@@ -15,14 +15,8 @@ import java.time.temporal.TemporalAccessor
 import java.time.temporal.TemporalQueries
 import java.util.*
 
-class CommandTextParser(vararg formatters: DateTimeFormatter) {
-    private val formatters: List<DateTimeFormatter>
-    private val parserVisitor: EnglishCommandsVisitor<Any>
-
-    init {
-        this.formatters = Arrays.asList(*formatters)
-        parserVisitor = MyEnglishCommandsBaseVisitor()
-    }
+class CommandTextParser(private val formatters: List<DateTimeFormatter>) {
+    private val parserVisitor = MyEnglishCommandsBaseVisitor()
 
     internal fun walk(commandContext: CommandContext): Any {
         return commandContext.accept(parserVisitor)

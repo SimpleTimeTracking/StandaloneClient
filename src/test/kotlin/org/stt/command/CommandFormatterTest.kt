@@ -55,8 +55,8 @@ class CommandFormatterTest {
                 Provider { OutputStreamWriter(FileOutputStream(tempFile), StandardCharsets.UTF_8) })
         timeTrackingItemQueries = TimeTrackingItemQueries(itemReaderProvider, Optional.empty())
         activities = Activities(itemWriter, timeTrackingItemQueries, Optional.empty())
-        sut = CommandFormatter(CommandTextParser(TIME_FORMATTER,
-                DATE_TIME_FORMATTER), DATE_TIME_FORMATTER, TIME_FORMATTER)
+        sut = CommandFormatter(CommandTextParser(listOf(TIME_FORMATTER,
+                DATE_TIME_FORMATTER)), DATE_TIME_FORMATTER, TIME_FORMATTER)
     }
 
 

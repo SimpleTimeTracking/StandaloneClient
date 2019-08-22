@@ -21,13 +21,13 @@ class CommandModule {
 
     @Provides
     fun provideCommandTextParser(): CommandTextParser {
-        return CommandTextParser(
+        return CommandTextParser(listOf(
                 dateTimeFormatter(null, FormatStyle.SHORT),
                 dateTimeFormatter(null, FormatStyle.MEDIUM),
                 dateTimeFormatter(FormatStyle.SHORT, FormatStyle.SHORT),
                 dateTimeFormatter(FormatStyle.SHORT, FormatStyle.MEDIUM),
                 dateTimeFormatter(FormatStyle.MEDIUM, FormatStyle.SHORT),
-                dateTimeFormatter(FormatStyle.MEDIUM, FormatStyle.MEDIUM))
+                dateTimeFormatter(FormatStyle.MEDIUM, FormatStyle.MEDIUM)))
     }
 
     internal fun dateTimeFormatter(dateFormat: FormatStyle?, timeFormat: FormatStyle): DateTimeFormatter {

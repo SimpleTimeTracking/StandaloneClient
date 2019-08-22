@@ -56,9 +56,9 @@ constructor(private val i18n: ResourceBundle,
         elements.add(hbox(4.0, Label(i18n.getString("weekWorktime")), weekWorktimeLabel))
     }
 
-    private fun hbox(spacing: Double, vararg nodes: Node): HBox {
+    private fun hbox(spacing: Double, a: Node, b: Node): HBox {
         val hBox = HBox(spacing)
-        hBox.children.addAll(*nodes)
+        hBox.children.addAll(a, b)
         return hBox
     }
 

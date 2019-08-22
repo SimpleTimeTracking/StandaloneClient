@@ -68,7 +68,7 @@ class MainTest {
         val persister = STTItemPersister(sttReader, sttWriter)
         val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
         val dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
-        val commandFormatter = CommandFormatter(CommandTextParser(timeFormatter, dateTimeFormatter), dateTimeFormatter, timeFormatter)
+        val commandFormatter = CommandFormatter(CommandTextParser(listOf(timeFormatter, dateTimeFormatter)), dateTimeFormatter, timeFormatter)
         val activities = Activities(persister, queries, Optional.empty())
         sut = Main(queries, reportPrinter, commandFormatter, activities)
     }

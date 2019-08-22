@@ -1,4 +1,3 @@
-import com.github.spotbugs.SpotBugsTask
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.gradle.internal.KaptTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -6,7 +5,7 @@ import org.sonarqube.gradle.SonarQubeTask
 
 
 plugins {
-    val kotlinVersion = "1.3.31"
+    val kotlinVersion = "1.3.50"
     application
     jacoco
     idea
@@ -14,7 +13,7 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("kapt") version kotlinVersion
     id("org.sonarqube") version "2.7.1"
-    id("com.github.ben-manes.versions") version "0.21.0"
+    id("com.github.ben-manes.versions") version "0.22.0"
     id("com.github.spotbugs") version "2.0.0"
 }
 
@@ -38,19 +37,9 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
-spotbugs {
-    excludeFilter = file("config/findbugs/excludeFilter.xml")
-}
 
 kapt {
     correctErrorTypes = true
-}
-
-tasks.withType<SpotBugsTask> {
-    reports {
-        xml.setEnabled(false)
-        html.setEnabled(true)
-    }
 }
 
 configurations {
@@ -62,22 +51,24 @@ configurations {
 val spek_version = "2.0.4"
 
 dependencies {
+    val daggerVersion = "2.24"
     antlr(group = "org.antlr", name = "antlr4", version = "4.7.2")
     implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.7.2")
-    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.0")
-    implementation("org.yaml:snakeyaml:1.24")
-    implementation("com.google.dagger:dagger:2.22.1")
+    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.1")
+    implementation("org.yaml:snakeyaml:1.25")
+    implementation("com.google.dagger:dagger:$daggerVersion")
     implementation("javax.inject:javax.inject:1")
-    kapt("com.google.dagger:dagger-compiler:2.22.1")
+    kapt("com.google.dagger:dagger-compiler:$daggerVersion")
     implementation("net.engio:mbassador:1.3.2")
     implementation("org.controlsfx:controlsfx:8.40.15")
     implementation("net.rcarz:jira-client:0.5")
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
+    implementation(files("/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/jfxrt.jar"))
 
     testImplementation("commons-io:commons-io:2.6")
-    testImplementation("org.mockito:mockito-core:2.27.0")
-    testImplementation("org.assertj:assertj-core:3.11.1")
+    testImplementation("org.mockito:mockito-core:3.0.0")
+    testImplementation("org.assertj:assertj-core:3.13.2")
     testImplementation("junit:junit-dep:4.11")
 }
 
@@ -103,13 +94,6 @@ tasks.withType<ProcessResources> {
                 "app.version" to project.property("version"),
                 "app.hash" to getCheckedOutGitCommitHash()
         ))
-    }
-}
-
-tasks.withType<FindBugs> {
-    reports {
-        xml.setEnabled(false)
-        html.setEnabled(true)
     }
 }
 
