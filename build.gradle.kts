@@ -14,7 +14,6 @@ plugins {
     kotlin("kapt") version kotlinVersion
     id("org.sonarqube") version "2.7.1"
     id("com.github.ben-manes.versions") version "0.22.0"
-    id("com.github.spotbugs") version "2.0.0"
 }
 
 repositories {

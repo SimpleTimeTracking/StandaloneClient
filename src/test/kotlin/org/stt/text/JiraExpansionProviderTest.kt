@@ -23,7 +23,7 @@ class JiraExpansionProviderTest {
     fun setUp() {
         MockitoAnnotations.initMocks(this)
 
-        given(jiraConnector.getIssue("JRA-7")).willReturn(Optional.of(issue))
+        given(jiraConnector.getIssue("JRA-7")).willReturn(issue)
         given(issue.summary).willReturn("Testing Issue")
     }
 

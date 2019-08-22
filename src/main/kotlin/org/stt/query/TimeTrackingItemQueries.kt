@@ -81,8 +81,7 @@ class TimeTrackingItemQueries @Inject constructor(private val provider: Provider
      */
     fun queryAllTrackedDays(): Stream<LocalDate> {
         return queryAllItems()
-                .map { it.start }
-                .map { it.toLocalDate() }
+                .map { it.start.toLocalDate() }
                 .distinct()
     }
 

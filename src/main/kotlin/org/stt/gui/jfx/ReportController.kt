@@ -17,7 +17,6 @@ import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.MouseEvent
-import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Pane
 import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
@@ -52,7 +51,6 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.streams.toList
 
 class ReportController @Inject
 internal constructor(private val localization: ResourceBundle,
@@ -70,8 +68,6 @@ internal constructor(private val localization: ResourceBundle,
     private lateinit var columnForComment: TableColumn<ListItem, String>
     @FXML
     private lateinit var tableForReport: TableView<ListItem>
-    @FXML
-    private lateinit var borderPane: BorderPane
     @FXML
     private lateinit var left: VBox
     @FXML
@@ -194,12 +190,12 @@ internal constructor(private val localization: ResourceBundle,
             report: ObservableValue<Report>): ListBinding<ListItem> {
         return MappedListBinding({
             report.value
-                    .reportingItems.stream()
+                    .reportingItems
                     .map { reportingItem ->
                         ListItem(
                                 reportingItem.comment, reportingItem.duration,
                                 rounder.roundDuration(reportingItem.duration))
-                    }.toList()
+                    }
         }, report)
     }
 
@@ -207,9 +203,8 @@ internal constructor(private val localization: ResourceBundle,
     private fun createBindingForRoundedDurationSum(
             items: ObservableList<ListItem>): ObservableValue<Duration> {
         return Bindings.createObjectBinding(Callable {
-            items.stream()
-                    .map { it.roundedDuration }
-                    .reduce(Duration.ZERO) { obj, duration -> obj.plus(duration) }
+            items.map { it.roundedDuration }
+                    .foldRight(Duration.ZERO) { obj, duration -> obj.plus(duration) }
         }, items)
     }
 
@@ -353,16 +348,11 @@ internal constructor(private val localization: ResourceBundle,
             } else {
                 val textList = textFlow.children
                 textList.clear()
-                val itemGroups = itemGrouper(item)
-                        .stream().map { g -> g.content }.toList()
+                val itemGroups = itemGrouper(item).map { it.content }
                 for (i in itemGroups.indices) {
                     val partToShow: String
                     val part = itemGroups[i]
-                    if (i > 0) {
-                        partToShow = " $part"
-                    } else {
-                        partToShow = part
-                    }
+                    partToShow = if (i > 0) " $part" else part
                     val partLabel = Text(partToShow)
                     addClickListener(itemGroups, partLabel, i)
                     if (i < itemGroups.size - 1) {

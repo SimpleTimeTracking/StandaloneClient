@@ -103,14 +103,14 @@ class UIMain : Application() {
         /**
          * Set to true to add debug graphics
          */
-        val DEBUG_UI = false
+        const val DEBUG_UI = false
         private val LOG = Logger.getLogger(UIMain::class.java
                 .name)
 
         @JvmStatic
         fun main(args: Array<String>) {
             LOG.info("START")
-            Application.launch(UIMain::class.java, *args)
+            launch(UIMain::class.java, *args)
         }
     }
 }

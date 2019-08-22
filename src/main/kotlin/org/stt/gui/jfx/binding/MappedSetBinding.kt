@@ -9,7 +9,7 @@ import java.util.function.Supplier
 class MappedSetBinding<T>(val supplier: Supplier<Set<T>>, sources: Observable) : SetBinding<T>() {
 
     init {
-//        bind(*sources)
+        bind(sources)
     }
 
     override fun computeValue(): ObservableSet<T> = FXCollections.observableSet(supplier.get())

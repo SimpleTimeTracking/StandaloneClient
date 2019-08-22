@@ -3,7 +3,6 @@ package org.stt.gui.jfx
 import javafx.application.Platform
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
-import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.layout.BorderPane
@@ -32,8 +31,6 @@ constructor(private val localization: ResourceBundle,
             private val executorService: ExecutorService) {
     private var panel: BorderPane? = null
 
-    @FXML
-    private lateinit var updateButton: Button
     @FXML
     private lateinit var versionLabel: Label
     @FXML
@@ -74,11 +71,12 @@ constructor(private val localization: ResourceBundle,
                     if (t != null) {
                         updateArea.children[0] = Label(t.message)
                     }
-                    if (a.isPresent) {
-                        updateArea.children[0] = Label(String.format(localization.getString("info.newerVersion"), a.get()), Glyph.glyph(fontAwesome, Glyph.ANGLE_DOUBLE_UP))
-                    } else {
-                        updateArea.children[0] = Label(localization.getString("info.upToDate"), Glyph.glyph(fontAwesome, Glyph.CHECK))
-                    }
+                    updateArea.children[0] =
+                            if (a != null) {
+                                Label(String.format(localization.getString("info.newerVersion"), a), Glyph.glyph(fontAwesome, Glyph.ANGLE_DOUBLE_UP))
+                            } else {
+                                Label(localization.getString("info.upToDate"), Glyph.glyph(fontAwesome, Glyph.CHECK))
+                            }
                     null
                 }, { Platform.runLater(it) })
     }
@@ -98,6 +96,6 @@ constructor(private val localization: ResourceBundle,
 
     companion object {
         private val LOG = Logger.getLogger(InfoController::class.java.name)
-        val URL_PROJECT = "https://github.com/SimpleTimeTracking/StandaloneClient/"
+        const val URL_PROJECT = "https://github.com/SimpleTimeTracking/StandaloneClient/"
     }
 }

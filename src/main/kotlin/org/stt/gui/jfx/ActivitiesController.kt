@@ -84,8 +84,6 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
     @FXML
     private lateinit var activityList: ListView<TimeTrackingItem>
     @FXML
-    private lateinit var achievements: FlowPane
-    @FXML
     private lateinit var additionals: VBox
     @FXML
     private lateinit var commandPane: BorderPane
@@ -456,6 +454,6 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
 
         private val LOG = Logger.getLogger(ActivitiesController::class.java
                 .name)
-        private val WIKI_URL = "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI"
+        private const val WIKI_URL = "https://github.com/SimpleTimeTracking/StandaloneClient/wiki/CLI"
     }
 }

@@ -8,14 +8,9 @@ interface Command {
 }
 
 
-class DoNothing private constructor() : Command {
-
+object DoNothing : Command {
     override fun accept(commandHandler: CommandHandler) {
         // DO NOTHING
-    }
-
-    companion object {
-        val INSTANCE: Command = DoNothing()
     }
 }
 

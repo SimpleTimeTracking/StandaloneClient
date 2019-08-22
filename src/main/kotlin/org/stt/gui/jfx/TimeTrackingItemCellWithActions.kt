@@ -124,12 +124,12 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         } else {
             actions.children[0] = if (item.end != null) continueButton else stopButton
             itemNodes.setItem(item)
-            if (lastItemOfDay.test(item)) {
+            graphic = if (lastItemOfDay.test(item)) {
                 setupLastItemOfDayPane()
-                graphic = lastItemOnDayPane
+                lastItemOnDayPane
             } else {
                 setupCellPane()
-                graphic = cellPane
+                cellPane
             }
         }
     }

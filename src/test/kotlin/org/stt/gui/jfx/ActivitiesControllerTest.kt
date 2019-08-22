@@ -21,7 +21,6 @@ import org.stt.command.CommandHandler
 import org.stt.command.DoNothing
 import org.stt.command.NewActivity
 import org.stt.config.ActivitiesConfig
-import org.stt.config.ReportConfig
 import org.stt.event.ShuttingDown
 import org.stt.gui.jfx.text.CommandHighlighter
 import org.stt.model.TimeTrackingItem
@@ -74,7 +73,7 @@ class ActivitiesControllerTest {
         sut = ActivitiesController(STTOptionDialogs(resourceBundle, fontAwesome, labelToNodeMapper), eventBus, commandFormatter,
                 setOf(expansionProvider), resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, executorService, commandHandler, fontAwesome,
-                worktimePane, labelToNodeMapper, CommandHighlighter.Factory({ emptyList() }, ReportConfig()))
+                worktimePane, labelToNodeMapper, CommandHighlighter.Factory({ emptyList() }))
         sut.commandText = StyleClassedTextArea()
     }
 
@@ -180,7 +179,7 @@ class ActivitiesControllerTest {
     fun shouldNotCloseWindowOnSimpleCommandExecution() {
         // GIVEN
         givenCommand("Hello World")
-        given(commandFormatter.parse(anyString())).willReturn(DoNothing.INSTANCE)
+        given(commandFormatter.parse(anyString())).willReturn(DoNothing)
 
         // WHEN
         sut.executeCommand()

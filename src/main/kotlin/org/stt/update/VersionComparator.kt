@@ -17,12 +17,9 @@ class VersionComparator : Comparator<String>, Serializable {
         return Integer.compare(aVersionParts.size, bVersionParts.size)
     }
 
-    private fun asVersionPart(s: String): Int {
-        try {
-            return Integer.parseInt(s)
-        } catch (e: NumberFormatException) {
-            return 0
-        }
-
+    private fun asVersionPart(s: String): Int = try {
+        Integer.parseInt(s)
+    } catch (e: NumberFormatException) {
+        0
     }
 }

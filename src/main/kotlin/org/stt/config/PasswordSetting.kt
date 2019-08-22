@@ -31,7 +31,7 @@ class PasswordSetting private constructor(encodedPassword: ByteArray) {
     }
 
     companion object {
-        private val CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding"
+        private const val CIPHER_ALGORITHM = "AES/ECB/PKCS5Padding"
         private var secretKey: SecretKey? = null
 
         init {

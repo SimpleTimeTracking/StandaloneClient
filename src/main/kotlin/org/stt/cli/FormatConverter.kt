@@ -53,17 +53,16 @@ internal class FormatConverter(args: MutableList<String>) {
     }
 
     private fun getReaderFrom(input: File?, sourceFormat: String?): ItemReader {
-        val inputReader: Reader
-        if (input == null) {
-            inputReader = InputStreamReader(System.`in`, StandardCharsets.UTF_8)
+        val inputReader = if (input == null) {
+            InputStreamReader(System.`in`, StandardCharsets.UTF_8)
         } else {
-            inputReader = InputStreamReader(FileInputStream(input), StandardCharsets.UTF_8)
+            InputStreamReader(FileInputStream(input), StandardCharsets.UTF_8)
         }
 
-        when (sourceFormat) {
-            "stt" -> return STTItemReader(inputReader)
-            "ti" -> return TiImporter(inputReader)
-            "csv" -> return CsvImporter(inputReader, 1, 4, 8)
+        return when (sourceFormat) {
+            "stt" -> STTItemReader(inputReader)
+            "ti" -> TiImporter(inputReader)
+            "csv" -> CsvImporter(inputReader, 1, 4, 8)
             else -> {
                 inputReader.close()
                 throw InvalidSourceFormatException("unknown input asNewItemCommandText \"" + sourceFormat

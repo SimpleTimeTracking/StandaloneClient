@@ -31,8 +31,8 @@ enum class Glyph(private val code: Char) {
 
     companion object {
 
-        val GLYPH_SIZE_MEDIUM = 20.0
-        val GLYPH_SIZE_LARGE = 30.0
+        const val GLYPH_SIZE_MEDIUM = 20.0
+        const val GLYPH_SIZE_LARGE = 30.0
         private val GLYPH_COLOR = Color.GRAY
 
         fun glyph(fontAwesome: Font, glyph: Glyph, size: Double): Label {

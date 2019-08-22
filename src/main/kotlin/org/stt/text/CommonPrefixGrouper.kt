@@ -186,6 +186,6 @@ class CommonPrefixGrouper @Inject constructor(private val queries: TimeTrackingI
     }
 
     companion object {
-        val MINIMUM_GROUP_LENGTH = 3
+        const val MINIMUM_GROUP_LENGTH = 3
     }
 }

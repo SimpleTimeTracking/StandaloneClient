@@ -4,16 +4,13 @@ import org.antlr.v4.runtime.tree.RuleNode
 import org.stt.grammar.EnglishCommandsBaseVisitor
 import org.stt.grammar.EnglishCommandsParser
 import org.stt.grammar.EnglishCommandsParser.CommandContext
-import org.stt.grammar.EnglishCommandsVisitor
 import org.stt.model.TimeTrackingItem
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.time.temporal.TemporalAccessor
 import java.time.temporal.TemporalQueries
-import java.util.*
 
 class CommandTextParser(private val formatters: List<DateTimeFormatter>) {
     private val parserVisitor = MyEnglishCommandsBaseVisitor()
@@ -29,17 +26,15 @@ class CommandTextParser(private val formatters: List<DateTimeFormatter>) {
         }
 
         override fun visitDateTime(ctx: EnglishCommandsParser.DateTimeContext): LocalDateTime {
-            val temporalAccessor = formatters.stream()
-                    .map<TemporalAccessor> { formatter ->
+            val temporalAccessor = formatters
+                    .mapNotNull { formatter ->
                         try {
-                            return@map formatter.parse(ctx.text)
+                            return@mapNotNull formatter.parse(ctx.text)
                         } catch (e: DateTimeParseException) {
-                            return@map null
+                            return@mapNotNull null
                         }
                     }
-                    .filter { it != null }
-                    .findFirst()
-                    .orElseThrow { DateTimeParseException("Invalid date format", ctx.text, 0) }
+                    .firstOrNull() ?: throw DateTimeParseException("Invalid date format", ctx.text, 0)
             val date = temporalAccessor.query(TemporalQueries.localDate())
             val time = temporalAccessor.query(TemporalQueries.localTime())
             return LocalDateTime.of(date ?: LocalDate.now(), time)

@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.tree.ParseTree
 import org.antlr.v4.runtime.tree.TerminalNode
 import org.fxmisc.richtext.StyleClassedTextArea
 import org.stt.command.CaseInsensitiveInputStream
-import org.stt.config.ReportConfig
 import org.stt.grammar.EnglishCommandsBaseVisitor
 import org.stt.grammar.EnglishCommandsLexer
 import org.stt.grammar.EnglishCommandsParser
@@ -16,7 +15,6 @@ import java.util.*
 import javax.inject.Inject
 
 class CommandHighlighter(private val itemGrouper: ItemGrouper,
-                         private val config: ReportConfig,
                          private val textArea: StyleClassedTextArea) {
     private val visitor = Highlighter()
 
@@ -78,10 +76,10 @@ class CommandHighlighter(private val itemGrouper: ItemGrouper,
     }
 
     class Factory @Inject
-    constructor(private val itemGrouper: @JvmSuppressWildcards ItemGrouper, private val config: ReportConfig) {
+    constructor(private val itemGrouper: @JvmSuppressWildcards ItemGrouper) {
 
         fun create(textArea: StyleClassedTextArea): CommandHighlighter {
-            return CommandHighlighter(itemGrouper, config, textArea)
+            return CommandHighlighter(itemGrouper, textArea)
         }
     }
 }

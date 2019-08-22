@@ -1,7 +1,6 @@
 package org.stt.update
 
 import java.net.URL
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.regex.Pattern
@@ -10,7 +9,7 @@ import javax.inject.Named
 
 class UpdateChecker @Inject
 constructor(@Named("version") val appVersion: String, @Named("release url") val projectURL: URL) {
-    fun queryNewerVersion(): CompletionStage<Optional<String>> {
+    fun queryNewerVersion(): CompletionStage<String?> {
         return CompletableFuture.supplyAsync<String> {
             projectURL.openStream().use { stream -> stream.bufferedReader().readText() }
         }.thenApply { receivedReply ->
@@ -22,7 +21,7 @@ constructor(@Named("version") val appVersion: String, @Named("release url") val 
                     version = nextVersion
                 }
             }
-            Optional.ofNullable(version)
+            version
         }
     }
 

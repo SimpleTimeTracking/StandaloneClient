@@ -4,7 +4,6 @@ import net.engio.mbassy.bus.MBassador
 import org.stt.connector.jira.*
 import org.stt.event.NotifyUser
 import java.util.*
-import java.util.logging.Logger
 import javax.inject.Inject
 
 class JiraExpansionProvider @Inject
@@ -18,31 +17,21 @@ constructor(private val jiraConnector: JiraConnector,
             queryText = text.substring(spaceIndex, text.length).trim { it <= ' ' }
         }
 
-        try {
-            return jiraConnector.getIssue(queryText)
-                    .map { it.summary }
-                    .map { issue -> listOf(": $issue") }
-                    .orElse(emptyList())
+        return try {
+            jiraConnector.getIssue(queryText)?.summary?.let { listOf(": $it") } ?: emptyList()
         } catch (e: JiraConnectorException) {
             eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-            return emptyList()
+            emptyList()
         } catch (e: Exceptions) {
             eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-            return emptyList()
+            emptyList()
         } catch (e: InvalidCredentialsException) {
             eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-            return emptyList()
+            emptyList()
         } catch (e: IssueDoesNotExistException) {
             eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-            return emptyList()
+            emptyList()
         }
 
     }
-
-    companion object {
-
-        private val LOG = Logger.getLogger(JiraExpansionProvider::class.java
-                .name)
-    }
-
 }

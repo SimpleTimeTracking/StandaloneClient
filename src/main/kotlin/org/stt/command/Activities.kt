@@ -111,8 +111,7 @@ constructor(private val persister: ItemPersister,
 
     override fun bulkChangeActivity(itemsToChange: Collection<TimeTrackingItem>, activity: String) {
         val updatedItems = persister.updateActivitities(itemsToChange, activity)
-        updatedItems.stream()
-                .map { updatedItem -> ItemReplaced(updatedItem.original, updatedItem.updated) }
+        updatedItems.map { updatedItem -> ItemReplaced(updatedItem.original, updatedItem.updated) }
                 .forEach { publisher.publish(it) }
     }
 

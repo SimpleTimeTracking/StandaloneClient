@@ -4,7 +4,6 @@ import net.rcarz.jiraclient.*
 import org.stt.Service
 import org.stt.config.JiraConfig
 import java.nio.charset.StandardCharsets
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,21 +12,16 @@ import javax.inject.Singleton
 class JiraConnector @Inject
 constructor(configuration: JiraConfig) : Service {
     private val client: JiraClient?
-    private var projectsCache: Set<String>? = null
 
-    val projectNames: Set<String>?
-        get() {
-            if (projectsCache == null) {
-                projectsCache = internalGetProjectNames()
-            }
-            return projectsCache
-        }
+    private val projectNames: Set<String> by lazy {
+        internalGetProjectNames()
+    }
 
     init {
         val jiraURI = configuration.jiraURI
         client = jiraURI?.let {
             if (configuration.jiraUsername != null
-                    && !configuration.jiraUsername!!.isEmpty()
+                    && configuration.jiraUsername!!.isNotEmpty()
                     && configuration.jiraPassword != null) {
                 JiraClient(jiraURI,
                         BasicCredentials(configuration.jiraUsername,
@@ -47,22 +41,20 @@ constructor(configuration: JiraConfig) : Service {
         // no cleanup
     }
 
-    fun getIssue(issueKey: String): Optional<Issue> {
+    fun getIssue(issueKey: String): Issue? {
         if (client == null) {
-            return Optional.empty()
+            return null
         }
 
         val projectKey = getProjectKey(issueKey)
 
         // Check if the given project key belongs to an existing project
         if (!projectExists(projectKey)) {
-            return Optional.empty()
+            return null
         }
 
         try {
-            val jiraIssue = client.getIssue(issueKey)
-
-            return Optional.of(jiraIssue)
+            return client.getIssue(issueKey)
         } catch (e: JiraException) {
             if (e.cause is RestException) {
                 val cause = e.cause as RestException
@@ -79,20 +71,14 @@ constructor(configuration: JiraConfig) : Service {
     }
 
     private fun projectExists(projectKey: String): Boolean {
-        return projectNames!!.contains(projectKey)
+        return projectNames.contains(projectKey)
     }
 
     private fun getProjectKey(issueKey: String): String {
         val index = issueKey.lastIndexOf('-')
 
         // Extract the project key
-        val projectKey: String
-        if (index > 0) {
-            projectKey = issueKey.substring(0, index)
-        } else {
-            projectKey = issueKey
-        }
-        return projectKey
+        return if (index > 0) issueKey.substring(0, index) else issueKey
     }
 
     private fun internalGetProjectNames(): Set<String> {

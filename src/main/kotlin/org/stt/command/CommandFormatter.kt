@@ -26,22 +26,20 @@ constructor(private val commandTextParser: CommandTextParser,
         }
         return if (result is LocalDateTime) {
             EndCurrentItem(result)
-        } else result as? Command ?: DoNothing.INSTANCE
+        } else result as? Command ?: DoNothing
     }
 
     fun asNewItemCommandText(item: TimeTrackingItem): String {
-        val start: String
-        if (DateTimes.isToday(item.start)) {
-            start = timeFormatter.format(item.start.toLocalTime())
+        val start = if (DateTimes.isToday(item.start)) {
+            timeFormatter.format(item.start.toLocalTime())
         } else {
-            start = dateTimeFormatter.format(item.start)
+            dateTimeFormatter.format(item.start)
         }
         return item.end?.let { endDateTime ->
-            val end: String
-            if (DateTimes.isToday(endDateTime)) {
-                end = timeFormatter.format(endDateTime.toLocalTime())
+            val end = if (DateTimes.isToday(endDateTime)) {
+                timeFormatter.format(endDateTime.toLocalTime())
             } else {
-                end = dateTimeFormatter.format(endDateTime)
+                dateTimeFormatter.format(endDateTime)
             }
             String.format("%s from %s to %s", item.activity, start, end)
         } ?: String.format("%s since %s", item.activity, start)

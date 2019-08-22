@@ -76,31 +76,15 @@ class Criteria {
         return this
     }
 
-    fun matches(item: TimeTrackingItem): Boolean {
-        if (!item.start.isBefore(startBefore)) {
-            return false
-        }
-        if (item.start.isBefore(startNotBefore)) {
-            return false
-        }
-        if (endNotAfter != null && item.end?.isAfter(endNotAfter) != false) {
-            return false
-        }
-        if (endBefore != null && item.end?.isBefore(endBefore) != true) {
-            return false
-        }
-        if (!item.activity.contains(activityContains)) {
-            return false
-        }
-        if (startsAt != null && item.start != startsAt) {
-            return false
-        }
-        if (endsAt != null && endsAt != item.end) {
-            return false
-        }
-        if (activityIs != null && activityIs != item.activity) {
-            return false
-        }
-        return activityIsNot != item.activity
+    fun matches(item: TimeTrackingItem): Boolean = when {
+        !item.start.isBefore(startBefore) -> false
+        item.start.isBefore(startNotBefore) -> false
+        endNotAfter != null && item.end?.isAfter(endNotAfter) != false -> false
+        endBefore != null && item.end?.isBefore(endBefore) != true -> false
+        !item.activity.contains(activityContains) -> false
+        startsAt != null && item.start != startsAt -> false
+        endsAt != null && endsAt != item.end -> false
+        activityIs != null && activityIs != item.activity -> false
+        else -> activityIsNot != item.activity
     }
 }
