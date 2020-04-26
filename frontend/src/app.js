@@ -9,11 +9,7 @@ let vm = new Vue({
     el: "#app",
     data: function () {
         return {
-            activities: [{
-                start: 2, end: 3, activity: "ttt"
-            }, {
-                start: 1, activity: "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
-            }, { "start": 1399089839, "end": 1399093439, "activity": "item 0" }]
+            activities: null
         }
     },
     render: function (h) {
@@ -21,10 +17,19 @@ let vm = new Vue({
     }
 });
 
+window.vm = vm;
 window.onload = function () { init(); };
 
 function updateActivities(activities) {
     vm.activities = activities;
 }
 
-export { updateActivities };
+function commandError(msg) {
+    console.log(msg);
+}
+
+function commandAccepted() {
+    vm.$children[0].$refs.command.clearCommand();
+}
+
+export { updateActivities, commandError, commandAccepted };

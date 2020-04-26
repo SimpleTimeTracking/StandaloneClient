@@ -44,7 +44,7 @@ fn main() {
     web_view::builder()
         .title("STT")
         .content(Content::Html(html))
-        .size(600, 600)
+        .size(800, 600)
         .resizable(false)
         .debug(true)
         .user_data(())
@@ -58,21 +58,27 @@ fn main() {
                     stt_file.push("activities");
                     let file = File::open(stt_file).unwrap();
                     let reader = BufReader::new(file);
-                    let items: Vec<TimeTrackingItem> = reader
+                    let mut items: Vec<TimeTrackingItem> = reader
                         .lines()
                         .filter_map(|l| TimeTrackingItem::from_str(&l.unwrap()).ok())
                         .collect();
+                    items.sort_by(|a, b| b.start.partial_cmp(&a.start).unwrap());
                     let blub = format!(
                         "app.updateActivities({})",
                         serde_json::to_string(&items).unwrap()
                     );
                     webview.eval(&blub).unwrap();
                 }
-                AddActivity { activity } => {
-                    if !activity.is_empty() {
-                        println!("Added activity {}", activity);
+                AddActivity { activity } => match commands::command(&activity) {
+                    Ok(cmd) => {
+                        println!("Added activity {:?}", cmd);
+                        webview.eval("app.commandAccepted();")?;
                     }
-                }
+                    Err(msg) => {
+                        println!("Invalid activity {}", msg);
+                        webview.eval("app.commandError('error');")?;
+                    }
+                },
                 Quit => webview.exit(),
             }
             Ok(())

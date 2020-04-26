@@ -9,7 +9,7 @@
     <input id="tab-4" type="radio" name="tabgroupB" />
     <label class="pseudo button toggle" for="tab-4">Info</label>
     <div class="row">
-      <activities v-bind:activities="activities"></activities>
+      <activities ref="command" v-bind:activities="activities"></activities>
 
       <div></div>
 
@@ -47,5 +47,35 @@ html,
 body {
   height: 100%;
   margin: 0;
+  font-size: 1em;
+  line-height: normal;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(0.6);
+  }
+}
+
+.busy-indicator {
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  background-color: blue;
+  animation: pulse 1s infinite;
+  margin: auto;
 }
 </style>

@@ -2,40 +2,81 @@ use chrono::format::{Item, ParseResult, Parsed};
 use chrono::prelude::*;
 use chrono::serde::ts_seconds;
 use lazy_static::lazy_static;
-use serde::Deserializer;
-use serde::Serializer;
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
+use std::cmp::Ordering;
 use std::str::FromStr;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, Eq, PartialEq)]
 pub struct TimeTrackingItem {
     #[serde(with = "ts_seconds")]
-    start: DateTime<Utc>,
-    #[serde(
-        default,
-        deserialize_with = "de_opt_date_time",
-        serialize_with = "ser_opt_date_time"
-    )]
-    end: Option<DateTime<Utc>>,
-    activity: String,
+    pub start: DateTime<Utc>,
+    pub end: Ending,
+    pub activity: String,
 }
 
-fn de_opt_date_time<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    chrono::serde::ts_seconds::deserialize(deserializer).map(Some)
+#[derive(Deserialize, Serialize, Copy, Clone, Debug, Eq, PartialEq)]
+pub enum Ending {
+    Open,
+    At(#[serde(with = "ts_seconds")] DateTime<Utc>),
 }
 
-fn ser_opt_date_time<S>(t: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    if let Some(dt) = t {
-        chrono::serde::ts_seconds::serialize(dt, serializer)
-    } else {
-        serializer.serialize_none()
+impl PartialEq<DateTime<Utc>> for Ending {
+    fn eq(&self, other: &DateTime<Utc>) -> bool {
+        match self {
+            Ending::Open => false,
+            Ending::At(ts) => ts == other,
+        }
+    }
+}
+
+impl PartialOrd<DateTime<Utc>> for Ending {
+    fn partial_cmp(&self, other: &DateTime<Utc>) -> Option<Ordering> {
+        match self {
+            Ending::Open => Some(Ordering::Greater),
+            Ending::At(ts) => Some(ts.cmp(other)),
+        }
+    }
+}
+
+impl PartialOrd<Ending> for DateTime<Utc> {
+    fn partial_cmp(&self, other: &Ending) -> Option<Ordering> {
+        match other {
+            Ending::Open => None,
+            Ending::At(ts) => Some(self.cmp(ts)),
+        }
+    }
+}
+
+impl PartialEq<Ending> for DateTime<Utc> {
+    fn eq(&self, other: &Ending) -> bool {
+        match other {
+            Ending::Open => false,
+            Ending::At(ts) => self == ts,
+        }
+    }
+}
+
+impl Ord for Ending {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self {
+            Ending::Open => {
+                if *other == Ending::Open {
+                    Ordering::Equal
+                } else {
+                    Ordering::Greater
+                }
+            }
+            Ending::At(my_ts) => match other {
+                Ending::Open => Ordering::Less,
+                Ending::At(other_ts) => my_ts.cmp(other_ts),
+            },
+        }
+    }
+}
+
+impl PartialOrd for Ending {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -43,7 +84,7 @@ impl TimeTrackingItem {
     fn starting_at(start: DateTime<Local>, activity: &str) -> Self {
         TimeTrackingItem {
             start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
-            end: Option::None,
+            end: Ending::Open,
             activity: activity.to_string(),
         }
     }
@@ -58,9 +99,27 @@ impl TimeTrackingItem {
         } else {
             Ok(TimeTrackingItem {
                 start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
-                end: Some(DateTime::<Utc>::from(end.with_nanosecond(0).unwrap())),
+                end: Ending::At(DateTime::<Utc>::from(end.with_nanosecond(0).unwrap())),
                 activity: activity.to_string(),
             })
+        }
+    }
+
+    fn to_storage_line(&self) -> String {
+        let start = DateTime::<Local>::from(self.start).format_with_items(FORMAT.iter().cloned());
+        if let Ending::At(end) = self.end {
+            format!(
+                "{start} {end} {activity}",
+                start = start,
+                end = DateTime::<Local>::from(end).format_with_items(FORMAT.iter().cloned()),
+                activity = self.activity
+            )
+        } else {
+            format!(
+                "{start} {activity}",
+                start = start,
+                activity = self.activity
+            )
         }
     }
 }
@@ -112,36 +171,376 @@ impl FromStr for TimeTrackingItem {
     }
 }
 
-impl TimeTrackingItem {
-    fn to_storage_line(&self) -> String {
-        let start = DateTime::<Local>::from(self.start).format_with_items(FORMAT.iter().cloned());
-        if let Some(end) = self.end {
-            format!(
-                "{start} {end} {activity}",
-                start = start,
-                end = DateTime::<Local>::from(end).format_with_items(FORMAT.iter().cloned()),
-                activity = self.activity
-            )
-        } else {
-            format!(
-                "{start} {activity}",
-                start = start,
-                activity = self.activity
-            )
-        }
-    }
-}
-
 fn parse_stt_date_time(s: &str) -> ParseResult<DateTime<Local>> {
     let mut parsed = Parsed::new();
     chrono::format::parse(&mut parsed, s, FORMAT.iter().cloned())?;
     parsed.to_datetime_with_timezone(&Local)
 }
 
+trait Storage
+where
+    Self: IntoIterator<Item = TimeTrackingItem>,
+{
+    fn insert_item(&mut self, item: TimeTrackingItem);
+    fn delete_item(&mut self, item: &TimeTrackingItem);
+}
+
+impl Storage for Vec<TimeTrackingItem> {
+    fn insert_item(&mut self, item: TimeTrackingItem) {
+        let mut i = 0;
+        while i < self.len() && self[i].end < item.start {
+            i += 1;
+        }
+        if i < self.len() {
+            let last = &mut self[i];
+            if last.start < item.start && last.end > item.start {
+                let mut after = last.clone();
+                last.end = Ending::At(item.start);
+                i += 1;
+                if let Ending::At(end) = item.end {
+                    if after.end > end {
+                        after.start = end;
+                        self.insert(i, after);
+                    }
+                }
+            } else if last.start >= item.start && last.end <= item.end {
+                self.remove(i);
+            } else if item.start >= last.end {
+                i += 1;
+            }
+        }
+        let item_end = item.end;
+        self.insert(i, item);
+        i += 1;
+        if i < self.len() {
+            let last = &mut self[i];
+            if let Ending::At(end) = item_end {
+                if last.start < item_end && last.end > end {
+                    last.start = end;
+                }
+            }
+        }
+    }
+
+    fn delete_item(&mut self, item: &TimeTrackingItem) {
+        for i in 0..self.len() {
+            if self[i] == *item {
+                self.remove(i);
+                if i > 0 && i < self.len() && self[i - 1].end == item.start {
+                    match item.end {
+                        Ending::Open => (),
+                        Ending::At(end) => {
+                            if item.start.num_days_from_ce() == end.num_days_from_ce() {
+                                self[i - 1].end = item.end;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::*;
+    use crate::tti::*;
     use chrono::prelude::*;
+
+    #[test]
+    fn should_modify_end_on_overlap() {
+        // GIVEN
+        let mut times = vec![TimeTrackingItem::starting_at(
+            Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+            "test",
+        )];
+        let to_insert =
+            TimeTrackingItem::starting_at(Local.ymd(2020, 11, 10).and_hms(10, 10, 10), "test 2");
+
+        // WHEN
+        times.insert_item(to_insert);
+
+        // THEN
+        assert_eq!(
+            times[0].end,
+            Ending::At(Local.ymd(2020, 11, 10).and_hms(10, 10, 10).into())
+        );
+    }
+
+    #[test]
+    fn should_modify_start_on_overlap() {
+        // GIVEN
+        let mut times = vec![TimeTrackingItem::starting_at(
+            Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+            "test",
+        )];
+        let to_insert = TimeTrackingItem::interval(
+            Local.ymd(2020, 10, 10).and_hms(9, 10, 10),
+            Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+            "test 2",
+        )
+        .unwrap();
+
+        // WHEN
+        times.insert_item(to_insert);
+
+        // THEN
+        assert_eq!(
+            times[1].start,
+            DateTime::<Utc>::from(Local.ymd(2020, 10, 10).and_hms(11, 10, 10))
+        );
+    }
+
+    #[test]
+    fn should_split_up_overlap() {
+        // GIVEN
+        let mut times = vec![TimeTrackingItem::starting_at(
+            Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+            "test",
+        )];
+        let to_insert = TimeTrackingItem::interval(
+            Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+            Local.ymd(2020, 10, 10).and_hms(12, 10, 10),
+            "test 2",
+        )
+        .unwrap();
+
+        // WHEN
+        times.insert_item(to_insert);
+
+        // THEN
+        assert_eq!(
+            times[0].end,
+            Ending::At(Local.ymd(2020, 10, 10).and_hms(11, 10, 10).into())
+        );
+        assert_eq!(
+            times[2].start,
+            DateTime::<Utc>::from(Local.ymd(2020, 10, 10).and_hms(12, 10, 10))
+        );
+    }
+
+    #[test]
+    fn should_not_modify_others_on_non_overlapping() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                "test",
+            )
+            .unwrap(),
+        ];
+        let to_insert = TimeTrackingItem::interval(
+            Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+            Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+            "test 2",
+        )
+        .unwrap();
+
+        // WHEN
+        times.insert_item(to_insert);
+
+        // THEN
+        assert_eq!(
+            vec![
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    "test 2",
+                )
+                .unwrap(),
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+            ],
+            times
+        );
+    }
+
+    #[test]
+    fn should_delete_item() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(11, 20, 10),
+                Local.ymd(2020, 10, 10).and_hms(13, 00, 10),
+                "test 2",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                "test",
+            )
+            .unwrap(),
+        ];
+        // WHEN
+        times.delete_item(&times[1].clone());
+
+        // THEN
+        assert_eq!(
+            vec![
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+            ],
+            times
+        );
+    }
+
+    #[test]
+    fn should_close_new_gap_on_delete() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                "test 2",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                "test",
+            )
+            .unwrap(),
+        ];
+        // WHEN
+        times.delete_item(&times[1].clone());
+
+        // THEN
+        assert_eq!(
+            vec![
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+            ],
+            times
+        );
+    }
+
+    #[test]
+    fn should_not_close_gap_crossing_midnight() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                Local.ymd(2020, 10, 11).and_hms(13, 10, 10),
+                "test 2",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 11).and_hms(13, 10, 10),
+                Local.ymd(2020, 10, 11).and_hms(14, 10, 10),
+                "test",
+            )
+            .unwrap(),
+        ];
+        // WHEN
+        times.delete_item(&times[1].clone());
+
+        // THEN
+        assert_eq!(
+            vec![
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+                TimeTrackingItem::interval(
+                    Local.ymd(2020, 10, 11).and_hms(13, 10, 10),
+                    Local.ymd(2020, 10, 11).and_hms(14, 10, 10),
+                    "test",
+                )
+                .unwrap(),
+            ],
+            times
+        );
+    }
+
+    #[test]
+    fn should_not_close_gap_for_last_item() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                "test",
+            )
+            .unwrap(),
+        ];
+        // WHEN
+        times.delete_item(&times[1].clone());
+
+        // THEN
+        assert_eq!(
+            vec![TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),],
+            times
+        );
+    }
 
     #[test]
     fn should_round_start_to_second() {
@@ -166,7 +565,7 @@ mod test {
 
         // THEN
         assert_ne!(sut.start, start);
-        assert_ne!(sut.end.unwrap(), end);
+        assert_ne!(sut.end, Ending::At(end.into()));
     }
 
     #[test]
@@ -181,8 +580,8 @@ mod test {
         // THEN
         assert_eq!(result.start, Local.ymd(2017, 7, 1).and_hms(21, 6, 3));
         assert_eq!(
-            result.end.unwrap(),
-            Local.ymd(2017, 7, 1).and_hms(21, 6, 11)
+            result.end,
+            Ending::At(Local.ymd(2017, 7, 1).and_hms(21, 6, 11).into())
         );
         assert_eq!(result.activity, "bla bla blub blub")
     }
@@ -196,7 +595,7 @@ mod test {
 
         // THEN
         assert_eq!(result.start, Local.ymd(2022, 11, 1).and_hms(11, 6, 3));
-        assert_eq!(result.end, None);
+        assert_eq!(result.end, Ending::Open);
         assert_eq!(result.activity, "bla");
     }
 
@@ -263,7 +662,7 @@ mod test {
 
         // THEN
         assert_eq!(
-            "{\"start\":1667297163,\"end\":null,\"activity\":\"test\"}",
+            "{\"start\":1667297163,\"end\":\"Open\",\"activity\":\"test\"}",
             line
         );
     }
@@ -283,7 +682,7 @@ mod test {
 
         // THEN
         assert_eq!(
-            "{\"start\":1667297163,\"end\":1672567319,\"activity\":\"test again\"}",
+            "{\"start\":1667297163,\"end\":{\"At\":1672567319},\"activity\":\"test again\"}",
             line
         );
     }
@@ -304,5 +703,30 @@ mod test {
 
         // THEN
         assert_eq!(lines, result);
+    }
+
+    #[test]
+    fn open_should_be_same_as_open() {
+        assert_eq!(
+            Ending::Open.partial_cmp(&Ending::Open),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn open_should_be_after_any_date() {
+        assert_eq!(
+            Ending::Open.partial_cmp(&Utc.ymd(99999, 12, 31).and_hms(12, 12, 12)),
+            Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn ending_at_should_be_comparable() {
+        assert_eq!(
+            Ending::At(Utc.ymd(1, 1, 1).and_hms(1, 1, 1))
+                .partial_cmp(&Ending::At(Utc.ymd(99999, 12, 31).and_hms(12, 12, 12))),
+            Some(Ordering::Less)
+        );
     }
 }
