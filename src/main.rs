@@ -1,11 +1,12 @@
+#![windows_subsystem = "windows"]
+
 mod commands;
 mod tti;
 
+use chrono::prelude::*;
+use commands::{Command, TimeSpec};
 use serde::Deserialize;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::str::FromStr;
-use tti::TimeTrackingItem;
+use tti::{Connection, Database, TimeTrackingItem};
 use web_view::*;
 
 #[derive(Deserialize)]
@@ -53,16 +54,7 @@ fn main() {
 
             match serde_json::from_str(arg).unwrap() {
                 Init => {
-                    let mut stt_file = dirs::home_dir().unwrap();
-                    stt_file.push(".stt");
-                    stt_file.push("activities");
-                    let file = File::open(stt_file).unwrap();
-                    let reader = BufReader::new(file);
-                    let mut items: Vec<TimeTrackingItem> = reader
-                        .lines()
-                        .filter_map(|l| TimeTrackingItem::from_str(&l.unwrap()).ok())
-                        .collect();
-                    items.sort_by(|a, b| b.start.partial_cmp(&a.start).unwrap());
+                    let items = Database::open().unwrap().open_connection().query_n(3000);
                     let blub = format!(
                         "app.updateActivities({})",
                         serde_json::to_string(&items).unwrap()
@@ -70,8 +62,28 @@ fn main() {
                     webview.eval(&blub).unwrap();
                 }
                 AddActivity { activity } => match commands::command(&activity) {
-                    Ok(cmd) => {
-                        println!("Added activity {:?}", cmd);
+                    Ok((_, cmd)) => {
+                        match cmd {
+                            Command::StartActivity(time, activity) => {
+                                let date_time = match time {
+                                    TimeSpec::Now => Local::now(),
+                                    TimeSpec::Absolute(date_time) => date_time,
+                                    TimeSpec::Relative(delta) => Local::now() + delta,
+                                };
+                                let item = TimeTrackingItem::starting_at(date_time, &activity);
+                                println!("Added activity {:?}", item);
+                                let mut database = Database::open().unwrap();
+                                let connection = database.open_connection();
+                                connection.insert_item(item);
+                                let blub = format!(
+                                    "app.updateActivities({})",
+                                    serde_json::to_string(&connection.query_n(3000)).unwrap()
+                                );
+                                webview.eval(&blub).unwrap();
+                            }
+                            _ => (),
+                        }
+
                         webview.eval("app.commandAccepted();")?;
                     }
                     Err(msg) => {

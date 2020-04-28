@@ -9,7 +9,7 @@
     <input id="tab-4" type="radio" name="tabgroupB" />
     <label class="pseudo button toggle" for="tab-4">Info</label>
     <div class="row">
-      <activities ref="command" v-bind:activities="activities"></activities>
+      <activities ref="command" v-bind:items="items"></activities>
 
       <div></div>
 
@@ -21,15 +21,14 @@
 </template>
 
 <script>
-import Activities from "./Activities.vue";
+import Activities from "./Activities";
 import { quitApp } from "./rpc";
 
 export default {
   components: { Activities },
   props: {
-    activities: {
-      type: Array,
-      required: true
+    items: {
+      type: Array
     }
   },
   methods: {
@@ -47,7 +46,7 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-size: 1em;
+  font-size: 0.95em;
   line-height: normal;
 }
 

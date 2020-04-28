@@ -8,30 +8,28 @@
       <h4>Activities</h4>
       <div v-if="!ready" class="busy-indicator"></div>
       <table v-if="ready" id="activity-list">
+        <colgroup>
+          <col />
+          <col style="width: 6.8em;" />
+          <col style="width: 1em;" />
+          <col style="width: 6.8em;" />
+          <col style="width: 6em;" />
+        </colgroup>
         <tbody>
-          <tr v-for="item in matchingActivities.slice(0, 1000)" :key="item.start">
-            <td class="activity" @click="setActivity(item.activity)">{{item.activity}}</td>
-            <td class="time">{{as_lts(item.start)}}</td>
-            <td class="symbol">
-              <i v-if="item.end !== 'Open'" class="fas fa-fast-forward"></i>
-              <div class="running" v-if="item.end === 'Open'"></div>
-            </td>
-            <td class="time">{{as_lts(item.end)}}</td>
-            <td class="action">
-              <button class="stop" v-if="item.end">
-                <i class="fas fa-stop"></i>
-              </button>
-              <button class="continue" v-if="!item.end">
-                <i class="fas fa-play"></i>
-              </button>
-              <button class="edit">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="error">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
+          <template v-for="item in matchingItems.slice(0, 1000)">
+            <tr class="newday" v-if="item.newday" :key="'day' + item.newday">
+              <td colspan="5">
+                <fasi icon="calendar-alt"></fasi>
+                {{ as_ll(item.newday)}}
+              </td>
+            </tr>
+            <activity-row
+              v-if="item.activity"
+              v-bind:item="item.activity"
+              :key="item.start"
+              v-on:selected-activity="setActivity"
+            ></activity-row>
+          </template>
         </tbody>
       </table>
     </div>
@@ -40,31 +38,30 @@
 
 <script>
 import { addActivity } from "./rpc";
+import ActivityRow from "./ActivityRow";
 import moment from "moment";
+
 export default {
+  components: { ActivityRow },
   data: function() {
     return {
-      text: "",
-      start_of_day: moment()
-        .hour(0)
-        .minute(0)
-        .second(0)
+      text: ""
     };
   },
   computed: {
-    matchingActivities: function() {
+    matchingItems: function() {
       let filter = this.text;
-      if (filter === "") return this.activities;
+      if (filter.length < 4) return this.items;
       else
-        return this.activities.filter(function(a) {
-          return a.activity.indexOf(filter) >= 0;
+        return this.items.filter(function(a) {
+          return !a.activity || a.activity.activity.indexOf(filter) >= 0;
         });
     },
     ready: function() {
-      return this.activities;
+      return this.items;
     }
   },
-  props: ["activities"],
+  props: ["items"],
   methods: {
     checkSubmit: function(evt) {
       if (evt.ctrlKey && evt.key === "Enter") {
@@ -74,18 +71,11 @@ export default {
     clearCommand: function() {
       this.text = "";
     },
-    as_lts: function(ts) {
-      if (ts === "Open") return undefined;
-      let date = ts["At"] ? moment(ts["At"] * 1000) : moment(ts * 1000);
-      let delta = this.start_of_day.diff(date);
-      if (delta >= 0 && delta < 86400) {
-        return date.format("LTS");
-      } else {
-        return date.format("lll");
-      }
-    },
     setActivity: function(activity) {
       this.text = activity;
+    },
+    as_ll: function(moment) {
+      return moment.format("ll");
     }
   }
 };
@@ -101,52 +91,7 @@ export default {
   table-layout: fixed;
 }
 
-#activity-list td {
-  overflow-wrap: break-word;
-}
-
-td.time {
-  white-space: nowrap;
-  width: 12em;
-  text-align: right;
-  padding-right: 1em;
-}
-
-td.symbol {
-  width: 1em;
-  padding-right: 1em;
-}
-
-td.action {
-  width: 6em;
-  white-space: nowrap;
-}
-
-.action > button {
-  margin: 0px;
-  padding: 0em 0.3em;
-  display: none;
-}
-
-tr:hover .action > button {
-  display: initial;
-}
-
-.running {
-  border: 0.3em solid #f3f3f3;
-  border-top: 0.3em solid #3498db;
-  border-radius: 50%;
-  width: 1em;
-  height: 1em;
-  animation: spin 8s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+.newday {
+  color: cornflowerblue;
 }
 </style>

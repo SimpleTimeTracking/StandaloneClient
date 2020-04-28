@@ -4,6 +4,9 @@ use chrono::serde::ts_seconds;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
+use std::fs::File;
+use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::path::PathBuf;
 use std::str::FromStr;
 
 #[derive(Deserialize, Serialize, Clone, Debug, Eq, PartialEq)]
@@ -81,7 +84,7 @@ impl PartialOrd for Ending {
 }
 
 impl TimeTrackingItem {
-    fn starting_at(start: DateTime<Local>, activity: &str) -> Self {
+    pub fn starting_at(start: DateTime<Local>, activity: &str) -> Self {
         TimeTrackingItem {
             start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
             end: Ending::Open,
@@ -89,7 +92,7 @@ impl TimeTrackingItem {
         }
     }
 
-    fn interval(
+    pub fn interval(
         start: DateTime<Local>,
         end: DateTime<Local>,
         activity: &str,
@@ -177,15 +180,58 @@ fn parse_stt_date_time(s: &str) -> ParseResult<DateTime<Local>> {
     parsed.to_datetime_with_timezone(&Local)
 }
 
-trait Storage
+pub trait Connection
 where
     Self: IntoIterator<Item = TimeTrackingItem>,
 {
     fn insert_item(&mut self, item: TimeTrackingItem);
     fn delete_item(&mut self, item: &TimeTrackingItem);
+    fn query_n(&self, limit: usize) -> Vec<TimeTrackingItem>;
 }
 
-impl Storage for Vec<TimeTrackingItem> {
+pub struct Database {
+    stt_file: PathBuf,
+    content: Vec<TimeTrackingItem>,
+}
+
+impl Database {
+    pub fn open() -> std::io::Result<Database> {
+        let mut stt_file = dirs::home_dir().unwrap();
+        stt_file.push(".stt");
+        stt_file.push("activities");
+        let file = File::open(&stt_file)?;
+        let reader = BufReader::new(file);
+        let mut content: Vec<TimeTrackingItem> = reader
+            .lines()
+            .filter_map(|l| TimeTrackingItem::from_str(&l.unwrap()).ok())
+            .collect();
+        content.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap());
+        Ok(Database { stt_file, content })
+    }
+
+    pub fn open_connection(&mut self) -> &mut impl Connection {
+        &mut self.content
+    }
+}
+
+impl Drop for Database {
+    fn drop(&mut self) {
+        let file = File::create(&self.stt_file).unwrap();
+        let mut writer = BufWriter::new(file);
+        for line in &self.content {
+            writeln!(writer, "{}", line.to_storage_line()).unwrap();
+        }
+    }
+}
+
+impl Connection for Vec<TimeTrackingItem> {
+    fn query_n(&self, limit: usize) -> Vec<TimeTrackingItem> {
+        let mut query_result = self.clone();
+        query_result.reverse();
+        query_result.truncate(limit);
+        query_result
+    }
+
     fn insert_item(&mut self, item: TimeTrackingItem) {
         let mut i = 0;
         while i < self.len() && self[i].end < item.start {
@@ -219,6 +265,9 @@ impl Storage for Vec<TimeTrackingItem> {
                     last.start = end;
                 }
             }
+        }
+        while i < self.len() && self[i].end <= item_end {
+            self.remove(i);
         }
     }
 
@@ -368,6 +417,67 @@ mod test {
                 )
                 .unwrap(),
             ],
+            times
+        );
+    }
+
+    #[test]
+    fn should_delete_covered_items() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                "test",
+            )
+            .unwrap(),
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(12, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                "test 3",
+            )
+            .unwrap(),
+        ];
+        let to_insert =
+            TimeTrackingItem::starting_at(Local.ymd(2020, 10, 10).and_hms(9, 10, 10), "test 2");
+
+        // WHEN
+        times.insert_item(to_insert);
+
+        // THEN
+        assert_eq!(
+            vec![TimeTrackingItem::starting_at(
+                Local.ymd(2020, 10, 10).and_hms(9, 10, 10),
+                "test 2",
+            )],
+            times
+        );
+    }
+
+    #[test]
+    fn should_delete_covered_open_items() {
+        // GIVEN
+        let mut times = vec![
+            TimeTrackingItem::interval(
+                Local.ymd(2020, 10, 10).and_hms(12, 10, 10),
+                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                "test 3",
+            )
+            .unwrap(),
+            TimeTrackingItem::starting_at(Local.ymd(2020, 10, 10).and_hms(14, 10, 10), "test"),
+        ];
+        let to_insert =
+            TimeTrackingItem::starting_at(Local.ymd(2020, 10, 10).and_hms(9, 10, 10), "test 2");
+
+        // WHEN
+        times.insert_item(to_insert);
+
+        // THEN
+        assert_eq!(
+            vec![TimeTrackingItem::starting_at(
+                Local.ymd(2020, 10, 10).and_hms(9, 10, 10),
+                "test 2",
+            )],
             times
         );
     }
