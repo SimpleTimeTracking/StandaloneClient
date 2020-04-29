@@ -16,14 +16,15 @@
           <col style="width: 6em;" />
         </colgroup>
         <tbody>
-          <template v-for="item in matchingItems.slice(0, 1000)">
-            <tr class="newday" v-if="item.newday" :key="'day' + item.newday">
+          <template v-for="item in matchingItems.slice(0,1000)">
+            <tr class="newday" v-show="item.show" v-if="item.newday" :key="'day' + item.newday">
               <td colspan="5">
                 <fasi icon="calendar-alt"></fasi>
                 {{ as_ll(item.newday)}}
               </td>
             </tr>
             <activity-row
+              v-show="item.show"
               v-if="item.activity"
               v-bind:item="item.activity"
               :key="item.start"
@@ -50,12 +51,26 @@ export default {
   },
   computed: {
     matchingItems: function() {
-      let filter = this.text;
-      if (filter.length < 4) return this.items;
-      else
-        return this.items.filter(function(a) {
-          return !a.activity || a.activity.activity.indexOf(filter) >= 0;
-        });
+      let filter = this.text.toLowerCase();
+      let j = 0;
+      let lastNewDay = null;
+      for (let i = 0; j < 1000 && i < this.items.length; i++) {
+        let a = this.items[i];
+        if (a.newday) {
+          lastNewDay = a;
+          a.show = false;
+        } else if (
+          filter.length < 4 ||
+          a.activity.activity.toLowerCase().indexOf(filter) >= 0
+        ) {
+          j++;
+          a.show = true;
+          lastNewDay.show = true;
+        } else {
+          a.show = false;
+        }
+      }
+      return this.items;
     },
     ready: function() {
       return this.items;

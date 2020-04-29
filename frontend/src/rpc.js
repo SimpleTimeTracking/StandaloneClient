@@ -16,7 +16,7 @@ function quitApp() {
 function init() {
     if (typeof window.external.invoke === "undefined") {
         console.log("DEMO DATA");
-        updateActivities([
+        let demoData = [
             { "start": moment().unix(), "end": "Open", "activity": "ONLY FOR TEST" },
             { "start": moment().subtract(1, 'day').unix(), "end": "Open", "activity": "ONLY FOR TEST" },
             { "start": 1557945827, "end": { "At": 1557946718 }, "activity": "asdfs" },
@@ -28,7 +28,11 @@ function init() {
             { "start": 1499193844, "end": { "At": 1499193850 }, "activity": "DAF-11012: sdfsdfsdff" },
             { "start": 1499193838, "end": { "At": 1499193844 }, "activity": "DAF-10012: sdfsdf" },
             { "start": 1499193805, "end": { "At": 1499193838 }, "activity": "item 9999 aaa" }
-        ]);
+        ];
+        for (let i = 0; i < 20000; i++) {
+            demoData.push({ "start": 1499193805 - i * 1000000, "end": { "At": 1499193838 - i * 1000000 }, "activity": "item " + i + " aaa" });
+        }
+        updateActivities(demoData);
     } else {
         invoke({ cmd: "init" });
     }

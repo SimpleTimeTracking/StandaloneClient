@@ -45,7 +45,7 @@ function updateActivities(activities) {
             }
         });
     });
-    vm.items = items;
+    vm.items = Object.freeze(items);
 }
 
 function commandError(msg) {
