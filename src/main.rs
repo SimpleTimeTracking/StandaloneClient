@@ -1,19 +1,22 @@
 #![windows_subsystem = "windows"]
 
 mod commands;
+mod database;
 mod tti;
 
 use chrono::prelude::*;
 use commands::{Command, TimeSpec};
+use database::{Connection, Database};
 use serde::Deserialize;
-use tti::{Connection, Database, TimeTrackingItem};
+use tti::TimeTrackingItem;
 use web_view::*;
 
 #[derive(Deserialize)]
 #[serde(tag = "cmd", rename_all = "camelCase")]
 pub enum Cmd {
     Init,
-    AddActivity { activity: String },
+    ExecuteCommand { activity: String },
+    DeleteActivity { activity: TimeTrackingItem },
     Quit,
 }
 
@@ -51,35 +54,42 @@ fn main() {
         .user_data(())
         .invoke_handler(|webview, arg| {
             use Cmd::*;
+            println!("{}", arg);
 
             match serde_json::from_str(arg).unwrap() {
                 Init => {
-                    let items = Database::open().unwrap().open_connection().query_n(3000);
-                    let blub = format!(
-                        "app.updateActivities({})",
-                        serde_json::to_string(&items).unwrap()
-                    );
-                    webview.eval(&blub).unwrap();
+                    update_activities(webview, Database::open().unwrap().open_connection())?;
                 }
-                AddActivity { activity } => match commands::command(&activity) {
+                ExecuteCommand { activity } => match commands::command(&activity) {
                     Ok((_, cmd)) => {
                         match cmd {
                             Command::StartActivity(time, activity) => {
-                                let date_time = match time {
-                                    TimeSpec::Now => Local::now(),
-                                    TimeSpec::Absolute(date_time) => date_time,
-                                    TimeSpec::Relative(delta) => Local::now() + delta,
+                                let item = match time {
+                                    TimeSpec::Interval { from, to } => {
+                                        TimeTrackingItem::interval(from, to, &activity)
+                                            .map_err(|e| web_view::Error::custom(e))?
+                                    }
+                                    _ => TimeTrackingItem::starting_at(
+                                        time.to_date_time(),
+                                        &activity,
+                                    ),
                                 };
-                                let item = TimeTrackingItem::starting_at(date_time, &activity);
-                                println!("Added activity {:?}", item);
                                 let mut database = Database::open().unwrap();
                                 let connection = database.open_connection();
                                 connection.insert_item(item);
-                                let blub = format!(
-                                    "app.updateActivities({})",
-                                    serde_json::to_string(&connection.query_n(3000)).unwrap()
-                                );
-                                webview.eval(&blub).unwrap();
+                                update_activities(webview, connection)?;
+                            }
+                            Command::Fin(time) => {
+                                let mut database = Database::open().unwrap();
+                                let connection = database.open_connection();
+                                let item = connection.query_latest();
+                                if let Some(item) = item {
+                                    let mut item = item.clone();
+                                    connection.delete_item(&item).unwrap();
+                                    item.end = tti::Ending::At(time.to_date_time().into());
+                                    connection.insert_item(item);
+                                    update_activities(webview, connection)?;
+                                }
                             }
                             _ => (),
                         }
@@ -91,12 +101,26 @@ fn main() {
                         webview.eval("app.commandError('error');")?;
                     }
                 },
+                DeleteActivity { activity } => {
+                    let mut database = Database::open().unwrap();
+                    let connection = database.open_connection();
+                    connection.delete_item(&activity).unwrap();
+                    update_activities(webview, connection)?;
+                }
                 Quit => webview.exit(),
             }
             Ok(())
         })
         .run()
         .unwrap();
+}
+
+fn update_activities<T>(webview: &mut WebView<T>, connection: &impl Connection) -> WVResult {
+    let update_activities = format!(
+        "app.updateActivities({})",
+        serde_json::to_string(&connection.query_n(3000)).unwrap()
+    );
+    webview.eval(&update_activities)
 }
 
 fn inline_style(s: &str) -> String {

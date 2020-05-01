@@ -16,19 +16,31 @@
           <col style="width: 6em;" />
         </colgroup>
         <tbody>
-          <template v-for="item in matchingItems.slice(0,1000)">
-            <tr class="newday" v-show="item.show" v-if="item.newday" :key="'day' + item.newday">
+          <template v-for="item in matchingItems.slice(0,600)">
+            <tr
+              class="newday"
+              v-show="item.show == version"
+              v-if="item.newday"
+              :key="'day' + item.newday"
+            >
               <td colspan="5">
                 <fasi icon="calendar-alt"></fasi>
                 {{ as_ll(item.newday)}}
               </td>
             </tr>
+            <tr v-show="item.show == version" v-if="item.gap" :key="'gap' + item.gap">
+              <td colspan="5">
+                <fasi class="error" icon="exclamation-triangle"></fasi>
+                <span>Gap between items on same day</span>
+              </td>
+            </tr>
             <activity-row
-              v-show="item.show"
+              v-show="item.show == version"
               v-if="item.activity"
               v-bind:item="item.activity"
               :key="item.start"
-              v-on:selected-activity="setActivity"
+              @selected-activity="setActivity"
+              @delete-item="deleteItem"
             ></activity-row>
           </template>
         </tbody>
@@ -38,36 +50,47 @@
 </template>
 
 <script>
-import { addActivity } from "./rpc";
+import { addActivity, deleteActivity } from "./rpc";
 import ActivityRow from "./ActivityRow";
-import moment from "moment";
+
+let tsFormat = new Intl.DateTimeFormat(undefined, {
+  weekday: "short",
+  year: "numeric",
+  month: "short",
+  day: "numeric"
+});
 
 export default {
   components: { ActivityRow },
   data: function() {
     return {
-      text: ""
+      text: "",
+      version: 0
     };
   },
   computed: {
     matchingItems: function() {
+      this.version++;
       let filter = this.text.toLowerCase();
+
       let j = 0;
       let lastNewDay = null;
-      for (let i = 0; j < 1000 && i < this.items.length; i++) {
+      for (let i = 0; i < this.items.length; i++) {
         let a = this.items[i];
         if (a.newday) {
           lastNewDay = a;
-          a.show = false;
+        } else if (a.gap) {
+          a.show = filter.length < 4 ? this.version : 0;
         } else if (
           filter.length < 4 ||
           a.activity.activity.toLowerCase().indexOf(filter) >= 0
         ) {
           j++;
-          a.show = true;
-          lastNewDay.show = true;
-        } else {
-          a.show = false;
+          if (j >= 600) {
+            break;
+          }
+          a.show = this.version;
+          lastNewDay.show = this.version;
         }
       }
       return this.items;
@@ -89,8 +112,11 @@ export default {
     setActivity: function(activity) {
       this.text = activity;
     },
-    as_ll: function(moment) {
-      return moment.format("ll");
+    deleteItem: function(activity) {
+      deleteActivity(activity);
+    },
+    as_ll: function(dateTime) {
+      return tsFormat.format(dateTime);
     }
   }
 };
@@ -108,5 +134,9 @@ export default {
 
 .newday {
   color: cornflowerblue;
+}
+
+svg.error {
+  color: #ff4136;
 }
 </style>

@@ -6,11 +6,10 @@ import App from './App.vue';
 import { init } from './rpc';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faStop, faPlay, faTrash, faEdit, faFastForward, faCalendarAlt } from '@fortawesome/free-solid-svg-icons'
+import { faStop, faPlay, faTrash, faEdit, faFastForward, faCalendarAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import moment from "moment";
 
-library.add(faStop, faPlay, faTrash, faEdit, faFastForward, faCalendarAlt);
+library.add(faStop, faPlay, faTrash, faEdit, faFastForward, faCalendarAlt, faExclamationTriangle);
 Vue.component('fasi', FontAwesomeIcon);
 
 let vm = new Vue({
@@ -30,17 +29,25 @@ window.onload = function () { init(); };
 
 function updateActivities(activities) {
     let items = [];
-    let lastStartDay = null;
+    let previousStartDay = null;
+    let previousItemOfTodayStart = null;
     activities.forEach(a => {
-        let currentDay = moment.unix(a.start);
-        if (lastStartDay == null || !lastStartDay.isSame(currentDay, 'day')) {
+        let currentDay = new Date(a.start * 1000);
+        let currentDayTruncated = Math.trunc(currentDay.getTime() / 86400000);
+        if (previousStartDay === null || currentDayTruncated !== previousStartDay) {
             items.push({ 'newday': currentDay });
-            lastStartDay = currentDay;
+            previousStartDay = currentDayTruncated;
+            previousItemOfTodayStart = null;
+        } else {
+            if (previousItemOfTodayStart !== null && (a.end !== 'Open' ? a.end['At'] : null) !== previousItemOfTodayStart) {
+                items.push({ 'gap': a.start });
+            }
         }
+        previousItemOfTodayStart = a.start;
         items.push({
             'activity': {
-                start: moment.unix(a.start),
-                end: a.end !== 'Open' ? moment.unix(a.end['At']) : null,
+                start: new Date(a.start * 1000),
+                end: a.end !== 'Open' ? new Date(a.end['At'] * 1000) : null,
                 activity: a.activity
             }
         });

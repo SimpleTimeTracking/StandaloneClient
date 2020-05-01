@@ -4,9 +4,7 @@
         "build": "parcel build src/app.js --experimental-scope-hoisting --out-dir build --global app"
     },
     "dependencies": {
-        "moment": "^2.24.0",
         "picnic": "^6.5.2",
-        "rpc.js": "^0.4.3",
         "vue": "^2.6.11"
     },
     "devDependencies": {

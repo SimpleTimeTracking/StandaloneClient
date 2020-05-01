@@ -18,7 +18,7 @@
       <button class="edit">
         <fasi icon="edit"></fasi>
       </button>
-      <button class="error">
+      <button class="error" @click="$emit('delete-item', item)">
         <fasi icon="trash"></fasi>
       </button>
     </td>
@@ -26,20 +26,23 @@
 </template>
 
 <script>
-import moment from "moment";
-
-let now = moment();
+let now = Math.trunc(Date.now() / 86400000);
+let tsFormat = new Intl.DateTimeFormat(undefined, {
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric"
+});
 
 export default {
   props: ["item"],
   methods: {
     as_lts: function(ts) {
       if (!ts) return undefined;
-      return ts.format("LTS");
+      return tsFormat.format(ts);
     },
     isOverrun: function(item) {
-      let start = item.start;
-      return !start.isSame(now, "day");
+      let start = Math.trunc(item.start.getTime() / 86400000);
+      return now - start > 0;
     }
   }
 };
