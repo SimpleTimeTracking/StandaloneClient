@@ -4,7 +4,6 @@ mod commands;
 mod database;
 mod tti;
 
-use chrono::prelude::*;
 use commands::{Command, TimeSpec};
 use database::{Connection, Database};
 use serde::Deserialize;
@@ -67,7 +66,7 @@ fn main() {
                                 let item = match time {
                                     TimeSpec::Interval { from, to } => {
                                         TimeTrackingItem::interval(from, to, &activity)
-                                            .map_err(|e| web_view::Error::custom(e))?
+                                            .map_err(web_view::Error::custom)?
                                     }
                                     _ => TimeTrackingItem::starting_at(
                                         time.to_date_time(),
@@ -78,6 +77,19 @@ fn main() {
                                 let connection = database.open_connection();
                                 connection.insert_item(item);
                                 update_activities(webview, connection)?;
+                            }
+                            Command::ResumeLast(time) => {
+                                let mut database = Database::open().unwrap();
+                                let connection = database.open_connection();
+                                let latest_item = connection.query_latest();
+                                if let Some(latest_item) = latest_item {
+                                    let new_item = TimeTrackingItem::starting_at(
+                                        time.to_date_time(),
+                                        &latest_item.activity,
+                                    );
+                                    connection.insert_item(new_item);
+                                    update_activities(webview, connection)?;
+                                }
                             }
                             Command::Fin(time) => {
                                 let mut database = Database::open().unwrap();
@@ -91,7 +103,6 @@ fn main() {
                                     update_activities(webview, connection)?;
                                 }
                             }
-                            _ => (),
                         }
 
                         webview.eval("app.commandAccepted();")?;
