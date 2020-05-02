@@ -1,16 +1,19 @@
 use chrono::prelude::*;
 use chrono::Duration;
+use core::str::FromStr;
 use nom::branch::alt;
 use nom::bytes::complete::tag_no_case;
 use nom::character::complete::{anychar, char, digit1, multispace0, multispace1};
 use nom::combinator::all_consuming;
+use nom::combinator::map;
+use nom::combinator::map_res;
 use nom::combinator::opt;
-use nom::multi::many0;
+use nom::combinator::rest;
 use nom::multi::many_till;
 use nom::sequence::preceded;
+use nom::sequence::terminated;
 use nom::sequence::tuple;
 use nom::IResult;
-use std::fmt::Display;
 use std::iter::FromIterator;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -60,28 +63,29 @@ impl<I> nom::error::ParseError<I> for ErrorKind<I> {
     }
 }
 
-fn to_nom_err<F: Display, I>(err: F) -> nom::Err<ErrorKind<I>> {
-    nom::Err::Error(ErrorKind::InvalidDateTimeFormat(err.to_string()))
-}
-
 fn at_absolute_timespec(i: &str) -> Result<&str, TimeSpec> {
     let (i, (_, _, ts)) = tuple((tag_no_case("at"), multispace1, absolute_timespec))(i)?;
     Ok((i, ts))
 }
 
 fn fin(i: &str) -> Result<&str, Command> {
-    let (i, _) = tag_no_case("fin")(i)?;
-    let (i, ts) = opt(preceded(
-        multispace1,
-        alt((at_absolute_timespec, in_relative_timespec)),
+    let (i, (_, ts)) = tuple((
+        tag_no_case("fin"),
+        opt(preceded(
+            multispace1,
+            alt((at_absolute_timespec, in_relative_timespec)),
+        )),
     ))(i)?;
-    let ts = if let Some(ts) = ts { ts } else { TimeSpec::Now };
-    Ok((i, Command::Fin(ts)))
+    Ok((i, Command::Fin(ts.unwrap_or(TimeSpec::Now))))
+}
+
+fn parse_num<T: FromStr>(i: &str) -> Result<&str, T> {
+    Ok(map_res(digit1, |d: &str| d.parse::<T>())(i)?)
 }
 
 fn hours(i: &str) -> Result<&str, Duration> {
     let (i, (delta, _, _)) = tuple((
-        digit1,
+        parse_num,
         multispace0,
         alt((
             tag_no_case("hours"),
@@ -91,12 +95,12 @@ fn hours(i: &str) -> Result<&str, Duration> {
             tag_no_case("h"),
         )),
     ))(i)?;
-    Ok((i, Duration::hours(delta.parse::<i64>().unwrap())))
+    Ok((i, Duration::hours(delta)))
 }
 
 fn minutes(i: &str) -> Result<&str, Duration> {
     let (i, (delta, _, _)) = tuple((
-        digit1,
+        parse_num,
         multispace0,
         alt((
             tag_no_case("minutes"),
@@ -104,12 +108,12 @@ fn minutes(i: &str) -> Result<&str, Duration> {
             tag_no_case("min"),
         )),
     ))(i)?;
-    Ok((i, Duration::minutes(delta.parse::<i64>().unwrap())))
+    Ok((i, Duration::minutes(delta)))
 }
 
 fn seconds(i: &str) -> Result<&str, Duration> {
     let (i, (delta, _, _)) = tuple((
-        digit1,
+        parse_num,
         multispace0,
         alt((
             tag_no_case("seconds"),
@@ -119,41 +123,33 @@ fn seconds(i: &str) -> Result<&str, Duration> {
             tag_no_case("s"),
         )),
     ))(i)?;
-    Ok((i, Duration::seconds(delta.parse::<i64>().unwrap())))
+    Ok((i, Duration::seconds(delta)))
 }
 
 fn relative_time(i: &str) -> Result<&str, Duration> {
     let mut result = Duration::zero();
-    let mut hit = false;
-    let (i, h) = opt(hours)(i)?;
-    let i = if let Some(h) = h {
+    let (i, (h, m)) = tuple((
+        opt(terminated(hours, multispace0)),
+        opt(terminated(minutes, multispace0)),
+    ))(i)?;
+    let hit = h.is_some() || m.is_some();
+    if let Some(h) = h {
         result = result + h;
-        hit = true;
-        multispace0(i)?.0
-    } else {
-        i
-    };
+    }
 
-    let (i, m) = opt(minutes)(i)?;
-    let i = if let Some(m) = m {
+    if let Some(m) = m {
         result = result + m;
-        hit = true;
-        multispace0(i)?.0
-    } else {
-        i
-    };
+    }
     let i = if hit {
-        let (i, s) = opt(seconds)(i)?;
+        let (i, s) = opt(terminated(seconds, multispace0))(i)?;
         if let Some(s) = s {
             result = result + s;
-            multispace0(i)?.0
-        } else {
-            i
         }
+        i
     } else {
-        let (i, s) = seconds(i)?;
+        let (i, s) = terminated(seconds, multispace0)(i)?;
         result = result + s;
-        multispace0(i)?.0
+        i
     };
     let (i, ago) = opt(tag_no_case("ago"))(i)?;
     let result = if ago.is_some() { -result } else { result };
@@ -161,34 +157,24 @@ fn relative_time(i: &str) -> Result<&str, Duration> {
 }
 
 fn date(i: &str) -> Result<&str, Date<Local>> {
-    let (i, (y, _, m, _, d)) = tuple((digit1, char('.'), digit1, char('.'), digit1))(i)?;
-    let y = y.parse::<i32>().map_err(to_nom_err)?;
-    let m = m.parse::<u32>().map_err(to_nom_err)?;
-    let d = d.parse::<u32>().map_err(to_nom_err)?;
+    let (i, (y, _, m, _, d)) = tuple((parse_num, char('.'), parse_num, char('.'), parse_num))(i)?;
     Ok((i, Local.ymd(y, m, d)))
 }
 
 fn time(i: &str) -> Result<&str, NaiveTime> {
-    let (i, (h, _, m)) = tuple((digit1, char(':'), digit1))(i)?;
-    let (i, s) = opt(tuple((char(':'), digit1)))(i)?;
-    let s = if let Some((_, s)) = s {
-        s.parse::<u32>().map_err(to_nom_err)?
-    } else {
-        0
-    };
-    let h = h.parse::<u32>().map_err(to_nom_err)?;
-    let m = m.parse::<u32>().map_err(to_nom_err)?;
+    let (i, (h, _, m, s)) = tuple((
+        parse_num,
+        char(':'),
+        parse_num,
+        opt(preceded(char(':'), parse_num)),
+    ))(i)?;
+    let s = s.unwrap_or(0);
     Ok((i, NaiveTime::from_hms(h, m, s)))
 }
 
 fn absolute_date_time(i: &str) -> Result<&str, DateTime<Local>> {
-    let (i, date) = opt(tuple((date, multispace1)))(i)?;
-    let (i, time) = time(i)?;
-    let date = if let Some((date, _)) = date {
-        date
-    } else {
-        Local::today()
-    };
+    let (i, (date, time)) = tuple((opt(terminated(date, multispace1)), time))(i)?;
+    let date = date.unwrap_or_else(Local::today);
     Ok((i, date.and_time(time).unwrap()))
 }
 
@@ -199,21 +185,24 @@ fn absolute_timespec(i: &str) -> Result<&str, TimeSpec> {
 
 fn negative_relative_timespec(i: &str) -> Result<&str, TimeSpec> {
     let (i, d) = relative_time(i)?;
-    Ok((
-        i,
-        if d < Duration::zero() {
-            TimeSpec::Relative(d)
-        } else {
-            TimeSpec::Relative(-d)
-        },
-    ))
+    let d = if d < Duration::zero() {
+        TimeSpec::Relative(d)
+    } else {
+        TimeSpec::Relative(-d)
+    };
+    Ok((i, d))
 }
 
 fn from_to(i: &str) -> Result<&str, TimeSpec> {
-    let (i, _) = alt((tag_no_case("since"), tag_no_case("from")))(i)?;
-    let (i, from) = preceded(multispace1, absolute_date_time)(i)?;
-    let (i, _) = preceded(multispace1, alt((tag_no_case("to"), tag_no_case("until"))))(i)?;
-    let (i, to) = preceded(multispace1, absolute_date_time)(i)?;
+    let (i, (_, _, from, _, _, _, to)) = tuple((
+        alt((tag_no_case("since"), tag_no_case("from"))),
+        multispace1,
+        absolute_date_time,
+        multispace1,
+        alt((tag_no_case("to"), tag_no_case("until"))),
+        multispace1,
+        absolute_date_time,
+    ))(i)?;
     Ok((i, TimeSpec::Interval { from, to }))
 }
 
@@ -247,17 +236,20 @@ fn timespec(i: &str) -> Result<&str, TimeSpec> {
     Ok(alt((in_relative_timespec, from_to, since))(i)?)
 }
 
-fn activity_now(i: &str) -> Result<&str, (Vec<char>, TimeSpec)> {
-    let (i, activity) = many0(anychar)(i)?;
-    Ok((i, (activity, TimeSpec::Now)))
+fn activity_now(i: &str) -> Result<&str, (String, TimeSpec)> {
+    let (i, activity) = rest(i)?;
+    Ok((i, (activity.to_string(), TimeSpec::Now)))
 }
 
 fn start_activity(i: &str) -> Result<&str, Command> {
     let (i, (chars, ts)) = alt((
-        many_till(anychar, preceded(multispace1, all_consuming(timespec))),
+        map(
+            many_till(anychar, preceded(multispace1, all_consuming(timespec))),
+            |(a, t)| (String::from_iter(a), t),
+        ),
         activity_now,
     ))(i)?;
-    Ok((i, Command::StartActivity(ts, String::from_iter(chars))))
+    Ok((i, Command::StartActivity(ts, chars.to_string())))
 }
 
 fn resume_last(i: &str) -> Result<&str, Command> {
