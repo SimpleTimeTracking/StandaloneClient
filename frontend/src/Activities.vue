@@ -2,7 +2,13 @@
   <div>
     <div>
       <h4>Add or Update Activity</h4>
-      <textarea id="activity-text" autofocus="true" v-model="text" @keydown="checkSubmit"></textarea>
+      <textarea
+        id="activity-text"
+        ref="activityCommand"
+        autofocus="true"
+        v-model="text"
+        @keydown="checkSubmit"
+      ></textarea>
     </div>
     <div>
       <h4>Activities</h4>
@@ -111,6 +117,7 @@ export default {
     },
     setActivity: function(activity) {
       this.text = activity;
+      this.$refs.activityCommand.focus();
     },
     deleteItem: function(activity) {
       deleteActivity(activity);
