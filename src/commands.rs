@@ -249,7 +249,7 @@ fn start_activity(i: &str) -> Result<&str, Command> {
         ),
         activity_now,
     ))(i)?;
-    Ok((i, Command::StartActivity(ts, chars.to_string())))
+    Ok((i, Command::StartActivity(ts, chars)))
 }
 
 fn resume_last(i: &str) -> Result<&str, Command> {
