@@ -1,0 +1,12 @@
+matrix:
+    include:
+        - language: rust
+            rust:
+                - stable
+        - language: node_js
+                node_js: node
+                before_script:
+                    - cd frontend
+                script:
+                    - npm install
+                    - npm build
