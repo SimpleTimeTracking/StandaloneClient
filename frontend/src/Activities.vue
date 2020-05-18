@@ -110,6 +110,7 @@ export default {
     checkSubmit: function(evt) {
       if (evt.ctrlKey && evt.key === "Enter") {
         addActivity(this.text);
+        evt.preventDefault();
       }
     },
     clearCommand: function() {
