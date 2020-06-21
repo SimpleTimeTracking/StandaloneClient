@@ -7,6 +7,7 @@ mod tti;
 use commands::{Command, TimeSpec};
 use database::{Connection, Database};
 use serde::Deserialize;
+use std::time::Instant;
 use tti::TimeTrackingItem;
 use web_view::*;
 
@@ -61,6 +62,8 @@ fn main() {
                 }
                 ExecuteCommand { activity } => match commands::command(&activity) {
                     Ok((_, cmd)) => {
+                        let mut database = Database::open().unwrap();
+                        let connection = database.open_connection();
                         match cmd {
                             Command::StartActivity(time, activity) => {
                                 let item = match time {
@@ -73,14 +76,9 @@ fn main() {
                                         &activity,
                                     ),
                                 };
-                                let mut database = Database::open().unwrap();
-                                let connection = database.open_connection();
                                 connection.insert_item(item);
-                                update_activities(webview, connection)?;
                             }
                             Command::ResumeLast(time) => {
-                                let mut database = Database::open().unwrap();
-                                let connection = database.open_connection();
                                 let latest_item = connection.query_latest();
                                 if let Some(latest_item) = latest_item {
                                     let new_item = TimeTrackingItem::starting_at(
@@ -88,24 +86,21 @@ fn main() {
                                         &latest_item.activity,
                                     );
                                     connection.insert_item(new_item);
-                                    update_activities(webview, connection)?;
                                 }
                             }
                             Command::Fin(time) => {
-                                let mut database = Database::open().unwrap();
-                                let connection = database.open_connection();
                                 let item = connection.query_latest();
                                 if let Some(item) = item {
                                     let mut item = item.clone();
                                     connection.delete_item(&item).unwrap();
                                     item.end = tti::Ending::At(time.to_date_time().into());
                                     connection.insert_item(item);
-                                    update_activities(webview, connection)?;
                                 }
                             }
                         }
 
                         webview.eval("app.commandAccepted();")?;
+                        update_activities(webview, connection)?;
                     }
                     Err(msg) => {
                         println!("Invalid activity {}", msg);
@@ -127,10 +122,13 @@ fn main() {
 }
 
 fn update_activities<T>(webview: &mut WebView<T>, connection: &impl Connection) -> WVResult {
+    let i = Instant::now();
+    let result = connection.query_n(500);
     let update_activities = format!(
         "app.updateActivities({})",
-        serde_json::to_string(&connection.query_n(3000)).unwrap()
+        serde_json::to_string(&result).unwrap()
     );
+    println!("Preparing update : {} ms", i.elapsed().as_millis());
     webview.eval(&update_activities)
 }
 
