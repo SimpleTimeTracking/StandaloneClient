@@ -9,6 +9,7 @@ class ActivitiesConfig : ConfigurationContainer {
     var isAutoCompletionPopup = false
     var isCloseOnContinue = true
     var isDeleteClosesGaps = true
+    var isCloseOnStop = true
 
     var isGroupItems = true
 }

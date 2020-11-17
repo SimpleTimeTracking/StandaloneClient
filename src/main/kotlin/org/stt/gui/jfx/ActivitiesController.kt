@@ -188,7 +188,10 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
         LOG.fine { "Stopping item: $item" }
         States.requireThat(item.end == null, "Item to finish is already finished")
         activities.endCurrentActivity(EndCurrentItem(LocalDateTime.now()))
-        shutdown()
+
+        if (activitiesConfig.isCloseOnStop) {
+            shutdown()
+        }
     }
 
     @FXML
