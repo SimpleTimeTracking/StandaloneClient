@@ -5,15 +5,15 @@ import org.sonarqube.gradle.SonarQubeTask
 
 
 plugins {
-    val kotlinVersion = "1.3.50"
+    val kotlinVersion = "1.3.72"
     application
     jacoco
     idea
     antlr
     kotlin("jvm") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("org.sonarqube") version "2.7.1"
-    id("com.github.ben-manes.versions") version "0.22.0"
+    id("org.sonarqube") version "2.8"
+    id("com.github.ben-manes.versions") version "0.28.0"
 }
 
 repositories {
@@ -50,11 +50,11 @@ configurations {
 val spek_version = "2.0.4"
 
 dependencies {
-    val daggerVersion = "2.24"
-    antlr(group = "org.antlr", name = "antlr4", version = "4.7.2")
-    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.7.2")
-    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.1")
-    implementation("org.yaml:snakeyaml:1.25")
+    val daggerVersion = "2.27"
+    antlr(group = "org.antlr", name = "antlr4", version = "4.8-1")
+    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.8-1")
+    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.4")
+    implementation("org.yaml:snakeyaml:1.26")
     implementation("com.google.dagger:dagger:$daggerVersion")
     implementation("javax.inject:javax.inject:1")
     kapt("com.google.dagger:dagger-compiler:$daggerVersion")
@@ -63,11 +63,11 @@ dependencies {
     implementation("net.rcarz:jira-client:0.5")
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
-    implementation(files("/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext/jfxrt.jar"))
+    implementation(fileTree("/usr/lib/").matching { include("**/jfxrt.jar") })
 
     testImplementation("commons-io:commons-io:2.6")
-    testImplementation("org.mockito:mockito-core:3.0.0")
-    testImplementation("org.assertj:assertj-core:3.13.2")
+    testImplementation("org.mockito:mockito-core:3.3.3")
+    testImplementation("org.assertj:assertj-core:3.15.0")
     testImplementation("junit:junit-dep:4.11")
 }
 

@@ -30,7 +30,7 @@ class CommandModule {
                 dateTimeFormatter(FormatStyle.MEDIUM, FormatStyle.MEDIUM)))
     }
 
-    internal fun dateTimeFormatter(dateFormat: FormatStyle?, timeFormat: FormatStyle): DateTimeFormatter {
+    private fun dateTimeFormatter(dateFormat: FormatStyle?, timeFormat: FormatStyle): DateTimeFormatter {
         return DateTimeFormatterBuilder()
                 .parseLenient().appendLocalized(dateFormat, timeFormat).toFormatter()
     }

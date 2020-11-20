@@ -38,11 +38,7 @@ class OvertimeReportGenerator(private val queries: TimeTrackingItemQueries,
                     val currentDay = start.toLocalDate()
                     val currentDuration = dateToOvertime[currentDay]
                     val itemDuration = Duration.between(start, end ?: LocalDateTime.now())
-                    if (currentDuration != null) {
-                        dateToOvertime[currentDay] = currentDuration.plus(itemDuration)
-                    } else {
-                        dateToOvertime[currentDay] = itemDuration
-                    }
+                    dateToOvertime[currentDay] = currentDuration?.plus(itemDuration) ?: itemDuration
                 }
             }
 

@@ -67,7 +67,7 @@ abstract class JFXModule {
                         if (it is String && activitiesConfig.isGroupItems) {
                             return@flatMap dissect(grouper, it)
                         }
-                        Stream.of<Any>(it)
+                        Stream.of(it)
                     }
                 }
 

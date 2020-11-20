@@ -10,7 +10,6 @@ import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.input.KeyCode.*
 import javafx.scene.input.KeyCombination.CONTROL_DOWN
-import javafx.scene.input.KeyEvent
 import javafx.scene.layout.*
 import javafx.scene.text.Font
 import net.engio.mbassy.bus.MBassador
@@ -280,10 +279,10 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
 
         commandPane.center = VirtualizedScrollPane(textArea)
         Tooltip.install(textArea, Tooltip(localization.getString("activities.command.tooltip")))
-        Nodes.addInputMap(textArea, sequence<KeyEvent>(
-                consume<KeyEvent, KeyEvent>(keyPressed(ENTER, CONTROL_DOWN)) { executeCommand() },
-                consume<KeyEvent, KeyEvent>(keyPressed(SPACE, CONTROL_DOWN)) { expandCurrentCommand() },
-                consume<KeyEvent, KeyEvent>(keyPressed(F1)) { help() }))
+        Nodes.addInputMap(textArea, sequence(
+                consume(keyPressed(ENTER, CONTROL_DOWN)) { executeCommand() },
+                consume(keyPressed(SPACE, CONTROL_DOWN)) { expandCurrentCommand() },
+                consume(keyPressed(F1)) { help() }))
         commandText = textArea
     }
 
@@ -355,7 +354,7 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
                 "/org/stt/gui/jfx/ActivitiesPanel.fxml"), localization)
         loader.setController(this)
 
-        return loader.load<BorderPane>()
+        return loader.load()
     }
 
     private fun clearCommand() {

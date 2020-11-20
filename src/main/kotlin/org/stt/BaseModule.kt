@@ -17,7 +17,7 @@ import javax.inject.Singleton
 
 @Module
 class BaseModule {
-    private val LOG = Logger.getLogger(BaseModule::class.java.name)
+    private val log = Logger.getLogger(BaseModule::class.java.name)
 
     @Provides
     @Singleton
@@ -47,14 +47,14 @@ class BaseModule {
 
     private fun migrateSTT1FileIfExisting(oldFile: File, newFile: File) {
         if (newFile.exists()) {
-            LOG.severe("Both, old and new data file found. Using new one.")
+            log.severe("Both, old and new data file found. Using new one.")
             return
         }
         if (oldFile.isDirectory || !oldFile.exists()) {
             // Already migrated or not existing yet
             return
         }
-        LOG.info("Found STT v1 activities file, migrating to STT v2")
+        log.info("Found STT v1 activities file, migrating to STT v2")
         val tempFile = File(oldFile.parentFile, oldFile.name + ".bak")
         renameAndFailIfnotPossible(oldFile, tempFile, String.format("Couldn't rename %s to %s.", oldFile.absolutePath, tempFile.absolutePath))
         val parentDir = newFile.parentFile
@@ -82,7 +82,7 @@ class BaseModule {
                        @Named("homePath") homePath: String): PrintWriter {
         val file = configuration.itemLogFile.file(homePath)
         if (file.parentFile.mkdirs()) {
-            LOG.info("Created directory " + file.parentFile.absolutePath)
+            log.info("Created directory " + file.parentFile.absolutePath)
         }
         val out: FileOutputStream
         try {

@@ -8,11 +8,11 @@ import javax.inject.Singleton
 
 @Module
 class EventBusModule {
-    private val LOG = Logger.getLogger(EventBusModule::class.java.simpleName)
+    private val log = Logger.getLogger(EventBusModule::class.java.simpleName)
 
     @Provides
     @Singleton
     fun provideMBassador(): MBassador<Any> {
-        return MBassador { error -> LOG.severe { error.toString() } }
+        return MBassador { error -> log.severe { error.toString() } }
     }
 }
