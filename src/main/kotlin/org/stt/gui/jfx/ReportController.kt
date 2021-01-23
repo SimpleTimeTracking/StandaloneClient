@@ -366,7 +366,10 @@ internal constructor(private val localization: ResourceBundle,
 
         private fun addClickListener(itemGroups: List<String>, partLabel: Node, fromIndex: Int) {
             partLabel.setOnMouseClicked { event ->
-                val commentRemainder = itemGroups.subList(fromIndex, itemGroups.size).joinToString(" ")
+                val commentRemainder = if (event.isControlDown)
+                    itemGroups.subList(0, fromIndex + 1).joinToString(" ")
+                else
+                    itemGroups.subList(fromIndex, itemGroups.size).joinToString(" ")
                 setClipboard(commentRemainder)
                 event.consume()
             }

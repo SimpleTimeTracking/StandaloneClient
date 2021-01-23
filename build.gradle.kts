@@ -12,8 +12,8 @@ plugins {
     antlr
     kotlin("jvm") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("org.sonarqube") version "2.8"
-    id("com.github.ben-manes.versions") version "0.28.0"
+    id("org.sonarqube") version "3.1"
+    id("com.github.ben-manes.versions") version "0.36.0"
 }
 
 repositories {
@@ -50,11 +50,11 @@ configurations {
 val spek_version = "2.0.4"
 
 dependencies {
-    val daggerVersion = "2.27"
-    antlr(group = "org.antlr", name = "antlr4", version = "4.8-1")
-    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.8-1")
+    val daggerVersion = "2.31.2"
+    antlr(group = "org.antlr", name = "antlr4", version = "4.9.1")
+    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.9.1")
     implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.4")
-    implementation("org.yaml:snakeyaml:1.26")
+    implementation("org.yaml:snakeyaml:1.27")
     implementation("com.google.dagger:dagger:$daggerVersion")
     implementation("javax.inject:javax.inject:1")
     kapt("com.google.dagger:dagger-compiler:$daggerVersion")
@@ -65,9 +65,9 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(fileTree("/usr/lib/").matching { include("**/jfxrt.jar") })
 
-    testImplementation("commons-io:commons-io:2.6")
-    testImplementation("org.mockito:mockito-core:3.3.3")
-    testImplementation("org.assertj:assertj-core:3.15.0")
+    testImplementation("commons-io:commons-io:2.8.0")
+    testImplementation("org.mockito:mockito-core:3.7.7")
+    testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("junit:junit-dep:4.11")
 }
 
@@ -139,3 +139,10 @@ tasks.withType<SonarQubeTask> {
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+//tasks.named("dependencyUpdates", com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java).configure {
+//    val badVersions = ".*(-rc(-.*)?$|-m.*)".toRegex()
+//    rejectVersionIf {
+//        candidate.version.toLowerCase().matches(badVersions)
+//    }
+//}
