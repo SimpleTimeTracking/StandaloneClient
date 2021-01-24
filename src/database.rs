@@ -12,7 +12,7 @@ where
 {
     fn insert_item(&mut self, item: TimeTrackingItem);
     fn delete_item(&mut self, item: &TimeTrackingItem) -> Result<(), String>;
-    fn query_n(&self, limit: usize) -> Vec<TimeTrackingItem>;
+    fn query_n(&self, limit: usize) -> Vec<&TimeTrackingItem>;
     fn query_latest(&self) -> Option<&TimeTrackingItem>;
 }
 
@@ -54,11 +54,8 @@ impl Drop for Database {
 }
 
 impl Connection for Vec<TimeTrackingItem> {
-    fn query_n(&self, limit: usize) -> Vec<TimeTrackingItem> {
-        let mut query_result = self.clone();
-        query_result.reverse();
-        query_result.truncate(limit);
-        query_result
+    fn query_n(&self, limit: usize) -> Vec<&TimeTrackingItem> {
+        self.iter().rev().take(limit).collect()
     }
 
     fn query_latest(&self) -> Option<&TimeTrackingItem> {

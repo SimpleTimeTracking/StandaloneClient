@@ -82,6 +82,15 @@ impl PartialOrd for Ending {
 }
 
 impl TimeTrackingItem {
+    pub fn ending_at(mut self, end: DateTime<Local>) -> Self {
+        self.end = Ending::At(DateTime::<Utc>::from(end.with_nanosecond(0).unwrap()));
+        self
+    }
+
+    pub fn ending_now(self) -> Self {
+        self.ending_at(Local::now())
+    }
+
     pub fn starting_at(start: DateTime<Local>, activity: &str) -> Self {
         TimeTrackingItem {
             start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),

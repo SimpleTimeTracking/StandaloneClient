@@ -1,31 +1,160 @@
-import Vue from 'vue';
-import picnic from 'picnic';
+import { html, render } from 'lit-html';
+import { repeat } from 'lit-html/directives/repeat.js'
+import '@fortawesome/fontawesome-free/css/all.css'
+import './w3.css'
+import './app.scss'
 
 
-import App from './App.vue';
-import { init } from './rpc';
+//import App from './App.vue';
+import { init, quitApp, addActivity, continueActivity, deleteActivity, stopActivity } from './rpc';
 
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faStop, faPlay, faTrash, faEdit, faFastForward, faCalendarAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-
-library.add(faStop, faPlay, faTrash, faEdit, faFastForward, faCalendarAlt, faExclamationTriangle);
-Vue.component('fasi', FontAwesomeIcon);
-
-let vm = new Vue({
-    el: "#app",
-    data: function () {
-        return {
-            items: null,
-        }
-    },
-    render: function (h) {
-        return h(App, { attrs: { items: this.items } })
-    }
+let now = Math.trunc(Date.now() / 86400000);
+let tsFormat = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric"
 });
 
-window.vm = vm;
-window.onload = function () { init(); };
+function as_lts(ts) {
+    if (!ts) return undefined;
+    return tsFormat.format(ts);
+};
+
+const vm = {
+    activity: ""
+};
+
+const commandArea = (activity) => html`
+<div>
+    <h4>Add or Update Activity</h4>
+    <textarea id="activity-text" autofocus="true" @keydown=${checkSubmit} @input=${updateActivity}>${activity}</textarea>
+</div>`;
+
+function checkSubmit(evt) {
+    if (evt.ctrlKey && evt.key === "Enter") {
+        addActivity(vm.activity);
+        evt.preventDefault();
+        this.value = "";
+        updateActivity.call(this);
+    }
+}
+
+function updateActivity() {
+    vm.activity = this.value;
+    updateApp();
+}
+
+function setActivityText(text) {
+    vm.activity = text;
+    updateApp();
+}
+
+function isOverrun(item) {
+    let start = Math.trunc(item.start.getTime() / 86400000);
+    return now - start > 0;
+}
+
+const activityRow = (item) => html`
+<tr>
+    <td class="activity" @click=${(_)=> setActivityText(item.activity)}>${item.activity}
+    </td>
+    <td class="time">${as_lts(item.start)}</td>
+    <td class="symbol">
+        ${item.end ? 
+        html`<i class="fas fa-fast-forward"></i>` : !isOverrun(item) 
+        ? html`<div class="running"></div>` : html`<div class="overrun"></div>`}
+    </td>
+    <td class="time">${as_lts(item.end)}</td>
+    <td class="action">
+        <div class="w3-bar">
+            ${!item.end ? html`<button class="w3-bar-item w3-button w3-padding-small" @click=${() => stopActivity(item)}><i
+                    class="fa fa-stop"></i></button>` : ""}
+            ${item.end ? html`<button class="w3-bar-item w3-button w3-padding-small" @click=${() => continueActivity(item)}><i
+                    class="fa fa-play"></i></button>` : ""}
+            <button class="w3-bar-item w3-button w3-padding-small">
+                <i class="fa fa-edit"></i>
+            </button>
+            <button class="w3-bar-item w3-button w3-padding-small" @click=${() => deleteActivity(item)}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+    `;
+
+const activityList = (items, searchFilter) => {
+    searchFilter = searchFilter.length >= 3 ? searchFilter.toLowerCase() : null;
+    return html`
+    <table class="activity-table">
+        <tbody>
+            ${repeat(items.filter((it) => it.activity && (!searchFilter || it.activity.activity.toLowerCase().includes(searchFilter))), (item) => item.gap || item.newday || item.start, (item, _) =>
+            activityRow(item.activity))}
+        </tbody>
+    </table>
+    `;
+}
+
+const activitiesArea = data => html`<div>
+    <h4>Activities</h4>
+    ${!data.items ? html`<div class="busy-indicator"></div>` : activityList(data.items, data.activity)}
+`;
+
+
+const tabButton = (name, id) => html`<button class="w3-bar-item w3-button" @click=${openingTab(id || name)}> ${name}</button>`;
+
+const app = (data) => html`
+    <div>
+        <div class="w3-bar w3-black main-menu">
+            ${tabButton("Activities")}
+            ${tabButton("Daily Report", "DailyReport")}
+            ${tabButton("Settings")}
+            ${tabButton("Info")}
+        </div>
+        <div id="Activities" class="tab-content">
+            ${commandArea(data.activity)}
+            ${activitiesArea(data)}
+        </div>
+        <div id="DailyReport" class="tab-content" style="display:none">
+            <h2>Daily Report</h2>
+            <p>Nothing</p>
+        </div>
+        <div id="Settings" class="tab-content" style="display:none">
+            <h2>Settings</h2>
+            <p>Nothing</p>
+        </div>
+        <div id="Info" class="tab-content" style="display:none">
+            <h2>Info</h2>
+            <p>Nothing</p>
+        </div>
+    </div>
+`;
+
+function appKey(evt) {
+    if (evt.key === "Escape") {
+        quitApp(this.text);
+    }
+}
+
+document.addEventListener('keydown', appKey);
+
+function openingTab(tab) {
+    return function () {
+        for (let element of document.getElementsByClassName("tab-content")) {
+            element.style.display = "none";
+        }
+        document.getElementById(tab).style.display = "block";
+    };
+}
+
+const appElement = document.getElementById("app");
+window.onload = function () {
+    init();
+    updateApp();
+};
+
+function updateApp() {
+    render(app(vm), appElement);
+}
 
 function updateActivities(activities) {
     let items = [];
@@ -52,7 +181,8 @@ function updateActivities(activities) {
             }
         });
     });
-    vm.items = Object.freeze(items);
+    vm.items = items;
+    updateApp();
 }
 
 function commandError(msg) {
@@ -60,7 +190,7 @@ function commandError(msg) {
 }
 
 function commandAccepted() {
-    vm.$children[0].$refs.command.clearCommand();
+    //vm.$children[0].$refs.command.clearCommand();
 }
 
-export { updateActivities, commandError, commandAccepted };
+export { updateActivities, commandError, commandAccepted, vm };

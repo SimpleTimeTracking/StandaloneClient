@@ -8,7 +8,7 @@ use commands::{Command, TimeSpec};
 use database::{Connection, Database};
 use serde::Deserialize;
 use std::time::Instant;
-use tti::TimeTrackingItem;
+use tti::{TimeTrackingItem, Ending};
 use web_view::*;
 
 #[derive(Deserialize)]
@@ -17,6 +17,8 @@ pub enum Cmd {
     Init,
     ExecuteCommand { activity: String },
     DeleteActivity { activity: TimeTrackingItem },
+    StopActivity { activity: TimeTrackingItem },
+    ContinueActivity { activity: TimeTrackingItem },
     Quit,
 }
 
@@ -50,20 +52,19 @@ fn main() {
         .content(Content::Html(html))
         .size(800, 600)
         .resizable(false)
-        .debug(true)
         .user_data(())
         .invoke_handler(|webview, arg| {
             use Cmd::*;
             println!("{}", arg);
 
+            let mut database = Database::open().unwrap();
+            let connection = database.open_connection();
             match serde_json::from_str(arg).unwrap() {
                 Init => {
-                    update_activities(webview, Database::open().unwrap().open_connection())?;
+                    // Just update activities below
                 }
                 ExecuteCommand { activity } => match commands::command(&activity) {
                     Ok((_, cmd)) => {
-                        let mut database = Database::open().unwrap();
-                        let connection = database.open_connection();
                         match cmd {
                             Command::StartActivity(time, activity) => {
                                 let item = match time {
@@ -100,21 +101,34 @@ fn main() {
                         }
 
                         webview.eval("app.commandAccepted();")?;
-                        update_activities(webview, connection)?;
                     }
                     Err(msg) => {
                         println!("Invalid activity {}", msg);
                         webview.eval("app.commandError('error');")?;
                     }
-                },
+                }
                 DeleteActivity { activity } => {
-                    let mut database = Database::open().unwrap();
-                    let connection = database.open_connection();
                     connection.delete_item(&activity).unwrap();
-                    update_activities(webview, connection)?;
+                }
+                StopActivity { activity } => {
+                    connection.delete_item(&activity).unwrap();
+                    connection.insert_item(activity.ending_now());
+                }
+                ContinueActivity { activity } => {
+                    let item = connection.query_latest();
+                    if let Some(item) = item {
+                        let mut item = item.clone();
+                        if item.end == Ending::Open {
+                            connection.delete_item(&item).unwrap();
+                            item.end = Ending::At(activity.start);
+                            connection.insert_item(item);
+                        }
+                    }
+                    connection.insert_item(activity);
                 }
                 Quit => webview.exit(),
             }
+            update_activities(webview, connection)?;
             Ok(())
         })
         .run()

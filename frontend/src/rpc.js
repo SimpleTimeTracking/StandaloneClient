@@ -1,20 +1,35 @@
-import { updateActivities } from "./app";
+import { updateActivities, vm } from "./app";
 
 function invoke(arg) {
-    window.external.invoke(JSON.stringify(arg));
+    !window.external.invoke || window.external.invoke(JSON.stringify(arg));
 }
 
 function addActivity(activity) {
     invoke({ cmd: 'executeCommand', activity: activity });
 }
 
-function deleteActivity(item) {
+function convertToRustActivity(item) {
     let activity = {};
     activity.activity = item.activity;
     activity.end = item.end ? { 'At': item.end.getTime() / 1000 } : 'Open';
     activity.start = item.start.getTime() / 1000;
-    invoke({ cmd: 'deleteActivity', activity: activity });
+    return activity;
 }
+
+function deleteActivity(item) {
+    invoke({ cmd: 'deleteActivity', activity: convertToRustActivity(item) });
+}
+
+function stopActivity(item) {
+    invoke({ cmd: 'stopActivity', activity: convertToRustActivity(item) });
+}
+
+function continueActivity(item) {
+    let now = Math.trunc(Date.now() / 1000);
+    let activity = { activity: item.activity, end: 'Open', start: now };
+    invoke({ cmd: 'continueActivity', activity: activity });
+}
+
 
 function quitApp() {
     invoke({ cmd: "quit" });
@@ -35,7 +50,7 @@ function init() {
             { "start": 1499193844, "end": { "At": 1499193850 }, "activity": "DAF-11012: sdfsdfsdff" },
             { "start": 1499193805, "end": { "At": 1499193838 }, "activity": "item 9999 aaa" }
         ];
-        for (let i = 1; i < 20000; i++) {
+        for (let i = 1; i < 2000; i++) {
             demoData.push({ "start": 1499193805 - i * 1000000, "end": { "At": 1499193838 - i * 1000000 }, "activity": "item " + i + " aaa" });
         }
         updateActivities(demoData);
@@ -44,4 +59,4 @@ function init() {
     }
 }
 
-export { addActivity, deleteActivity, quitApp, init };
+export { addActivity, deleteActivity, continueActivity, stopActivity, quitApp, init };

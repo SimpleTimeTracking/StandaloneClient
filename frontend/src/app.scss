@@ -1,0 +1,98 @@
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  80% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+}
+
+.busy-indicator {
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  background-color: blue;
+  animation: pulse 1s infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.running {
+  border: 0.3em solid #00000000;
+  border-top: 0.25em solid cornflowerblue;
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+  animation: spin 8s linear infinite;
+}
+
+.overrun {
+  border: 0.3em solid #00000000;
+  border-top: 0.25em solid red;
+  border-left: 0.25em solid red;
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+  animation: spin 2s ease infinite;
+}
+
+.activity {
+  cursor: copy;
+}
+
+.activity-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  > tbody > tr {
+    &:hover {
+      background-color: palegreen;
+    }
+    > {
+      td:not(:first-child) {
+        text-align: center;
+      }
+      :nth-child(2) {
+        width: 6.8em;
+      }
+      :nth-child(3) {
+        width: 1em;
+      }
+      :nth-child(4) {
+        width: 6.8em;
+      }
+      :nth-child(5) {
+        width: 8em;
+      }
+    }
+  }
+}
+
+#activity-text {
+  min-width: 100%;
+  min-height: 5em;
+}
+
+.main-menu {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+}
