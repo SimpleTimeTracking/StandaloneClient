@@ -91,18 +91,18 @@ impl TimeTrackingItem {
         self.ending_at(Local::now())
     }
 
-    pub fn starting_at(start: DateTime<Local>, activity: &str) -> Self {
+    pub fn starting_at<S: Into<String>>(start: DateTime<Local>, activity: S) -> Self {
         TimeTrackingItem {
             start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
             end: Ending::Open,
-            activity: activity.to_string(),
+            activity: activity.into(),
         }
     }
 
-    pub fn interval(
+    pub fn interval<S: Into<String>>(
         start: DateTime<Local>,
         end: DateTime<Local>,
-        activity: &str,
+        activity: S,
     ) -> Result<Self, ItemError> {
         if end < start {
             Err(ItemError(ItemErrorKind::StartAfterEnd))
@@ -110,27 +110,32 @@ impl TimeTrackingItem {
             Ok(TimeTrackingItem {
                 start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
                 end: Ending::At(DateTime::<Utc>::from(end.with_nanosecond(0).unwrap())),
-                activity: activity.to_string(),
+                activity: activity.into(),
             })
         }
     }
 
     pub fn to_storage_line(&self) -> String {
         let start = DateTime::<Local>::from(self.start).format_with_items(FORMAT.iter().cloned());
+        let activity_escaped = self.activity.replace('\\', "\\\\").replace('\n', "\\n");
         if let Ending::At(end) = self.end {
             format!(
                 "{start} {end} {activity}",
                 start = start,
                 end = DateTime::<Local>::from(end).format_with_items(FORMAT.iter().cloned()),
-                activity = self.activity
+                activity = activity_escaped
             )
         } else {
             format!(
                 "{start} {activity}",
                 start = start,
-                activity = self.activity
+                activity = activity_escaped
             )
         }
+    }
+
+    fn unescape(activity: &str) -> String {
+        activity.replace("\\n", "\n").replace("\\\\", "\\")
     }
 }
 
@@ -167,21 +172,27 @@ impl FromStr for TimeTrackingItem {
                 TimeTrackingItem::interval(
                     start,
                     end,
-                    &s.get(40..)
-                        .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
+                    Self::unescape(
+                        &s.get(40..)
+                            .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
+                    ),
                 )
             } else {
                 Ok(TimeTrackingItem::starting_at(
                     start,
-                    &s.get(20..)
-                        .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
+                    Self::unescape(
+                        &s.get(20..)
+                            .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
+                    ),
                 ))
             }
         } else {
             Ok(TimeTrackingItem::starting_at(
                 start,
-                &s.get(20..)
-                    .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
+                Self::unescape(
+                    &s.get(20..)
+                        .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
+                ),
             ))
         }
     }
@@ -305,6 +316,31 @@ mod test {
 
         // THEN
         assert_eq!("2022-11-01_11:06:03 test", line);
+    }
+
+    #[test]
+    fn should_escape_cr_in_storage_format() {
+        // GIVEN
+        let item =
+            TimeTrackingItem::starting_at(Local.ymd(2022, 11, 1).and_hms(11, 6, 3), "test\ntest\\");
+
+        // WHEN
+        let line = item.to_storage_line();
+
+        // THEN
+        assert_eq!("2022-11-01_11:06:03 test\\ntest\\\\", line);
+    }
+
+    #[test]
+    fn should_unescape_cr_in_storage_format() {
+        // GIVEN
+        let item = TimeTrackingItem::from_str("2022-11-01_11:06:03 test\\ntest\\\\").unwrap();
+
+        // WHEN
+        let line = item.to_storage_line();
+
+        // THEN
+        assert_eq!("2022-11-01_11:06:03 test\\ntest\\\\", line);
     }
 
     #[test]

@@ -39,17 +39,22 @@ impl Database {
     pub fn open_connection(&mut self) -> &mut impl Connection {
         &mut self.content
     }
-}
 
-impl Drop for Database {
-    fn drop(&mut self) {
+    pub fn flush(&self) {
         let file = File::create(&self.stt_file).unwrap();
         let mut writer = BufWriter::new(file);
         let i = Instant::now();
         for line in &self.content {
             writeln!(writer, "{}", line.to_storage_line()).unwrap();
         }
+        #[cfg(LOG_TIMES)]
         println!("Writing DB: {} ms", i.elapsed().as_millis());
+    }
+}
+
+impl Drop for Database {
+    fn drop(&mut self) {
+        self.flush();
     }
 }
 
