@@ -20,10 +20,9 @@ use std::{
 use tui::{
     backend::{self, CrosstermBackend},
     layout::{Constraint, Layout, Rect},
-    style::{Color, Style},
     terminal::Frame,
-    text::{Span, Spans, Text},
-    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Widget},
+    text::{Spans},
+    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
     Terminal,
 };
 
@@ -331,7 +330,7 @@ impl HistoryList {
             .enumerate()
             .map(|(i, e)| {
                 let ending = match e.end {
-                    Ending::Open => format!("{}", symbol),
+                    Ending::Open => symbol.to_string(),
                     Ending::At(t) => format!("{}", DateTime::<Local>::from(t).format("%F %X")),
                 };
                 ListItem::new(format!(
@@ -355,7 +354,7 @@ impl HistoryList {
         f.render_stateful_widget(list, area, &mut state);
         let footer =
             Block::default().title(format!("{}%", 100 * self.start / self.items.len().max(1)));
-        let mut footer_area = area.clone();
+        let mut footer_area = area;
         footer_area.y += footer_area.height - 1;
         footer_area.height = 1;
         footer_area.x += 2;
@@ -432,7 +431,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let text = Block::default().title(status_text);
             f.render_widget(text, chunks[2]);
             if app.mode == Mode::SearchHistory {
-                let mut my_area = chunks[2].clone();
+                let mut my_area = chunks[2];
                 my_area.x += status_len;
                 my_area.width -= status_len;
                 app.search_field.focus = app.mode == Mode::SearchHistory;
@@ -477,7 +476,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                     }
                                     _ => (),
                                 }
-                                drop(connection);
                                 database.flush();
                                 connection = database.open_connection();
                                 app.activity_field.clear();
@@ -533,8 +531,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                         },
                     },
                 },
-                Event::Mouse(event) => (),
-                Event::Resize(width, height) => (),
+                Event::Mouse(_event) => (),
+                Event::Resize(_width, _height) => (),
             }
         }
     }

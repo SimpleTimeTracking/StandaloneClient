@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
+#[cfg(LOG_TIMES)]
 use std::time::Instant;
 
 pub trait Connection
@@ -43,6 +44,7 @@ impl Database {
     pub fn flush(&self) {
         let file = File::create(&self.stt_file).unwrap();
         let mut writer = BufWriter::new(file);
+        #[cfg(LOG_TIMES)]
         let i = Instant::now();
         for line in &self.content {
             writeln!(writer, "{}", line.to_storage_line()).unwrap();
