@@ -17,7 +17,7 @@ serde = { version = "1.0", features = ["derive"] }
 web-view = { version = "0.7", features = ["edge"], optional = true }
 serde_json = { version = "1.0", optional = true }
 tui = { version = "0", optional = true, features = ["crossterm"]}
-crossterm = { version = "0", optional = true }
+crossterm = { version = "0", default-features = false, optional = true }
 regex = { version = "1.4", optional = true}
 
 
