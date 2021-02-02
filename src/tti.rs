@@ -21,8 +21,8 @@ pub enum Ending {
     At(#[serde(with = "ts_seconds")] DateTime<Utc>),
 }
 
-impl PartialEq<DateTime<Utc>> for Ending {
-    fn eq(&self, other: &DateTime<Utc>) -> bool {
+impl<TZ: chrono::TimeZone> PartialEq<DateTime<TZ>> for Ending {
+    fn eq(&self, other: &DateTime<TZ>) -> bool {
         match self {
             Ending::Open => false,
             Ending::At(ts) => ts == other,
@@ -30,25 +30,25 @@ impl PartialEq<DateTime<Utc>> for Ending {
     }
 }
 
-impl PartialOrd<DateTime<Utc>> for Ending {
-    fn partial_cmp(&self, other: &DateTime<Utc>) -> Option<Ordering> {
+impl<TZ: chrono::TimeZone> PartialOrd<DateTime<TZ>> for Ending {
+    fn partial_cmp(&self, other: &DateTime<TZ>) -> Option<Ordering> {
         match self {
             Ending::Open => Some(Ordering::Greater),
-            Ending::At(ts) => Some(ts.cmp(other)),
+            Ending::At(ts) => Some(ts.timestamp().cmp(&other.timestamp())),
         }
     }
 }
 
-impl PartialOrd<Ending> for DateTime<Utc> {
+impl<TZ: chrono::TimeZone> PartialOrd<Ending> for DateTime<TZ> {
     fn partial_cmp(&self, other: &Ending) -> Option<Ordering> {
         match other {
             Ending::Open => None,
-            Ending::At(ts) => Some(self.cmp(ts)),
+            Ending::At(ts) => Some(self.timestamp().cmp(&ts.timestamp())),
         }
     }
 }
 
-impl PartialEq<Ending> for DateTime<Utc> {
+impl<TZ: chrono::TimeZone> PartialEq<Ending> for DateTime<TZ> {
     fn eq(&self, other: &Ending) -> bool {
         match other {
             Ending::Open => false,

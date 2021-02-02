@@ -19,7 +19,7 @@ use std::{
 use tui::{
     backend::{self, CrosstermBackend},
     layout::{Constraint, Layout, Rect},
-    style::{Color, Style, Modifier},
+    style::{Color, Modifier, Style},
     terminal::Frame,
     text::Spans,
     widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Tabs},
@@ -365,12 +365,20 @@ impl HistoryList {
             .enumerate()
             .map(|(i, e)| {
                 let ending = match e.end {
-                    Ending::Open => format!(
-                        "for {}",
-                        (DateTime::<Utc>::from(std::time::UNIX_EPOCH)
-                            + Local::now().signed_duration_since(e.start))
-                        .format("%H:%M:%S")
-                    ),
+                    Ending::Open => {
+                        let delta = Local::now().signed_duration_since(e.start);
+                        let (delta, msg) = if delta < chrono::Duration::zero() {
+                            (-delta, "in")
+                        } else {
+                            (delta, "for")
+                        };
+                        format!(
+                            "{} {}",
+                            msg,
+                            (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + delta)
+                                .format("%H:%M:%S")
+                        )
+                    }
                     Ending::At(t) => format!("{}", DateTime::<Local>::from(t).format("%F %X")),
                 };
                 let mut lines = e.activity.lines();
@@ -384,12 +392,12 @@ impl HistoryList {
                         let added = seen_activities.insert(&e.activity);
                         if added {
                             indices.push(i);
-                            format!("[{}] ", indices.len())
+                            format!("[{}]", indices.len())
                         } else {
-                            "    ".to_owned()
+                            "   ".to_owned()
                         }
                     } else if self.show_indices {
-                        "    ".to_owned()
+                        "   ".to_owned()
                     } else {
                         "".to_owned()
                     },
@@ -452,6 +460,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     );
 
     let mut app = App::new(history_list);
+    let pause_matcher = Regex::new("(?i).*pause.*")?;
 
     'main: loop {
         terminal.draw(|f| {
@@ -478,6 +487,23 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             f.render_widget(block, activity_area);
             app.activity_field.focus = app.mode == Mode::EnterActivity;
             app.activity_field.render(f, txt);
+
+            let mut activity_status_area = activity_area;
+            activity_status_area.y += activity_status_area.height - 1;
+            activity_status_area.x += 2;
+            activity_status_area.height = 1;
+            activity_status_area.width -= 2;
+            let now = Local::now();
+            let start_of_day = now.date().and_hms(0, 0, 0);
+            let work_time = connection.query().iter()
+                .take_while(|a| a.end > start_of_day)
+                .filter(|a| !pause_matcher.is_match(&a.activity))
+                .fold(chrono::Duration::zero(), |acc, a| acc - a.start.signed_duration_since(match a.end { Ending::Open => now, Ending::At(time) => time.into()}));
+            let work_time = (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time)
+                .format("%H:%M:%S");
+            let activity_status_line = Block::default().title(format!("Time today: {}", work_time));
+            f.render_widget(activity_status_line, activity_status_area);
+
             app.history_list.show_indices = app.mode == Mode::Normal;
             app.history_list.render(f, chunks.next().unwrap());
 

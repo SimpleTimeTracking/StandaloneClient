@@ -15,7 +15,7 @@ where
     fn delete_item(&mut self, item: &TimeTrackingItem) -> Result<(), String>;
     fn query_n(&self, limit: usize) -> Vec<&TimeTrackingItem>;
     fn query_latest(&self) -> Option<&TimeTrackingItem>;
-    fn query(&self) -> Box<dyn Iterator<Item = &TimeTrackingItem> + '_>;
+    fn query(&self) -> Vec<&TimeTrackingItem>;
 }
 
 pub struct Database {
@@ -61,9 +61,11 @@ impl Drop for Database {
     }
 }
 
+trait Items<'a>: Iterator<Item = &'a TimeTrackingItem> + Sized {}
+
 impl Connection for Vec<TimeTrackingItem> {
-    fn query(&self) -> Box<dyn Iterator<Item = &TimeTrackingItem> + '_> {
-        Box::new(self.iter().rev())
+    fn query(&self) -> Vec<&TimeTrackingItem> {
+        self.iter().rev().collect()
     }
 
     fn query_n(&self, limit: usize) -> Vec<&TimeTrackingItem> {
