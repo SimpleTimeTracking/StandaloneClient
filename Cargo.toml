@@ -10,8 +10,9 @@ edition = "2018"
 chrono = {version ="0.4", features = ["serde"]}
 lazy_static="1.4"
 dirs="2.0"
-nom = "5"
+nom = "6"
 serde = { version = "1.0", features = ["derive"] }
+unicode-segmentation = "1.7.1"
 #goji = "0.2"
 
 # Based on features

@@ -1,8 +1,13 @@
+mod calendar;
+mod textfield;
+mod daily_report;
+
+use crate::tui::daily_report::CondensedActivityList;
 use crate::{
     commands::{self, Command, TimeSpec},
     Connection, Database, Ending, TimeTrackingItem,
 };
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Datelike, Local, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking},
     event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
@@ -11,11 +16,8 @@ use crossterm::{
 };
 use regex::Regex;
 use std::collections::HashSet;
-use std::{
-    error::Error,
-    io::{stdout, Write},
-    time::Duration,
-};
+use std::{error::Error, io::stdout, time::Duration};
+use textfield::TextField;
 use tui::{
     backend::{self, CrosstermBackend},
     layout::{Constraint, Layout, Rect},
@@ -25,6 +27,15 @@ use tui::{
     widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Tabs},
     Terminal,
 };
+
+#[derive(PartialEq)]
+enum Mode {
+    Normal,
+    EnterActivity,
+    BrowseHistory,
+    SearchHistory,
+    DailyReport,
+}
 
 struct App {
     mode: Mode,
@@ -49,188 +60,6 @@ impl App {
             self.activity_field.set_text(&selected.activity);
             self.activity_field.end();
             self.history_list.reset();
-        }
-    }
-}
-
-trait StringExt {
-    fn remove_char(&mut self, idx: usize) -> char;
-    fn insert_char(&mut self, idx: usize, ch: char);
-    fn split_at_char(&mut self, mid: usize) -> (&str, &str);
-}
-
-impl StringExt for String {
-    fn remove_char(&mut self, idx: usize) -> char {
-        let byte_index = self.char_indices().nth(idx).unwrap().0;
-        self.remove(byte_index)
-    }
-
-    fn insert_char(&mut self, idx: usize, ch: char) {
-        let byte_index = self
-            .char_indices()
-            .nth(idx)
-            .map(|i| i.0)
-            .unwrap_or(self.len());
-        self.insert(byte_index, ch)
-    }
-
-    fn split_at_char(&mut self, mid: usize) -> (&str, &str) {
-        let byte_index = self
-            .char_indices()
-            .nth(mid)
-            .map(|i| i.0)
-            .unwrap_or(self.len());
-        self.split_at(byte_index)
-    }
-}
-
-struct TextField {
-    cursor: (usize, usize),
-    scroll: (u16, u16),
-    lines: Vec<String>,
-    focus: bool,
-}
-
-impl TextField {
-    fn new() -> Self {
-        TextField {
-            cursor: (0, 0),
-            scroll: (0, 0),
-            lines: vec![],
-            focus: false,
-        }
-    }
-
-    fn clear(&mut self) {
-        self.lines.clear();
-        self.cursor = (0, 0);
-        self.scroll = (0, 0);
-    }
-
-    fn set_text(&mut self, text: &str) {
-        self.lines = text.lines().map(|s| s.to_owned()).collect();
-    }
-
-    fn end(&mut self) {
-        if let Some(last) = self.lines.last() {
-            self.cursor = (last.len(), self.lines.len() - 1);
-        } else {
-            self.cursor = (0, 0);
-        }
-    }
-
-    fn current_line_len(&self) -> usize {
-        self.lines.get(self.cursor.1).map(|l| l.len()).unwrap_or(0)
-    }
-
-    fn handle_event(&mut self, event: KeyEvent) {
-        match event.code {
-            KeyCode::Backspace => {
-                if self.cursor.0 > 0 {
-                    self.cursor.0 -= 1;
-                    self.lines[self.cursor.1].remove_char(self.cursor.0);
-                } else if !self.lines.is_empty() {
-                    let line = self.lines.remove(self.cursor.1);
-                    if self.cursor.1 > 0 {
-                        self.cursor.1 -= 1;
-                    }
-                    self.cursor.0 = self.current_line_len();
-                    if !self.lines.is_empty() {
-                        self.lines[self.cursor.1].push_str(&line);
-                    }
-                }
-            }
-            KeyCode::Delete => {
-                if !self.lines.is_empty() {
-                    let line = self.lines.get_mut(self.cursor.1).unwrap();
-                    if line.len() > self.cursor.0 {
-                        line.remove_char(self.cursor.0);
-                    } else if self.lines.len() > self.cursor.1 + 1 {
-                        let line = self.lines.remove(self.cursor.1 + 1);
-                        self.lines[self.cursor.1].push_str(&line);
-                    }
-                }
-            }
-            KeyCode::Enter => {
-                if self.lines.is_empty() {
-                    self.lines.push(String::new());
-                    self.lines.push(String::new());
-                    self.cursor.1 = 1;
-                } else {
-                    let line = &mut self.lines[self.cursor.1];
-                    let split = line.split_at_char(self.cursor.0);
-                    let split = (split.0.to_owned(), split.1.to_owned());
-                    self.lines[self.cursor.1] = split.0;
-                    self.cursor.1 += 1;
-                    self.cursor.0 = 0;
-                    self.lines.insert(self.cursor.1, split.1);
-                }
-            }
-            KeyCode::Char(c) => {
-                if self.lines.is_empty() {
-                    self.lines.push(String::from(c));
-                } else {
-                    self.lines[self.cursor.1].insert_char(self.cursor.0, c);
-                }
-                self.cursor.0 += 1;
-            }
-            KeyCode::Up => {
-                if self.cursor.1 > 0 {
-                    self.cursor.1 -= 1;
-                    self.cursor.0 = self.current_line_len().min(self.cursor.0);
-                }
-            }
-            KeyCode::Down => {
-                if self.cursor.1 + 1 < self.lines.len() {
-                    self.cursor.1 += 1;
-                    self.cursor.0 = self.current_line_len().min(self.cursor.0);
-                }
-            }
-            KeyCode::Left => {
-                if self.cursor.0 > 0 {
-                    self.cursor.0 -= 1;
-                }
-            }
-            KeyCode::Right => {
-                if self.cursor.0 < self.current_line_len() {
-                    self.cursor.0 += 1;
-                }
-            }
-            KeyCode::End => {
-                self.cursor.0 = self.current_line_len();
-            }
-            KeyCode::Home => {
-                self.cursor.0 = 0;
-            }
-            _ => (),
-        }
-    }
-
-    fn render<B: backend::Backend>(&mut self, f: &mut Frame<'_, B>, area: Rect) {
-        self.scroll.1 = self.scroll.1.min(self.cursor.1 as u16);
-        self.scroll.0 = self.scroll.0.min(self.cursor.0 as u16);
-
-        if self.cursor.0 as u16 >= self.scroll.0 + area.width {
-            self.scroll.0 = self.cursor.0 as u16 - area.width + 1;
-        }
-
-        if self.cursor.1 as u16 >= self.scroll.1 + area.height {
-            self.scroll.1 = self.cursor.1 as u16 - area.height + 1;
-        }
-
-        let para = Paragraph::new(
-            self.lines
-                .iter()
-                .map(|s| Spans::from(s.to_owned()))
-                .collect::<Vec<_>>(),
-        ) // (x, y) _> (y, x)
-        .scroll((self.scroll.1, self.scroll.0));
-        f.render_widget(para, area);
-        if self.focus {
-            f.set_cursor(
-                area.x + self.cursor.0 as u16 - self.scroll.0,
-                area.y + self.cursor.1 as u16 - self.scroll.1,
-            );
         }
     }
 }
@@ -429,14 +258,6 @@ impl HistoryList {
     }
 }
 
-#[derive(PartialEq)]
-enum Mode {
-    Normal,
-    EnterActivity,
-    BrowseHistory,
-    SearchHistory,
-}
-
 pub fn run() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
 
@@ -472,13 +293,18 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                     Constraint::Length(1),
                 ])
                 .split(f.size()).into_iter();
+                /*
+            let x = CondensedActivityList::new();
+            f.render_widget(x, f.size());
+            return;
+            */
             let mut block = Block::default().title("Activity").borders(Borders::ALL);
             if app.mode == Mode::EnterActivity {
                 block = block.border_type(BorderType::Thick);
             }
             let tab_area = chunks.next().unwrap();
             if app.mode == Mode::Normal {
-                let tab = Tabs::new(vec![Spans::from("Activities")])
+                let tab = Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
                 .highlight_style(Style::default().add_modifier(Modifier::BOLD));
                 f.render_widget(tab, tab_area);
             }
@@ -495,13 +321,19 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             activity_status_area.width -= 2;
             let now = Local::now();
             let start_of_day = now.date().and_hms(0, 0, 0);
-            let work_time = connection.query().iter()
+            let start_of_week = start_of_day - chrono::Duration::days(now.weekday().num_days_from_monday() as i64);
+            let duration_acc = |acc, a: &&TimeTrackingItem| acc - a.start.signed_duration_since(match a.end { Ending::Open => now, Ending::At(time) => time.into()});
+            let work_time_today = connection.query().iter()
                 .take_while(|a| a.end > start_of_day)
                 .filter(|a| !pause_matcher.is_match(&a.activity))
-                .fold(chrono::Duration::zero(), |acc, a| acc - a.start.signed_duration_since(match a.end { Ending::Open => now, Ending::At(time) => time.into()}));
-            let work_time = (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time)
-                .format("%H:%M:%S");
-            let activity_status_line = Block::default().title(format!("Time today: {}", work_time));
+                .fold(chrono::Duration::zero(), duration_acc);
+            let work_time_today = (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time_today)
+                .format("%T");
+            let work_time_week = connection.query().iter()
+            .take_while(|a| a.end > start_of_week)
+            .filter(|a| !pause_matcher.is_match(&a.activity))
+            .fold(chrono::Duration::zero(), duration_acc);
+            let activity_status_line = Block::default().title(format!("Tracked time today: {} week: {}:{:02}:{:02}", work_time_today, work_time_week.num_hours(), work_time_week.num_minutes() % 60, work_time_week.num_seconds() % 60));
             f.render_widget(activity_status_line, activity_status_area);
 
             app.history_list.show_indices = app.mode == Mode::Normal;
@@ -511,7 +343,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 Mode::EnterActivity => "Esc - leave insert mode  Ctrl+Enter/Alt+Enter insert activity",
                 Mode::Normal => "q - exit  i - edit  n - clear & edit  up/down/pgUp/pgDown - browse history  / - search  [1]-[9] - quick select previous item",
                 Mode::BrowseHistory => "Esc - leave browsing mode  q - exit  i - insert  n - clear & edit  r - replace  up/down/pgUp/pgDown browse history",
-                Mode::SearchHistory => "Esc - leave search  Enter - leave search/keep filter  up/down/pgUp/pgDown - browse history  ?"
+                Mode::SearchHistory => "Esc - leave search  Enter - leave search/keep filter  up/down/pgUp/pgDown - browse history  ?",
+                Mode::DailyReport => "Esc"
             }
             .to_owned();
             let status_len = status_text.len() as u16;
@@ -543,7 +376,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                         .modifiers
                                         .intersects(KeyModifiers::ALT | KeyModifiers::CONTROL)
                                 {
-                                    match commands::command(&app.activity_field.lines.join("\n")) {
+                                    match commands::command(&app.activity_field.get_text()) {
                                         Ok((_, Command::StartActivity(time, activity))) => {
                                             let item = match time {
                                                 TimeSpec::Interval { from, to } => {
@@ -614,7 +447,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                 }
                                 KeyCode::Char('r') => {
                                     if let Some(mut item) = app.history_list.get_selected_item() {
-                                        item.activity = app.activity_field.lines.join("\n");
+                                        item.activity = app.activity_field.get_text();
                                         connection.insert_item(item);
                                         database.flush();
                                         connection = database.open_connection();
@@ -625,6 +458,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                             .map(|&i| i.clone())
                                             .collect();
                                     }
+                                }
+                                KeyCode::Tab => {
+                                    app.mode = Mode::DailyReport;
                                 }
                                 _ => (),
                             },
@@ -638,13 +474,18 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                 }
                                 _ => {
                                     app.search_field.handle_event(event);
-                                    app.history_list
-                                        .set_filter(app.search_field.lines.get(0).map(|l| {
-                                            Regex::new(&format!("(?i){}", regex::escape(l)))
-                                                .unwrap()
-                                        }));
+                                    app.history_list.set_filter(
+                                        Regex::new(&format!(
+                                            "(?i){}",
+                                            regex::escape(app.search_field.first_line())
+                                        ))
+                                        .ok(),
+                                    );
                                 }
                             },
+                            Mode::DailyReport => {
+                                unimplemented!()
+                            }
                         },
                     },
                     Event::Mouse(_event) => (),

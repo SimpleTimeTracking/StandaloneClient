@@ -3,7 +3,7 @@ use chrono::Duration;
 use core::str::FromStr;
 use nom::branch::alt;
 use nom::bytes::complete::tag_no_case;
-use nom::character::complete::{anychar, char, digit1, multispace0, multispace1};
+use nom::character::complete::{anychar, char, digit1, multispace0, multispace1, one_of};
 use nom::combinator::all_consuming;
 use nom::combinator::map;
 use nom::combinator::map_res;
@@ -61,6 +61,13 @@ impl<I> nom::error::ParseError<I> for ErrorKind<I> {
     fn append(_: I, _: nom::error::ErrorKind, other: Self) -> Self {
         other
     }
+}
+
+impl<I, E> nom::error::FromExternalError<I, E> for ErrorKind<I> {
+
+    fn from_external_error(input: I, kind: nom::error::ErrorKind, err: E) -> Self { 
+        ErrorKind::Nom(input, kind)
+     }
 }
 
 fn at_absolute_timespec(i: &str) -> Result<&str, TimeSpec> {
@@ -157,7 +164,7 @@ fn relative_time(i: &str) -> Result<&str, Duration> {
 }
 
 fn date(i: &str) -> Result<&str, Date<Local>> {
-    let (i, (y, _, m, _, d)) = tuple((parse_num, char('.'), parse_num, char('.'), parse_num))(i)?;
+    let (i, (y, _, m, _, d)) = tuple((parse_num, one_of(".-"), parse_num, one_of(".-"), parse_num))(i)?;
     Ok((i, Local.ymd(y, m, d)))
 }
 
@@ -396,6 +403,23 @@ mod tests {
 
         // WHEN
         let m = timespec("since 2010.10.12 12:02:00");
+
+        // THEN
+        assert_eq!(
+            Ok((
+                "",
+                TimeSpec::Absolute(Local.ymd(2010, 10, 12).and_hms(12, 02, 00))
+            )),
+            m
+        )
+    }
+
+    #[test]
+    fn should_parse_different_delimiters() {
+        // GIVEN
+
+        // WHEN
+        let m = timespec("since 2010-10-12 12:02:00");
 
         // THEN
         assert_eq!(
