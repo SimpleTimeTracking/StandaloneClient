@@ -1,8 +1,8 @@
 mod calendar;
-mod textfield;
 mod daily_report;
+mod textfield;
 
-use crate::tui::daily_report::CondensedActivityList;
+use crate::tui::daily_report::{DailyReport, DailyReportState, CondensedActivityListState};
 use crate::{
     commands::{self, Command, TimeSpec},
     Connection, Database, Ending, TimeTrackingItem,
@@ -42,6 +42,16 @@ struct App {
     history_list: HistoryList,
     activity_field: TextField,
     search_field: TextField,
+    daily_report: DailyReportState,
+}
+
+pub fn duration_to_string(duration: &chrono::Duration) -> String {
+    format!(
+        "{}:{:02}:{:02}",
+        duration.num_hours(),
+        duration.num_minutes() % 60,
+        duration.num_seconds() % 60
+    )
 }
 
 impl App {
@@ -51,6 +61,7 @@ impl App {
             history_list,
             activity_field: TextField::new(),
             search_field: TextField::new(),
+            daily_report: DailyReportState::new(),
         }
     }
 
@@ -293,15 +304,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                     Constraint::Length(1),
                 ])
                 .split(f.size()).into_iter();
-                /*
-            let x = CondensedActivityList::new();
-            f.render_widget(x, f.size());
-            return;
-            */
-            let mut block = Block::default().title("Activity").borders(Borders::ALL);
-            if app.mode == Mode::EnterActivity {
-                block = block.border_type(BorderType::Thick);
-            }
+
+
             let tab_area = chunks.next().unwrap();
             if app.mode == Mode::Normal {
                 let tab = Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
@@ -309,6 +313,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 f.render_widget(tab, tab_area);
             }
             let activity_area = chunks.next().unwrap();
+            if app.mode == Mode::DailyReport {
+                app.daily_report.condensedList.set_items(connection.query_n(20));
+                let daily_report = DailyReport::new();
+                f.render_stateful_widget(daily_report, activity_area, &mut app.daily_report);
+                return;
+            }
+            let mut block = Block::default().title("Activity").borders(Borders::ALL);
+            if app.mode == Mode::EnterActivity {
+                block = block.border_type(BorderType::Thick);
+            }
             let txt = block.inner(activity_area);
             f.render_widget(block, activity_area);
             app.activity_field.focus = app.mode == Mode::EnterActivity;
@@ -484,7 +498,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                 }
                             },
                             Mode::DailyReport => {
-                                unimplemented!()
+                                app.daily_report.handle_event(event);
                             }
                         },
                     },

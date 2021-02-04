@@ -64,10 +64,9 @@ impl<I> nom::error::ParseError<I> for ErrorKind<I> {
 }
 
 impl<I, E> nom::error::FromExternalError<I, E> for ErrorKind<I> {
-
-    fn from_external_error(input: I, kind: nom::error::ErrorKind, err: E) -> Self { 
+    fn from_external_error(input: I, kind: nom::error::ErrorKind, err: E) -> Self {
         ErrorKind::Nom(input, kind)
-     }
+    }
 }
 
 fn at_absolute_timespec(i: &str) -> Result<&str, TimeSpec> {
@@ -164,7 +163,8 @@ fn relative_time(i: &str) -> Result<&str, Duration> {
 }
 
 fn date(i: &str) -> Result<&str, Date<Local>> {
-    let (i, (y, _, m, _, d)) = tuple((parse_num, one_of(".-"), parse_num, one_of(".-"), parse_num))(i)?;
+    let (i, (y, _, m, _, d)) =
+        tuple((parse_num, one_of(".-"), parse_num, one_of(".-"), parse_num))(i)?;
     Ok((i, Local.ymd(y, m, d)))
 }
 

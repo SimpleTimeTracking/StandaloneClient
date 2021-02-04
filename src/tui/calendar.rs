@@ -22,7 +22,7 @@ pub struct Calendar<'a> {
     pub date_style: Vec<(NaiveDate, Style)>,
     pub title_background_color: Color,
     pub start_month: u32,
-    pub end_month: u32
+    pub end_month: u32,
 }
 
 impl<'a> Default for Calendar<'a> {
@@ -38,7 +38,7 @@ impl<'a> Default for Calendar<'a> {
             date_style: vec![],
             title_background_color: Color::Reset,
             start_month: 0,
-            end_month: 11
+            end_month: 11,
         }
     }
 }
@@ -154,10 +154,13 @@ impl<'a> Widget for Calendar<'a> {
             buf.set_string(x, y, &s, style);
         }
 
-        let startx = (area.width - 3 * 7 * self.months_per_row as u16 - self.months_per_row as u16) / 2;
+        let startx =
+            (area.width - 3 * 7 * self.months_per_row as u16 - self.months_per_row as u16) / 2;
         y += 2;
         loop {
-            let endm = 12.min(startm + self.months_per_row).min(self.end_month as usize + 1);
+            let endm = 12
+                .min(startm + self.months_per_row)
+                .min(self.end_month as usize + 1);
             let mut x = area.x + startx;
             for c in startm..endm {
                 if c > startm {
@@ -213,7 +216,10 @@ impl<'a> Widget for Calendar<'a> {
                             "   ".to_string()
                         };
                         let mut style = Style::default();
-                        let index = self.date_style.iter().position(|(date, style)| d.1 == *date);
+                        let index = self
+                            .date_style
+                            .iter()
+                            .position(|(date, style)| d.1 == *date);
                         if let Some(i) = index {
                             style = self.date_style[i].1
                         }
@@ -246,7 +252,8 @@ impl<'a> Widget for Calendar<'a> {
                             let first = NaiveDate::from_ymd(self.year + year as i32, i + 1, 1);
                             (
                                 first,
-                                first - Duration::days(first.weekday().num_days_from_sunday() as i64),
+                                first
+                                    - Duration::days(first.weekday().num_days_from_sunday() as i64),
                             )
                         })
                         .collect::<Vec<_>>(),

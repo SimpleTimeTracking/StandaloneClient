@@ -65,7 +65,6 @@ impl TextField {
         self.lines.join("\n")
     }
 
-
     pub fn set_text(&mut self, text: &str) {
         self.lines = text.lines().map(|s| s.to_owned()).collect();
     }

@@ -28,7 +28,15 @@ impl Database {
         let mut stt_file = dirs::home_dir().unwrap();
         stt_file.push(".stt");
         stt_file.push("activities");
-        let file = File::open(&stt_file)?;
+        let file = match File::open(&stt_file) {
+            Ok(file) => file,
+            Err(_) => {
+                return Ok(Database {
+                    stt_file,
+                    content: vec![],
+                })
+            }
+        };
         let reader = BufReader::new(file);
         let mut content: Vec<TimeTrackingItem> = reader
             .lines()
