@@ -165,7 +165,16 @@ fn relative_time(i: &str) -> Result<&str, Duration> {
 fn date(i: &str) -> Result<&str, Date<Local>> {
     let (i, (y, _, m, _, d)) =
         tuple((parse_num, one_of(".-"), parse_num, one_of(".-"), parse_num))(i)?;
-    Ok((i, Local.ymd(y, m, d)))
+    Ok((
+        i,
+        if let chrono::offset::LocalResult::Single(t) = Local.ymd_opt(y, m, d) {
+            t
+        } else {
+            return Err(nom::Err::Error(ErrorKind::InvalidDateTimeFormat(
+                "Future time spec with relative time in the past".to_string(),
+            )));
+        },
+    ))
 }
 
 fn time(i: &str) -> Result<&str, NaiveTime> {
@@ -579,5 +588,15 @@ mod tests {
             }
             _ => panic!(format!("Invalid result: {:?}", res)),
         }
+    }
+
+    #[test]
+    fn should_not_panic_on_() {
+        // GIVEN
+
+        // WHEN
+        command("blub 9.1.0").ok();
+
+        // THEN
     }
 }

@@ -314,7 +314,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             }
             let activity_area = chunks.next().unwrap();
             if app.mode == Mode::DailyReport {
-                app.daily_report.condensedList.set_items(connection.query_n(20));
+                app.daily_report.condensed_list.set_items(connection.query_n(20));
                 let daily_report = DailyReport::new();
                 f.render_stateful_widget(daily_report, activity_area, &mut app.daily_report);
                 return;
@@ -505,7 +505,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                     Event::Mouse(_event) => (),
                     Event::Resize(_width, _height) => (),
                 }
-                if poll(Duration::from_secs(0))? == false {
+                if !poll(Duration::from_secs(0))? {
                     break;
                 }
             }

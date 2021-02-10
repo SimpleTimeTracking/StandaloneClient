@@ -12,18 +12,18 @@ use tui::{
 };
 
 pub struct DailyReportState {
-    pub condensedList: CondensedActivityListState,
+    pub condensed_list: CondensedActivityListState,
 }
 
 impl DailyReportState {
     pub fn new() -> Self {
         Self {
-            condensedList: CondensedActivityListState::new(),
+            condensed_list: CondensedActivityListState::new(),
         }
     }
 
     pub fn handle_event(&mut self, event: KeyEvent) {
-        self.condensedList.handle_event(event);
+        self.condensed_list.handle_event(event);
     }
 }
 
@@ -46,7 +46,7 @@ impl StatefulWidget for DailyReport {
             .into_iter();
 
         let list = CondensedActivityList::new();
-        list.render(chunks.next().unwrap(), buf, &mut state.condensedList)
+        list.render(chunks.next().unwrap(), buf, &mut state.condensed_list)
     }
 }
 
