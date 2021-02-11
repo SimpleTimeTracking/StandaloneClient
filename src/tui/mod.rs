@@ -228,7 +228,7 @@ impl HistoryList {
                     "{} -> {:>19} {}|{}{}",
                     DateTime::<Local>::from(e.start).format("%F %X"),
                     ending,
-                    if self.show_indices && i < 9 {
+                    if self.show_indices && indices.len() < 9 {
                         let added = seen_activities.insert(&e.activity);
                         if added {
                             indices.push(i);
