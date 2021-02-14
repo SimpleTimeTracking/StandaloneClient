@@ -791,6 +791,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "nom",
+ "num-traits",
  "regex",
  "serde",
  "serde_json",

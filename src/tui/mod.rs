@@ -3,11 +3,13 @@ mod daily_report;
 mod event_handler;
 mod history_list;
 mod textfield;
+mod date_picker;
 
 use crate::tui::history_list::{HistoryList, HistoryListState};
 use crate::tui::{
     daily_report::{DailyReport, DailyReportState},
     event_handler::EventHandler,
+    date_picker::{DatePicker, DatePickerState}
 };
 use crate::{
     commands::{self, Command, TimeSpec},
@@ -119,7 +121,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             if app.mode == Mode::DailyReport {
                 app.daily_report.condensed_list.set_items(connection.query_n(20));
                 let daily_report = DailyReport::new();
-                f.render_stateful_widget(daily_report, activity_area, &mut app.daily_report);
+//                f.render_stateful_widget(daily_report, activity_area, &mut app.daily_report);
+                let picker = DatePicker::default();
+                let mut state = DatePickerState::new(2021, 2);
+                state.set_selected(Some(chrono::NaiveDate::from_ymd(2021, 2, 14)));
+                f.render_stateful_widget(picker, f.size(), &mut state);
                 return;
             }
             let mut block = Block::default().title("Activity").borders(Borders::ALL);
@@ -143,14 +149,14 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let now = Local::now();
             let start_of_day = now.date().and_hms(0, 0, 0);
             let start_of_week = start_of_day - chrono::Duration::days(now.weekday().num_days_from_monday() as i64);
-            let duration_acc = |acc, a: &&TimeTrackingItem| acc - a.start.signed_duration_since(match a.end { Ending::Open => now, Ending::At(time) => time.into()});
-            let work_time_today = connection.query().iter()
+            let duration_acc = |acc, a: &TimeTrackingItem| acc - a.start.signed_duration_since(match a.end { Ending::Open => now, Ending::At(time) => time.into()});
+            let work_time_today = current_list.iter()
                 .take_while(|a| a.end > start_of_day)
                 .filter(|a| !pause_matcher.is_match(&a.activity))
                 .fold(chrono::Duration::zero(), duration_acc);
             let work_time_today = (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time_today)
                 .format("%T");
-            let work_time_week = connection.query().iter()
+            let work_time_week = current_list.iter()
             .take_while(|a| a.end > start_of_week)
             .filter(|a| !pause_matcher.is_match(&a.activity))
             .fold(chrono::Duration::zero(), duration_acc);
@@ -159,11 +165,15 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
             let mut history_list = HistoryList::new(&current_list)
                 .set_filter(
-                Regex::new(&format!(
-                    "(?i){}",
-                    regex::escape(app.search_field.first_line())
-                ))
-                .ok(),
+                    if app.search_field.first_line().is_empty() {
+                        None
+                    } else {
+                        Regex::new(&format!(
+                            "(?i){}",
+                            regex::escape(app.search_field.first_line())
+                        ))
+                        .ok() 
+                },
             );
 
             history_list.show_indices = app.mode == Mode::Normal;
