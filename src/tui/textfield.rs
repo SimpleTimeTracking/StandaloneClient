@@ -1,5 +1,11 @@
+use crate::tui::event_handler::EventHandler;
 use crossterm::event::{KeyCode, KeyEvent};
-use tui::{layout::Rect, text::Spans, widgets::Paragraph, Frame};
+use tui::{
+    buffer::Buffer,
+    layout::Rect,
+    text::Spans,
+    widgets::{Paragraph, StatefulWidget, Widget},
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 trait StringExt {
@@ -12,7 +18,7 @@ impl StringExt for String {
     fn remove_char(&mut self, idx: usize) -> char {
         let byte_index = UnicodeSegmentation::grapheme_indices(self.as_str(), true)
             .nth(idx)
-            .unwrap()
+            .expect("Character to remove to be not beyond grapheme length")
             .0;
         self.remove(byte_index)
     }
@@ -21,7 +27,7 @@ impl StringExt for String {
         let byte_index = UnicodeSegmentation::grapheme_indices(self.as_str(), true)
             .nth(idx)
             .map(|i| i.0)
-            .unwrap_or(self.len());
+            .unwrap_or_else(|| self.len());
         self.insert(byte_index, ch)
     }
 
@@ -29,59 +35,23 @@ impl StringExt for String {
         let byte_index = UnicodeSegmentation::grapheme_indices(self.as_str(), true)
             .nth(mid)
             .map(|i| i.0)
-            .unwrap_or(self.len());
+            .unwrap_or_else(|| self.len());
         self.split_at(byte_index)
     }
 }
 
-pub struct TextField {
+pub struct TextFieldState {
     cursor: (usize, usize),
     scroll: (u16, u16),
     lines: Vec<String>,
-    pub focus: bool,
+    pub cursor_screen_pos: (u16, u16),
 }
 
-impl TextField {
-    pub fn new() -> Self {
-        TextField {
-            cursor: (0, 0),
-            scroll: (0, 0),
-            lines: vec![],
-            focus: false,
-        }
-    }
+#[derive(Default)]
+pub struct TextField;
 
-    pub fn clear(&mut self) {
-        self.lines.clear();
-        self.cursor = (0, 0);
-        self.scroll = (0, 0);
-    }
-
-    pub fn first_line(&self) -> &str {
-        self.lines.get(0).map(|s| s.as_str()).unwrap_or("")
-    }
-
-    pub fn get_text(&self) -> String {
-        self.lines.join("\n")
-    }
-
-    pub fn set_text(&mut self, text: &str) {
-        self.lines = text.lines().map(|s| s.to_owned()).collect();
-    }
-
-    pub fn end(&mut self) {
-        if let Some(last) = self.lines.last() {
-            self.cursor = (last.len(), self.lines.len() - 1);
-        } else {
-            self.cursor = (0, 0);
-        }
-    }
-
-    fn current_line_len(&self) -> usize {
-        self.lines.get(self.cursor.1).map(|l| l.len()).unwrap_or(0)
-    }
-
-    pub fn handle_event(&mut self, event: KeyEvent) {
+impl EventHandler for TextFieldState {
+    fn handle_event(&mut self, event: KeyEvent) {
         match event.code {
             KeyCode::Backspace => {
                 if self.cursor.0 > 0 {
@@ -163,32 +133,76 @@ impl TextField {
             _ => (),
         }
     }
+}
 
-    pub fn render<B: tui::backend::Backend>(&mut self, f: &mut Frame<'_, B>, area: Rect) {
-        self.scroll.1 = self.scroll.1.min(self.cursor.1 as u16);
-        self.scroll.0 = self.scroll.0.min(self.cursor.0 as u16);
+impl TextFieldState {
+    pub fn new() -> Self {
+        Self {
+            cursor: (0, 0),
+            scroll: (0, 0),
+            lines: vec![],
+            cursor_screen_pos: (0, 0),
+        }
+    }
 
-        if self.cursor.0 as u16 >= self.scroll.0 + area.width {
-            self.scroll.0 = self.cursor.0 as u16 - area.width + 1;
+    pub fn clear(&mut self) {
+        self.lines.clear();
+        self.cursor = (0, 0);
+        self.scroll = (0, 0);
+    }
+
+    pub fn first_line(&self) -> &str {
+        self.lines.get(0).map(|s| s.as_str()).unwrap_or("")
+    }
+
+    pub fn get_text(&self) -> String {
+        self.lines.join("\n")
+    }
+
+    pub fn set_text(&mut self, text: &str) {
+        self.lines = text.lines().map(|s| s.to_owned()).collect();
+    }
+
+    pub fn end(&mut self) {
+        if let Some(last) = self.lines.last() {
+            self.cursor = (last.len(), self.lines.len() - 1);
+        } else {
+            self.cursor = (0, 0);
+        }
+    }
+
+    fn current_line_len(&self) -> usize {
+        self.lines.get(self.cursor.1).map(|l| l.len()).unwrap_or(0)
+    }
+}
+
+impl StatefulWidget for TextField {
+    type State = TextFieldState;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        state.scroll.1 = state.scroll.1.min(state.cursor.1 as u16);
+        state.scroll.0 = state.scroll.0.min(state.cursor.0 as u16);
+
+        if state.cursor.0 as u16 >= state.scroll.0 + area.width {
+            state.scroll.0 = state.cursor.0 as u16 - area.width + 1;
         }
 
-        if self.cursor.1 as u16 >= self.scroll.1 + area.height {
-            self.scroll.1 = self.cursor.1 as u16 - area.height + 1;
+        if state.cursor.1 as u16 >= state.scroll.1 + area.height {
+            state.scroll.1 = state.cursor.1 as u16 - area.height + 1;
         }
 
         let para = Paragraph::new(
-            self.lines
+            state
+                .lines
                 .iter()
                 .map(|s| Spans::from(s.to_owned()))
                 .collect::<Vec<_>>(),
-        ) // (x, y) _> (y, x)
-        .scroll((self.scroll.1, self.scroll.0));
-        f.render_widget(para, area);
-        if self.focus {
-            f.set_cursor(
-                area.x + self.cursor.0 as u16 - self.scroll.0,
-                area.y + self.cursor.1 as u16 - self.scroll.1,
-            );
-        }
+        ) // (x, y) -> (y, x)
+        .scroll((state.scroll.1, state.scroll.0));
+        para.render(area, buf);
+        state.cursor_screen_pos = (
+            area.x + state.cursor.0 as u16 - state.scroll.0,
+            area.y + state.cursor.1 as u16 - state.scroll.1,
+        )
     }
 }

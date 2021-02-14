@@ -6,9 +6,7 @@ use itertools::Itertools;
 use tui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::Spans,
-    widgets::{Cell, Paragraph, Row, StatefulWidget, Table, TableState, Widget},
-    Frame,
+    widgets::{Row, StatefulWidget, Table, TableState},
 };
 
 pub struct DailyReportState {

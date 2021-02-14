@@ -1,8 +1,14 @@
 mod calendar;
 mod daily_report;
+mod event_handler;
+mod history_list;
 mod textfield;
 
-use crate::tui::daily_report::{DailyReport, DailyReportState, CondensedActivityListState};
+use crate::tui::history_list::{HistoryList, HistoryListState};
+use crate::tui::{
+    daily_report::{DailyReport, DailyReportState},
+    event_handler::EventHandler,
+};
 use crate::{
     commands::{self, Command, TimeSpec},
     Connection, Database, Ending, TimeTrackingItem,
@@ -10,21 +16,19 @@ use crate::{
 use chrono::{DateTime, Datelike, Local, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking},
-    event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers},
+    event::{poll, read, Event, KeyCode, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use regex::Regex;
-use std::collections::HashSet;
 use std::{error::Error, io::stdout, time::Duration};
-use textfield::TextField;
+use textfield::{TextField, TextFieldState};
 use tui::{
-    backend::{self, CrosstermBackend},
-    layout::{Constraint, Layout, Rect},
-    style::{Color, Modifier, Style},
-    terminal::Frame,
+    backend::CrosstermBackend,
+    layout::{Constraint, Layout},
+    style::{Modifier, Style},
     text::Spans,
-    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph, Tabs},
+    widgets::{Block, BorderType, Borders, Tabs},
     Terminal,
 };
 
@@ -39,9 +43,9 @@ enum Mode {
 
 struct App {
     mode: Mode,
-    history_list: HistoryList,
-    activity_field: TextField,
-    search_field: TextField,
+    history_list: HistoryListState,
+    activity_field: TextFieldState,
+    search_field: TextFieldState,
     daily_report: DailyReportState,
 }
 
@@ -55,217 +59,23 @@ pub fn duration_to_string(duration: &chrono::Duration) -> String {
 }
 
 impl App {
-    fn new(history_list: HistoryList) -> Self {
+    fn new() -> Self {
         Self {
             mode: Mode::EnterActivity,
-            history_list,
-            activity_field: TextField::new(),
-            search_field: TextField::new(),
+            history_list: HistoryListState::default(),
+            activity_field: TextFieldState::new(),
+            search_field: TextFieldState::new(),
             daily_report: DailyReportState::new(),
         }
     }
 
-    fn select_as_activity<T: Into<Option<TimeTrackingItem>>>(&mut self, item: T) {
+    fn select_as_activity<'a, T: Into<Option<&'a TimeTrackingItem>>>(&mut self, item: T) {
         if let Some(selected) = item.into() {
             self.mode = Mode::EnterActivity;
             self.activity_field.set_text(&selected.activity);
             self.activity_field.end();
             self.history_list.reset();
         }
-    }
-}
-
-struct HistoryList {
-    start: usize,
-    page_size: u16,
-    selected: Option<usize>,
-    items: Vec<TimeTrackingItem>,
-    filter: Option<Regex>,
-    visible: Vec<TimeTrackingItem>,
-    indices: Vec<usize>,
-    show_indices: bool,
-}
-
-impl HistoryList {
-    fn new(items: Vec<TimeTrackingItem>) -> Self {
-        HistoryList {
-            start: 0,
-            page_size: 0,
-            selected: None,
-            items,
-            filter: None,
-            visible: vec![],
-            indices: vec![],
-            show_indices: false,
-        }
-    }
-
-    fn get_selected_item(&self) -> Option<TimeTrackingItem> {
-        if let Some(index) = self.selected {
-            self.visible.get(index).cloned()
-        } else {
-            None
-        }
-    }
-
-    fn get_item_by_index(&self, index: usize) -> Option<TimeTrackingItem> {
-        self.indices
-            .get(index)
-            .map(|&i| self.visible.get(i))
-            .flatten()
-            .cloned()
-    }
-
-    fn set_filter(&mut self, filter: Option<Regex>) {
-        self.filter = filter;
-        self.start = 0;
-        self.selected = None;
-    }
-
-    fn reset(&mut self) {
-        self.selected = None;
-        self.filter = None;
-    }
-
-    fn handle_event(&mut self, event: KeyEvent) {
-        match event.code {
-            KeyCode::Up => {
-                self.selected = Some(
-                    self.selected
-                        .map(|i| if i > 0 { i - 1 } else { 0 })
-                        .unwrap_or(0),
-                )
-            }
-            KeyCode::Down => {
-                self.selected = Some(
-                    self.selected
-                        .map(|i| (i + 1).min(self.items.len() - 1))
-                        .unwrap_or(0),
-                )
-            }
-            KeyCode::PageUp => {
-                self.selected = Some(
-                    self.selected
-                        .map(|i| {
-                            if i >= self.page_size as usize {
-                                i - self.page_size as usize
-                            } else {
-                                0
-                            }
-                        })
-                        .unwrap_or(0),
-                )
-            }
-            KeyCode::PageDown => {
-                self.selected = Some(
-                    self.selected
-                        .map(|i| (i + self.page_size as usize).min(self.items.len() - 1))
-                        .unwrap_or(0),
-                )
-            }
-            KeyCode::Home => self.selected = Some(0),
-            KeyCode::End => self.selected = Some(0.max(self.items.len() - 1)),
-            _ => (),
-        }
-    }
-
-    fn render<B: backend::Backend>(&mut self, f: &mut Frame<'_, B>, area: Rect) {
-        self.page_size = area.height - 2;
-        let mut state = ListState::default();
-        if let Some(index) = self.selected {
-            if index < self.start {
-                self.start = index;
-            }
-            if index >= self.start + self.page_size as usize {
-                self.start = index - self.page_size as usize + 1;
-            }
-            state.select(Some(index - self.start));
-        }
-        self.visible = if let Some(regex) = &self.filter {
-            self.items
-                .iter()
-                .filter(|i| regex.find(&i.activity).is_some())
-                .skip(self.start)
-                .take(self.page_size as usize)
-                .cloned()
-                .collect()
-        } else {
-            self.items
-                .iter()
-                .skip(self.start)
-                .take(self.page_size as usize)
-                .cloned()
-                .collect()
-        };
-        let mut seen_activities = HashSet::<&str>::new();
-        let mut indices = vec![];
-        let list_items = self
-            .visible
-            .iter()
-            .enumerate()
-            .map(|(i, e)| {
-                let ending = match e.end {
-                    Ending::Open => {
-                        let delta = Local::now().signed_duration_since(e.start);
-                        let (delta, msg) = if delta < chrono::Duration::zero() {
-                            (-delta, "in")
-                        } else {
-                            (delta, "for")
-                        };
-                        format!(
-                            "{} {}",
-                            msg,
-                            (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + delta)
-                                .format("%H:%M:%S")
-                        )
-                    }
-                    Ending::At(t) => format!("{}", DateTime::<Local>::from(t).format("%F %X")),
-                };
-                let mut lines = e.activity.lines();
-                let first_line = lines.next().unwrap_or("");
-
-                ListItem::new(format!(
-                    "{} -> {:>19} {}|{}{}",
-                    DateTime::<Local>::from(e.start).format("%F %X"),
-                    ending,
-                    if self.show_indices && indices.len() < 9 {
-                        let added = seen_activities.insert(&e.activity);
-                        if added {
-                            indices.push(i);
-                            format!("[{}]", indices.len())
-                        } else {
-                            "   ".to_owned()
-                        }
-                    } else if self.show_indices {
-                        "   ".to_owned()
-                    } else {
-                        "".to_owned()
-                    },
-                    if lines.next().is_some() { "#" } else { " " },
-                    first_line
-                ))
-            })
-            .collect::<Vec<_>>();
-        self.indices = indices;
-        let list = List::new(list_items)
-            .highlight_symbol(">>")
-            .highlight_style(Style::default().fg(Color::Black).bg(Color::Green))
-            .block(Block::default().title("History").borders(Borders::ALL));
-        f.render_stateful_widget(list, area, &mut state);
-        let footer = Block::default().title(format!(
-            "{}% {}",
-            100 * self.start / self.items.len().max(1),
-            self.filter
-                .as_ref()
-                .map(|r| format!("search-regex: {}", r))
-                .unwrap_or("".to_owned())
-        ));
-        let mut footer_area = area;
-        footer_area.y += footer_area.height - 1;
-        footer_area.height = 1;
-        footer_area.x += 2;
-        footer_area.width -= 2;
-        f.render_widget(footer, footer_area);
     }
 }
 
@@ -283,18 +93,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let mut database = Database::open().unwrap();
     let mut connection = database.open_connection();
 
-    let history_list = HistoryList::new(
-        connection
-            .query_n(10000)
-            .iter()
-            .map(|&i| i.clone())
-            .collect(),
-    );
-
-    let mut app = App::new(history_list);
+    let mut app = App::new();
     let pause_matcher = Regex::new("(?i).*pause.*")?;
 
     'main: loop {
+        let current_list: Vec<_> = connection.query().iter().map(|&i| i.clone()).collect();
         terminal.draw(|f| {
             let mut chunks = Layout::default()
                 .constraints([
@@ -325,8 +128,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             }
             let txt = block.inner(activity_area);
             f.render_widget(block, activity_area);
-            app.activity_field.focus = app.mode == Mode::EnterActivity;
-            app.activity_field.render(f, txt);
+
+            let text_field = TextField::default();
+            f.render_stateful_widget(text_field, txt, &mut app.activity_field);
+            if app.mode == Mode::EnterActivity {
+                f.set_cursor(app.activity_field.cursor_screen_pos.0, app.activity_field.cursor_screen_pos.1);
+            }
 
             let mut activity_status_area = activity_area;
             activity_status_area.y += activity_status_area.height - 1;
@@ -350,8 +157,17 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let activity_status_line = Block::default().title(format!("Tracked time today: {} week: {}:{:02}:{:02}", work_time_today, work_time_week.num_hours(), work_time_week.num_minutes() % 60, work_time_week.num_seconds() % 60));
             f.render_widget(activity_status_line, activity_status_area);
 
-            app.history_list.show_indices = app.mode == Mode::Normal;
-            app.history_list.render(f, chunks.next().unwrap());
+            let mut history_list = HistoryList::new(&current_list)
+                .set_filter(
+                Regex::new(&format!(
+                    "(?i){}",
+                    regex::escape(app.search_field.first_line())
+                ))
+                .ok(),
+            );
+
+            history_list.show_indices = app.mode == Mode::Normal;
+            f.render_stateful_widget(history_list, chunks.next().unwrap(), &mut app.history_list);
 
             let status_text = match app.mode {
                 Mode::EnterActivity => "Esc - leave insert mode  Ctrl+Enter/Alt+Enter insert activity",
@@ -369,8 +185,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 let mut my_area = history_area;
                 my_area.x += status_len;
                 my_area.width -= status_len;
-                app.search_field.focus = app.mode == Mode::SearchHistory;
-                app.search_field.render(f, my_area);
+                let text_field = TextField::default();
+                f.render_stateful_widget(text_field, my_area, &mut app.search_field);
+                if app.mode == Mode::SearchHistory {
+                    f.set_cursor(app.search_field.cursor_screen_pos.0, app.search_field.cursor_screen_pos.1);
+                }
             }
         })?;
 
@@ -418,11 +237,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                     database.flush();
                                     connection = database.open_connection();
                                     app.activity_field.clear();
-                                    app.history_list.items = connection
-                                        .query_n(10000)
-                                        .iter()
-                                        .map(|&i| i.clone())
-                                        .collect();
                                 } else {
                                     app.activity_field.handle_event(event);
                                 }
@@ -433,6 +247,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                     if let Some(item) = app
                                         .history_list
                                         .get_item_by_index((n as u8 - b'1') as usize)
+                                        .map(|i| &current_list[i])
                                     {
                                         app.mode = Mode::EnterActivity;
                                         app.select_as_activity(item);
@@ -453,24 +268,27 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                     app.history_list.handle_event(event)
                                 }
                                 KeyCode::Char(' ') | KeyCode::Enter => {
-                                    app.select_as_activity(app.history_list.get_selected_item());
+                                    app.select_as_activity(
+                                        app.history_list
+                                            .get_selected_item()
+                                            .map(|i| &current_list[i]),
+                                    );
                                 }
                                 KeyCode::Char('/') => {
                                     app.mode = Mode::SearchHistory;
                                     app.search_field.clear();
                                 }
                                 KeyCode::Char('r') => {
-                                    if let Some(mut item) = app.history_list.get_selected_item() {
+                                    if let Some(mut item) = app
+                                        .history_list
+                                        .get_selected_item()
+                                        .map(|i| current_list[i].clone())
+                                    {
                                         item.activity = app.activity_field.get_text();
                                         connection.insert_item(item);
                                         database.flush();
                                         connection = database.open_connection();
                                         app.activity_field.clear();
-                                        app.history_list.items = connection
-                                            .query_n(10000)
-                                            .iter()
-                                            .map(|&i| i.clone())
-                                            .collect();
                                     }
                                 }
                                 KeyCode::Tab => {
@@ -488,13 +306,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                 }
                                 _ => {
                                     app.search_field.handle_event(event);
-                                    app.history_list.set_filter(
-                                        Regex::new(&format!(
-                                            "(?i){}",
-                                            regex::escape(app.search_field.first_line())
-                                        ))
-                                        .ok(),
-                                    );
                                 }
                             },
                             Mode::DailyReport => {
