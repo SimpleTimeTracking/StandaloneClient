@@ -1,16 +1,14 @@
-mod calendar;
-mod daily_report;
-mod event_handler;
+mod activity_tab;
+mod component;
+//mod daily_report;
+//mod date_picker;
 mod history_list;
+mod string_ext;
 mod textfield;
-mod date_picker;
 
+use crate::tui::activity_tab::*;
+use crate::tui::component::*;
 use crate::tui::history_list::{HistoryList, HistoryListState};
-use crate::tui::{
-    daily_report::{DailyReport, DailyReportState},
-    event_handler::EventHandler,
-    date_picker::{DatePicker, DatePickerState}
-};
 use crate::{
     commands::{self, Command, TimeSpec},
     Connection, Database, Ending, TimeTrackingItem,
@@ -27,28 +25,28 @@ use std::{error::Error, io::stdout, time::Duration};
 use textfield::{TextField, TextFieldState};
 use tui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Layout},
+    buffer::Buffer,
+    layout::{Constraint, Layout, Rect},
     style::{Modifier, Style},
     text::Spans,
-    widgets::{Block, BorderType, Borders, Tabs},
+    widgets::{Block, BorderType, Borders, StatefulWidget, Tabs},
     Terminal,
 };
 
 #[derive(PartialEq)]
 enum Mode {
-    Normal,
     EnterActivity,
-    BrowseHistory,
-    SearchHistory,
     DailyReport,
 }
 
 struct App {
-    mode: Mode,
+    show_tabs: bool,
+    tab: Mode,
     history_list: HistoryListState,
     activity_field: TextFieldState,
     search_field: TextFieldState,
-    daily_report: DailyReportState,
+    activity_tab: ActivityTabState,
+    //daily_report: DailyReportState,
 }
 
 pub fn duration_to_string(duration: &chrono::Duration) -> String {
@@ -63,23 +61,146 @@ pub fn duration_to_string(duration: &chrono::Duration) -> String {
 impl App {
     fn new() -> Self {
         Self {
-            mode: Mode::EnterActivity,
+            show_tabs: false,
+            tab: Mode::EnterActivity,
             history_list: HistoryListState::default(),
             activity_field: TextFieldState::new(),
             search_field: TextFieldState::new(),
-            daily_report: DailyReportState::new(),
+            activity_tab: ActivityTabState::default(),
+            //daily_report: DailyReportState::new(),
         }
     }
 
     fn select_as_activity<'a, T: Into<Option<&'a TimeTrackingItem>>>(&mut self, item: T) {
         if let Some(selected) = item.into() {
-            self.mode = Mode::EnterActivity;
+            self.tab = Mode::EnterActivity;
             self.activity_field.set_text(&selected.activity);
             self.activity_field.end();
-            self.history_list.reset();
+            //            self.history_list.reset();
         }
     }
 }
+
+/*
+impl Component for AppComponent {
+    type State = App;
+
+    fn handle_event(&mut self, event: KeyEvent, state: &mut Self::State) -> Consumed {
+        Consumed::Consumed
+    }
+
+    fn render(&mut self, area: Rect, buf: mut Buffer, app: &mut Self::State) {
+        let mut chunks = Layout::default()
+            .constraints([
+                if app.mode == Mode::Normal {
+                    Constraint::Length(1)
+                } else {
+                    Constraint::Length(0)
+                },
+                Constraint::Length(5),
+                Constraint::Min(0),
+                Constraint::Length(1),
+            ])
+            .split(f.size())
+            .into_iter();
+
+        let tab_area = chunks.next().unwrap();
+        if app.mode == Mode::Normal {
+            let tab = Modes::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
+                .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+            f.render_widget(tab, tab_area);
+        }
+        let activity_area = chunks.next().unwrap();
+        if app.mode == Mode::DailyReport {
+            //                app.daily_report.condensed_list.set_items(&current_list);
+            let daily_report = DailyReport::new(&current_list, &state.daily_report);
+            f.render_stateful_widget(daily_report, f.size(), &mut app.daily_report);
+            return;
+        }
+        let mut block = Block::default().title("Activity").borders(Borders::ALL);
+        if app.mode == Mode::EnterActivity {
+            block = block.border_type(BorderType::Thick);
+        }
+        let txt = block.inner(activity_area);
+        f.render_widget(block, activity_area);
+
+        let text_field = TextField::default();
+        text_field.render(txt, buffer, &mut app.activity_field);
+        if app.mode == Mode::EnterActivity {
+            f.set_cursor(
+                app.activity_field.cursor_screen_pos.0,
+                app.activity_field.cursor_screen_pos.1,
+            );
+        }
+
+        let mut activity_status_area = activity_area;
+        activity_status_area.y += activity_status_area.height - 1;
+        activity_status_area.x += 2;
+        activity_status_area.height = 1;
+        activity_status_area.width -= 2;
+        let now = Local::now();
+        let start_of_day = now.date().and_hms(0, 0, 0);
+        let start_of_week =
+            start_of_day - chrono::Duration::days(now.weekday().num_days_from_monday() as i64);
+        let duration_acc = |acc, a: &TimeTrackingItem| {
+            acc - a.start.signed_duration_since(match a.end {
+                Ending::Open => now,
+                Ending::At(time) => time.into(),
+            })
+        };
+        let work_time_today = current_list
+            .iter()
+            .take_while(|a| a.end > start_of_day)
+            .filter(|a| !pause_matcher.is_match(&a.activity))
+            .fold(chrono::Duration::zero(), duration_acc);
+        let work_time_today =
+            (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time_today).format("%T");
+        let work_time_week = current_list
+            .iter()
+            .take_while(|a| a.end > start_of_week)
+            .filter(|a| !pause_matcher.is_match(&a.activity))
+            .fold(chrono::Duration::zero(), duration_acc);
+        let activity_status_line = Block::default().title(format!(
+            "Tracked time today: {} week: {}:{:02}:{:02}",
+            work_time_today,
+            work_time_week.num_hours(),
+            work_time_week.num_minutes() % 60,
+            work_time_week.num_seconds() % 60
+        ));
+        f.render_widget(activity_status_line, activity_status_area);
+
+        history_list.render(chunks.next().unwrap(), &mut app.history_list);
+
+        let status_text = match app.mode {
+                Mode::EnterActivity => "Esc - leave insert mode  Ctrl+Enter/Alt+Enter insert activity",
+                Mode::Normal => "q - exit  i - edit  n - clear & edit  up/down/pgUp/pgDown - browse history  / - search  [1]-[9] - quick select previous item",
+                Mode::BrowseHistory => "Esc - leave browsing mode  q - exit  i - insert  n - clear & edit  r - replace  up/down/pgUp/pgDown browse history",
+                Mode::SearchHistory => "Esc - leave search  Enter - leave search/keep filter  up/down/pgUp/pgDown - browse history  ?",
+                Mode::DailyReport => "Esc"
+            }
+            .to_owned();
+        let status_len = status_text.len() as u16;
+        let text = Block::default().title(status_text);
+        let history_area = chunks.next().unwrap();
+        f.render_widget(text, history_area);
+        if app.mode == Mode::SearchHistory {
+            let mut my_area = history_area;
+            my_area.x += status_len;
+            my_area.width -= status_len;
+            let text_field = TextField::default();
+            text_field.render(my_area, buffer, &mut app.search_field);
+            if app.mode == Mode::SearchHistory {
+                /*
+                f.set_cursor(
+                    app.search_field.cursor_screen_pos.0,
+                    app.search_field.cursor_screen_pos.1,
+                );
+                */
+            }
+        }
+    }
+}
+*/
 
 pub fn run() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -100,229 +221,99 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
     'main: loop {
         let current_list: Vec<_> = connection.query().iter().map(|&i| i.clone()).collect();
-        terminal.draw(|f| {
-            let mut chunks = Layout::default()
-                .constraints([
-                    if app.mode == Mode::Normal {Constraint::Length(1) } else {Constraint::Length(0)},
-                    Constraint::Length(5),
-                    Constraint::Min(0),
-                    Constraint::Length(1),
-                ])
-                .split(f.size()).into_iter();
 
-
-            let tab_area = chunks.next().unwrap();
-            if app.mode == Mode::Normal {
-                let tab = Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD));
-                f.render_widget(tab, tab_area);
-            }
-            let activity_area = chunks.next().unwrap();
-            if app.mode == Mode::DailyReport {
-                app.daily_report.condensed_list.set_items(connection.query_n(20));
-                let daily_report = DailyReport::new();
-//                f.render_stateful_widget(daily_report, activity_area, &mut app.daily_report);
-                let picker = DatePicker::default();
-                let mut state = DatePickerState::new(2021, 2);
-                state.set_selected(Some(chrono::NaiveDate::from_ymd(2021, 2, 14)));
-                f.render_stateful_widget(picker, f.size(), &mut state);
-                return;
-            }
-            let mut block = Block::default().title("Activity").borders(Borders::ALL);
-            if app.mode == Mode::EnterActivity {
-                block = block.border_type(BorderType::Thick);
-            }
-            let txt = block.inner(activity_area);
-            f.render_widget(block, activity_area);
-
-            let text_field = TextField::default();
-            f.render_stateful_widget(text_field, txt, &mut app.activity_field);
-            if app.mode == Mode::EnterActivity {
-                f.set_cursor(app.activity_field.cursor_screen_pos.0, app.activity_field.cursor_screen_pos.1);
-            }
-
-            let mut activity_status_area = activity_area;
-            activity_status_area.y += activity_status_area.height - 1;
-            activity_status_area.x += 2;
-            activity_status_area.height = 1;
-            activity_status_area.width -= 2;
-            let now = Local::now();
-            let start_of_day = now.date().and_hms(0, 0, 0);
-            let start_of_week = start_of_day - chrono::Duration::days(now.weekday().num_days_from_monday() as i64);
-            let duration_acc = |acc, a: &TimeTrackingItem| acc - a.start.signed_duration_since(match a.end { Ending::Open => now, Ending::At(time) => time.into()});
-            let work_time_today = current_list.iter()
-                .take_while(|a| a.end > start_of_day)
-                .filter(|a| !pause_matcher.is_match(&a.activity))
-                .fold(chrono::Duration::zero(), duration_acc);
-            let work_time_today = (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time_today)
-                .format("%T");
-            let work_time_week = current_list.iter()
-            .take_while(|a| a.end > start_of_week)
-            .filter(|a| !pause_matcher.is_match(&a.activity))
-            .fold(chrono::Duration::zero(), duration_acc);
-            let activity_status_line = Block::default().title(format!("Tracked time today: {} week: {}:{:02}:{:02}", work_time_today, work_time_week.num_hours(), work_time_week.num_minutes() % 60, work_time_week.num_seconds() % 60));
-            f.render_widget(activity_status_line, activity_status_area);
-
-            let mut history_list = HistoryList::new(&current_list)
-                .set_filter(
-                    if app.search_field.first_line().is_empty() {
+        /*
+                let mut history_list = HistoryList::new(&current_list)
+                    .set_filter(if app.search_field.first_line().is_empty() {
                         None
                     } else {
                         Regex::new(&format!(
                             "(?i){}",
                             regex::escape(app.search_field.first_line())
                         ))
-                        .ok() 
-                },
-            );
+                        .ok()
+                    })
+                    .set_show_indices(app.mode == Mode::Normal);
+                let activity_field = TextField::new();
+        */
 
-            history_list.show_indices = app.mode == Mode::Normal;
-            f.render_stateful_widget(history_list, chunks.next().unwrap(), &mut app.history_list);
-
-            let status_text = match app.mode {
-                Mode::EnterActivity => "Esc - leave insert mode  Ctrl+Enter/Alt+Enter insert activity",
-                Mode::Normal => "q - exit  i - edit  n - clear & edit  up/down/pgUp/pgDown - browse history  / - search  [1]-[9] - quick select previous item",
-                Mode::BrowseHistory => "Esc - leave browsing mode  q - exit  i - insert  n - clear & edit  r - replace  up/down/pgUp/pgDown browse history",
-                Mode::SearchHistory => "Esc - leave search  Enter - leave search/keep filter  up/down/pgUp/pgDown - browse history  ?",
-                Mode::DailyReport => "Esc"
-            }
-            .to_owned();
-            let status_len = status_text.len() as u16;
-            let text = Block::default().title(status_text);
-            let history_area = chunks.next().unwrap();
-            f.render_widget(text, history_area);
-            if app.mode == Mode::SearchHistory {
-                let mut my_area = history_area;
-                my_area.x += status_len;
-                my_area.width -= status_len;
-                let text_field = TextField::default();
-                f.render_stateful_widget(text_field, my_area, &mut app.search_field);
-                if app.mode == Mode::SearchHistory {
-                    f.set_cursor(app.search_field.cursor_screen_pos.0, app.search_field.cursor_screen_pos.1);
-                }
-            }
+        let show_tabs = app.show_tabs;
+        let mut activity_tab_frame = app.activity_tab.into_frame(current_list);
+        terminal.draw(|f| {
+            let layout = Layout::default()
+                .constraints([])
+                .split(f.size())
+                .into_iter();
+            let content_area = if show_tabs {
+                let mut chunks = Layout::default()
+                    .constraints([Constraint::Length(1), Constraint::Min(0)])
+                    .split(f.size())
+                    .into_iter();
+                let tab = Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
+                    .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+                f.render_widget(tab, chunks.next().unwrap());
+                chunks.next().unwrap()
+            } else {
+                f.size()
+            };
+            f.render_stateful_widget(ActivityTab, content_area, &mut activity_tab_frame);
+            activity_tab_frame.set_focus(f);
         })?;
-
         if poll(Duration::from_millis(500))? {
             loop {
                 match read()? {
-                    Event::Key(event) => match event.code {
-                        KeyCode::Esc => {
-                            app.mode = Mode::Normal;
-                            app.history_list.reset();
-                        }
-                        _ => match app.mode {
-                            Mode::EnterActivity => {
-                                if (event.code == KeyCode::Enter
-                                    || event.code == KeyCode::Char('\r'))
-                                    && event
-                                        .modifiers
-                                        .intersects(KeyModifiers::ALT | KeyModifiers::CONTROL)
-                                {
-                                    match commands::command(&app.activity_field.get_text()) {
-                                        Ok((_, Command::StartActivity(time, activity))) => {
-                                            let item = match time {
-                                                TimeSpec::Interval { from, to } => {
-                                                    TimeTrackingItem::interval(from, to, &activity)
+                    Event::Key(event) => {
+                        let result = match event.code {
+                            _ if app.tab == Mode::EnterActivity => {
+                                let consumed = activity_tab_frame.handle_event(event);
+                                match consumed {
+                                    Consumed::Command(cmd) => {
+                                        match cmd {
+                                            Command::StartActivity(time, activity) => {
+                                                let item = match time {
+                                                    TimeSpec::Interval { from, to } => {
+                                                        TimeTrackingItem::interval(
+                                                            from, to, &activity,
+                                                        )
                                                         .unwrap()
-                                                }
-                                                _ => TimeTrackingItem::starting_at(
-                                                    time.to_date_time(),
-                                                    &activity,
-                                                ),
-                                            };
-                                            connection.insert_item(item);
-                                        }
-                                        Ok((_, Command::Fin(time))) => {
-                                            let item = connection.query_latest();
-                                            if let Some(item) = item {
-                                                let mut item = item.clone();
-                                                connection.delete_item(&item).unwrap();
-                                                item.end = Ending::At(time.to_date_time().into());
+                                                    }
+                                                    _ => TimeTrackingItem::starting_at(
+                                                        time.to_date_time(),
+                                                        &activity,
+                                                    ),
+                                                };
                                                 connection.insert_item(item);
                                             }
-                                        }
-                                        _ => (),
+                                            Command::Fin(time) => {
+                                                let item = connection.query_latest();
+                                                if let Some(item) = item {
+                                                    let mut item = item.clone();
+                                                    connection.delete_item(&item).unwrap();
+                                                    item.end =
+                                                        Ending::At(time.to_date_time().into());
+                                                    connection.insert_item(item);
+                                                }
+                                            }
+                                            _ => (),
+                                        };
+                                        true
                                     }
-                                    database.flush();
-                                    connection = database.open_connection();
-                                    app.activity_field.clear();
-                                } else {
-                                    app.activity_field.handle_event(event);
+                                    Consumed::Consumed => true,
+                                    Consumed::NotConsumed => false,
                                 }
                             }
-                            Mode::Normal | Mode::BrowseHistory => match event.code {
-                                KeyCode::Char('q') => break 'main,
-                                KeyCode::Char(n @ '1'..='9') => {
-                                    if let Some(item) = app
-                                        .history_list
-                                        .get_item_by_index((n as u8 - b'1') as usize)
-                                        .map(|i| &current_list[i])
-                                    {
-                                        app.mode = Mode::EnterActivity;
-                                        app.select_as_activity(item);
-                                    }
-                                }
-                                KeyCode::Char('n') => {
-                                    app.mode = Mode::EnterActivity;
-                                    app.activity_field.clear();
-                                }
-                                KeyCode::Char('i') => app.mode = Mode::EnterActivity,
-                                KeyCode::Down
-                                | KeyCode::Up
-                                | KeyCode::PageDown
-                                | KeyCode::PageUp
-                                | KeyCode::Home
-                                | KeyCode::End => {
-                                    app.mode = Mode::BrowseHistory;
-                                    app.history_list.handle_event(event)
-                                }
-                                KeyCode::Char(' ') | KeyCode::Enter => {
-                                    app.select_as_activity(
-                                        app.history_list
-                                            .get_selected_item()
-                                            .map(|i| &current_list[i]),
-                                    );
-                                }
-                                KeyCode::Char('/') => {
-                                    app.mode = Mode::SearchHistory;
-                                    app.search_field.clear();
-                                }
-                                KeyCode::Char('r') => {
-                                    if let Some(mut item) = app
-                                        .history_list
-                                        .get_selected_item()
-                                        .map(|i| current_list[i].clone())
-                                    {
-                                        item.activity = app.activity_field.get_text();
-                                        connection.insert_item(item);
-                                        database.flush();
-                                        connection = database.open_connection();
-                                        app.activity_field.clear();
-                                    }
-                                }
-                                KeyCode::Tab => {
-                                    app.mode = Mode::DailyReport;
-                                }
+                            _ => false,
+                        };
+                        if !result {
+                            match event.code {
+                                KeyCode::Esc if !app.show_tabs => app.show_tabs = true,
+                                KeyCode::Char('q') if app.show_tabs => break 'main,
                                 _ => (),
-                            },
-                            Mode::SearchHistory => match event.code {
-                                KeyCode::Down
-                                | KeyCode::Up
-                                | KeyCode::PageDown
-                                | KeyCode::PageUp => app.history_list.handle_event(event),
-                                KeyCode::Enter => {
-                                    app.mode = Mode::Normal;
-                                }
-                                _ => {
-                                    app.search_field.handle_event(event);
-                                }
-                            },
-                            Mode::DailyReport => {
-                                app.daily_report.handle_event(event);
                             }
-                        },
-                    },
+                        } else {
+                            app.show_tabs = false;
+                        }
+                    }
                     Event::Mouse(_event) => (),
                     Event::Resize(_width, _height) => (),
                 }
@@ -331,6 +322,139 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
             }
         }
+        app.activity_tab = activity_tab_frame.into_state();
+        /*
+            if poll(Duration::from_millis(500))? {
+                loop {
+                    match read()? {
+                        Event::Key(event) => match event.code {
+                            KeyCode::Esc => {
+                                app.mode = Mode::Normal;
+                                app.history_list.reset();
+                                app.search_field.clear();
+                            }
+                            _ => match app.mode {
+                                Mode::EnterActivity => {
+                                    if (event.code == KeyCode::Enter
+                                        || event.code == KeyCode::Char('\r'))
+                                        && event
+                                            .modifiers
+                                            .intersects(KeyModifiers::ALT | KeyModifiers::CONTROL)
+                                    {
+                                        match commands::command(&app.activity_field.get_text()) {
+                                            Ok((_, Command::StartActivity(time, activity))) => {
+                                                let item = match time {
+                                                    TimeSpec::Interval { from, to } => {
+                                                        TimeTrackingItem::interval(from, to, &activity)
+                                                            .unwrap()
+                                                    }
+                                                    _ => TimeTrackingItem::starting_at(
+                                                        time.to_date_time(),
+                                                        &activity,
+                                                    ),
+                                                };
+                                                connection.insert_item(item);
+                                            }
+                                            Ok((_, Command::Fin(time))) => {
+                                                let item = connection.query_latest();
+                                                if let Some(item) = item {
+                                                    let mut item = item.clone();
+                                                    connection.delete_item(&item).unwrap();
+                                                    item.end = Ending::At(time.to_date_time().into());
+                                                    connection.insert_item(item);
+                                                }
+                                            }
+                                            _ => (),
+                                        }
+                                        database.flush();
+                                        connection = database.open_connection();
+                                        app.activity_field.clear();
+                                    } else {
+                                        activity_field.handle_event(event, &mut app.activity_field);
+                                    }
+                                }
+                                Mode::Normal | Mode::BrowseHistory => match event.code {
+                                    KeyCode::Char('q') => break 'main,
+                                    KeyCode::Char(n @ '1'..='9') => {
+                                        if let Some(item) = history_list
+                                            .get_item_by_index((n as u8 - b'1') as usize)
+                                            .map(|i| &current_list[i])
+                                        {
+                                            app.mode = Mode::EnterActivity;
+                                            app.select_as_activity(item);
+                                        }
+                                    }
+                                    KeyCode::Char('n') => {
+                                        app.mode = Mode::EnterActivity;
+                                        app.activity_field.clear();
+                                    }
+                                    KeyCode::Char('i') => app.mode = Mode::EnterActivity,
+                                    KeyCode::Down
+                                    | KeyCode::Up
+                                    | KeyCode::PageDown
+                                    | KeyCode::PageUp
+                                    | KeyCode::Home
+                                    | KeyCode::End => {
+                                        app.mode = Mode::BrowseHistory;
+                                        history_list.handle_event(event, &mut app.history_list);
+                                    }
+                                    KeyCode::Char(' ') | KeyCode::Enter => {
+                                        app.select_as_activity(
+                                            app.history_list
+                                                .get_selected_item()
+                                                .map(|i| &current_list[i]),
+                                        );
+                                    }
+                                    KeyCode::Char('/') => {
+                                        app.mode = Mode::SearchHistory;
+                                        app.search_field.clear();
+                                    }
+                                    KeyCode::Char('r') => {
+                                        if let Some(mut item) = app
+                                            .history_list
+                                            .get_selected_item()
+                                            .map(|i| current_list[i].clone())
+                                        {
+                                            item.activity = app.activity_field.get_text();
+                                            connection.insert_item(item);
+                                            database.flush();
+                                            connection = database.open_connection();
+                                            app.activity_field.clear();
+                                        }
+                                    }
+                                    KeyCode::Mode => {
+                                        app.mode = Mode::DailyReport;
+                                    }
+                                    _ => (),
+                                },
+                                Mode::SearchHistory => match event.code {
+                                    KeyCode::Down
+                                    | KeyCode::Up
+                                    | KeyCode::PageDown
+                                    | KeyCode::PageUp => {
+                                        history_list.handle_event(event, &mut app.history_list);
+                                    }
+                                    KeyCode::Enter => {
+                                        app.mode = Mode::Normal;
+                                    }
+                                    _ => {
+                                        search_field.handle_event(event, &mut app.search_field);
+                                    }
+                                },
+                                Mode::DailyReport => {
+                                    daily_report.handle_event(event, &mut app.daily_report)
+                                }
+                            },
+                        },
+                        Event::Mouse(_event) => (),
+                        Event::Resize(_width, _height) => (),
+                    }
+                    if !poll(Duration::from_secs(0))? {
+                        break;
+                    }
+                }
+            }
+        */
     }
     execute!(
         terminal.backend_mut(),

@@ -1,72 +1,41 @@
-use crate::{tui::duration_to_string, Ending, TimeTrackingItem};
+use crate::{
+    tui::{
+        component::EventHandler, date_picker::DatePickerState, duration_to_string, Consumed,
+        DatePicker,
+    },
+    Ending, TimeTrackingItem,
+};
 use chrono::{Duration, Local};
 use clipboard::ClipboardProvider;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use itertools::Itertools;
 use tui::{
+    buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     widgets::{Row, StatefulWidget, Table, TableState},
 };
 
 pub struct DailyReportState {
-    pub condensed_list: CondensedActivityListState,
+    pub duration_activity_list_state: DurationActivityListState,
+    pub date_picker_state: DatePickerState,
 }
 
 impl DailyReportState {
     pub fn new() -> Self {
         Self {
-            condensed_list: CondensedActivityListState::new(),
+            duration_activity_list_state: DurationActivityListState::new(),
+            date_picker_state: DatePickerState::new(),
         }
-    }
-
-    pub fn handle_event(&mut self, event: KeyEvent) {
-        self.condensed_list.handle_event(event);
     }
 }
 
-pub struct DailyReport;
+pub struct DailyReport {
+    duration_activity_list: DurationActivityList,
+}
 
 impl DailyReport {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl StatefulWidget for DailyReport {
-    type State = DailyReportState;
-
-    fn render(self, area: Rect, buf: &mut tui::buffer::Buffer, state: &mut Self::State) {
-        let mut chunks = Layout::default()
-            .constraints([Constraint::Min(3 * 7), Constraint::Min(0)])
-            .direction(Direction::Vertical)
-            .split(area)
-            .into_iter();
-
-        let list = CondensedActivityList::new();
-        list.render(chunks.next().unwrap(), buf, &mut state.condensed_list)
-    }
-}
-
-struct ActivityWithDuration {
-    activity: String,
-    duration: Duration,
-}
-
-pub struct CondensedActivityListState {
-    selected: Option<usize>,
-    items: Vec<ActivityWithDuration>,
-}
-
-impl CondensedActivityListState {
-    pub fn new() -> Self {
-        Self {
-            selected: None,
-            items: vec![],
-        }
-    }
-
-    pub fn set_items(&mut self, mut items: Vec<&TimeTrackingItem>) {
+    pub fn new(items: &[TimeTrackingItem], state: &DailyReportState) -> Self {
         let now = Local::now();
         let to_duration = |a: &TimeTrackingItem| {
             (match a.end {
@@ -75,9 +44,10 @@ impl CondensedActivityListState {
             })
             .signed_duration_since(a.start)
         };
-        items.sort_by(|a, b| a.activity.cmp(&b.activity));
-        self.items = items
+        let items: Vec<_> = items
             .iter()
+            .filter(|a| a.start.date().naive_local() == state.date_picker_state.get_selected())
+            .sorted_by(|a, b| a.activity.cmp(&b.activity))
             .map(|a| (&a.activity, to_duration(a)))
             .group_by(|a| a.0)
             .into_iter()
@@ -86,27 +56,93 @@ impl CondensedActivityListState {
                 duration: i.fold(Duration::zero(), |acc, a| acc + a.1),
             })
             .collect();
+        Self {
+            duration_activity_list: DurationActivityList::new(items),
+        }
+    }
+}
+
+impl EventHandler for DailyReportState {
+    type State = DailyReportState;
+
+    fn handle_event(&mut self, event: KeyEvent, state: &mut Self::State) -> Consumed {
+        state.date_picker_state.handle_event(event, &mut ());
+        self.duration_activity_list_state
+            .handle_event(event, &mut state.duration_activity_list_state);
+        Consumed::Consumed
+    }
+}
+
+impl StatefulWidget for DailyReport {
+    type State = DailyReportState;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        let mut chunks = Layout::default()
+            .constraints([Constraint::Min(3 * 7), Constraint::Min(0)])
+            .direction(Direction::Horizontal)
+            .split(area)
+            .into_iter();
+
+        self.date_picker_state
+            .render(chunks.next().unwrap(), buf, &mut state.date_picker_state);
+        self.duration_activity_list.render(
+            chunks.next().unwrap(),
+            buf,
+            &mut state.duration_activity_list_state,
+        )
+    }
+}
+
+struct ActivityWithDuration {
+    activity: String,
+    duration: Duration,
+}
+
+pub struct DurationActivityListState {
+    selected: Option<usize>,
+}
+
+pub struct DurationActivityListEmphemeralState {
+    state: DurationActivityListState,
+    items: Vec<ActivityWithDuration>,
+}
+
+impl DurationActivityListState {
+    pub fn new() -> Self {
+        Self { selected: None }
     }
 
     pub fn select(&mut self, selected: Option<usize>) {
         self.selected = selected;
     }
+}
 
-    pub fn handle_event(&mut self, event: KeyEvent) {
+pub struct DurationActivityList {}
+
+impl DurationActivityList {
+    pub fn new(items: Vec<ActivityWithDuration>) -> Self {
+        Self { items }
+    }
+}
+
+impl EventHandler for DurationActivityListState {
+    type State = DurationActivityListEmphemeralState;
+
+    fn handle_event(&mut self, event: KeyEvent, state: &mut Self::State) -> Consumed {
         match event.code {
-            KeyCode::Down => self.selected = Some(self.selected.map(|i| i + 1).unwrap_or(0)),
+            KeyCode::Down => state.selected = Some(state.selected.map(|i| i + 1).unwrap_or(0)),
             KeyCode::Up => {
-                self.selected = Some(self.selected.map(|i| i.saturating_sub(1)).unwrap_or(0))
+                state.selected = Some(state.selected.map(|i| i.saturating_sub(1)).unwrap_or(0))
             }
             KeyCode::Char('d') => {
-                if let Some(item) = self.selected.map(|i| self.items.get(i)).flatten() {
+                if let Some(item) = state.selected.map(|i| self.items.get(i)).flatten() {
                     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
                     ctx.set_contents(duration_to_string(&item.duration))
                         .unwrap()
                 }
             }
             KeyCode::Char('a') => {
-                if let Some(item) = self.selected.map(|i| self.items.get(i)).flatten() {
+                if let Some(item) = state.selected.map(|i| self.items.get(i)).flatten() {
                     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
                     ctx.set_contents(item.activity.to_owned()).unwrap()
                 }
@@ -127,23 +163,16 @@ impl CondensedActivityListState {
                 }
             }
             _ => (),
-        }
+        };
+        Consumed::Consumed
     }
 }
 
-pub struct CondensedActivityList;
+impl StatefulWidget for DurationActivityList {
+    type State = DurationActivityListState;
 
-impl CondensedActivityList {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl StatefulWidget for CondensedActivityList {
-    type State = CondensedActivityListState;
-
-    fn render(self, area: Rect, buf: &mut tui::buffer::Buffer, state: &mut Self::State) {
-        let rows: Vec<_> = state
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        let rows: Vec<_> = self
             .items
             .iter()
             .enumerate()
@@ -167,9 +196,7 @@ impl StatefulWidget for CondensedActivityList {
                 Constraint::Min(10),
             ])
             .highlight_style(Style::default().bg(Color::Green));
-        if let Some(index) = state.selected {
-            state.select(Some(index.min(num_rows - 1)));
-        }
+        state.select(state.selected.map(|index| index.min(num_rows - 1)));
         let mut table_state = TableState::default();
         table_state.select(state.selected);
         StatefulWidget::render(table, area, buf, &mut table_state);

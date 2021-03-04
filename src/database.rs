@@ -51,6 +51,8 @@ impl Database {
     }
 
     pub fn flush(&self) {
+        let parent = self.stt_file.parent().unwrap();
+        std::fs::create_dir_all(parent).unwrap();
         let file = File::create(&self.stt_file).unwrap();
         let mut writer = BufWriter::new(file);
         #[cfg(LOG_TIMES)]

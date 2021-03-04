@@ -1,45 +1,18 @@
-use crate::tui::event_handler::EventHandler;
+use crate::tui::{
+    component::{Consumed, EventHandler},
+    string_ext::StringExt,
+};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
+    backend::Backend,
     buffer::Buffer,
     layout::Rect,
     text::Spans,
     widgets::{Paragraph, StatefulWidget, Widget},
+    Frame,
 };
-use unicode_segmentation::UnicodeSegmentation;
 
-trait StringExt {
-    fn remove_char(&mut self, idx: usize) -> char;
-    fn insert_char(&mut self, idx: usize, ch: char);
-    fn split_at_char(&mut self, mid: usize) -> (&str, &str);
-}
-
-impl StringExt for String {
-    fn remove_char(&mut self, idx: usize) -> char {
-        let byte_index = UnicodeSegmentation::grapheme_indices(self.as_str(), true)
-            .nth(idx)
-            .expect("Character to remove to be not beyond grapheme length")
-            .0;
-        self.remove(byte_index)
-    }
-
-    fn insert_char(&mut self, idx: usize, ch: char) {
-        let byte_index = UnicodeSegmentation::grapheme_indices(self.as_str(), true)
-            .nth(idx)
-            .map(|i| i.0)
-            .unwrap_or_else(|| self.len());
-        self.insert(byte_index, ch)
-    }
-
-    fn split_at_char(&mut self, mid: usize) -> (&str, &str) {
-        let byte_index = UnicodeSegmentation::grapheme_indices(self.as_str(), true)
-            .nth(mid)
-            .map(|i| i.0)
-            .unwrap_or_else(|| self.len());
-        self.split_at(byte_index)
-    }
-}
-
+#[derive(Default)]
 pub struct TextFieldState {
     cursor: (usize, usize),
     scroll: (u16, u16),
@@ -47,11 +20,94 @@ pub struct TextFieldState {
     pub cursor_screen_pos: (u16, u16),
 }
 
-#[derive(Default)]
+impl TextFieldState {
+    pub fn new() -> Self {
+        Self {
+            cursor: (0, 0),
+            scroll: (0, 0),
+            lines: vec![],
+            cursor_screen_pos: (0, 0),
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.lines.clear();
+        self.cursor = (0, 0);
+        self.scroll = (0, 0);
+    }
+
+    pub fn first_line(&self) -> &str {
+        self.lines.get(0).map(|s| s.as_str()).unwrap_or("")
+    }
+
+    pub fn has_text(&self) -> bool {
+        self.lines.get(0).map(|l| !l.is_empty()).unwrap_or(false)
+    }
+
+    pub fn get_text(&self) -> String {
+        self.lines.join("\n")
+    }
+
+    pub fn set_text(&mut self, text: &str) {
+        self.lines = text.lines().map(|s| s.to_owned()).collect();
+    }
+
+    pub fn end(&mut self) {
+        if let Some(last) = self.lines.last() {
+            self.cursor = (last.len(), self.lines.len() - 1);
+        } else {
+            self.cursor = (0, 0);
+        }
+    }
+
+    fn current_line_len(&self) -> usize {
+        self.lines
+            .get(self.cursor.1)
+            .map(|l| l.char_len())
+            .unwrap_or(0)
+    }
+}
+
 pub struct TextField;
 
+impl StatefulWidget for TextField {
+    type State = TextFieldState;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        state.scroll.1 = state.scroll.1.min(state.cursor.1 as u16);
+        state.scroll.0 = state.scroll.0.min(state.cursor.0 as u16);
+
+        if state.cursor.0 as u16 >= state.scroll.0 + area.width {
+            state.scroll.0 = state.cursor.0 as u16 - area.width + 1;
+        }
+
+        if state.cursor.1 as u16 >= state.scroll.1 + area.height {
+            state.scroll.1 = state.cursor.1 as u16 - area.height + 1;
+        }
+
+        let para = Paragraph::new(
+            state
+                .lines
+                .iter()
+                .map(|s| Spans::from(s.to_owned()))
+                .collect::<Vec<_>>(),
+        ) // (x, y) -> (y, x)
+        .scroll((state.scroll.1, state.scroll.0));
+        Widget::render(para, area, buf);
+        state.cursor_screen_pos = (
+            area.x + state.cursor.0 as u16 - state.scroll.0,
+            area.y + state.cursor.1 as u16 - state.scroll.1,
+        )
+    }
+}
+
 impl EventHandler for TextFieldState {
-    fn handle_event(&mut self, event: KeyEvent) {
+    fn set_focus<B: Backend>(&self, frame: &mut Frame<B>) {
+        let (x, y) = self.cursor_screen_pos;
+        frame.set_cursor(x, y);
+    }
+
+    fn handle_event(&mut self, event: KeyEvent) -> Consumed {
         match event.code {
             KeyCode::Backspace => {
                 if self.cursor.0 > 0 {
@@ -120,9 +176,7 @@ impl EventHandler for TextFieldState {
                 }
             }
             KeyCode::Right => {
-                if self.cursor.0 < self.current_line_len() {
-                    self.cursor.0 += 1;
-                }
+                self.cursor.0 = self.current_line_len().min(self.cursor.0 + 1);
             }
             KeyCode::End => {
                 self.cursor.0 = self.current_line_len();
@@ -131,78 +185,7 @@ impl EventHandler for TextFieldState {
                 self.cursor.0 = 0;
             }
             _ => (),
-        }
-    }
-}
-
-impl TextFieldState {
-    pub fn new() -> Self {
-        Self {
-            cursor: (0, 0),
-            scroll: (0, 0),
-            lines: vec![],
-            cursor_screen_pos: (0, 0),
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.lines.clear();
-        self.cursor = (0, 0);
-        self.scroll = (0, 0);
-    }
-
-    pub fn first_line(&self) -> &str {
-        self.lines.get(0).map(|s| s.as_str()).unwrap_or("")
-    }
-
-    pub fn get_text(&self) -> String {
-        self.lines.join("\n")
-    }
-
-    pub fn set_text(&mut self, text: &str) {
-        self.lines = text.lines().map(|s| s.to_owned()).collect();
-    }
-
-    pub fn end(&mut self) {
-        if let Some(last) = self.lines.last() {
-            self.cursor = (last.len(), self.lines.len() - 1);
-        } else {
-            self.cursor = (0, 0);
-        }
-    }
-
-    fn current_line_len(&self) -> usize {
-        self.lines.get(self.cursor.1).map(|l| l.len()).unwrap_or(0)
-    }
-}
-
-impl StatefulWidget for TextField {
-    type State = TextFieldState;
-
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        state.scroll.1 = state.scroll.1.min(state.cursor.1 as u16);
-        state.scroll.0 = state.scroll.0.min(state.cursor.0 as u16);
-
-        if state.cursor.0 as u16 >= state.scroll.0 + area.width {
-            state.scroll.0 = state.cursor.0 as u16 - area.width + 1;
-        }
-
-        if state.cursor.1 as u16 >= state.scroll.1 + area.height {
-            state.scroll.1 = state.cursor.1 as u16 - area.height + 1;
-        }
-
-        let para = Paragraph::new(
-            state
-                .lines
-                .iter()
-                .map(|s| Spans::from(s.to_owned()))
-                .collect::<Vec<_>>(),
-        ) // (x, y) -> (y, x)
-        .scroll((state.scroll.1, state.scroll.0));
-        para.render(area, buf);
-        state.cursor_screen_pos = (
-            area.x + state.cursor.0 as u16 - state.scroll.0,
-            area.y + state.cursor.1 as u16 - state.scroll.1,
-        )
+        };
+        Consumed::Consumed
     }
 }

@@ -2,4 +2,5 @@
 /frontend/node_modules
 /frontend/build
 /frontend/dist
-/frontend/.cache
+/frontend/.cachetags
+/tags

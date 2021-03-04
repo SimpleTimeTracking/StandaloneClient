@@ -1,34 +1,52 @@
-use chrono::{Datelike, Duration, Month, NaiveDate, Weekday};
+use crate::tui::component::{Consumed, EventHandler};
+use chrono::{Datelike, Duration, Local, Month, NaiveDate, Weekday};
+use crossterm::event::*;
 use num_traits::FromPrimitive;
-use tui::style::{Modifier, Style};
-use tui::{buffer::Buffer, layout::Rect, widgets::StatefulWidget};
+use tui::{
+    buffer::Buffer,
+    layout::Rect,
+    style::{Color, Modifier, Style},
+    widgets::StatefulWidget,
+};
 
 pub struct DatePickerState {
-    month: u32,
-    year: i32,
-    selected: Option<NaiveDate>,
+    selected: NaiveDate,
 }
 
-#[derive(Default)]
-pub struct DatePicker {
-}
+pub struct DatePicker;
 
 impl DatePickerState {
-    pub fn new(year: i32, month: u32) -> Self {
+    pub fn new() -> Self {
         Self {
-            year,
-            month,
-            selected: None,
+            selected: Local::today().naive_local(),
         }
     }
 
-    pub fn set_selected(&mut self, selected: Option<NaiveDate>) {
+    pub fn set_selected(&mut self, selected: NaiveDate) {
         self.selected = selected;
+    }
+
+    pub fn get_selected(&self) -> NaiveDate {
+        self.selected
+    }
+}
+
+impl EventHandler for DatePickerState {
+    fn handle_event(&mut self, event: KeyEvent) -> Consumed {
+        match event.code {
+            KeyCode::Up => self.selected -= Duration::days(7),
+            KeyCode::Down => self.selected += Duration::days(7),
+            KeyCode::Left => self.selected -= Duration::days(1),
+            KeyCode::Right => self.selected += Duration::days(1),
+            _ => (),
+        };
+        Consumed::Consumed
     }
 }
 
 impl StatefulWidget for DatePicker {
     type State = DatePickerState;
+
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         if area.height < 7 {
             return;
@@ -41,8 +59,8 @@ impl StatefulWidget for DatePicker {
             y,
             format!(
                 "{:<15} {}",
-                Month::from_u32(state.month).unwrap().name(),
-                state.year
+                Month::from_u32(state.selected.month()).unwrap().name(),
+                state.selected.year()
             ),
             Style::default(),
         );
@@ -53,18 +71,19 @@ impl StatefulWidget for DatePicker {
             "Mo Tu We Th Fr Sa Su",
             Style::default().add_modifier(Modifier::UNDERLINED),
         );
-        let mut day = NaiveDate::from_ymd(state.year, state.month, 1);
+        let mut day = state.selected.with_day(1).unwrap();
+        let month = day.month();
         let mut dow = Weekday::Mon;
-        while day.month() == state.month {
+        while day.month() == month {
             y += 1;
             let mut x = 0;
             for _ in 0..7 {
-                if dow == day.weekday() && day.month() == state.month {
-                    let style = match state.selected {
-                        Some(selected) if selected == day => {
-                            Style::default().add_modifier(Modifier::BOLD)
-                        }
-                        _ => Style::default(),
+                if dow == day.weekday() && day.month() == month {
+                    let style = Style::default();
+                    let style = if state.selected == day {
+                        style.bg(Color::Green).fg(Color::Black)
+                    } else {
+                        style
                     };
                     buf.set_string(x, y, format!("{:>2}", day.day()), style);
                     day += Duration::days(1);
