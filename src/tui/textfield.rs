@@ -97,7 +97,7 @@ impl StatefulWidget for TextField {
         state.cursor_screen_pos = (
             area.x + state.cursor.0 as u16 - state.scroll.0,
             area.y + state.cursor.1 as u16 - state.scroll.1,
-        )
+        );
     }
 }
 

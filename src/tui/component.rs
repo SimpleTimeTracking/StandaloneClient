@@ -10,10 +10,7 @@ pub enum Consumed {
 
 impl Consumed {
     pub fn is_consumed(&self) -> bool {
-        match self {
-            Consumed::NotConsumed => false,
-            _ => true,
-        }
+        !matches!(self, Consumed::NotConsumed)
     }
 }
 

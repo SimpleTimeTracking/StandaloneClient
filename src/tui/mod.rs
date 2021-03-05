@@ -42,20 +42,8 @@ enum Mode {
 struct App {
     show_tabs: bool,
     tab: Mode,
-    history_list: HistoryListState,
-    activity_field: TextFieldState,
-    search_field: TextFieldState,
     activity_tab: ActivityTabState,
     //daily_report: DailyReportState,
-}
-
-pub fn duration_to_string(duration: &chrono::Duration) -> String {
-    format!(
-        "{}:{:02}:{:02}",
-        duration.num_hours(),
-        duration.num_minutes() % 60,
-        duration.num_seconds() % 60
-    )
 }
 
 impl App {
@@ -63,20 +51,8 @@ impl App {
         Self {
             show_tabs: false,
             tab: Mode::EnterActivity,
-            history_list: HistoryListState::default(),
-            activity_field: TextFieldState::new(),
-            search_field: TextFieldState::new(),
             activity_tab: ActivityTabState::default(),
             //daily_report: DailyReportState::new(),
-        }
-    }
-
-    fn select_as_activity<'a, T: Into<Option<&'a TimeTrackingItem>>>(&mut self, item: T) {
-        if let Some(selected) = item.into() {
-            self.tab = Mode::EnterActivity;
-            self.activity_field.set_text(&selected.activity);
-            self.activity_field.end();
-            //            self.history_list.reset();
         }
     }
 }
@@ -214,31 +190,15 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     terminal.clear()?;
 
     let mut database = Database::open().unwrap();
-    let mut connection = database.open_connection();
+    let connection = database.open_connection();
 
     let mut app = App::new();
-    let pause_matcher = Regex::new("(?i).*pause.*")?;
 
     'main: loop {
         let current_list: Vec<_> = connection.query().iter().map(|&i| i.clone()).collect();
 
-        /*
-                let mut history_list = HistoryList::new(&current_list)
-                    .set_filter(if app.search_field.first_line().is_empty() {
-                        None
-                    } else {
-                        Regex::new(&format!(
-                            "(?i){}",
-                            regex::escape(app.search_field.first_line())
-                        ))
-                        .ok()
-                    })
-                    .set_show_indices(app.mode == Mode::Normal);
-                let activity_field = TextField::new();
-        */
-
         let show_tabs = app.show_tabs;
-        let mut activity_tab_frame = app.activity_tab.into_frame(current_list);
+        let mut activity_tab_frame = app.activity_tab.into_frame(&current_list);
         terminal.draw(|f| {
             let layout = Layout::default()
                 .constraints([])
@@ -307,7 +267,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                         if !result {
                             match event.code {
                                 KeyCode::Esc if !app.show_tabs => app.show_tabs = true,
-                                KeyCode::Char('q') if app.show_tabs => break 'main,
+                                KeyCode::Char('q') => break 'main,
                                 _ => (),
                             }
                         } else {
@@ -323,138 +283,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             }
         }
         app.activity_tab = activity_tab_frame.into_state();
-        /*
-            if poll(Duration::from_millis(500))? {
-                loop {
-                    match read()? {
-                        Event::Key(event) => match event.code {
-                            KeyCode::Esc => {
-                                app.mode = Mode::Normal;
-                                app.history_list.reset();
-                                app.search_field.clear();
-                            }
-                            _ => match app.mode {
-                                Mode::EnterActivity => {
-                                    if (event.code == KeyCode::Enter
-                                        || event.code == KeyCode::Char('\r'))
-                                        && event
-                                            .modifiers
-                                            .intersects(KeyModifiers::ALT | KeyModifiers::CONTROL)
-                                    {
-                                        match commands::command(&app.activity_field.get_text()) {
-                                            Ok((_, Command::StartActivity(time, activity))) => {
-                                                let item = match time {
-                                                    TimeSpec::Interval { from, to } => {
-                                                        TimeTrackingItem::interval(from, to, &activity)
-                                                            .unwrap()
-                                                    }
-                                                    _ => TimeTrackingItem::starting_at(
-                                                        time.to_date_time(),
-                                                        &activity,
-                                                    ),
-                                                };
-                                                connection.insert_item(item);
-                                            }
-                                            Ok((_, Command::Fin(time))) => {
-                                                let item = connection.query_latest();
-                                                if let Some(item) = item {
-                                                    let mut item = item.clone();
-                                                    connection.delete_item(&item).unwrap();
-                                                    item.end = Ending::At(time.to_date_time().into());
-                                                    connection.insert_item(item);
-                                                }
-                                            }
-                                            _ => (),
-                                        }
-                                        database.flush();
-                                        connection = database.open_connection();
-                                        app.activity_field.clear();
-                                    } else {
-                                        activity_field.handle_event(event, &mut app.activity_field);
-                                    }
-                                }
-                                Mode::Normal | Mode::BrowseHistory => match event.code {
-                                    KeyCode::Char('q') => break 'main,
-                                    KeyCode::Char(n @ '1'..='9') => {
-                                        if let Some(item) = history_list
-                                            .get_item_by_index((n as u8 - b'1') as usize)
-                                            .map(|i| &current_list[i])
-                                        {
-                                            app.mode = Mode::EnterActivity;
-                                            app.select_as_activity(item);
-                                        }
-                                    }
-                                    KeyCode::Char('n') => {
-                                        app.mode = Mode::EnterActivity;
-                                        app.activity_field.clear();
-                                    }
-                                    KeyCode::Char('i') => app.mode = Mode::EnterActivity,
-                                    KeyCode::Down
-                                    | KeyCode::Up
-                                    | KeyCode::PageDown
-                                    | KeyCode::PageUp
-                                    | KeyCode::Home
-                                    | KeyCode::End => {
-                                        app.mode = Mode::BrowseHistory;
-                                        history_list.handle_event(event, &mut app.history_list);
-                                    }
-                                    KeyCode::Char(' ') | KeyCode::Enter => {
-                                        app.select_as_activity(
-                                            app.history_list
-                                                .get_selected_item()
-                                                .map(|i| &current_list[i]),
-                                        );
-                                    }
-                                    KeyCode::Char('/') => {
-                                        app.mode = Mode::SearchHistory;
-                                        app.search_field.clear();
-                                    }
-                                    KeyCode::Char('r') => {
-                                        if let Some(mut item) = app
-                                            .history_list
-                                            .get_selected_item()
-                                            .map(|i| current_list[i].clone())
-                                        {
-                                            item.activity = app.activity_field.get_text();
-                                            connection.insert_item(item);
-                                            database.flush();
-                                            connection = database.open_connection();
-                                            app.activity_field.clear();
-                                        }
-                                    }
-                                    KeyCode::Mode => {
-                                        app.mode = Mode::DailyReport;
-                                    }
-                                    _ => (),
-                                },
-                                Mode::SearchHistory => match event.code {
-                                    KeyCode::Down
-                                    | KeyCode::Up
-                                    | KeyCode::PageDown
-                                    | KeyCode::PageUp => {
-                                        history_list.handle_event(event, &mut app.history_list);
-                                    }
-                                    KeyCode::Enter => {
-                                        app.mode = Mode::Normal;
-                                    }
-                                    _ => {
-                                        search_field.handle_event(event, &mut app.search_field);
-                                    }
-                                },
-                                Mode::DailyReport => {
-                                    daily_report.handle_event(event, &mut app.daily_report)
-                                }
-                            },
-                        },
-                        Event::Mouse(_event) => (),
-                        Event::Resize(_width, _height) => (),
-                    }
-                    if !poll(Duration::from_secs(0))? {
-                        break;
-                    }
-                }
-            }
-        */
     }
     execute!(
         terminal.backend_mut(),

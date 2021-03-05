@@ -201,8 +201,8 @@ impl EventHandler for HistoryListFrame {
             }
             KeyCode::Home => self.state.selected = Some(0),
             KeyCode::End => self.state.selected = Some(usize::MAX),
-            _ => (),
+            _ => return Consumed::NotConsumed,
         };
-        Consumed::NotConsumed
+        Consumed::Consumed
     }
 }
