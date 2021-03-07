@@ -13,15 +13,15 @@ pub struct DatePickerState {
     selected: NaiveDate,
 }
 
-pub struct DatePicker;
-
-impl DatePickerState {
-    pub fn new() -> Self {
+impl Default for DatePickerState {
+    fn default() -> Self {
         Self {
             selected: Local::today().naive_local(),
         }
     }
+}
 
+impl DatePickerState {
     pub fn set_selected(&mut self, selected: NaiveDate) {
         self.selected = selected;
     }
@@ -38,11 +38,13 @@ impl EventHandler for DatePickerState {
             KeyCode::Down => self.selected += Duration::days(7),
             KeyCode::Left => self.selected -= Duration::days(1),
             KeyCode::Right => self.selected += Duration::days(1),
-            _ => (),
+            _ => return Consumed::NotConsumed,
         };
         Consumed::Consumed
     }
 }
+
+pub struct DatePicker;
 
 impl StatefulWidget for DatePicker {
     type State = DatePickerState;

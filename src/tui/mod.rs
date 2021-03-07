@@ -1,39 +1,35 @@
 mod activity_tab;
 mod component;
-//mod daily_report;
-//mod date_picker;
+mod daily_report;
+mod date_picker;
 mod history_list;
 mod string_ext;
 mod textfield;
 
 use crate::tui::activity_tab::*;
 use crate::tui::component::*;
-use crate::tui::history_list::{HistoryList, HistoryListState};
+use crate::tui::daily_report::*;
 use crate::{
-    commands::{self, Command, TimeSpec},
+    commands::{Command, TimeSpec},
     Connection, Database, Ending, TimeTrackingItem,
 };
-use chrono::{DateTime, Datelike, Local, Utc};
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking},
-    event::{poll, read, Event, KeyCode, KeyModifiers},
+    event::{poll, read, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use regex::Regex;
 use std::{error::Error, io::stdout, time::Duration};
-use textfield::{TextField, TextFieldState};
 use tui::{
     backend::CrosstermBackend,
-    buffer::Buffer,
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Layout},
     style::{Modifier, Style},
     text::Spans,
-    widgets::{Block, BorderType, Borders, StatefulWidget, Tabs},
+    widgets::Tabs,
     Terminal,
 };
 
-#[derive(PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 enum Mode {
     EnterActivity,
     DailyReport,
@@ -42,8 +38,8 @@ enum Mode {
 struct App {
     show_tabs: bool,
     tab: Mode,
-    activity_tab: ActivityTabState,
-    //daily_report: DailyReportState,
+    activity: ActivityTabState,
+    daily_report: DailyReportState,
 }
 
 impl App {
@@ -51,132 +47,25 @@ impl App {
         Self {
             show_tabs: false,
             tab: Mode::EnterActivity,
-            activity_tab: ActivityTabState::default(),
-            //daily_report: DailyReportState::new(),
+            activity: ActivityTabState::default(),
+            daily_report: DailyReportState::default(),
         }
     }
 }
 
-/*
-impl Component for AppComponent {
-    type State = App;
+enum FrameOrState<F, S> {
+    Frame(F),
+    State(S),
+}
 
-    fn handle_event(&mut self, event: KeyEvent, state: &mut Self::State) -> Consumed {
-        Consumed::Consumed
-    }
-
-    fn render(&mut self, area: Rect, buf: mut Buffer, app: &mut Self::State) {
-        let mut chunks = Layout::default()
-            .constraints([
-                if app.mode == Mode::Normal {
-                    Constraint::Length(1)
-                } else {
-                    Constraint::Length(0)
-                },
-                Constraint::Length(5),
-                Constraint::Min(0),
-                Constraint::Length(1),
-            ])
-            .split(f.size())
-            .into_iter();
-
-        let tab_area = chunks.next().unwrap();
-        if app.mode == Mode::Normal {
-            let tab = Modes::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD));
-            f.render_widget(tab, tab_area);
-        }
-        let activity_area = chunks.next().unwrap();
-        if app.mode == Mode::DailyReport {
-            //                app.daily_report.condensed_list.set_items(&current_list);
-            let daily_report = DailyReport::new(&current_list, &state.daily_report);
-            f.render_stateful_widget(daily_report, f.size(), &mut app.daily_report);
-            return;
-        }
-        let mut block = Block::default().title("Activity").borders(Borders::ALL);
-        if app.mode == Mode::EnterActivity {
-            block = block.border_type(BorderType::Thick);
-        }
-        let txt = block.inner(activity_area);
-        f.render_widget(block, activity_area);
-
-        let text_field = TextField::default();
-        text_field.render(txt, buffer, &mut app.activity_field);
-        if app.mode == Mode::EnterActivity {
-            f.set_cursor(
-                app.activity_field.cursor_screen_pos.0,
-                app.activity_field.cursor_screen_pos.1,
-            );
-        }
-
-        let mut activity_status_area = activity_area;
-        activity_status_area.y += activity_status_area.height - 1;
-        activity_status_area.x += 2;
-        activity_status_area.height = 1;
-        activity_status_area.width -= 2;
-        let now = Local::now();
-        let start_of_day = now.date().and_hms(0, 0, 0);
-        let start_of_week =
-            start_of_day - chrono::Duration::days(now.weekday().num_days_from_monday() as i64);
-        let duration_acc = |acc, a: &TimeTrackingItem| {
-            acc - a.start.signed_duration_since(match a.end {
-                Ending::Open => now,
-                Ending::At(time) => time.into(),
-            })
-        };
-        let work_time_today = current_list
-            .iter()
-            .take_while(|a| a.end > start_of_day)
-            .filter(|a| !pause_matcher.is_match(&a.activity))
-            .fold(chrono::Duration::zero(), duration_acc);
-        let work_time_today =
-            (DateTime::<Utc>::from(std::time::UNIX_EPOCH) + work_time_today).format("%T");
-        let work_time_week = current_list
-            .iter()
-            .take_while(|a| a.end > start_of_week)
-            .filter(|a| !pause_matcher.is_match(&a.activity))
-            .fold(chrono::Duration::zero(), duration_acc);
-        let activity_status_line = Block::default().title(format!(
-            "Tracked time today: {} week: {}:{:02}:{:02}",
-            work_time_today,
-            work_time_week.num_hours(),
-            work_time_week.num_minutes() % 60,
-            work_time_week.num_seconds() % 60
-        ));
-        f.render_widget(activity_status_line, activity_status_area);
-
-        history_list.render(chunks.next().unwrap(), &mut app.history_list);
-
-        let status_text = match app.mode {
-                Mode::EnterActivity => "Esc - leave insert mode  Ctrl+Enter/Alt+Enter insert activity",
-                Mode::Normal => "q - exit  i - edit  n - clear & edit  up/down/pgUp/pgDown - browse history  / - search  [1]-[9] - quick select previous item",
-                Mode::BrowseHistory => "Esc - leave browsing mode  q - exit  i - insert  n - clear & edit  r - replace  up/down/pgUp/pgDown browse history",
-                Mode::SearchHistory => "Esc - leave search  Enter - leave search/keep filter  up/down/pgUp/pgDown - browse history  ?",
-                Mode::DailyReport => "Esc"
-            }
-            .to_owned();
-        let status_len = status_text.len() as u16;
-        let text = Block::default().title(status_text);
-        let history_area = chunks.next().unwrap();
-        f.render_widget(text, history_area);
-        if app.mode == Mode::SearchHistory {
-            let mut my_area = history_area;
-            my_area.x += status_len;
-            my_area.width -= status_len;
-            let text_field = TextField::default();
-            text_field.render(my_area, buffer, &mut app.search_field);
-            if app.mode == Mode::SearchHistory {
-                /*
-                f.set_cursor(
-                    app.search_field.cursor_screen_pos.0,
-                    app.search_field.cursor_screen_pos.1,
-                );
-                */
-            }
+impl<F: Frame<S>, S> Frame<S> for FrameOrState<F, S> {
+    fn into_state(self) -> S {
+        match self {
+            FrameOrState::Frame(f) => f.into_state(),
+            FrameOrState::State(s) => s,
         }
     }
 }
-*/
 
 pub fn run() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -197,75 +86,95 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     'main: loop {
         let current_list: Vec<_> = connection.query().iter().map(|&i| i.clone()).collect();
 
-        let show_tabs = app.show_tabs;
-        let mut activity_tab_frame = app.activity_tab.into_frame(&current_list);
+        let (show_tabs, tab) = (app.show_tabs, app.tab);
+        let (mut activity_frame, mut daily_report_frame) = match tab {
+            Mode::EnterActivity => (
+                FrameOrState::Frame(app.activity.into_frame(&current_list)),
+                FrameOrState::State(app.daily_report),
+            ),
+            Mode::DailyReport => (
+                FrameOrState::State(app.activity),
+                FrameOrState::Frame(app.daily_report.into_frame(&current_list)),
+            ),
+        };
         terminal.draw(|f| {
-            let layout = Layout::default()
-                .constraints([])
-                .split(f.size())
-                .into_iter();
             let content_area = if show_tabs {
                 let mut chunks = Layout::default()
                     .constraints([Constraint::Length(1), Constraint::Min(0)])
                     .split(f.size())
                     .into_iter();
                 let tab = Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
-                    .highlight_style(Style::default().add_modifier(Modifier::BOLD));
+                    .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+                    .select(match tab {
+                        Mode::EnterActivity => 0,
+                        Mode::DailyReport => 1,
+                    });
                 f.render_widget(tab, chunks.next().unwrap());
                 chunks.next().unwrap()
             } else {
                 f.size()
             };
-            f.render_stateful_widget(ActivityTab, content_area, &mut activity_tab_frame);
-            activity_tab_frame.set_focus(f);
+            if let FrameOrState::Frame(ref mut frame) = activity_frame {
+                f.render_stateful_widget(ActivityTab, content_area, frame);
+                frame.set_focus(f);
+            }
+            if let FrameOrState::Frame(ref mut frame) = daily_report_frame {
+                f.render_stateful_widget(DailyReport, content_area, frame);
+                frame.set_focus(f);
+            }
         })?;
         if poll(Duration::from_millis(500))? {
             loop {
                 match read()? {
                     Event::Key(event) => {
-                        let result = match event.code {
-                            _ if app.tab == Mode::EnterActivity => {
-                                let consumed = activity_tab_frame.handle_event(event);
-                                match consumed {
-                                    Consumed::Command(cmd) => {
-                                        match cmd {
-                                            Command::StartActivity(time, activity) => {
-                                                let item = match time {
-                                                    TimeSpec::Interval { from, to } => {
-                                                        TimeTrackingItem::interval(
-                                                            from, to, &activity,
-                                                        )
-                                                        .unwrap()
-                                                    }
-                                                    _ => TimeTrackingItem::starting_at(
-                                                        time.to_date_time(),
-                                                        &activity,
-                                                    ),
-                                                };
-                                                connection.insert_item(item);
-                                            }
-                                            Command::Fin(time) => {
-                                                let item = connection.query_latest();
-                                                if let Some(item) = item {
-                                                    let mut item = item.clone();
-                                                    connection.delete_item(&item).unwrap();
-                                                    item.end =
-                                                        Ending::At(time.to_date_time().into());
-                                                    connection.insert_item(item);
-                                                }
-                                            }
-                                            _ => (),
-                                        };
-                                        true
-                                    }
-                                    Consumed::Consumed => true,
-                                    Consumed::NotConsumed => false,
-                                }
-                            }
-                            _ => false,
+                        let consumed = if let FrameOrState::Frame(ref mut frame) = activity_frame {
+                            frame.handle_event(event)
+                        } else if let FrameOrState::Frame(ref mut frame) = daily_report_frame {
+                            frame.handle_event(event)
+                        } else {
+                            panic!("Invalid tab")
                         };
-                        if !result {
+                        let consumed = match consumed {
+                            Consumed::Command(cmd) => {
+                                match cmd {
+                                    Command::StartActivity(time, activity) => {
+                                        let item = match time {
+                                            TimeSpec::Interval { from, to } => {
+                                                TimeTrackingItem::interval(from, to, &activity)
+                                                    .unwrap()
+                                            }
+                                            _ => TimeTrackingItem::starting_at(
+                                                time.to_date_time(),
+                                                &activity,
+                                            ),
+                                        };
+                                        connection.insert_item(item);
+                                    }
+                                    Command::Fin(time) => {
+                                        let item = connection.query_latest();
+                                        if let Some(item) = item {
+                                            let mut item = item.clone();
+                                            connection.delete_item(&item).unwrap();
+                                            item.end = Ending::At(time.to_date_time().into());
+                                            connection.insert_item(item);
+                                        }
+                                    }
+                                    _ => (),
+                                };
+                                true
+                            }
+                            Consumed::Consumed => true,
+                            Consumed::NotConsumed => false,
+                        };
+                        if !consumed {
                             match event.code {
+                                KeyCode::Tab => {
+                                    app.show_tabs = true;
+                                    app.tab = match app.tab {
+                                        Mode::EnterActivity => Mode::DailyReport,
+                                        Mode::DailyReport => Mode::EnterActivity,
+                                    }
+                                }
                                 KeyCode::Esc if !app.show_tabs => app.show_tabs = true,
                                 KeyCode::Char('q') => break 'main,
                                 _ => (),
@@ -282,7 +191,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
             }
         }
-        app.activity_tab = activity_tab_frame.into_state();
+        app.activity = activity_frame.into_state();
+        app.daily_report = daily_report_frame.into_state()
     }
     execute!(
         terminal.backend_mut(),
@@ -291,4 +201,13 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     )?;
     disable_raw_mode()?;
     Ok(())
+}
+
+pub fn duration_to_string(duration: &chrono::Duration) -> String {
+    format!(
+        "{}:{:02}:{:02}",
+        duration.num_hours(),
+        duration.num_minutes() % 60,
+        duration.num_seconds() % 60
+    )
 }

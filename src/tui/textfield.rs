@@ -21,15 +21,6 @@ pub struct TextFieldState {
 }
 
 impl TextFieldState {
-    pub fn new() -> Self {
-        Self {
-            cursor: (0, 0),
-            scroll: (0, 0),
-            lines: vec![],
-            cursor_screen_pos: (0, 0),
-        }
-    }
-
     pub fn clear(&mut self) {
         self.lines.clear();
         self.cursor = (0, 0);

@@ -1,7 +1,8 @@
 use crate::{
     tui::{
-        component::EventHandler, date_picker::DatePickerState, duration_to_string, Consumed,
-        DatePicker,
+        component::EventHandler,
+        date_picker::{DatePicker, DatePickerState},
+        duration_to_string, Consumed, Frame,
     },
     Ending, TimeTrackingItem,
 };
@@ -13,29 +14,103 @@ use tui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Row, StatefulWidget, Table, TableState},
+    widgets::{Block, Borders, Row, StatefulWidget, Table, TableState},
 };
 
+pub struct DailyReportFrame {
+    duration_activity_list: DurationActivityListFrame,
+    date_picker_state: DatePickerState,
+}
+
+impl Frame<DailyReportState> for DailyReportFrame {
+    fn into_state(self) -> DailyReportState {
+        DailyReportState {
+            duration_activity_list_state: self.duration_activity_list.into_state(),
+            date_picker_state: self.date_picker_state,
+        }
+    }
+}
+
+pub struct DailyReport;
+
+impl StatefulWidget for DailyReport {
+    type State = DailyReportFrame;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
+        let mut chunks = Layout::default()
+            .constraints([Constraint::Length(3 * 7), Constraint::Min(0)])
+            .direction(Direction::Horizontal)
+            .split(area)
+            .into_iter();
+
+        let date_picker = DatePicker;
+        date_picker.render(chunks.next().unwrap(), buf, &mut state.date_picker_state);
+        let duration_activity_list = DurationActivityList;
+        duration_activity_list.render(
+            chunks.next().unwrap(),
+            buf,
+            &mut state.duration_activity_list,
+        )
+    }
+}
+
+#[derive(Default)]
 pub struct DailyReportState {
     pub duration_activity_list_state: DurationActivityListState,
     pub date_picker_state: DatePickerState,
 }
 
+impl EventHandler for DailyReportFrame {
+    fn handle_event(&mut self, event: KeyEvent) -> Consumed {
+        let result = self.date_picker_state.handle_event(event);
+        if result.is_consumed() {
+            return result;
+        }
+        self.duration_activity_list.handle_event(event)
+    }
+}
+
 impl DailyReportState {
-    pub fn new() -> Self {
-        Self {
-            duration_activity_list_state: DurationActivityListState::new(),
-            date_picker_state: DatePickerState::new(),
+    pub fn into_frame(self, items: &[TimeTrackingItem]) -> DailyReportFrame {
+        let items: Vec<_> = items
+            .iter()
+            .filter(|a| a.start.date().naive_local() == self.date_picker_state.get_selected())
+            .cloned()
+            .collect();
+        DailyReportFrame {
+            duration_activity_list: self.duration_activity_list_state.into_frame(&items),
+            date_picker_state: self.date_picker_state,
         }
     }
 }
 
-pub struct DailyReport {
-    duration_activity_list: DurationActivityList,
+struct ActivityWithDuration {
+    activity: String,
+    duration: Duration,
 }
 
-impl DailyReport {
-    pub fn new(items: &[TimeTrackingItem], state: &DailyReportState) -> Self {
+#[derive(Default)]
+pub struct DurationActivityListState {
+    selected: Option<usize>,
+}
+
+pub struct DurationActivityListFrame {
+    state: DurationActivityListState,
+    items: Vec<ActivityWithDuration>,
+}
+
+impl Frame<DurationActivityListState> for DurationActivityListFrame {
+    fn into_state(self) -> DurationActivityListState {
+        self.state
+    }
+}
+
+impl DurationActivityListState {
+    pub fn select(&mut self, selected: Option<usize>) {
+        self.selected = selected;
+    }
+
+    pub fn into_frame(self, items: &[TimeTrackingItem]) -> DurationActivityListFrame {
         let now = Local::now();
         let to_duration = |a: &TimeTrackingItem| {
             (match a.end {
@@ -46,7 +121,6 @@ impl DailyReport {
         };
         let items: Vec<_> = items
             .iter()
-            .filter(|a| a.start.date().naive_local() == state.date_picker_state.get_selected())
             .sorted_by(|a, b| a.activity.cmp(&b.activity))
             .map(|a| (&a.activity, to_duration(a)))
             .group_by(|a| a.0)
@@ -56,93 +130,35 @@ impl DailyReport {
                 duration: i.fold(Duration::zero(), |acc, a| acc + a.1),
             })
             .collect();
-        Self {
-            duration_activity_list: DurationActivityList::new(items),
-        }
+        DurationActivityListFrame { state: self, items }
     }
 }
 
-impl EventHandler for DailyReportState {
-    type State = DailyReportState;
+pub struct DurationActivityList;
 
-    fn handle_event(&mut self, event: KeyEvent, state: &mut Self::State) -> Consumed {
-        state.date_picker_state.handle_event(event, &mut ());
-        self.duration_activity_list_state
-            .handle_event(event, &mut state.duration_activity_list_state);
-        Consumed::Consumed
-    }
-}
-
-impl StatefulWidget for DailyReport {
-    type State = DailyReportState;
-
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let mut chunks = Layout::default()
-            .constraints([Constraint::Min(3 * 7), Constraint::Min(0)])
-            .direction(Direction::Horizontal)
-            .split(area)
-            .into_iter();
-
-        self.date_picker_state
-            .render(chunks.next().unwrap(), buf, &mut state.date_picker_state);
-        self.duration_activity_list.render(
-            chunks.next().unwrap(),
-            buf,
-            &mut state.duration_activity_list_state,
-        )
-    }
-}
-
-struct ActivityWithDuration {
-    activity: String,
-    duration: Duration,
-}
-
-pub struct DurationActivityListState {
-    selected: Option<usize>,
-}
-
-pub struct DurationActivityListEmphemeralState {
-    state: DurationActivityListState,
-    items: Vec<ActivityWithDuration>,
-}
-
-impl DurationActivityListState {
-    pub fn new() -> Self {
-        Self { selected: None }
-    }
-
-    pub fn select(&mut self, selected: Option<usize>) {
-        self.selected = selected;
-    }
-}
-
-pub struct DurationActivityList {}
-
-impl DurationActivityList {
-    pub fn new(items: Vec<ActivityWithDuration>) -> Self {
-        Self { items }
-    }
-}
-
-impl EventHandler for DurationActivityListState {
-    type State = DurationActivityListEmphemeralState;
-
-    fn handle_event(&mut self, event: KeyEvent, state: &mut Self::State) -> Consumed {
+impl EventHandler for DurationActivityListFrame {
+    fn handle_event(&mut self, event: KeyEvent) -> Consumed {
         match event.code {
-            KeyCode::Down => state.selected = Some(state.selected.map(|i| i + 1).unwrap_or(0)),
+            KeyCode::Down => {
+                self.state.selected = Some(self.state.selected.map(|i| i + 1).unwrap_or(0))
+            }
             KeyCode::Up => {
-                state.selected = Some(state.selected.map(|i| i.saturating_sub(1)).unwrap_or(0))
+                self.state.selected = Some(
+                    self.state
+                        .selected
+                        .map(|i| i.saturating_sub(1))
+                        .unwrap_or(0),
+                )
             }
             KeyCode::Char('d') => {
-                if let Some(item) = state.selected.map(|i| self.items.get(i)).flatten() {
+                if let Some(item) = self.state.selected.map(|i| self.items.get(i)).flatten() {
                     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
                     ctx.set_contents(duration_to_string(&item.duration))
                         .unwrap()
                 }
             }
             KeyCode::Char('a') => {
-                if let Some(item) = state.selected.map(|i| self.items.get(i)).flatten() {
+                if let Some(item) = self.state.selected.map(|i| self.items.get(i)).flatten() {
                     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
                     ctx.set_contents(item.activity.to_owned()).unwrap()
                 }
@@ -162,30 +178,37 @@ impl EventHandler for DurationActivityListState {
                     }
                 }
             }
-            _ => (),
+            _ => return Consumed::NotConsumed,
         };
         Consumed::Consumed
     }
 }
 
 impl StatefulWidget for DurationActivityList {
-    type State = DurationActivityListState;
+    type State = DurationActivityListFrame;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let rows: Vec<_> = self
+        let rows: Vec<_> = state
             .items
             .iter()
             .enumerate()
             .map(|(index, i)| {
+                let rounded_duration =
+                    Duration::seconds((i.duration.num_seconds() + 5 * 30) / 5 / 60 * 5 * 60);
                 Row::new(vec![
                     format!("[{}]", index + 1),
-                    format!("{:>10}", duration_to_string(&i.duration)),
+                    format!("{:>10}", duration_to_string(&rounded_duration)),
                     i.activity.to_owned(),
                 ])
             })
             .collect();
         let num_rows = rows.len();
         let table = Table::new(rows)
+            .block(
+                Block::default()
+                    .title("Aggregated Times")
+                    .borders(Borders::ALL),
+            )
             .header(
                 Row::new(vec!["Index", "Duration", "Activity"])
                     .style(Style::default().add_modifier(Modifier::BOLD | Modifier::UNDERLINED)),
@@ -196,9 +219,11 @@ impl StatefulWidget for DurationActivityList {
                 Constraint::Min(10),
             ])
             .highlight_style(Style::default().bg(Color::Green));
-        state.select(state.selected.map(|index| index.min(num_rows - 1)));
+        state
+            .state
+            .select(state.state.selected.map(|index| index.min(num_rows - 1)));
         let mut table_state = TableState::default();
-        table_state.select(state.selected);
+        table_state.select(state.state.selected);
         StatefulWidget::render(table, area, buf, &mut table_state);
     }
 }

@@ -16,7 +16,7 @@ impl Consumed {
 
 pub trait EventHandler {
     fn handle_event(&mut self, event: KeyEvent) -> Consumed;
-    fn set_focus<B: Backend>(&self, frame: &mut tui::Frame<B>) {}
+    fn set_focus<B: Backend>(&self, _frame: &mut tui::Frame<B>) {}
 }
 
 pub trait Frame<S> {
