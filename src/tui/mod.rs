@@ -79,7 +79,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     terminal.clear()?;
 
     let mut database = Database::open().unwrap();
-    let connection = database.open_connection();
+    let mut connection = database.open_connection();
 
     let mut app = App::new();
 
@@ -161,6 +161,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                     }
                                     _ => (),
                                 };
+                                database.flush();
+                                connection = database.open_connection();
                                 true
                             }
                             Consumed::Consumed => true,
