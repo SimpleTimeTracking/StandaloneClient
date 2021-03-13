@@ -21,6 +21,15 @@ pub enum Ending {
     At(#[serde(with = "ts_seconds")] DateTime<Utc>),
 }
 
+impl Ending {
+    pub fn to_date_time(&self) -> Option<DateTime<Utc>> {
+        match self {
+            Ending::Open => None,
+            Ending::At(dt) => Some(*dt),
+        }
+    }
+}
+
 impl<TZ: chrono::TimeZone> PartialEq<DateTime<TZ>> for Ending {
     fn eq(&self, other: &DateTime<TZ>) -> bool {
         match self {

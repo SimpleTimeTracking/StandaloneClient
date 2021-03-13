@@ -6,7 +6,7 @@ use crate::{
     },
     Ending, TimeTrackingItem,
 };
-use chrono::{Duration, Local};
+use chrono::{Duration, Local, NaiveDateTime};
 use clipboard::ClipboardProvider;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use itertools::Itertools;
@@ -97,6 +97,8 @@ pub struct DurationActivityListState {
 pub struct DurationActivityListFrame {
     state: DurationActivityListState,
     items: Vec<ActivityWithDuration>,
+    start: Option<NaiveDateTime>,
+    end: Option<NaiveDateTime>,
 }
 
 impl Frame<DurationActivityListState> for DurationActivityListFrame {
@@ -119,6 +121,11 @@ impl DurationActivityListState {
             })
             .signed_duration_since(a.start)
         };
+        let start = items.first().map(|i| i.start.naive_local());
+        let end = items
+            .last()
+            .map(|i| i.end.to_date_time().map(|d| d.naive_local()))
+            .flatten();
         let items: Vec<_> = items
             .iter()
             .sorted_by(|a, b| a.activity.cmp(&b.activity))
@@ -127,10 +134,19 @@ impl DurationActivityListState {
             .into_iter()
             .map(|(activity, i)| ActivityWithDuration {
                 activity: activity.to_owned(),
-                duration: i.fold(Duration::zero(), |acc, a| acc + a.1),
+                duration: Duration::seconds(
+                    (i.fold(Duration::zero(), |acc, a| acc + a.1).num_seconds() + 5 * 30) / 5 / 60
+                        * 5
+                        * 60,
+                ),
             })
             .collect();
-        DurationActivityListFrame { state: self, items }
+        DurationActivityListFrame {
+            state: self,
+            items,
+            start,
+            end,
+        }
     }
 }
 
@@ -178,6 +194,18 @@ impl EventHandler for DurationActivityListFrame {
                     }
                 }
             }
+            KeyCode::Char('s') => {
+                if let Some(start) = self.start {
+                    let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
+                    ctx.set_contents(format!("{}", start.time())).unwrap();
+                }
+            }
+            KeyCode::Char('e') => {
+                if let Some(end) = self.end {
+                    let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
+                    ctx.set_contents(format!("{}", end.time())).unwrap();
+                }
+            }
             _ => return Consumed::NotConsumed,
         };
         Consumed::Consumed
@@ -188,20 +216,32 @@ impl StatefulWidget for DurationActivityList {
     type State = DurationActivityListFrame;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let rows: Vec<_> = state
+        let mut rows: Vec<_> = state
             .items
             .iter()
             .enumerate()
             .map(|(index, i)| {
-                let rounded_duration =
-                    Duration::seconds((i.duration.num_seconds() + 5 * 30) / 5 / 60 * 5 * 60);
                 Row::new(vec![
                     format!("[{}]", index + 1),
-                    format!("{:>10}", duration_to_string(&rounded_duration)),
+                    format!("{:>10}", duration_to_string(&i.duration)),
                     i.activity.to_owned(),
                 ])
             })
             .collect();
+        if let Some(start) = state.start {
+            rows.push(Row::new(vec![
+                "[s]".to_owned(),
+                format!("{:>10}", start.time()),
+                "*** START OF DAY ***".to_owned(),
+            ]));
+        }
+        if let Some(end) = state.end {
+            rows.push(Row::new(vec![
+                "[e]".to_owned(),
+                format!("{:>10}", end.time()),
+                "*** END OF DAY ***".to_owned(),
+            ]));
+        }
         let num_rows = rows.len();
         let table = Table::new(rows)
             .block(

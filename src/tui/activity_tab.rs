@@ -111,11 +111,6 @@ impl EventHandler for ActivityTabFrame {
     }
 
     fn handle_event(&mut self, event: KeyEvent) -> Consumed {
-        let index = if let KeyCode::Char(index @ '1'..='9') = event.code {
-            Some(index as usize - '1' as usize)
-        } else {
-            None
-        };
         match self.mode {
             _ if event.code == KeyCode::Esc => {
                 self.history_list.reset();
@@ -138,25 +133,25 @@ impl EventHandler for ActivityTabFrame {
                 self.history_list.reset();
                 Consumed::Consumed
             }
-            Mode::Normal | Mode::SearchHistory
-                if index
-                    .map(|i| self.history_list.get_item_with_index(i))
-                    .flatten()
-                    .is_some() =>
-            {
-                self.mode = Mode::EnteringActivity;
-                self.activity_field.set_text(
-                    &self
-                        .history_list
-                        .get_item_with_index(index.unwrap())
-                        .unwrap()
-                        .activity,
-                );
-                self.activity_field.end();
-                self.history_list.reset();
-                Consumed::Consumed
-            }
             Mode::Normal => match event.code {
+                KeyCode::Char(index @ '1'..='9')
+                    if self
+                        .history_list
+                        .get_item_with_index(index as usize - '1' as usize)
+                        .is_some() =>
+                {
+                    self.mode = Mode::EnteringActivity;
+                    self.activity_field.set_text(
+                        &self
+                            .history_list
+                            .get_item_with_index(index as usize - '1' as usize)
+                            .unwrap()
+                            .activity,
+                    );
+                    self.activity_field.end();
+                    self.history_list.reset();
+                    Consumed::Consumed
+                }
                 KeyCode::Char('/') => {
                     self.history_list.reset();
                     self.filter_field.clear();
