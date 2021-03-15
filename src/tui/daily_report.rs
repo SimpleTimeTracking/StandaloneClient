@@ -6,7 +6,7 @@ use crate::{
     },
     Ending, TimeTrackingItem,
 };
-use chrono::{Duration, Local, NaiveDateTime};
+use chrono::{DateTime, Duration, Local, NaiveDateTime};
 use clipboard::ClipboardProvider;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use itertools::Itertools;
@@ -97,8 +97,8 @@ pub struct DurationActivityListState {
 pub struct DurationActivityListFrame {
     state: DurationActivityListState,
     items: Vec<ActivityWithDuration>,
-    start: Option<NaiveDateTime>,
-    end: Option<NaiveDateTime>,
+    start: Option<DateTime<Local>>,
+    end: Option<DateTime<Local>>,
 }
 
 impl Frame<DurationActivityListState> for DurationActivityListFrame {
@@ -121,10 +121,10 @@ impl DurationActivityListState {
             })
             .signed_duration_since(a.start)
         };
-        let start = items.first().map(|i| i.start.naive_local());
+        let start = items.first().map(|i| DateTime::<Local>::from(i.start));
         let end = items
             .last()
-            .map(|i| i.end.to_date_time().map(|d| d.naive_local()))
+            .map(|i| i.end.to_date_time().map(|d| DateTime::<Local>::from(d)))
             .flatten();
         let items: Vec<_> = items
             .iter()
