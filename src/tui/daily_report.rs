@@ -121,9 +121,9 @@ impl DurationActivityListState {
             })
             .signed_duration_since(a.start)
         };
-        let start = items.first().map(|i| DateTime::<Local>::from(i.start));
+        let start = items.last().map(|i| DateTime::<Local>::from(i.start));
         let end = items
-            .last()
+            .first()
             .map(|i| i.end.to_date_time().map(|d| DateTime::<Local>::from(d)))
             .flatten();
         let items: Vec<_> = items
