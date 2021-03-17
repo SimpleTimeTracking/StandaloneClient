@@ -45,7 +45,7 @@ impl TextFieldState {
 
     pub fn end(&mut self) {
         if let Some(last) = self.lines.last() {
-            self.cursor = (last.len(), self.lines.len() - 1);
+            self.cursor = (last.char_len(), self.lines.len() - 1);
         } else {
             self.cursor = (0, 0);
         }
