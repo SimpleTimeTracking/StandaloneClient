@@ -73,136 +73,142 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let mut stdout = stdout();
     execute!(stdout, EnterAlternateScreen, EnableBlinking)?;
 
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    let result = || -> Result<(), Box<dyn Error>> {
+        let backend = CrosstermBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
 
-    terminal.clear()?;
+        terminal.clear()?;
 
-    let mut database = Database::open().unwrap();
-    let mut connection = database.open_connection();
+        let mut database = Database::open().unwrap();
+        let mut connection = database.open_connection();
 
-    let mut app = App::new();
+        let mut app = App::new();
 
-    'main: loop {
-        let current_list: Vec<_> = connection.query().iter().map(|&i| i.clone()).collect();
+        'main: loop {
+            let current_list: Vec<_> = connection.query().iter().map(|&i| i.clone()).collect();
 
-        let (show_tabs, tab) = (app.show_tabs, app.tab);
-        let (mut activity_frame, mut daily_report_frame) = match tab {
-            Mode::EnterActivity => (
-                FrameOrState::Frame(app.activity.into_frame(&current_list)),
-                FrameOrState::State(app.daily_report),
-            ),
-            Mode::DailyReport => (
-                FrameOrState::State(app.activity),
-                FrameOrState::Frame(app.daily_report.into_frame(&current_list)),
-            ),
-        };
-        terminal.draw(|f| {
-            let content_area = if show_tabs {
-                let mut chunks = Layout::default()
-                    .constraints([Constraint::Length(1), Constraint::Min(0)])
-                    .split(f.size())
-                    .into_iter();
-                let tab = Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
-                    .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                    .select(match tab {
-                        Mode::EnterActivity => 0,
-                        Mode::DailyReport => 1,
-                    });
-                f.render_widget(tab, chunks.next().unwrap());
-                chunks.next().unwrap()
-            } else {
-                f.size()
+            let (show_tabs, tab) = (app.show_tabs, app.tab);
+            let (mut activity_frame, mut daily_report_frame) = match tab {
+                Mode::EnterActivity => (
+                    FrameOrState::Frame(app.activity.into_frame(&current_list)),
+                    FrameOrState::State(app.daily_report),
+                ),
+                Mode::DailyReport => (
+                    FrameOrState::State(app.activity),
+                    FrameOrState::Frame(app.daily_report.into_frame(&current_list)),
+                ),
             };
-            if let FrameOrState::Frame(ref mut frame) = activity_frame {
-                f.render_stateful_widget(ActivityTab, content_area, frame);
-                frame.set_focus(f);
-            }
-            if let FrameOrState::Frame(ref mut frame) = daily_report_frame {
-                f.render_stateful_widget(DailyReport, content_area, frame);
-                frame.set_focus(f);
-            }
-        })?;
-        if poll(Duration::from_millis(500))? {
-            loop {
-                match read()? {
-                    Event::Key(event) => {
-                        let consumed = if let FrameOrState::Frame(ref mut frame) = activity_frame {
-                            frame.handle_event(event)
-                        } else if let FrameOrState::Frame(ref mut frame) = daily_report_frame {
-                            frame.handle_event(event)
-                        } else {
-                            panic!("Invalid tab")
-                        };
-                        let consumed = match consumed {
-                            Consumed::Command(cmd) => {
-                                match cmd {
-                                    Command::StartActivity(time, activity) => {
-                                        let item = match time {
-                                            TimeSpec::Interval { from, to } => {
-                                                TimeTrackingItem::interval(from, to, &activity)
-                                                    .unwrap()
-                                            }
-                                            _ => TimeTrackingItem::starting_at(
-                                                time.to_date_time(),
-                                                &activity,
-                                            ),
-                                        };
-                                        connection.insert_item(item);
-                                    }
-                                    Command::Fin(time) => {
-                                        let item = connection.query_latest();
-                                        if let Some(item) = item {
-                                            let mut item = item.clone();
-                                            connection.delete_item(&item).unwrap();
-                                            item.end = Ending::At(time.to_date_time().into());
+            terminal.draw(|f| {
+                let content_area = if show_tabs {
+                    let mut chunks = Layout::default()
+                        .constraints([Constraint::Length(1), Constraint::Min(0)])
+                        .split(f.size())
+                        .into_iter();
+                    let tab =
+                        Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
+                            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+                            .select(match tab {
+                                Mode::EnterActivity => 0,
+                                Mode::DailyReport => 1,
+                            });
+                    f.render_widget(tab, chunks.next().unwrap());
+                    chunks.next().unwrap()
+                } else {
+                    f.size()
+                };
+                if let FrameOrState::Frame(ref mut frame) = activity_frame {
+                    f.render_stateful_widget(ActivityTab, content_area, frame);
+                    frame.set_focus(f);
+                }
+                if let FrameOrState::Frame(ref mut frame) = daily_report_frame {
+                    f.render_stateful_widget(DailyReport, content_area, frame);
+                    frame.set_focus(f);
+                }
+            })?;
+            if poll(Duration::from_millis(500))? {
+                loop {
+                    match read()? {
+                        Event::Key(event) => {
+                            let consumed = if let FrameOrState::Frame(ref mut frame) =
+                                activity_frame
+                            {
+                                frame.handle_event(event)
+                            } else if let FrameOrState::Frame(ref mut frame) = daily_report_frame {
+                                frame.handle_event(event)
+                            } else {
+                                panic!("Invalid tab")
+                            };
+                            let consumed = match consumed {
+                                Consumed::Command(cmd) => {
+                                    match cmd {
+                                        Command::StartActivity(time, activity) => {
+                                            let item = match time {
+                                                TimeSpec::Interval { from, to } => {
+                                                    TimeTrackingItem::interval(from, to, &activity)
+                                                        .unwrap()
+                                                }
+                                                _ => TimeTrackingItem::starting_at(
+                                                    time.to_date_time(),
+                                                    &activity,
+                                                ),
+                                            };
                                             connection.insert_item(item);
                                         }
-                                    }
-                                    _ => (),
-                                };
-                                database.flush();
-                                connection = database.open_connection();
-                                true
-                            }
-                            Consumed::Consumed => true,
-                            Consumed::NotConsumed => false,
-                        };
-                        if !consumed {
-                            match event.code {
-                                KeyCode::Tab => {
-                                    app.show_tabs = true;
-                                    app.tab = match app.tab {
-                                        Mode::EnterActivity => Mode::DailyReport,
-                                        Mode::DailyReport => Mode::EnterActivity,
-                                    }
+                                        Command::Fin(time) => {
+                                            let item = connection.query_latest();
+                                            if let Some(item) = item {
+                                                let mut item = item.clone();
+                                                connection.delete_item(&item).unwrap();
+                                                item.end = Ending::At(time.to_date_time().into());
+                                                connection.insert_item(item);
+                                            }
+                                        }
+                                        _ => (),
+                                    };
+                                    database.flush();
+                                    connection = database.open_connection();
+                                    true
                                 }
-                                KeyCode::Esc if !app.show_tabs => app.show_tabs = true,
-                                KeyCode::Char('q') => break 'main,
-                                _ => (),
+                                Consumed::Consumed => true,
+                                Consumed::NotConsumed => false,
+                            };
+                            if !consumed {
+                                match event.code {
+                                    KeyCode::Tab => {
+                                        app.show_tabs = true;
+                                        app.tab = match app.tab {
+                                            Mode::EnterActivity => Mode::DailyReport,
+                                            Mode::DailyReport => Mode::EnterActivity,
+                                        }
+                                    }
+                                    KeyCode::Esc if !app.show_tabs => app.show_tabs = true,
+                                    KeyCode::Char('q') => break 'main,
+                                    _ => (),
+                                }
+                            } else {
+                                app.show_tabs = false;
                             }
-                        } else {
-                            app.show_tabs = false;
                         }
+                        Event::Mouse(_event) => (),
+                        Event::Resize(_width, _height) => (),
                     }
-                    Event::Mouse(_event) => (),
-                    Event::Resize(_width, _height) => (),
-                }
-                if !poll(Duration::from_secs(0))? {
-                    break;
+                    if !poll(Duration::from_secs(0))? {
+                        break;
+                    }
                 }
             }
+            app.activity = activity_frame.into_state();
+            app.daily_report = daily_report_frame.into_state()
         }
-        app.activity = activity_frame.into_state();
-        app.daily_report = daily_report_frame.into_state()
-    }
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableBlinking
-    )?;
-    disable_raw_mode()?;
-    Ok(())
+        execute!(
+            terminal.backend_mut(),
+            LeaveAlternateScreen,
+            DisableBlinking
+        )?;
+        disable_raw_mode()?;
+        Ok(())
+    };
+    result()
 }
 
 pub fn duration_to_string(duration: &chrono::Duration) -> String {
