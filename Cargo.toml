@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 chrono = {version ="0.4", features = ["serde"]}
+time = "0.2"
 lazy_static="1.4"
 dirs="2.0"
 nom = "6"

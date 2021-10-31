@@ -1,5 +1,5 @@
 use chrono::prelude::*;
-use chrono::Duration;
+use chrono::{Duration, Local};
 use core::str::FromStr;
 use nom::branch::alt;
 use nom::bytes::complete::tag_no_case;
@@ -43,7 +43,7 @@ pub enum ErrorKind<I> {
 }
 
 impl TimeSpec {
-    pub fn to_date_time(&self) -> DateTime<Local> {
+    pub fn as_date_time(&self) -> DateTime<Local> {
         match self {
             TimeSpec::Now => Local::now(),
             TimeSpec::Absolute(date_time) => *date_time,
@@ -64,7 +64,7 @@ impl<I> nom::error::ParseError<I> for ErrorKind<I> {
 }
 
 impl<I, E> nom::error::FromExternalError<I, E> for ErrorKind<I> {
-    fn from_external_error(input: I, kind: nom::error::ErrorKind, err: E) -> Self {
+    fn from_external_error(input: I, kind: nom::error::ErrorKind, _err: E) -> Self {
         ErrorKind::Nom(input, kind)
     }
 }
@@ -86,7 +86,7 @@ fn fin(i: &str) -> Result<&str, Command> {
 }
 
 fn parse_num<T: FromStr>(i: &str) -> Result<&str, T> {
-    Ok(map_res(digit1, |d: &str| d.parse::<T>())(i)?)
+    map_res(digit1, |d: &str| d.parse::<T>())(i)
 }
 
 fn hours(i: &str) -> Result<&str, Duration> {
@@ -249,7 +249,7 @@ fn in_relative_timespec(i: &str) -> Result<&str, TimeSpec> {
 }
 
 fn timespec(i: &str) -> Result<&str, TimeSpec> {
-    Ok(alt((in_relative_timespec, from_to, since))(i)?)
+    alt((in_relative_timespec, from_to, since))(i)
 }
 
 fn activity_now(i: &str) -> Result<&str, (String, TimeSpec)> {

@@ -148,7 +148,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                                         .unwrap()
                                                 }
                                                 _ => TimeTrackingItem::starting_at(
-                                                    time.to_date_time(),
+                                                    time.as_date_time(),
                                                     &activity,
                                                 ),
                                             };
@@ -159,7 +159,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                             if let Some(item) = item {
                                                 let mut item = item.clone();
                                                 connection.delete_item(&item).unwrap();
-                                                item.end = Ending::At(time.to_date_time().into());
+                                                item.end = Ending::At(time.as_date_time().into());
                                                 connection.insert_item(item);
                                             }
                                         }

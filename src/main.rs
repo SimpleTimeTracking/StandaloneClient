@@ -11,5 +11,5 @@ use database::{Connection, Database};
 use tti::{Ending, TimeTrackingItem};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    Ok(tui::run()?)
+    tui::run()
 }

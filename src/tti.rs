@@ -1,6 +1,7 @@
 use chrono::format::{Item, ParseResult, Parsed};
 use chrono::prelude::*;
 use chrono::serde::ts_seconds;
+use chrono::{DateTime, Local, Utc};
 use core::fmt::Display;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -22,7 +23,7 @@ pub enum Ending {
 }
 
 impl Ending {
-    pub fn to_date_time(&self) -> Option<DateTime<Utc>> {
+    pub fn as_date_time(&self) -> Option<DateTime<Utc>> {
         match self {
             Ending::Open => None,
             Ending::At(dt) => Some(*dt),
@@ -173,7 +174,7 @@ impl FromStr for TimeTrackingItem {
     type Err = ItemError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let start = parse_stt_date_time(&s.get(0..19).ok_or(ItemError(ItemErrorKind::BadFormat))?)
+        let start = parse_stt_date_time(s.get(0..19).ok_or(ItemError(ItemErrorKind::BadFormat))?)
             .map_err(|_| ItemError(ItemErrorKind::BadFormat))?;
         if let Some(end) = s.get(20..39) {
             let end = parse_stt_date_time(end);
@@ -182,7 +183,7 @@ impl FromStr for TimeTrackingItem {
                     start,
                     end,
                     Self::unescape(
-                        &s.get(40..)
+                        s.get(40..)
                             .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
                     ),
                 )
@@ -190,7 +191,7 @@ impl FromStr for TimeTrackingItem {
                 Ok(TimeTrackingItem::starting_at(
                     start,
                     Self::unescape(
-                        &s.get(20..)
+                        s.get(20..)
                             .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
                     ),
                 ))
@@ -199,7 +200,7 @@ impl FromStr for TimeTrackingItem {
             Ok(TimeTrackingItem::starting_at(
                 start,
                 Self::unescape(
-                    &s.get(20..)
+                    s.get(20..)
                         .ok_or(ItemError(ItemErrorKind::ActivityMissing))?,
                 ),
             ))

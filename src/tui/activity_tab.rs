@@ -1,6 +1,6 @@
 use crate::tti::*;
 use crate::tui::{component::*, history_list::*, textfield::*};
-use chrono::{DateTime, Datelike, Local, Utc};
+use chrono::{self, DateTime, Datelike, Local, Utc};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use regex::Regex;
 use tui::{
