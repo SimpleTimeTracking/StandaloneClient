@@ -21,7 +21,7 @@ clipboard="0"
 # Based on features
 web-view = { version = "0.7", features = ["edge"], optional = true }
 serde_json = { version = "1.0", optional = true }
-tui = { version = "0", default-features = false, optional = true, features = ["crossterm"]}
+tui = { version = "0.15", default-features = false, optional = true, features = ["crossterm"]}
 crossterm = { version = "0", optional = true }
 regex = { version = "1.4", optional = true}
 num-traits = { version = "0.2", optional = true }
