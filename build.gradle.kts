@@ -19,8 +19,8 @@ plugins {
 repositories {
     mavenCentral()
     maven("https://dl.bintray.com/spekframework/spek/")
-    maven("http://oss.sonatype.org/content/groups/public/")
-    maven("http://maven.atlassian.com/content/repositories/atlassian-public/")
+    maven("https://oss.sonatype.org/content/groups/public/")
+    maven("https://maven.atlassian.com/content/repositories/atlassian-public/")
 }
 
 
@@ -42,7 +42,7 @@ kapt {
 }
 
 configurations {
-    "compile" {
+    implementation {
         setExtendsFrom(extendsFrom.filter { it != configurations.antlr })
     }
 }
@@ -77,13 +77,13 @@ distributions.getByName("main") {
     }
 }
 
-tasks.withType<Jar> {
-    from(configurations.compile.get().resolve().map { if (it.isDirectory()) it else zipTree(it) })
-    manifest {
-        attributes += "Main-Class" to "org.stt.StartWithJFX"
-        attributes += "JavaFX-Feature-Proxy" to "None"
-    }
-}
+//tasks.withType<Jar> {
+//    from(configurations..get().resolve().map { if (it.isDirectory()) it else zipTree(it) })
+//    manifest {
+//        attributes += "Main-Class" to "org.stt.StartWithJFX"
+//        attributes += "JavaFX-Feature-Proxy" to "None"
+//    }
+//}
 
 tasks.withType<KaptTask> { dependsOn(tasks.withType<AntlrTask>()) }
 
