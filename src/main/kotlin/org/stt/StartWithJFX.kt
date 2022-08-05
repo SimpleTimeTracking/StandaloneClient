@@ -10,7 +10,7 @@ object StartWithJFX {
     @JvmStatic
     fun main(args: Array<String>) {
         try {
-            Class.forName("javafx.embed.swing.JFXPanel")
+            //Class.forName("javafx.embed.swing.JFXPanel")
         } catch (e: ClassNotFoundException) {
             val jfxrt = retrieveJFXRTFile()
             val systemClassLoader = ClassLoader

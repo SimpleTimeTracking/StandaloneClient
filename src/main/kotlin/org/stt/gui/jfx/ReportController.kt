@@ -1,6 +1,6 @@
 package org.stt.gui.jfx
 
-import com.sun.javafx.scene.control.skin.DatePickerSkin
+import javafx.scene.control.skin.DatePickerSkin
 import javafx.animation.PauseTransition
 import javafx.application.Platform
 import javafx.beans.binding.*

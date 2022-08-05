@@ -86,10 +86,13 @@ class TimeTrackingItemNodes(private val labelToNodeMapper: @JvmSuppressWildcards
         parent.addAll(labelArea, space, timePane)
     }
 
-    fun appendNodesTo(timePaneContainer: Pane, timePaneOpacity: DoubleBinding, parent: ObservableList<Node>) {
-        timePane.opacityProperty().bind(timePaneOpacity)
+    fun appendNodesToAndWrapTimePane(timePaneContainer: Pane, parent: ObservableList<Node>) {
         timePaneContainer.children.add(timePane)
         parent.addAll(labelArea, space, timePaneContainer)
+    }
+
+    fun bindTimePaneOpacity(timePaneOpacity: DoubleBinding) {
+        timePane.opacityProperty().bind(timePaneOpacity)
     }
 
     fun setItem(item: TimeTrackingItem) {

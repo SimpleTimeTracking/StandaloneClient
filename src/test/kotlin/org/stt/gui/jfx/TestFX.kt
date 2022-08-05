@@ -37,7 +37,7 @@ object TestFX {
                     return 1
                 }
             })
-            given(toolkit.fontLoader.loadFont(any<InputStream>(), anyDouble())).willAnswer { Font(1.0) }
+            given(toolkit.fontLoader.loadFont(any<InputStream>(), anyDouble(), anyBoolean())).willAnswer { arrayOf( Font(1.0) ) }
             val layout = toolkit.textLayoutFactory.createLayout()
             //            given(layout.getBounds()).willReturn(new RectBounds(0, 0, 10, 10));
             given(layout.runs).willReturn(arrayOfNulls(0))

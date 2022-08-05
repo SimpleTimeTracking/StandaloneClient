@@ -5,7 +5,7 @@ import org.sonarqube.gradle.SonarQubeTask
 
 
 plugins {
-    val kotlinVersion = "1.3.72"
+    val kotlinVersion = "1.7.10"
     application
     jacoco
     idea
@@ -14,6 +14,7 @@ plugins {
     kotlin("kapt") version kotlinVersion
     id("org.sonarqube") version "3.1"
     id("com.github.ben-manes.versions") version "0.36.0"
+    id("org.openjfx.javafxplugin") version "0.0.13"
 }
 
 repositories {
@@ -22,7 +23,6 @@ repositories {
     maven("https://oss.sonatype.org/content/groups/public/")
     maven("https://maven.atlassian.com/content/repositories/atlassian-public/")
 }
-
 
 // -SNAPSHOT is added if the release task is not set
 version = "3"
@@ -50,7 +50,7 @@ configurations {
 val spek_version = "2.0.4"
 
 dependencies {
-    val daggerVersion = "2.31.2"
+    val daggerVersion = "2.43.1"
     antlr(group = "org.antlr", name = "antlr4", version = "4.9.1")
     implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.9.1")
     implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.4")
@@ -63,12 +63,16 @@ dependencies {
     implementation("net.rcarz:jira-client:0.5")
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
-    implementation(fileTree("/usr/lib/").matching { include("**/jfxrt.jar") })
 
     testImplementation("commons-io:commons-io:2.8.0")
     testImplementation("org.mockito:mockito-core:3.7.7")
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("junit:junit-dep:4.11")
+}
+
+javafx {
+    version = "11.0.2"
+    modules("javafx.base", "javafx.controls", "javafx.fxml", "javafx.graphics")
 }
 
 distributions.getByName("main") {

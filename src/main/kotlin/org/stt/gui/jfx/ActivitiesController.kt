@@ -1,6 +1,6 @@
 package org.stt.gui.jfx
 
-import com.sun.javafx.scene.control.skin.VirtualFlow
+import javafx.scene.control.skin.VirtualFlow
 import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.fxml.FXML
