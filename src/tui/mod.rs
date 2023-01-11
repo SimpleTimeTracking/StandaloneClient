@@ -189,8 +189,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                 app.show_tabs = false;
                             }
                         }
-                        Event::Mouse(_event) => (),
-                        Event::Resize(_width, _height) => (),
+                        Event::Mouse(_)
+                        | Event::Resize(..)
+                        | Event::FocusGained
+                        | Event::FocusLost
+                        | Event::Paste(_) => (),
                     }
                     if !poll(Duration::from_secs(0))? {
                         break;

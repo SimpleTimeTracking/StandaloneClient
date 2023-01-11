@@ -16,7 +16,7 @@ pub struct DatePickerState {
 impl Default for DatePickerState {
     fn default() -> Self {
         Self {
-            selected: Local::today().naive_local(),
+            selected: Local::now().naive_local().date(),
         }
     }
 }
