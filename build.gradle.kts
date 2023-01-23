@@ -7,6 +7,7 @@ import org.sonarqube.gradle.SonarQubeTask
 plugins {
     val kotlinVersion = "1.7.10"
     application
+
     jacoco
     idea
     antlr
@@ -33,9 +34,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
 }
-
 
 kapt {
     correctErrorTypes = true
@@ -60,18 +60,18 @@ dependencies {
     kapt("com.google.dagger:dagger-compiler:$daggerVersion")
     implementation("net.engio:mbassador:1.3.2")
     implementation("org.controlsfx:controlsfx:8.40.15")
-    implementation("net.rcarz:jira-client:0.5")
+    //implementation("net.rcarz:jira-client:0.5")
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
 
     testImplementation("commons-io:commons-io:2.8.0")
-    testImplementation("org.mockito:mockito-core:3.7.7")
+    testImplementation("org.mockito:mockito-core:3.12.4")
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("junit:junit-dep:4.11")
 }
 
 javafx {
-    version = "11.0.2"
+    version = "17.0.1"
     modules("javafx.base", "javafx.controls", "javafx.fxml", "javafx.graphics")
 }
 
@@ -81,6 +81,24 @@ distributions.getByName("main") {
     }
 }
 
+tasks.compileJava {
+    sourceSets {
+        main {
+            java {
+                srcDir("$buildDir/generated/source/kapt/main")
+            }
+        }
+    }
+    options.compilerArgs.addAll(listOf("-verbose", "-Xmaxerrs"))
+}
+
+tasks.test {
+    extensions.configure(TestModuleOptions::class) {
+        runOnClasspath = true
+    }
+}
+
+
 //tasks.withType<Jar> {
 //    from(configurations..get().resolve().map { if (it.isDirectory()) it else zipTree(it) })
 //    manifest {
@@ -89,7 +107,9 @@ distributions.getByName("main") {
 //    }
 //}
 
-tasks.withType<KaptTask> { dependsOn(tasks.withType<AntlrTask>()) }
+tasks.withType<KaptTask> {
+    dependsOn(tasks.withType<AntlrTask>())
+}
 
 tasks.withType<ProcessResources> {
     filesMatching("version.info") {
@@ -141,7 +161,7 @@ tasks.withType<SonarQubeTask> {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "17"
 }
 
 //tasks.named("dependencyUpdates", com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java).configure {
