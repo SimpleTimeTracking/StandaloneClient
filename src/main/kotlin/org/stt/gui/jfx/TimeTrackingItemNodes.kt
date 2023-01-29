@@ -122,6 +122,7 @@ class TimeTrackingItemNodes(private val labelToNodeMapper: @JvmSuppressWildcards
     }
 
     companion object {
+        // see also corresponding --add-opens to allow access to this file
         private val WARNING_IMAGE = Image(GraphicValidationDecoration::class.java.getResource("/impl/org/controlsfx/control/validation/decoration-warning.png").toExternalForm()) //$NON-NLS-1$
     }
 

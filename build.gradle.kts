@@ -2,6 +2,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.gradle.internal.KaptTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.sonarqube.gradle.SonarQubeTask
+import org.javamodularity.moduleplugin.extensions.TestModuleOptions
 
 
 plugins {
@@ -15,7 +16,11 @@ plugins {
     kotlin("kapt") version kotlinVersion
     id("org.sonarqube") version "3.1"
     id("com.github.ben-manes.versions") version "0.36.0"
+
     id("org.openjfx.javafxplugin") version "0.0.13"
+
+    id("org.javamodularity.moduleplugin") version "1.8.12"
+    id("org.beryx.jlink") version "2.25.0"
 }
 
 repositories {
@@ -30,7 +35,11 @@ version = "3"
 val archivesBaseName = "STT"
 
 application {
-    mainClassName = "org.stt.StartWithJFX"
+    mainModule.set("org.stt")
+    mainClass.set("org.stt.StartWithJFX")
+    // add-opens, so we can access the file decoration-warning.png within this module
+    applicationDefaultJvmArgs =
+        listOf("--add-opens=org.controlsfx.controls/impl.org.controlsfx.control.validation=org.stt")
 }
 
 java {
@@ -53,13 +62,16 @@ dependencies {
     val daggerVersion = "2.43.1"
     antlr(group = "org.antlr", name = "antlr4", version = "4.9.1")
     implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.9.1")
-    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.10.4")
+
+    implementation(group = "org.fxmisc.richtext", name = "richtextfx", version = "0.11.0") {
+        exclude(group = "org.openjfx")
+    }
     implementation("org.yaml:snakeyaml:1.27")
     implementation("com.google.dagger:dagger:$daggerVersion")
     implementation("javax.inject:javax.inject:1")
     kapt("com.google.dagger:dagger-compiler:$daggerVersion")
     implementation("net.engio:mbassador:1.3.2")
-    implementation("org.controlsfx:controlsfx:8.40.15")
+    implementation("org.controlsfx:controlsfx:11.1.2")
     //implementation("net.rcarz:jira-client:0.5")
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
@@ -82,6 +94,7 @@ distributions.getByName("main") {
 }
 
 tasks.compileJava {
+    // workaround, to make kopt created classes available to java module source set
     sourceSets {
         main {
             java {
@@ -89,23 +102,14 @@ tasks.compileJava {
             }
         }
     }
-    options.compilerArgs.addAll(listOf("-verbose", "-Xmaxerrs"))
 }
 
 tasks.test {
     extensions.configure(TestModuleOptions::class) {
+        // disable java-module path for tests
         runOnClasspath = true
     }
 }
-
-
-//tasks.withType<Jar> {
-//    from(configurations..get().resolve().map { if (it.isDirectory()) it else zipTree(it) })
-//    manifest {
-//        attributes += "Main-Class" to "org.stt.StartWithJFX"
-//        attributes += "JavaFX-Feature-Proxy" to "None"
-//    }
-//}
 
 tasks.withType<KaptTask> {
     dependsOn(tasks.withType<AntlrTask>())
@@ -113,15 +117,17 @@ tasks.withType<KaptTask> {
 
 tasks.withType<ProcessResources> {
     filesMatching("version.info") {
-        filter<ReplaceTokens>("tokens" to mapOf(
+        filter<ReplaceTokens>(
+            "tokens" to mapOf(
                 "app.version" to project.property("version"),
                 "app.hash" to getCheckedOutGitCommitHash()
-        ))
+            )
+        )
     }
 }
 
 task("release") {
-    dependsOn += "distZip"
+    dependsOn += "jlinkZip"
     doLast {
         println("Built release for $project.version")
     }
@@ -170,3 +176,24 @@ tasks.withType<KotlinCompile> {
 //        candidate.version.toLowerCase().matches(badVersions)
 //    }
 //}
+
+jlink {
+    imageZip.set(File("$buildDir/dist/stt-${javafx.platform.classifier}.zip"))
+    addOptions("--bind-services", "--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+    mergedModule {
+        excludeRequires("javafx.graphics", "javafx.controls", "javafx.base")
+    }
+    forceMerge("kotlin") // see https://stackoverflow.com/questions/74453018/jlink-package-kotlin-in-both-merged-module-and-kotlin-stdlib
+    launcher {
+        name = "stt"
+        jvmArgs =
+            application.applicationDefaultJvmArgs.plus(
+                listOf(
+                    // some classes in the merged-modules (see jlink plugin( need access to javafx modules
+                    "--add-reads=simpleTimeTracking.merged.module=javafx.graphics",
+                    "--add-reads=simpleTimeTracking.merged.module=javafx.base",
+                    "--add-reads=simpleTimeTracking.merged.module=javafx.controls"
+                )
+            )
+    }
+}
