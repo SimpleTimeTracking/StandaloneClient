@@ -94,7 +94,7 @@ distributions.getByName("main") {
 }
 
 tasks.compileJava {
-    // workaround, to make kopt created classes available to java module source set
+    // workaround, to make kapt created classes available to java module source set
     sourceSets {
         main {
             java {
