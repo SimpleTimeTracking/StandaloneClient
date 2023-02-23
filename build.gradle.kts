@@ -31,7 +31,7 @@ repositories {
 }
 
 // -SNAPSHOT is added if the release task is not set
-version = "3"
+version = "4"
 val archivesBaseName = "STT"
 
 application {
@@ -178,7 +178,7 @@ tasks.withType<KotlinCompile> {
 //}
 
 jlink {
-    imageZip.set(File("$buildDir/dist/stt-${javafx.platform.classifier}.zip"))
+    imageZip.set(File("$buildDir/dist/stt-${javafx.platform.classifier}-${version}.zip"))
     addOptions("--bind-services", "--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
     mergedModule {
         excludeRequires("javafx.graphics", "javafx.controls", "javafx.base")
