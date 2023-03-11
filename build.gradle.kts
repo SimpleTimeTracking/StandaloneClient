@@ -21,6 +21,8 @@ plugins {
 
     id("org.javamodularity.moduleplugin") version "1.8.12"
     id("org.beryx.jlink") version "2.25.0"
+
+    id("com.palantir.git-version") version "2.0.0"
 }
 
 repositories {
@@ -114,15 +116,21 @@ tasks.test {
 tasks.withType<KaptTask> {
     dependsOn(tasks.withType<AntlrTask>())
 }
+// provided by plugin: com.palantir.git-version
+val gitVersion: groovy.lang.Closure<String> by project.extra
+val versionDetails: groovy.lang.Closure<com.palantir.gradle.gitversion.VersionDetails> by extra
 
 tasks.withType<ProcessResources> {
     filesMatching("version.info") {
         filter<ReplaceTokens>(
             "tokens" to mapOf(
                 "app.version" to project.property("version"),
-                "app.hash" to getCheckedOutGitCommitHash()
+                "app.hash" to versionDetails().gitHash
             )
         )
+    }
+    doLast {
+        println("Built release for $project.version")
     }
 }
 
@@ -142,23 +150,6 @@ gradle.taskGraph.whenReady {
 tasks.withType<AntlrTask> {
     maxHeapSize = "64m"
     arguments = arguments + "-visitor" + "-long-messages"
-}
-
-
-fun getCheckedOutGitCommitHash(): String {
-    val takeFromHash = 12
-    /*
-     * '.git/HEAD' contains either
-     *      in case of detached head: the currently checked out commit hash
-     *      otherwise: a reference to a file containing the current commit hash
-     */
-    val head = file(".git/HEAD").readText().split(":") // .git/HEAD
-    val isCommit = head.size == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
-
-    if (isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
-
-    val refHead = file(".git/logs/" + head[1].trim()) // .git/refs/heads/master
-    return refHead.readText().trim().take(takeFromHash)
 }
 
 tasks.withType<SonarQubeTask> {
