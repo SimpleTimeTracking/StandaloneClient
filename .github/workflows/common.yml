@@ -5,7 +5,7 @@ on:
        runs-on:
          required: true
          type: string
-       gradle-task:
+       gradle-tasks:
          required: true
          type: string
 jobs:
@@ -20,9 +20,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Execute Gradle build
-        run: ./gradlew ${{ inputs.gradle-task }} --scan
-      - name: Upload binaries
+        run: ./gradlew ${{ inputs.gradle-tasks }} --scan
+      - name: Upload dists
         uses: actions/upload-artifact@v3
         with:
-          name: binaries
-          path: build/dist/*.zip
+          name: dist
+          path: build/dist/**/*

@@ -8,4 +8,4 @@ jobs:
     uses: ./.github/workflows/common.yml
     with:
       runs-on: ${{ matrix.os }}
-      gradle-task: release
+      gradle-tasks: release

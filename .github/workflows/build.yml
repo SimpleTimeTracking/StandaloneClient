@@ -8,4 +8,4 @@ jobs:
     uses: ./.github/workflows/common.yml
     with:
       runs-on: ${{ matrix.os }}
-      gradle-task: jlinkZip
+      gradle-tasks: dist
