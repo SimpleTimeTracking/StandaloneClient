@@ -52,7 +52,7 @@ The file is $HOME/.stt/stt.yaml (Linux) resp. %HOME%\.stt\stt.yaml (Windows)
 # Start hacking
 
 to start hacking on STT:
-- make sure you have an Oracle JDK >= 1.8
+- make sure you have an Oracle JDK >= 17
 - clone this repository 
 - build it
 ```bash

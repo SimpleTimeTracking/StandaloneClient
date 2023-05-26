@@ -1,0 +1,11 @@
+name: Build STT on Push
+on: push
+jobs:
+  build-with-common:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    uses: ./.github/workflows/common.yml
+    with:
+      runs-on: ${{ matrix.os }}
+      gradle-tasks: dist

@@ -3,7 +3,7 @@ package org.stt.config
 import com.jsoniter.JsonIterator
 import com.jsoniter.output.JsonStream
 import com.jsoniter.spi.JsoniterSpi
-import net.sf.json.JSONException
+import com.jsoniter.spi.JsonException
 import org.stt.Service
 import org.stt.time.DateTimes
 import java.io.File
@@ -61,7 +61,7 @@ constructor(@Named("homePath") homePath: String) : ConfigService, Service {
         } catch (e: IOException) {
             LOG.log(Level.FINEST, "No previous config file found, creating a new one.", e)
             createNewConfig()
-        } catch (e: JSONException) {
+        } catch (e: JsonException) {
             LOG.log(Level.FINEST, "No previous config file found, creating a new one.", e)
             createNewConfig()
         }
@@ -84,7 +84,7 @@ constructor(@Named("homePath") homePath: String) : ConfigService, Service {
             Files.write(sttJson.toPath(), JsonStream.serialize(config).toByteArray(charset("UTF-8")))
         } catch (e: IOException) {
             LOG.log(Level.SEVERE, null, e)
-        } catch (e: JSONException) {
+        } catch (e: JsonException) {
             LOG.log(Level.SEVERE, null, e)
         }
 

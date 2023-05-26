@@ -1,0 +1,11 @@
+name: Build STT Release (manually)
+on: workflow_dispatch # for manual triggered builds
+jobs:
+  build-with-common:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    uses: ./.github/workflows/common.yml
+    with:
+      runs-on: ${{ matrix.os }}
+      gradle-tasks: release

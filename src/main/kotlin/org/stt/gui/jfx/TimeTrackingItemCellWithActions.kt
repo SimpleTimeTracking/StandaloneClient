@@ -1,13 +1,7 @@
 package org.stt.gui.jfx
 
-import com.sun.javafx.geom.BaseBounds
-import com.sun.javafx.geom.transform.BaseTransform
-import com.sun.javafx.jmx.MXNodeAlgorithm
-import com.sun.javafx.jmx.MXNodeAlgorithmContext
-import com.sun.javafx.sg.prism.NGNode
 import javafx.animation.FadeTransition
 import javafx.beans.binding.Bindings
-import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Insets
 import javafx.geometry.Pos
@@ -59,14 +53,16 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         StackPane.setAlignment(actions, Pos.CENTER)
         val timeOrActions = StackPaneWithoutResize()
 
-        actions.opacityProperty().bind(fadeOnHoverProperty())
+        val fade = addOpacityFadeTransition(actions);
+        bindFadeTransitionToHover(fade, cellPane);
+
         val one = SimpleDoubleProperty(1.0)
-        val timePaneOpacity = one.subtract(Bindings.min(one, fadeOnHoverProperty().multiply(2)))
-        itemNodes.appendNodesTo(timeOrActions, timePaneOpacity, cellPane.children)
+        val timePaneOpacity = one.subtract(Bindings.min(one, actions.opacityProperty().multiply(2)))
+        itemNodes.appendNodesToAndWrapTimePane(timeOrActions, cellPane.children)
+        itemNodes.bindTimePaneOpacity(timePaneOpacity)
         timeOrActions.children.add(actions)
 
         cellPane.alignment = Pos.CENTER_LEFT
-
 
         lastItemOnDayPane = BorderPane()
 
@@ -75,19 +71,25 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         contentDisplay = ContentDisplay.GRAPHIC_ONLY
     }
 
-    private fun fadeOnHoverProperty(): DoubleProperty {
-        val placeHolder = DummyNode()
-        placeHolder.opacity = 0.0
+    private fun addOpacityFadeTransition(node: Node) : FadeTransition {
+        node.opacity = 0.0
 
         val fade = FadeTransition()
         fade.fromValue = 0.0
         fade.toValue = 1.0
-        fade.node = placeHolder
+        fade.node = node
         cellPane.hoverProperty().addListener { _, _, newValue ->
             fade.rate = (if (newValue) 1 else -1).toDouble()
             fade.play()
         }
-        return placeHolder.opacityProperty()
+        return fade;
+    }
+
+    private fun bindFadeTransitionToHover(fade : FadeTransition, node: Node) {
+        node.hoverProperty().addListener { _, _, newValue ->
+            fade.rate = (if (newValue) 1 else -1).toDouble()
+            fade.play()
+        }
     }
 
     private fun createDateSubheader(fontAwesome: Font): Node {
@@ -153,24 +155,6 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         fun delete(item: TimeTrackingItem)
 
         fun stop(item: TimeTrackingItem)
-    }
-
-    private class DummyNode : Node() {
-        override fun impl_createPeer(): NGNode? {
-            return null
-        }
-
-        override fun impl_computeGeomBounds(bounds: BaseBounds, tx: BaseTransform): BaseBounds? {
-            return null
-        }
-
-        override fun impl_computeContains(localX: Double, localY: Double): Boolean {
-            return false
-        }
-
-        override fun impl_processMXNode(alg: MXNodeAlgorithm, ctx: MXNodeAlgorithmContext): Any? {
-            return null
-        }
     }
 
     companion object {
