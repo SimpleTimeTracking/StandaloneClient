@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/SimpleTimeTracking/StandaloneClient.svg)](https://travis-ci.org/SimpleTimeTracking/StandaloneClient) 
+[![Build STT on Push](https://github.com/SimpleTimeTracking/StandaloneClient/actions/workflows/build.yml/badge.svg)](https://github.com/SimpleTimeTracking/StandaloneClient/actions/workflows/build.yml)
 
 # What? 
 _SimpleTimeTracking_ is an application to make time tracking as simple and quick as possible.
