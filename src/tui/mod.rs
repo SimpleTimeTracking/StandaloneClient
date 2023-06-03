@@ -24,7 +24,7 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Constraint, Layout},
     style::{Modifier, Style},
-    text::Spans,
+    text::Line,
     widgets::Tabs,
     Terminal,
 };
@@ -100,19 +100,17 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             };
             terminal.draw(|f| {
                 let content_area = if show_tabs {
-                    let mut chunks = Layout::default()
+                    let chunks = Layout::default()
                         .constraints([Constraint::Length(1), Constraint::Min(0)])
-                        .split(f.size())
-                        .into_iter();
-                    let tab =
-                        Tabs::new(vec![Spans::from("Activities"), Spans::from("Daily Report")])
-                            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                            .select(match tab {
-                                Mode::EnterActivity => 0,
-                                Mode::DailyReport => 1,
-                            });
-                    f.render_widget(tab, chunks.next().unwrap());
-                    chunks.next().unwrap()
+                        .split(f.size());
+                    let tab = Tabs::new(vec![Line::from("Activities"), Line::from("Daily Report")])
+                        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+                        .select(match tab {
+                            Mode::EnterActivity => 0,
+                            Mode::DailyReport => 1,
+                        });
+                    f.render_widget(tab, chunks[0]);
+                    chunks[1]
                 } else {
                     f.size()
                 };
@@ -159,7 +157,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                                             if let Some(item) = item {
                                                 let mut item = item.clone();
                                                 connection.delete_item(&item).unwrap();
-                                                item.end = Ending::At(time.as_date_time().into());
+                                                item.end = Ending::At(time.as_date_time());
                                                 connection.insert_item(item);
                                             }
                                         }

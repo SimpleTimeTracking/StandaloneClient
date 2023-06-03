@@ -22,10 +22,6 @@ impl Default for DatePickerState {
 }
 
 impl DatePickerState {
-    pub fn set_selected(&mut self, selected: NaiveDate) {
-        self.selected = selected;
-    }
-
     pub fn get_selected(&self) -> NaiveDate {
         self.selected
     }

@@ -19,17 +19,12 @@ pub struct ActivityTabState {
     filter_field: TextFieldState,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Default)]
 enum Mode {
+    #[default]
     Normal,
     EnteringActivity,
     SearchHistory,
-}
-
-impl Default for Mode {
-    fn default() -> Self {
-        Mode::Normal
-    }
 }
 
 impl ActivityTabState {
@@ -49,14 +44,14 @@ impl ActivityTabState {
             cloned_items_iter.collect()
         };
 
-        let now = Local::now();
-        let start_of_day = now.date().and_hms(0, 0, 0);
+        let now = Local::now().naive_local();
+        let start_of_day = now.date().and_hms_opt(0, 0, 0).unwrap();
         let start_of_week =
             start_of_day - chrono::Duration::days(now.weekday().num_days_from_monday() as i64);
         let duration_acc = |acc, a: &TimeTrackingItem| {
             acc - a.start.signed_duration_since(match a.end {
                 Ending::Open => now,
-                Ending::At(time) => time.into(),
+                Ending::At(time) => time,
             })
         };
         let pause_matcher = Regex::new("(?i).*pause.*").unwrap();
@@ -210,14 +205,14 @@ impl StatefulWidget for ActivityTab {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let show_filter = state.mode == Mode::SearchHistory || state.filter_field.has_text();
-        let mut chunks = Layout::default()
+        let chunks = &Layout::default()
             .constraints([
                 Constraint::Length(5),
                 Constraint::Min(0),
                 Constraint::Length(1),
             ])
-            .split(area)
-            .into_iter();
+            .split(area);
+        let mut chunks = chunks.iter();
 
         let textfield_block_area = chunks.next().unwrap();
         let textfield_block = Block::default().title("Activity").borders(Borders::ALL);
@@ -226,8 +221,8 @@ impl StatefulWidget for ActivityTab {
         } else {
             textfield_block
         };
-        let textfield_area = textfield_block.inner(textfield_block_area);
-        textfield_block.render(textfield_block_area, buf);
+        let textfield_area = textfield_block.inner(*textfield_block_area);
+        textfield_block.render(*textfield_block_area, buf);
 
         let mut activity_status_area = textfield_area;
         activity_status_area.y += activity_status_area.height;
@@ -253,9 +248,9 @@ impl StatefulWidget for ActivityTab {
         state
             .history_list
             .set_show_indices(state.mode != Mode::EnteringActivity);
-        history_list.render(chunks.next().unwrap(), buf, &mut state.history_list);
+        history_list.render(*chunks.next().unwrap(), buf, &mut state.history_list);
 
-        let mut area = chunks.next().unwrap();
+        let mut area = *chunks.next().unwrap();
         if show_filter {
             let search_field = TextField;
             buf.set_string(area.x, area.y, "/", Style::default());

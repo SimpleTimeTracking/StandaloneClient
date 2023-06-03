@@ -26,10 +26,10 @@ pub enum Command {
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum TimeSpec {
     Relative(Duration),
-    Absolute(DateTime<Local>),
+    Absolute(NaiveDateTime),
     Interval {
-        from: DateTime<Local>,
-        to: DateTime<Local>,
+        from: NaiveDateTime,
+        to: NaiveDateTime,
     },
     Now,
 }
@@ -43,11 +43,11 @@ pub enum ErrorKind<I> {
 }
 
 impl TimeSpec {
-    pub fn as_date_time(&self) -> DateTime<Local> {
+    pub fn as_date_time(&self) -> NaiveDateTime {
         match self {
-            TimeSpec::Now => Local::now(),
+            TimeSpec::Now => Local::now().naive_local(),
             TimeSpec::Absolute(date_time) => *date_time,
-            TimeSpec::Relative(delta) => Local::now() + *delta,
+            TimeSpec::Relative(delta) => Local::now().naive_local() + *delta,
             TimeSpec::Interval { from: _, to: _ } => panic!("Can't convert interval to date time"),
         }
     }
@@ -162,12 +162,12 @@ fn relative_time(i: &str) -> Result<&str, Duration> {
     Ok((i, result))
 }
 
-fn date(i: &str) -> Result<&str, Date<Local>> {
+fn date(i: &str) -> Result<&str, NaiveDate> {
     let (i, (y, _, m, _, d)) =
         tuple((parse_num, one_of(".-"), parse_num, one_of(".-"), parse_num))(i)?;
     Ok((
         i,
-        if let chrono::offset::LocalResult::Single(t) = Local.ymd_opt(y, m, d) {
+        if let Some(t) = NaiveDate::from_ymd_opt(y, m, d) {
             t
         } else {
             return Err(nom::Err::Error(ErrorKind::InvalidDateTimeFormat(
@@ -185,13 +185,17 @@ fn time(i: &str) -> Result<&str, NaiveTime> {
         opt(preceded(char(':'), parse_num)),
     ))(i)?;
     let s = s.unwrap_or(0);
-    Ok((i, NaiveTime::from_hms(h, m, s)))
+    NaiveTime::from_hms_opt(h, m, s)
+        .map(|t| (i, t))
+        .ok_or(nom::Err::Error(ErrorKind::InvalidDateTimeFormat(
+            "Invalid time format".to_string(),
+        )))
 }
 
-fn absolute_date_time(i: &str) -> Result<&str, DateTime<Local>> {
+fn absolute_date_time(i: &str) -> Result<&str, NaiveDateTime> {
     let (i, (date, time)) = tuple((opt(terminated(date, multispace1)), time))(i)?;
-    let date = date.unwrap_or_else(Local::today);
-    Ok((i, date.and_time(time).unwrap()))
+    let date = date.unwrap_or_else(|| Local::now().date_naive());
+    Ok((i, date.and_time(time)))
 }
 
 fn absolute_timespec(i: &str) -> Result<&str, TimeSpec> {
@@ -400,7 +404,12 @@ mod tests {
         assert_eq!(
             Ok((
                 "",
-                TimeSpec::Absolute(Local.ymd(2010, 10, 12).and_hms(12, 02, 01))
+                TimeSpec::Absolute(
+                    NaiveDate::from_ymd_opt(2010, 10, 12)
+                        .unwrap()
+                        .and_hms_opt(12, 02, 01)
+                        .unwrap()
+                )
             )),
             m
         )
@@ -417,7 +426,12 @@ mod tests {
         assert_eq!(
             Ok((
                 "",
-                TimeSpec::Absolute(Local.ymd(2010, 10, 12).and_hms(12, 02, 00))
+                TimeSpec::Absolute(
+                    NaiveDate::from_ymd_opt(2010, 10, 12)
+                        .unwrap()
+                        .and_hms_opt(12, 02, 00)
+                        .unwrap()
+                )
             )),
             m
         )
@@ -434,7 +448,12 @@ mod tests {
         assert_eq!(
             Ok((
                 "",
-                TimeSpec::Absolute(Local.ymd(2010, 10, 12).and_hms(12, 02, 00))
+                TimeSpec::Absolute(
+                    NaiveDate::from_ymd_opt(2010, 10, 12)
+                        .unwrap()
+                        .and_hms_opt(12, 02, 00)
+                        .unwrap()
+                )
             )),
             m
         )
@@ -466,7 +485,12 @@ mod tests {
         assert_eq!(
             Ok((
                 "",
-                TimeSpec::Absolute(Local.ymd(2010, 10, 12).and_hms(12, 02, 00))
+                TimeSpec::Absolute(
+                    NaiveDate::from_ymd_opt(2010, 10, 12)
+                        .unwrap()
+                        .and_hms_opt(12, 02, 00)
+                        .unwrap()
+                )
             )),
             m
         )
@@ -484,8 +508,14 @@ mod tests {
             Ok((
                 "",
                 TimeSpec::Interval {
-                    from: Local.ymd(2010, 10, 12).and_hms(12, 02, 00),
-                    to: Local.ymd(2011, 10, 13).and_hms(13, 03, 00)
+                    from: NaiveDate::from_ymd_opt(2010, 10, 12)
+                        .unwrap()
+                        .and_hms_opt(12, 02, 00)
+                        .unwrap(),
+                    to: NaiveDate::from_ymd_opt(2011, 10, 13)
+                        .unwrap()
+                        .and_hms_opt(13, 03, 00)
+                        .unwrap()
                 }
             )),
             m
@@ -586,7 +616,7 @@ mod tests {
             Ok((_, Command::Fin(TimeSpec::Absolute(dt)))) => {
                 assert_eq!(dt.time(), NaiveTime::from_hms(12, 12, 0))
             }
-            _ => panic!(format!("Invalid result: {:?}", res)),
+            _ => panic!("Invalid result: {:?}", res),
         }
     }
 

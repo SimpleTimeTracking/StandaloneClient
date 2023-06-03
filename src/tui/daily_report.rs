@@ -6,7 +6,7 @@ use crate::{
     },
     Ending, TimeTrackingItem,
 };
-use chrono::{DateTime, Duration, Local};
+use chrono::{Duration, Local, NaiveDateTime};
 use clipboard::ClipboardProvider;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use itertools::Itertools;
@@ -37,20 +37,15 @@ impl StatefulWidget for DailyReport {
     type State = DailyReportFrame;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let mut chunks = Layout::default()
+        let chunks = Layout::default()
             .constraints([Constraint::Length(3 * 7), Constraint::Min(0)])
             .direction(Direction::Horizontal)
-            .split(area)
-            .into_iter();
+            .split(area);
 
         let date_picker = DatePicker;
-        date_picker.render(chunks.next().unwrap(), buf, &mut state.date_picker_state);
+        date_picker.render(chunks[0], buf, &mut state.date_picker_state);
         let duration_activity_list = DurationActivityList;
-        duration_activity_list.render(
-            chunks.next().unwrap(),
-            buf,
-            &mut state.duration_activity_list,
-        )
+        duration_activity_list.render(chunks[1], buf, &mut state.duration_activity_list)
     }
 }
 
@@ -74,7 +69,7 @@ impl DailyReportState {
     pub fn into_frame(self, items: &[TimeTrackingItem]) -> DailyReportFrame {
         let items: Vec<_> = items
             .iter()
-            .filter(|a| a.start.date().naive_local() == self.date_picker_state.get_selected())
+            .filter(|a| a.start.date() == self.date_picker_state.get_selected())
             .cloned()
             .collect();
         DailyReportFrame {
@@ -97,8 +92,8 @@ pub struct DurationActivityListState {
 pub struct DurationActivityListFrame {
     state: DurationActivityListState,
     items: Vec<ActivityWithDuration>,
-    start: Option<DateTime<Local>>,
-    end: Option<DateTime<Local>>,
+    start: Option<NaiveDateTime>,
+    end: Option<NaiveDateTime>,
 }
 
 impl Frame<DurationActivityListState> for DurationActivityListFrame {
@@ -113,19 +108,16 @@ impl DurationActivityListState {
     }
 
     pub fn into_frame(self, items: &[TimeTrackingItem]) -> DurationActivityListFrame {
-        let now = Local::now();
+        let now = Local::now().naive_local();
         let to_duration = |a: &TimeTrackingItem| {
             (match a.end {
                 Ending::Open => now,
-                Ending::At(time) => time.into(),
+                Ending::At(time) => time,
             })
             .signed_duration_since(a.start)
         };
-        let start = items.last().map(|i| DateTime::<Local>::from(i.start));
-        let end = items
-            .first()
-            .map(|i| i.end.as_date_time().map(DateTime::<Local>::from))
-            .flatten();
+        let start = items.last().map(|i| i.start);
+        let end = items.first().and_then(|i| i.end.as_date_time());
         let items: Vec<_> = items
             .iter()
             .sorted_by(|a, b| a.activity.cmp(&b.activity))
@@ -167,14 +159,14 @@ impl EventHandler for DurationActivityListFrame {
                 )
             }
             KeyCode::Char('d') => {
-                if let Some(item) = self.state.selected.map(|i| self.items.get(i)).flatten() {
+                if let Some(item) = self.state.selected.and_then(|i| self.items.get(i)) {
                     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
                     ctx.set_contents(duration_to_string(&item.duration))
                         .unwrap()
                 }
             }
             KeyCode::Char('a') => {
-                if let Some(item) = self.state.selected.map(|i| self.items.get(i)).flatten() {
+                if let Some(item) = self.state.selected.and_then(|i| self.items.get(i)) {
                     let mut ctx: clipboard::ClipboardContext = ClipboardProvider::new().unwrap();
                     ctx.set_contents(item.activity.to_owned()).unwrap()
                 }
@@ -256,7 +248,7 @@ impl StatefulWidget for DurationActivityList {
             .widths(&[
                 Constraint::Length(5),
                 Constraint::Min(12),
-                Constraint::Min(10),
+                Constraint::Percentage(90),
             ])
             .highlight_style(Style::default().bg(Color::Green));
         state

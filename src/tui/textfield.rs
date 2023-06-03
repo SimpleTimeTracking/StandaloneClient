@@ -7,7 +7,7 @@ use tui::{
     backend::Backend,
     buffer::Buffer,
     layout::Rect,
-    text::Spans,
+    text::Line,
     widgets::{Paragraph, StatefulWidget, Widget},
     Frame,
 };
@@ -25,10 +25,6 @@ impl TextFieldState {
         self.lines.clear();
         self.cursor = (0, 0);
         self.scroll = (0, 0);
-    }
-
-    pub fn first_line(&self) -> &str {
-        self.lines.get(0).map(|s| s.as_str()).unwrap_or("")
     }
 
     pub fn has_text(&self) -> bool {
@@ -80,7 +76,7 @@ impl StatefulWidget for TextField {
             state
                 .lines
                 .iter()
-                .map(|s| Spans::from(s.to_owned()))
+                .map(|s| Line::from(s.to_owned()))
                 .collect::<Vec<_>>(),
         ) // (x, y) -> (y, x)
         .scroll((state.scroll.1, state.scroll.0));

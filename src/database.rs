@@ -105,7 +105,12 @@ impl Connection for Vec<TimeTrackingItem> {
                 }
             } else if last.start >= item.start && last.end <= item.end {
                 self.remove(i);
-            } else if item.start >= last.end {
+            } else if last
+                .end
+                .as_date_time()
+                .map(|end| item.start >= end)
+                .unwrap_or(false)
+            {
                 i += 1;
             }
         }
@@ -115,7 +120,12 @@ impl Connection for Vec<TimeTrackingItem> {
         if i < self.len() {
             let last = &mut self[i];
             if let Ending::At(end) = item_end {
-                if last.start < item_end && last.end > end {
+                if item_end
+                    .as_date_time()
+                    .map(|end| last.start < end)
+                    .unwrap_or(false)
+                    && last.end > end
+                {
                     last.start = end;
                 }
             }
@@ -131,7 +141,7 @@ impl Connection for Vec<TimeTrackingItem> {
                 self.remove(i);
                 let len = self.len();
                 let last_item = &mut self[i - 1];
-                if i > 0 && last_item.end == item.start {
+                if i > 0 && last_item.end.as_date_time() == Some(item.start) {
                     match item.end {
                         Ending::Open => (),
                         Ending::At(end) => {
@@ -156,11 +166,19 @@ mod test {
     fn should_modify_end_on_overlap() {
         // GIVEN
         let mut times = vec![TimeTrackingItem::starting_at(
-            Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(10, 10, 10)
+                .unwrap(),
             "test",
         )];
-        let to_insert =
-            TimeTrackingItem::starting_at(Local.ymd(2020, 11, 10).and_hms(10, 10, 10), "test 2");
+        let to_insert = TimeTrackingItem::starting_at(
+            NaiveDate::from_ymd_opt(2020, 11, 10)
+                .unwrap()
+                .and_hms_opt(10, 10, 10)
+                .unwrap(),
+            "test 2",
+        );
 
         // WHEN
         times.insert_item(to_insert);
@@ -168,7 +186,13 @@ mod test {
         // THEN
         assert_eq!(
             times[0].end,
-            Ending::At(Local.ymd(2020, 11, 10).and_hms(10, 10, 10).into())
+            Ending::At(
+                NaiveDate::from_ymd_opt(2020, 11, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap()
+                    .into()
+            )
         );
     }
 
@@ -176,12 +200,21 @@ mod test {
     fn should_modify_start_on_overlap() {
         // GIVEN
         let mut times = vec![TimeTrackingItem::starting_at(
-            Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(10, 10, 10)
+                .unwrap(),
             "test",
         )];
         let to_insert = TimeTrackingItem::interval(
-            Local.ymd(2020, 10, 10).and_hms(9, 10, 10),
-            Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(9, 10, 10)
+                .unwrap(),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(11, 10, 10)
+                .unwrap(),
             "test 2",
         )
         .unwrap();
@@ -192,7 +225,10 @@ mod test {
         // THEN
         assert_eq!(
             times[1].start,
-            DateTime::<Utc>::from(Local.ymd(2020, 10, 10).and_hms(11, 10, 10))
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(11, 10, 10)
+                .unwrap()
         );
     }
 
@@ -200,12 +236,21 @@ mod test {
     fn should_split_up_overlap() {
         // GIVEN
         let mut times = vec![TimeTrackingItem::starting_at(
-            Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(10, 10, 10)
+                .unwrap(),
             "test",
         )];
         let to_insert = TimeTrackingItem::interval(
-            Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
-            Local.ymd(2020, 10, 10).and_hms(12, 10, 10),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(11, 10, 10)
+                .unwrap(),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(12, 10, 10)
+                .unwrap(),
             "test 2",
         )
         .unwrap();
@@ -216,11 +261,20 @@ mod test {
         // THEN
         assert_eq!(
             times[0].end,
-            Ending::At(Local.ymd(2020, 10, 10).and_hms(11, 10, 10).into())
+            Ending::At(
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap()
+                    .into()
+            )
         );
         assert_eq!(
             times[2].start,
-            DateTime::<Utc>::from(Local.ymd(2020, 10, 10).and_hms(12, 10, 10))
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(12, 10, 10)
+                .unwrap()
         );
     }
 
@@ -229,21 +283,39 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(14, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
         ];
         let to_insert = TimeTrackingItem::interval(
-            Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
-            Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(11, 10, 10)
+                .unwrap(),
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(13, 10, 10)
+                .unwrap(),
             "test 2",
         )
         .unwrap();
@@ -255,20 +327,38 @@ mod test {
         assert_eq!(
             vec![
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(10, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(11, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(11, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(13, 10, 10)
+                        .unwrap(),
                     "test 2",
                 )
                 .unwrap(),
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(13, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(14, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
@@ -282,20 +372,37 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(12, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(12, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
                 "test 3",
             )
             .unwrap(),
         ];
-        let to_insert =
-            TimeTrackingItem::starting_at(Local.ymd(2020, 10, 10).and_hms(9, 10, 10), "test 2");
+        let to_insert = TimeTrackingItem::starting_at(
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(9, 10, 10)
+                .unwrap(),
+            "test 2",
+        );
 
         // WHEN
         times.insert_item(to_insert);
@@ -303,7 +410,10 @@ mod test {
         // THEN
         assert_eq!(
             vec![TimeTrackingItem::starting_at(
-                Local.ymd(2020, 10, 10).and_hms(9, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(9, 10, 10)
+                    .unwrap(),
                 "test 2",
             )],
             times
@@ -315,15 +425,32 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(12, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(12, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
                 "test 3",
             )
             .unwrap(),
-            TimeTrackingItem::starting_at(Local.ymd(2020, 10, 10).and_hms(14, 10, 10), "test"),
+            TimeTrackingItem::starting_at(
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(14, 10, 10)
+                    .unwrap(),
+                "test",
+            ),
         ];
-        let to_insert =
-            TimeTrackingItem::starting_at(Local.ymd(2020, 10, 10).and_hms(9, 10, 10), "test 2");
+        let to_insert = TimeTrackingItem::starting_at(
+            NaiveDate::from_ymd_opt(2020, 10, 10)
+                .unwrap()
+                .and_hms_opt(9, 10, 10)
+                .unwrap(),
+            "test 2",
+        );
 
         // WHEN
         times.insert_item(to_insert);
@@ -331,7 +458,10 @@ mod test {
         // THEN
         assert_eq!(
             vec![TimeTrackingItem::starting_at(
-                Local.ymd(2020, 10, 10).and_hms(9, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(9, 10, 10)
+                    .unwrap(),
                 "test 2",
             )],
             times
@@ -343,20 +473,38 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(11, 20, 10),
-                Local.ymd(2020, 10, 10).and_hms(13, 00, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 20, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 00, 10)
+                    .unwrap(),
                 "test 2",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(14, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
@@ -368,14 +516,26 @@ mod test {
         assert_eq!(
             vec![
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(10, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(11, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(13, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(14, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
@@ -389,20 +549,38 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
                 "test 2",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(14, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
@@ -414,14 +592,26 @@ mod test {
         assert_eq!(
             vec![
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(10, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(13, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(13, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(13, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(14, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
@@ -435,20 +625,38 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
-                Local.ymd(2020, 10, 11).and_hms(13, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 11)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
                 "test 2",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 11).and_hms(13, 10, 10),
-                Local.ymd(2020, 10, 11).and_hms(14, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 11)
+                    .unwrap()
+                    .and_hms_opt(13, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 11)
+                    .unwrap()
+                    .and_hms_opt(14, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
@@ -460,14 +668,26 @@ mod test {
         assert_eq!(
             vec![
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                    Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(10, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 10)
+                        .unwrap()
+                        .and_hms_opt(11, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
                 TimeTrackingItem::interval(
-                    Local.ymd(2020, 10, 11).and_hms(13, 10, 10),
-                    Local.ymd(2020, 10, 11).and_hms(14, 10, 10),
+                    NaiveDate::from_ymd_opt(2020, 10, 11)
+                        .unwrap()
+                        .and_hms_opt(13, 10, 10)
+                        .unwrap(),
+                    NaiveDate::from_ymd_opt(2020, 10, 11)
+                        .unwrap()
+                        .and_hms_opt(14, 10, 10)
+                        .unwrap(),
                     "test",
                 )
                 .unwrap(),
@@ -481,14 +701,26 @@ mod test {
         // GIVEN
         let mut times = vec![
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
             TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(14, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(14, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),
@@ -499,12 +731,30 @@ mod test {
         // THEN
         assert_eq!(
             vec![TimeTrackingItem::interval(
-                Local.ymd(2020, 10, 10).and_hms(10, 10, 10),
-                Local.ymd(2020, 10, 10).and_hms(11, 10, 10),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(10, 10, 10)
+                    .unwrap(),
+                NaiveDate::from_ymd_opt(2020, 10, 10)
+                    .unwrap()
+                    .and_hms_opt(11, 10, 10)
+                    .unwrap(),
                 "test",
             )
             .unwrap(),],
             times
         );
+    }
+
+    #[test]
+    fn generate() {
+        let mut db = Database::open().unwrap();
+        let mut con = db.open_connection();
+        con.insert_item(TimeTrackingItem {
+            start: Local::now().naive_local(),
+            end: Ending::At(Local::now().naive_local()),
+            activity: "test".to_string(),
+        });
+        db.flush();
     }
 }

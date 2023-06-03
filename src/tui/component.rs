@@ -2,6 +2,7 @@ use crate::tui::Command;
 use crossterm::event::KeyEvent;
 use tui::backend::Backend;
 
+#[allow(clippy::enum_variant_names)]
 pub enum Consumed {
     Consumed,
     NotConsumed,

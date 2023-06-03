@@ -1,7 +1,7 @@
 use chrono::format::{Item, ParseResult, Parsed};
+use chrono::naive::serde::ts_seconds;
 use chrono::prelude::*;
-use chrono::serde::ts_seconds;
-use chrono::{DateTime, Local, Utc};
+use chrono::NaiveDateTime;
 use core::fmt::Display;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ use std::str::FromStr;
 #[derive(Deserialize, Serialize, Clone, Debug, Eq, PartialEq)]
 pub struct TimeTrackingItem {
     #[serde(with = "ts_seconds")]
-    pub start: DateTime<Utc>,
+    pub start: NaiveDateTime,
     pub end: Ending,
     pub activity: String,
 }
@@ -19,11 +19,11 @@ pub struct TimeTrackingItem {
 #[derive(Deserialize, Serialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Ending {
     Open,
-    At(#[serde(with = "ts_seconds")] DateTime<Utc>),
+    At(#[serde(with = "ts_seconds")] NaiveDateTime),
 }
 
 impl Ending {
-    pub fn as_date_time(&self) -> Option<DateTime<Utc>> {
+    pub fn as_date_time(&self) -> Option<NaiveDateTime> {
         match self {
             Ending::Open => None,
             Ending::At(dt) => Some(*dt),
@@ -31,8 +31,8 @@ impl Ending {
     }
 }
 
-impl<TZ: chrono::TimeZone> PartialEq<DateTime<TZ>> for Ending {
-    fn eq(&self, other: &DateTime<TZ>) -> bool {
+impl PartialEq<NaiveDateTime> for Ending {
+    fn eq(&self, other: &NaiveDateTime) -> bool {
         match self {
             Ending::Open => false,
             Ending::At(ts) => ts == other,
@@ -40,8 +40,8 @@ impl<TZ: chrono::TimeZone> PartialEq<DateTime<TZ>> for Ending {
     }
 }
 
-impl<TZ: chrono::TimeZone> PartialOrd<DateTime<TZ>> for Ending {
-    fn partial_cmp(&self, other: &DateTime<TZ>) -> Option<Ordering> {
+impl PartialOrd<NaiveDateTime> for Ending {
+    fn partial_cmp(&self, other: &NaiveDateTime) -> Option<Ordering> {
         match self {
             Ending::Open => Some(Ordering::Greater),
             Ending::At(ts) => Some(ts.timestamp().cmp(&other.timestamp())),
@@ -49,16 +49,7 @@ impl<TZ: chrono::TimeZone> PartialOrd<DateTime<TZ>> for Ending {
     }
 }
 
-impl<TZ: chrono::TimeZone> PartialOrd<Ending> for DateTime<TZ> {
-    fn partial_cmp(&self, other: &Ending) -> Option<Ordering> {
-        match other {
-            Ending::Open => None,
-            Ending::At(ts) => Some(self.timestamp().cmp(&ts.timestamp())),
-        }
-    }
-}
-
-impl<TZ: chrono::TimeZone> PartialEq<Ending> for DateTime<TZ> {
+impl PartialEq<Ending> for NaiveDateTime {
     fn eq(&self, other: &Ending) -> bool {
         match other {
             Ending::Open => false,
@@ -92,47 +83,38 @@ impl PartialOrd for Ending {
 }
 
 impl TimeTrackingItem {
-    pub fn ending_at(mut self, end: DateTime<Local>) -> Self {
-        self.end = Ending::At(DateTime::<Utc>::from(end.with_nanosecond(0).unwrap()));
-        self
-    }
-
-    pub fn ending_now(self) -> Self {
-        self.ending_at(Local::now())
-    }
-
-    pub fn starting_at<S: Into<String>>(start: DateTime<Local>, activity: S) -> Self {
+    pub fn starting_at<S: Into<String>>(start: NaiveDateTime, activity: S) -> Self {
         TimeTrackingItem {
-            start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
+            start: start.with_nanosecond(0).unwrap(),
             end: Ending::Open,
             activity: activity.into(),
         }
     }
 
     pub fn interval<S: Into<String>>(
-        start: DateTime<Local>,
-        end: DateTime<Local>,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
         activity: S,
     ) -> Result<Self, ItemError> {
         if end < start {
             Err(ItemError(ItemErrorKind::StartAfterEnd))
         } else {
             Ok(TimeTrackingItem {
-                start: DateTime::<Utc>::from(start.with_nanosecond(0).unwrap()),
-                end: Ending::At(DateTime::<Utc>::from(end.with_nanosecond(0).unwrap())),
+                start: start.with_nanosecond(0).unwrap(),
+                end: Ending::At(end.with_nanosecond(0).unwrap()),
                 activity: activity.into(),
             })
         }
     }
 
     pub fn to_storage_line(&self) -> String {
-        let start = DateTime::<Local>::from(self.start).format_with_items(FORMAT.iter().cloned());
+        let start = self.start.format_with_items(FORMAT.iter().cloned());
         let activity_escaped = self.activity.replace('\\', "\\\\").replace('\n', "\\n");
         if let Ending::At(end) = self.end {
             format!(
                 "{start} {end} {activity}",
                 start = start,
-                end = DateTime::<Local>::from(end).format_with_items(FORMAT.iter().cloned()),
+                end = end.format_with_items(FORMAT.iter().cloned()),
                 activity = activity_escaped
             )
         } else {
@@ -208,10 +190,10 @@ impl FromStr for TimeTrackingItem {
     }
 }
 
-fn parse_stt_date_time(s: &str) -> ParseResult<DateTime<Local>> {
+fn parse_stt_date_time(s: &str) -> ParseResult<NaiveDateTime> {
     let mut parsed = Parsed::new();
     chrono::format::parse(&mut parsed, s, FORMAT.iter().cloned())?;
-    parsed.to_datetime_with_timezone(&Local)
+    parsed.to_naive_datetime_with_offset(0)
 }
 
 #[cfg(test)]
@@ -221,7 +203,7 @@ mod test {
     #[test]
     fn should_round_start_to_second() {
         // GIVEN
-        let start = Local.timestamp(0, 1);
+        let start = NaiveDateTime::from_timestamp_opt(0, 1).unwrap();
 
         // WHEN
         let sut = TimeTrackingItem::starting_at(start, "");
@@ -233,15 +215,15 @@ mod test {
     #[test]
     fn should_round_interval_to_second() {
         // GIVEN
-        let start = Local.timestamp(9999, 9999);
-        let end = Local.timestamp(99999999, 9999999);
+        let start = NaiveDateTime::from_timestamp_opt(9999, 9999).unwrap();
+        let end = NaiveDateTime::from_timestamp_opt(99999999, 9999999).unwrap();
 
         // WHEN
         let sut = TimeTrackingItem::interval(start, end, "").unwrap();
 
         // THEN
         assert_ne!(sut.start, start);
-        assert_ne!(sut.end, Ending::At(end.into()));
+        assert_ne!(sut.end, Ending::At(end));
     }
 
     #[test]
@@ -254,10 +236,22 @@ mod test {
             .unwrap();
 
         // THEN
-        assert_eq!(result.start, Local.ymd(2017, 7, 1).and_hms(21, 6, 3));
+        assert_eq!(
+            result.start,
+            NaiveDate::from_ymd_opt(2017, 7, 1)
+                .unwrap()
+                .and_hms_opt(21, 6, 3)
+                .unwrap()
+        );
         assert_eq!(
             result.end,
-            Ending::At(Local.ymd(2017, 7, 1).and_hms(21, 6, 11).into())
+            Ending::At(
+                NaiveDate::from_ymd_opt(2017, 7, 1)
+                    .unwrap()
+                    .and_hms_opt(21, 6, 11)
+                    .unwrap()
+                    .into()
+            )
         );
         assert_eq!(result.activity, "bla bla blub blub")
     }
@@ -270,7 +264,13 @@ mod test {
         let result = TimeTrackingItem::from_str("2022-11-01_11:06:03 bla").unwrap();
 
         // THEN
-        assert_eq!(result.start, Local.ymd(2022, 11, 1).and_hms(11, 6, 3));
+        assert_eq!(
+            result.start,
+            NaiveDate::from_ymd_opt(2022, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap()
+        );
         assert_eq!(result.end, Ending::Open);
         assert_eq!(result.activity, "bla");
     }
@@ -306,8 +306,14 @@ mod test {
 
         // WHEN
         TimeTrackingItem::interval(
-            Local.ymd(2022, 11, 1).and_hms(11, 6, 3),
-            Local.ymd(2020, 11, 1).and_hms(11, 6, 3),
+            NaiveDate::from_ymd_opt(2022, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap(),
+            NaiveDate::from_ymd_opt(2020, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap(),
             "test",
         )
         .unwrap();
@@ -319,7 +325,13 @@ mod test {
     #[test]
     fn should_print_in_storage_format() {
         // GIVEN
-        let item = TimeTrackingItem::starting_at(Local.ymd(2022, 11, 1).and_hms(11, 6, 3), "test");
+        let item = TimeTrackingItem::starting_at(
+            NaiveDate::from_ymd_opt(2022, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap(),
+            "test",
+        );
 
         // WHEN
         let line = item.to_storage_line();
@@ -331,8 +343,13 @@ mod test {
     #[test]
     fn should_escape_cr_in_storage_format() {
         // GIVEN
-        let item =
-            TimeTrackingItem::starting_at(Local.ymd(2022, 11, 1).and_hms(11, 6, 3), "test\ntest\\");
+        let item = TimeTrackingItem::starting_at(
+            NaiveDate::from_ymd_opt(2022, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap(),
+            "test\ntest\\",
+        );
 
         // WHEN
         let line = item.to_storage_line();
@@ -356,14 +373,20 @@ mod test {
     #[test]
     fn without_end_should_serialize_to_json() {
         // GIVEN
-        let item = TimeTrackingItem::starting_at(Local.ymd(2022, 11, 1).and_hms(11, 6, 3), "test");
+        let item = TimeTrackingItem::starting_at(
+            NaiveDate::from_ymd_opt(2022, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap(),
+            "test",
+        );
 
         // WHEN
         let line = serde_json::to_string(&item).unwrap();
 
         // THEN
         assert_eq!(
-            "{\"start\":1667297163,\"end\":\"Open\",\"activity\":\"test\"}",
+            "{\"start\":1667300763,\"end\":\"Open\",\"activity\":\"test\"}",
             line
         );
     }
@@ -372,8 +395,14 @@ mod test {
     fn with_end_should_serialize_to_json() {
         // GIVEN
         let item = TimeTrackingItem::interval(
-            Local.ymd(2022, 11, 1).and_hms(11, 6, 3),
-            Local.ymd(2023, 1, 1).and_hms(11, 1, 59),
+            NaiveDate::from_ymd_opt(2022, 11, 1)
+                .unwrap()
+                .and_hms_opt(11, 6, 3)
+                .unwrap(),
+            NaiveDate::from_ymd_opt(2023, 1, 1)
+                .unwrap()
+                .and_hms_opt(11, 1, 59)
+                .unwrap(),
             "test again",
         )
         .unwrap();
@@ -383,7 +412,7 @@ mod test {
 
         // THEN
         assert_eq!(
-            "{\"start\":1667297163,\"end\":{\"At\":1672567319},\"activity\":\"test again\"}",
+            "{\"start\":1667300763,\"end\":{\"At\":1672570919},\"activity\":\"test again\"}",
             line
         );
     }
@@ -417,7 +446,12 @@ mod test {
     #[test]
     fn open_should_be_after_any_date() {
         assert_eq!(
-            Ending::Open.partial_cmp(&Utc.ymd(99999, 12, 31).and_hms(12, 12, 12)),
+            Ending::Open.partial_cmp(
+                &NaiveDate::from_ymd_opt(99999, 12, 31)
+                    .unwrap()
+                    .and_hms_opt(12, 12, 12)
+                    .unwrap()
+            ),
             Some(Ordering::Greater)
         );
     }
@@ -425,8 +459,18 @@ mod test {
     #[test]
     fn ending_at_should_be_comparable() {
         assert_eq!(
-            Ending::At(Utc.ymd(1, 1, 1).and_hms(1, 1, 1))
-                .partial_cmp(&Ending::At(Utc.ymd(99999, 12, 31).and_hms(12, 12, 12))),
+            Ending::At(
+                NaiveDate::from_ymd_opt(1, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(1, 1, 1)
+                    .unwrap()
+            )
+            .partial_cmp(&Ending::At(
+                NaiveDate::from_ymd_opt(99999, 12, 31)
+                    .unwrap()
+                    .and_hms_opt(12, 12, 12)
+                    .unwrap()
+            )),
             Some(Ordering::Less)
         );
     }

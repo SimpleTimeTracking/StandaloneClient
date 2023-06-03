@@ -50,18 +50,13 @@ impl HistoryListFrame {
     }
 
     pub fn get_selected_item(&self) -> Option<TimeTrackingItem> {
-        self.state
-            .selected
-            .map(|i| self.items.get(i))
-            .flatten()
-            .cloned()
+        self.state.selected.and_then(|i| self.items.get(i)).cloned()
     }
 
     pub fn get_item_with_index(&self, index: usize) -> Option<TimeTrackingItem> {
         self.indices
             .get(index)
-            .map(|&index| self.items.get(index))
-            .flatten()
+            .and_then(|&index| self.items.get(index))
             .cloned()
     }
 }
@@ -107,7 +102,7 @@ impl StatefulWidget for HistoryList {
                 let i = i + state.scroll_y;
                 let ending = match e.end {
                     Ending::Open => {
-                        let delta = Local::now().signed_duration_since(e.start);
+                        let delta = Local::now().naive_local().signed_duration_since(e.start);
                         let (delta, msg) = if delta < chrono::Duration::zero() {
                             (-delta, "in")
                         } else {
@@ -120,14 +115,14 @@ impl StatefulWidget for HistoryList {
                                 .format("%H:%M:%S")
                         )
                     }
-                    Ending::At(t) => format!("{}", DateTime::<Local>::from(t).format("%F %X")),
+                    Ending::At(t) => format!("{}", t.format("%F %X")),
                 };
                 let mut lines = e.activity.lines();
                 let first_line = lines.next().unwrap_or("");
 
                 ListItem::new(format!(
                     "{} -> {:>19} {}|{}{}",
-                    DateTime::<Local>::from(e.start).format("%F %X"),
+                    e.start.format("%F %X"),
                     ending,
                     if *show_indices && indices.len() < 9 {
                         let added = seen_activities.insert(&e.activity);
