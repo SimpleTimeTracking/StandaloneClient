@@ -15,7 +15,7 @@ use crate::{
 };
 use crossterm::{
     cursor::{DisableBlinking, EnableBlinking},
-    event::{poll, read, Event, KeyCode},
+    event::{poll, read, Event, KeyCode, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -126,6 +126,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             if poll(Duration::from_millis(500))? {
                 loop {
                     match read()? {
+                        Event::Key(event) if event.kind != KeyEventKind::Press => (),
                         Event::Key(event) => {
                             let consumed = if let FrameOrState::Frame(ref mut frame) =
                                 activity_frame
