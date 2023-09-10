@@ -2,6 +2,7 @@ package org.stt.reporting
 
 import org.stt.model.ReportingItem
 import org.stt.model.TimeTrackingItem
+import org.stt.text.ItemCategorizer
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
@@ -19,7 +20,10 @@ import java.util.stream.Stream
  *
  * Items will be returned sorted in ascending order of the comments
  */
-class SummingReportGenerator(private val itemsToRead: Stream<TimeTrackingItem>) {
+class SummingReportGenerator(
+    private val itemsToRead: Stream<TimeTrackingItem>,
+    private val itemCategorizer: ItemCategorizer
+) {
 
     fun createReport(): Report {
         var startOfReport: LocalDateTime? = null
@@ -42,9 +46,10 @@ class SummingReportGenerator(private val itemsToRead: Stream<TimeTrackingItem>) 
                     val endOfLastItem = lastItem!!.end ?: now
                     if (endOfLastItem.isBefore(start)) {
                         val additionalUncoveredTime = Duration.between(
-                                endOfLastItem, start)
+                            endOfLastItem, start
+                        )
                         uncoveredDuration = uncoveredDuration
-                                .plus(additionalUncoveredTime)
+                            .plus(additionalUncoveredTime)
                     }
                 }
 
@@ -70,18 +75,23 @@ class SummingReportGenerator(private val itemsToRead: Stream<TimeTrackingItem>) 
 
         }
 
-        for ((key, value) in collectingMap) {
-            reportList.add(ReportingItem(value, key))
+        for ((comment, duration) in collectingMap) {
+            val isBreak = ItemCategorizer.ItemCategory.BREAK == itemCategorizer.getCategory(comment)
+            reportList.add(ReportingItem(duration, comment, isBreak))
         }
 
         reportList.sortWith(comparing<ReportingItem, String> { it.comment })
-        return Report(reportList, startOfReport, endOfReport,
-                uncoveredDuration)
+        return Report(
+            reportList, startOfReport, endOfReport,
+            uncoveredDuration
+        )
     }
 
 
-    class Report(val reportingItems: List<ReportingItem>,
-                 val start: LocalDateTime?,
-                 val end: LocalDateTime?,
-                 val uncoveredDuration: Duration)
+    class Report(
+        val reportingItems: List<ReportingItem>,
+        val start: LocalDateTime?,
+        val end: LocalDateTime?,
+        val uncoveredDuration: Duration
+    )
 }

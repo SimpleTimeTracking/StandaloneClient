@@ -11,12 +11,14 @@ import org.stt.query.Criteria
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.reporting.SummingReportGenerator
 import org.stt.reporting.SummingReportGenerator.Report
+import org.stt.text.ItemCategorizer
 import org.stt.time.until
 import java.time.Duration
 import java.time.LocalDate
 
 class ReportBinding(val reportStart: ObservableValue<LocalDate>,
                     val reportEnd: ObservableValue<LocalDate>,
+                    val itemCategorizer: ItemCategorizer,
                     val queries: TimeTrackingItemQueries) : ObjectBinding<Report>() {
 
     init {
@@ -34,6 +36,6 @@ class ReportBinding(val reportStart: ObservableValue<LocalDate>,
     private fun createSummaryReportFor(): Report {
         val criteria = Criteria()
         criteria.withStartBetween(reportStart.value.atStartOfDay() until reportEnd.value.atStartOfDay())
-        queries.queryItems(criteria).use { items -> return SummingReportGenerator(items).createReport() }
+        queries.queryItems(criteria).use { items -> return SummingReportGenerator(items, itemCategorizer).createReport() }
     }
 }

@@ -36,6 +36,7 @@ import org.stt.gui.jfx.binding.STTBindings
 import org.stt.model.ItemModified
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.reporting.SummingReportGenerator.Report
+import org.stt.text.ItemCategorizer
 import org.stt.text.ItemGrouper
 import org.stt.time.DateTimes
 import org.stt.time.DateTimes.FORMATTER_PERIOD_HHh_MMm_SSs
@@ -57,17 +58,18 @@ internal constructor(private val localization: ResourceBundle,
                      private val timeTrackingItemQueries: TimeTrackingItemQueries,
                      private val rounder: DurationRounder,
                      private val itemGrouper: @JvmSuppressWildcards ItemGrouper,
+                     private val itemCategorizer: ItemCategorizer,
                      private val activitiesConfig: ActivitiesConfig,
                      @param:Named("glyph") private val fontaweSome: Font,
                      private val eventBus: MBassador<Any>) {
     @FXML
-    private lateinit var columnForRoundedDuration: TableColumn<ListItem, String>
+    private lateinit var columnForRoundedDuration: TableColumn<ReportListItem, String>
     @FXML
-    private lateinit var columnForDuration: TableColumn<ListItem, String>
+    private lateinit var columnForDuration: TableColumn<ReportListItem, String>
     @FXML
-    private lateinit var columnForComment: TableColumn<ListItem, String>
+    private lateinit var columnForComment: TableColumn<ReportListItem, String>
     @FXML
-    private lateinit var tableForReport: TableView<ListItem>
+    private lateinit var tableForReport: TableView<ReportListItem>
     @FXML
     private lateinit var left: VBox
     @FXML
@@ -77,7 +79,14 @@ internal constructor(private val localization: ResourceBundle,
     @FXML
     private lateinit var uncoveredTime: Label
     @FXML
-    private lateinit var roundedDurationSum: Label
+    private lateinit var breakTime: Label
+    @FXML
+    private lateinit var nonEffectiveTime: Label
+    @FXML
+    private lateinit var roundedDurationTime: Label
+    @FXML
+    private lateinit var effectiveDurationTime: Label
+
     private lateinit var datePicker: DatePicker
 
     internal val panel: NotificationPane by lazy {
@@ -109,29 +118,58 @@ internal constructor(private val localization: ResourceBundle,
 
         val reportModel = createReportModel()
         eventBus.subscribe(OnItemChangeListener(reportModel))
-        val startBinding = createBindingForStartOfReport(reportModel)
-        val endBinding = createBindingForEndOfReport(reportModel)
-        val uncoveredTimeBinding = createBindingForUncoveredTimeOfReport(reportModel)
-        val formattedUncoveredTimeBinding = STTBindings
-                .formattedDuration(uncoveredTimeBinding)
-        val uncoveredTimeTextFillBinding = When(
-                uncoveredTimeBinding.isEqualTo(Duration.ZERO)).then(
-                Color.BLACK).otherwise(Color.RED)
 
-        startOfReport.textProperty().bind(startBinding)
-        endOfReport.textProperty().bind(endBinding)
-        uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding)
-        uncoveredTime.textProperty().bind(formattedUncoveredTimeBinding)
-        startOfReport.setOnMouseClicked { setClipboard(startBinding.get()) }
-        endOfReport.setOnMouseClicked { setClipboard(endBinding.get()) }
+
 
         val reportListModel = createReportingItemsListModel(reportModel)
+
+        // 1. rounded Duration
+        roundedDurationTime
+            .textProperty()
+            .bind(STTBindings
+                .formattedDuration(createBindingForRoundedDurationTime(reportListModel)))
+
+        // 3. uncovered duration
+        val uncoveredTimeBinding = createBindingForUncoveredTime(reportModel)
+        uncoveredTime.textProperty().bind(STTBindings
+            .formattedDuration(uncoveredTimeBinding))
+
+        val uncoveredTimeTextFillBinding = When(
+            uncoveredTimeBinding.isEqualTo(Duration.ZERO)).then(
+            Color.BLACK).otherwise(Color.RED)
+        uncoveredTime.textFillProperty().bind(uncoveredTimeTextFillBinding)
+
+
+        // 4. break duration
+        val breakTimeBinding = createBindingForBreakTime(reportListModel)
+
+        breakTime.textProperty().bind(STTBindings.formattedDuration(breakTimeBinding))
+
+
+        breakTimeBinding.value.plus(uncoveredTimeBinding.value)
+
+        // 2. non Duration
+        nonEffectiveTime
+            .textProperty()
+            .bind(STTBindings
+                .formattedDuration(createBindingForNonEffectiveTime(uncoveredTimeBinding, breakTimeBinding)))
+
+        // 5. effective duration
+        effectiveDurationTime.textProperty().bind(STTBindings.formattedDuration(createBindingForEffectiveDurationTime(reportListModel)))
+
+        // start time
+        val startBinding = createBindingForStartOfReport(reportModel)
+        startOfReport.textProperty().bind(startBinding)
+        startOfReport.setOnMouseClicked { setClipboard(startBinding.get()) }
+
+        // end time
+        val endBinding = createBindingForEndOfReport(reportModel)
+        endOfReport.setOnMouseClicked { setClipboard(endBinding.get()) }
+        endOfReport.textProperty().bind(endBinding)
+
+
         tableForReport.items = reportListModel
 
-        roundedDurationSum
-                .textProperty()
-                .bind(STTBindings
-                        .formattedDuration(createBindingForRoundedDurationSum(reportListModel)))
 
         columnForRoundedDuration.style = "-fx-alignment: TOP-RIGHT;"
         columnForDuration.style = "-fx-alignment: TOP-RIGHT;"
@@ -183,34 +221,61 @@ internal constructor(private val localization: ResourceBundle,
                     else
                         null
                 }, datePicker.valueProperty())
-        return ReportBinding(datePicker.valueProperty(), nextDay, timeTrackingItemQueries)
+        return ReportBinding(datePicker.valueProperty(), nextDay, itemCategorizer, timeTrackingItemQueries)
     }
 
     private fun createReportingItemsListModel(
-            report: ObservableValue<Report>): ListBinding<ListItem> {
+            report: ObservableValue<Report>): ListBinding<ReportListItem> {
         return MappedListBinding({
             report.value
                     .reportingItems
                     .map { reportingItem ->
-                        ListItem(
-                                reportingItem.comment, reportingItem.duration,
+                        ReportListItem(
+                                reportingItem.comment,
+                                reportingItem.isBreak,
+                                reportingItem.duration,
                                 rounder.roundDuration(reportingItem.duration))
                     }
         }, report)
     }
 
+    private fun createBindingForNonEffectiveTime(uncoveredTime: ObservableValue<Duration>, breakTime: ObservableValue<Duration> ): ObjectBinding<Duration> {
 
-    private fun createBindingForRoundedDurationSum(
-            items: ObservableList<ListItem>): ObservableValue<Duration> {
+        return Bindings.createObjectBinding({uncoveredTime.value.plus(breakTime.value)}, uncoveredTime, breakTime)
+    }
+
+
+    private fun createBindingForRoundedDurationTime(
+            items: ObservableList<ReportListItem>): ObjectBinding<Duration> {
         return Bindings.createObjectBinding(Callable {
             items.map { it.roundedDuration }
                     .foldRight(Duration.ZERO) { obj, duration -> obj.plus(duration) }
         }, items)
     }
 
-    private fun createBindingForUncoveredTimeOfReport(
+    private fun createBindingForUncoveredTime(
             reportModel: ObservableValue<Report>): ObjectBinding<Duration> {
         return Bindings.createObjectBinding(Callable { reportModel.value.uncoveredDuration }, reportModel)
+    }
+
+    private fun createBindingForEffectiveDurationTime(
+        items: ObservableList<ReportListItem>): ObjectBinding<Duration> {
+        return Bindings.createObjectBinding(Callable {
+            items
+                .filter { !it.isBreak }
+                .map { it.roundedDuration }
+                .foldRight(Duration.ZERO) { obj, duration -> obj.plus(duration) }
+        }, items)
+    }
+
+    private fun createBindingForBreakTime(
+        items: ObservableList<ReportListItem>): ObjectBinding<Duration> {
+        return Bindings.createObjectBinding(Callable {
+            items
+                .filter { it.isBreak }
+                .map { it.roundedDuration }
+                .foldRight(Duration.ZERO) { obj, duration -> obj.plus(duration) }
+        }, items)
     }
 
     private fun createBindingForEndOfReport(
@@ -252,11 +317,11 @@ internal constructor(private val localization: ResourceBundle,
         }
     }
 
-    private fun addClickToCopy(column: TableColumn<ListItem, String>, clickHandler: BiConsumer<ListItem, MouseEvent>) {
+    private fun addClickToCopy(column: TableColumn<ReportListItem, String>, clickHandler: BiConsumer<ReportListItem, MouseEvent>) {
         column.setCellFactory { param ->
-            val tableCell = TableColumn.DEFAULT_CELL_FACTORY.call(param) as TableCell<ListItem, String>
+            val tableCell = TableColumn.DEFAULT_CELL_FACTORY.call(param) as TableCell<ReportListItem, String>
             tableCell.setOnMouseClicked { event ->
-                val item = tableCell.tableRow.item as? ListItem ?: return@setOnMouseClicked
+                val item = tableCell.tableRow.item as? ReportListItem ?: return@setOnMouseClicked
                 clickHandler.accept(item, event)
             }
             tableCell
@@ -292,10 +357,10 @@ internal constructor(private val localization: ResourceBundle,
     }
 
     private fun setDurationColumnCellFactoryToConvertDurationToString() {
-        columnForDuration.cellValueFactory = object : PropertyValueFactory<ListItem, String>(
+        columnForDuration.cellValueFactory = object : PropertyValueFactory<ReportListItem, String>(
                 "duration") {
             override fun call(
-                    cellDataFeatures: CellDataFeatures<ListItem, String>): ObservableValue<String> {
+                    cellDataFeatures: CellDataFeatures<ReportListItem, String>): ObservableValue<String> {
                 val duration = FORMATTER_PERIOD_HHh_MMm_SSs(cellDataFeatures.value.duration)
                 return SimpleStringProperty(duration)
             }
@@ -304,10 +369,10 @@ internal constructor(private val localization: ResourceBundle,
     }
 
     private fun setRoundedDurationColumnCellFactoryToConvertDurationToString() {
-        columnForRoundedDuration.cellValueFactory = object : PropertyValueFactory<ListItem, String>(
+        columnForRoundedDuration.cellValueFactory = object : PropertyValueFactory<ReportListItem, String>(
                 "roundedDuration") {
             override fun call(
-                    cellDataFeatures: CellDataFeatures<ListItem, String>): ObservableValue<String> {
+                    cellDataFeatures: CellDataFeatures<ReportListItem, String>): ObservableValue<String> {
                 val duration = FORMATTER_PERIOD_HHh_MMm_SSs(cellDataFeatures.value.roundedDuration)
                 return SimpleStringProperty(duration)
             }
@@ -315,7 +380,7 @@ internal constructor(private val localization: ResourceBundle,
         addClickToCopy(columnForRoundedDuration, BiConsumer { item, _ -> copyDurationToClipboard(item.roundedDuration) })
     }
 
-    private inner class ActivityTableCell internal constructor() : TableCell<ListItem, String>() {
+    private inner class ActivityTableCell internal constructor() : TableCell<ReportListItem, String>() {
         private val textFlow = object : TextFlow() {
             // Textflow bug: Tries to place each character on a separate line if != USE_COMPUTED_SIZE by delivering width < -1...
             override fun computePrefHeight(width: Double): Double {
@@ -336,7 +401,7 @@ internal constructor(private val localization: ResourceBundle,
             graphic = textFlow
 
             setOnMouseClicked {
-                val item = this@ActivityTableCell.tableRow.item as? ListItem ?: return@setOnMouseClicked
+                val item = this@ActivityTableCell.tableRow.item as? ReportListItem ?: return@setOnMouseClicked
                 setClipboard(item.comment)
             }
         }
@@ -376,8 +441,8 @@ internal constructor(private val localization: ResourceBundle,
         }
     }
 
-    class ListItem internal constructor(val comment: String, val duration: Duration,
-                                        internal val roundedDuration: Duration)
+    class ReportListItem internal constructor(val comment: String, val isBreak: Boolean, val duration: Duration,
+                                              internal val roundedDuration: Duration)
 
     @Listener(references = References.Strong)
     private class OnItemChangeListener internal constructor(private val binding: ObjectBinding<*>) {

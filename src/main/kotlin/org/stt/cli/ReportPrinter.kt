@@ -133,7 +133,7 @@ constructor(private val queries: TimeTrackingItemQueries,
         criteria.withStartBetween(reportStart!! until reportEnd)
 
         queries.queryItems(criteria).use { itemsToConsider ->
-            val reporter = SummingReportGenerator(itemsToConsider)
+            val reporter = SummingReportGenerator(itemsToConsider, categorizer )
             val report = reporter.createReport()
 
             if (DateTimes.isToday(reportStart)) {
