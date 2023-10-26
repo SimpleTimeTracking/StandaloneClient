@@ -8,7 +8,7 @@ use nom::combinator::all_consuming;
 use nom::combinator::map;
 use nom::combinator::map_res;
 use nom::combinator::opt;
-use nom::combinator::rest;
+use nom::combinator::{eof, rest};
 use nom::multi::many_till;
 use nom::sequence::preceded;
 use nom::sequence::terminated;
@@ -75,12 +75,13 @@ fn at_absolute_timespec(i: &str) -> Result<&str, TimeSpec> {
 }
 
 fn fin(i: &str) -> Result<&str, Command> {
-    let (i, (_, ts)) = tuple((
+    let (i, (_, ts, _)) = tuple((
         tag_no_case("fin"),
         opt(preceded(
             multispace1,
             alt((at_absolute_timespec, in_relative_timespec)),
         )),
+        eof,
     ))(i)?;
     Ok((i, Command::Fin(ts.unwrap_or(TimeSpec::Now))))
 }
