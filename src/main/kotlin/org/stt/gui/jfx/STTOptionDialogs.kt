@@ -49,9 +49,9 @@ constructor(private val localization: ResourceBundle,
         coveredItemsList.setCellFactory {
             val itemNodes = TimeTrackingItemNodes(labelToNodeMapper, DATE_TIME_FORMATTER, glyphFont, 400, 360, localization)
             val cell = object : ListCell<TimeTrackingItem>() {
-                override fun updateItem(item: TimeTrackingItem, empty: Boolean) {
+                override fun updateItem(item: TimeTrackingItem?, empty: Boolean) {
                     super.updateItem(item, empty)
-                    if (!empty) {
+                    if (!empty && item != null) {
                         itemNodes.setItem(item)
                     }
                 }
