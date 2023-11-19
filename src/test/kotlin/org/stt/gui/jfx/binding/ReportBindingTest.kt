@@ -9,11 +9,13 @@ import javafx.beans.property.SimpleObjectProperty
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.mock
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
 import org.stt.query.TimeTrackingItemQueries
+import org.stt.text.ItemCategorizer
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
@@ -31,11 +33,12 @@ class ReportBindingTest {
 
     private var readerProvider: Provider<ItemReader>? = null
     private val itemReader = mock(ItemReader::class.java)
+    private val itemCategorizer = mock(ItemCategorizer::class.java)
 
     @Before
     fun setup() {
         readerProvider = Provider { itemReader }
-        sut = ReportBinding(reportStart, reportEnd,
+        sut = ReportBinding(reportStart, reportEnd, itemCategorizer,
                 TimeTrackingItemQueries(readerProvider!!, Optional.empty()))
     }
 
@@ -78,6 +81,7 @@ class ReportBindingTest {
         reportEnd.set(end)
         val item = TimeTrackingItem("none", start.atStartOfDay(), end.atStartOfDay())
         given<TimeTrackingItem>(itemReader.read()).willReturn(item, null)
+        given(itemCategorizer.getCategory(anyString())).willReturn(ItemCategorizer.ItemCategory.WORKTIME)
 
         // WHEN
         val result = sut!!.value

@@ -10,3 +10,5 @@ build
 /.idea
 /*.iml
 /gen-src
+# mac stuff
+**/.DS_Store
