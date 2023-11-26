@@ -749,7 +749,7 @@ mod test {
     #[test]
     fn generate() {
         let mut db = Database::open().unwrap();
-        let mut con = db.open_connection();
+        let con = db.open_connection();
         con.insert_item(TimeTrackingItem {
             start: Local::now().naive_local(),
             end: Ending::At(Local::now().naive_local()),

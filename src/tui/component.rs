@@ -1,6 +1,6 @@
 use crate::tui::Command;
 use crossterm::event::KeyEvent;
-use tui::backend::Backend;
+
 
 #[allow(clippy::enum_variant_names)]
 pub enum Consumed {
@@ -17,7 +17,7 @@ impl Consumed {
 
 pub trait EventHandler {
     fn handle_event(&mut self, event: KeyEvent) -> Consumed;
-    fn set_focus<B: Backend>(&self, _frame: &mut tui::Frame<B>) {}
+    fn set_focus(&self, _frame: &mut tui::Frame) {}
 }
 
 pub trait Frame<S> {

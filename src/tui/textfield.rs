@@ -4,7 +4,6 @@ use crate::tui::{
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
-    backend::Backend,
     buffer::Buffer,
     layout::Rect,
     text::Line,
@@ -89,7 +88,7 @@ impl StatefulWidget for TextField {
 }
 
 impl EventHandler for TextFieldState {
-    fn set_focus<B: Backend>(&self, frame: &mut Frame<B>) {
+    fn set_focus(&self, frame: &mut Frame) {
         let (x, y) = self.cursor_screen_pos;
         frame.set_cursor(x, y);
     }

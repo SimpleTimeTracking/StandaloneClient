@@ -4,7 +4,6 @@ use chrono::{self, DateTime, Datelike, Local, Utc};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use regex::Regex;
 use tui::{
-    backend::Backend,
     buffer::Buffer,
     layout::{Constraint, Layout, Rect},
     style::{Modifier, Style},
@@ -97,7 +96,7 @@ impl Frame<ActivityTabState> for ActivityTabFrame {
 }
 
 impl EventHandler for ActivityTabFrame {
-    fn set_focus<B: Backend>(&self, frame: &mut tui::Frame<B>) {
+    fn set_focus(&self, frame: &mut tui::Frame) {
         match self.mode {
             Mode::EnteringActivity => self.activity_field.set_focus(frame),
             Mode::SearchHistory => self.filter_field.set_focus(frame),
