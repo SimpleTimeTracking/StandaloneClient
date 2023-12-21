@@ -235,22 +235,24 @@ impl StatefulWidget for DurationActivityList {
             ]));
         }
         let num_rows = rows.len();
-        let table = Table::new(rows)
-            .block(
-                Block::default()
-                    .title("Aggregated Times")
-                    .borders(Borders::ALL),
-            )
-            .header(
-                Row::new(vec!["Index", "Duration", "Activity"])
-                    .style(Style::default().add_modifier(Modifier::BOLD | Modifier::UNDERLINED)),
-            )
-            .widths(&[
+        let table = Table::new(
+            rows,
+            [
                 Constraint::Length(5),
                 Constraint::Min(12),
-                Constraint::Percentage(90),
-            ])
-            .highlight_style(Style::default().bg(Color::Green));
+                Constraint::Percentage(100),
+            ],
+        )
+        .block(
+            Block::default()
+                .title("Aggregated Times")
+                .borders(Borders::ALL),
+        )
+        .header(
+            Row::new(vec!["Index", "Duration", "Activity"])
+                .style(Style::default().add_modifier(Modifier::BOLD | Modifier::UNDERLINED)),
+        )
+        .highlight_style(Style::default().bg(Color::Green));
         state
             .state
             .select(state.state.selected.map(|index| index.min(num_rows - 1)));

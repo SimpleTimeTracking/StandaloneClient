@@ -2,7 +2,7 @@ use crate::tui::{
     component::{Consumed, EventHandler},
     string_ext::StringExt,
 };
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -44,6 +44,20 @@ impl TextFieldState {
         } else {
             self.cursor = (0, 0);
         }
+    }
+
+    fn word_boundary_before(&self) -> usize {
+        self.lines
+            .get(self.cursor.1)
+            .map(|s| s.word_boundary_before(self.cursor.0))
+            .unwrap_or(0)
+    }
+
+    fn word_boundary_after(&self) -> usize {
+        self.lines
+            .get(self.cursor.1)
+            .map(|s| s.word_boundary_after(self.cursor.0))
+            .unwrap_or(0)
     }
 
     fn current_line_len(&self) -> usize {
@@ -157,12 +171,18 @@ impl EventHandler for TextFieldState {
                 }
             }
             KeyCode::Left => {
-                if self.cursor.0 > 0 {
+                if event.modifiers.intersects(KeyModifiers::CONTROL) {
+                    self.cursor.0 = self.word_boundary_before();
+                } else if self.cursor.0 > 0 {
                     self.cursor.0 -= 1;
                 }
             }
             KeyCode::Right => {
-                self.cursor.0 = self.current_line_len().min(self.cursor.0 + 1);
+                if event.modifiers.intersects(KeyModifiers::CONTROL) {
+                    self.cursor.0 = self.word_boundary_after();
+                } else {
+                    self.cursor.0 = self.current_line_len().min(self.cursor.0 + 1);
+                }
             }
             KeyCode::End => {
                 self.cursor.0 = self.current_line_len();
