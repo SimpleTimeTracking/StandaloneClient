@@ -78,7 +78,6 @@ dependencies {
     kapt("com.google.dagger:dagger-compiler:$daggerVersion")
     implementation("net.engio:mbassador:1.3.2")
     implementation("org.controlsfx:controlsfx:11.1.2")
-    //implementation("net.rcarz:jira-client:0.5")
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
 

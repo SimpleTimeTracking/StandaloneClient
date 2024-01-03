@@ -17,23 +17,21 @@ constructor(private val jiraConnector: JiraConnector,
             queryText = text.substring(spaceIndex, text.length).trim { it <= ' ' }
         }
 
-        return emptyList()
-
-//        return try {
-//            jiraConnector.getIssue(queryText)?.summary?.let { listOf(": $it") } ?: emptyList()
-//        } catch (e: JiraConnectorException) {
-//            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-//            emptyList()
-//        } catch (e: Exceptions) {
-//            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-//            emptyList()
-//        } catch (e: InvalidCredentialsException) {
-//            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-//            emptyList()
-//        } catch (e: IssueDoesNotExistException) {
-//            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
-//            emptyList()
-//        }
+        return try {
+            jiraConnector.getIssue(queryText)?.summary?.let { listOf(": $it") } ?: emptyList()
+        } catch (e: JiraConnectorException) {
+            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
+            emptyList()
+        } catch (e: Exceptions) {
+            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
+            emptyList()
+        } catch (e: InvalidCredentialsException) {
+            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
+            emptyList()
+        } catch (e: IssueDoesNotExistException) {
+            eventBus.ifPresent { eb -> eb.publish(NotifyUser(e.message ?: "")) }
+            emptyList()
+        }
 
     }
 }
