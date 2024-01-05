@@ -1,26 +1,17 @@
 package org.stt.connector.jira
 
 import com.jsoniter.JsonIterator
-import java.net.Authenticator
-import java.net.PasswordAuthentication
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.Base64
 
-class JiraClient(private var username: String, private var password: String, private var jiraUrl: String) {
+class JiraClient(private var username: String?, private var password: String?, private var jiraUrl: String) {
     private val restApiV3 = "rest/api/3"
     private var restClient: HttpClient? = null
 
     init {
-
-        //create a local implementation of Authenticator in kotlin
-        Authenticator.setDefault(object : Authenticator() {
-            override fun getPasswordAuthentication(): PasswordAuthentication {
-                return PasswordAuthentication(username, password.toCharArray())
-            }
-        })
         this.restClient = getJiraRestClient()
     }
 

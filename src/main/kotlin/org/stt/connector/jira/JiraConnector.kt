@@ -21,7 +21,7 @@ constructor(configuration: JiraConfig) : Service {
                 JiraClient(configuration.jiraUsername!!,
                                 String(configuration.jiraToken!!.password, StandardCharsets.UTF_8), jiraURI)
             } else {
-                throw InvalidCredentialsException("Credentials missing", Exception("No username or token configured for Jira connector."))
+               JiraClient(configuration.jiraUsername, null, jiraURI);
             }
         }
     }
