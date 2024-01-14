@@ -51,7 +51,7 @@ impl StringExt for String {
     fn word_boundary_after(&self, at: usize) -> usize {
         self.unicode_word_indices()
             .filter_map(|(pos, _)| if pos > at { Some(pos) } else { None })
-            .max()
+            .min()
             .unwrap_or(self.len())
     }
 }
