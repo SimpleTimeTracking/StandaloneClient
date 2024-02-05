@@ -7,8 +7,8 @@ import javax.inject.Singleton
 @Singleton
 class DurationRounder {
 
-    private var intervalMillis: Long = 0
-    private var tieBreakMillis: Long = 0
+    private var intervalMillis: Long = 1
+    private var tieBreakMillis: Long = 1
 
     fun setInterval(interval: Duration) {
         intervalMillis = interval.toMillis()

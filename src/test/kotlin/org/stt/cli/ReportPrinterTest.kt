@@ -17,6 +17,7 @@ import org.stt.reporting.WorkingtimeItemProvider
 import org.stt.text.ItemCategorizer
 import org.stt.text.ItemCategorizer.ItemCategory
 import org.stt.time.DateTimes
+import org.stt.time.DurationRounder
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
@@ -41,6 +42,9 @@ class ReportPrinterTest {
     @Mock
     private lateinit var categorizer: ItemCategorizer
 
+    @Mock
+    private lateinit var rounder: DurationRounder
+
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
@@ -51,8 +55,9 @@ class ReportPrinterTest {
         readFrom = Provider { itemReader }
         given(categorizer.getCategory(anyString())).willReturn(
                 ItemCategory.WORKTIME)
+        given(rounder.roundDuration(any())).willReturn(Duration.ofDays(2))
         sut = ReportPrinter(TimeTrackingItemQueries(readFrom, Optional.empty()), configuration,
-                workingtimeItemProvider, categorizer)
+                workingtimeItemProvider, categorizer, rounder)
     }
 
     @Test

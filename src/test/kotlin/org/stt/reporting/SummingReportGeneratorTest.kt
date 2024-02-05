@@ -4,13 +4,15 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.*
 import org.mockito.BDDMockito.given
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.anyOrNull
 import org.stt.model.ReportingItem
 import org.stt.model.TimeTrackingItem
 import org.stt.text.ItemCategorizer
+import org.stt.time.DurationRounder
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.stream.Stream
@@ -22,10 +24,14 @@ class SummingReportGeneratorTest {
     @Mock
     private lateinit var itemCategorizer: ItemCategorizer;
 
+    @Mock
+    private lateinit var rounder: DurationRounder
+
     @Before
     fun setup() {
         closeable = MockitoAnnotations.openMocks(this)
         given(itemCategorizer.getCategory(anyString())).willReturn(ItemCategorizer.ItemCategory.WORKTIME)
+        given(rounder.roundDuration(anyOrNull())).willReturn(Duration.ofDays(1));
     }
 
     @After
@@ -45,7 +51,7 @@ class SummingReportGeneratorTest {
             LocalDateTime.of(2012, 12, 12, 14, 3, 0)
         )
 
-        sut = SummingReportGenerator(Stream.of(itemBeforeHole, itemAfterHole), itemCategorizer)
+        sut = SummingReportGenerator(Stream.of(itemBeforeHole, itemAfterHole), itemCategorizer, rounder)
 
         // WHEN
         val report = sut!!.createReport()
@@ -80,7 +86,7 @@ class SummingReportGeneratorTest {
             )
         )
 
-        sut = SummingReportGenerator(Stream.of(expectedItem, expectedItem2, expectedItem3), itemCategorizer)
+        sut = SummingReportGenerator(Stream.of(expectedItem, expectedItem2, expectedItem3), itemCategorizer, rounder)
 
         // WHEN
         val report = sut!!.createReport()
@@ -89,9 +95,9 @@ class SummingReportGeneratorTest {
         // THEN
         assertThat(items).contains(
             ReportingItem(
-                Duration.ofMillis((60 * 1000 + 2 * 1000).toLong()), "first comment", false
+                Duration.ofMillis((60 * 1000 + 2 * 1000).toLong()), Duration.ofDays(1), "first comment", false
             ),
-            ReportingItem(Duration.ofMillis((3 * 1000).toLong()), "first comment?", false)
+            ReportingItem(Duration.ofMillis((3 * 1000).toLong()), Duration.ofDays(1), "first comment?", false)
         )
     }
 
@@ -114,7 +120,7 @@ class SummingReportGeneratorTest {
             )
         )
 
-        sut = SummingReportGenerator(Stream.of(expectedItem, expectedItem2), itemCategorizer)
+        sut = SummingReportGenerator(Stream.of(expectedItem, expectedItem2), itemCategorizer, rounder)
 
         // WHEN
         val report = sut!!.createReport()
@@ -125,7 +131,7 @@ class SummingReportGeneratorTest {
             ReportingItem(
                 Duration.ofMillis(
                     (60 * 1000 + 2 * 1000).toLong()
-                ), "", false
+                ), Duration.ofDays(1), "", false
             )
         )
     }
@@ -144,7 +150,7 @@ class SummingReportGeneratorTest {
             LocalDateTime.of(2012, 12, 12, 14, 15, 14), endOfLastItem
         )
 
-        sut = SummingReportGenerator(Stream.of(expectedItem, expectedItem2), itemCategorizer)
+        sut = SummingReportGenerator(Stream.of(expectedItem, expectedItem2), itemCategorizer, rounder)
 
         // WHEN
         val report = sut!!.createReport()
