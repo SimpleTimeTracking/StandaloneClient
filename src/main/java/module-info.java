@@ -17,6 +17,7 @@ module org.stt {
     requires org.controlsfx.controls;
     requires org.fxmisc.richtext;
     requires org.antlr.antlr4.runtime;
+    requires java.net.http;
 
     // exporting is needed for javafx to work
     opens org.stt;
