@@ -155,17 +155,17 @@ constructor(private val queries: TimeTrackingItemQueries,
 
             var worktimeDuration = Duration.ZERO
             var breakTimeDuration = Duration.ZERO
-            for (reportItem in reportingItems) {
+            for ((duration, _, comment) in reportingItems) {
                 var prefix = " "
-                if (ItemCategory.BREAK == categorizer.getCategory(reportItem.comment)) {
+                if (ItemCategory.BREAK == categorizer.getCategory(comment)) {
                     prefix = "*"
-                    breakTimeDuration = breakTimeDuration.plus(reportItem.duration)
+                    breakTimeDuration = breakTimeDuration.plus(duration)
                 } else {
-                    worktimeDuration = worktimeDuration.plus(reportItem.duration)
+                    worktimeDuration = worktimeDuration.plus(duration)
                 }
                 printTruncatedString(
-                        prefix + DateTimes.prettyPrintDuration(reportItem.duration)
-                                + "   " + reportItem.comment, printTo, truncateLongLines)
+                        prefix + DateTimes.prettyPrintDuration(duration)
+                                + "   " + comment, printTo, truncateLongLines)
             }
 
             printTo.println("====== overall sum: ======")
