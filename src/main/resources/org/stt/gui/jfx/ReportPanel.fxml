@@ -43,21 +43,21 @@
                                 <Font name="System Bold" size="12.0" />
                             </font>
                         </Label>
-                        <Label fx:id="roundedDurationTime" text="roundedDurationTime" GridPane.columnIndex="1" GridPane.columnSpan="3" />
+                        <Label fx:id="totalDuration" text="totalDuration" GridPane.columnIndex="1" GridPane.columnSpan="3" />
                         <!-- -->
                         <Label text="%report.nonEffectiveTime" GridPane.rowIndex="1">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
                         </Label>
-                        <Label fx:id="nonEffectiveTime" text="nonEffectiveTime" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+                        <Label fx:id="nonEffectiveDuration" text="nonEffectiveDuration" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="1" />
                         <!-- -->
                         <Label text="%report.uncoveredTime" GridPane.rowIndex="2">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
                         </Label>
-                        <Label fx:id="uncoveredTime" text="uncoveredTime" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                        <Label fx:id="uncoveredDuration" text="uncoveredDuration" GridPane.columnIndex="3" GridPane.rowIndex="2" />
                         <!-- -->
 
 
@@ -66,14 +66,14 @@
                                 <Font name="System Bold" size="12.0" />
                             </font>
                         </Label>
-                        <Label fx:id="breakTime" text="breakTime" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+                        <Label fx:id="breakDuration" text="breakDuration" GridPane.columnIndex="3" GridPane.rowIndex="3" />
 
                         <Label text="%report.effectiveDurationTime" GridPane.rowIndex="4">
                             <font>
                                 <Font name="System Bold" size="12.0" />
                             </font>
                         </Label>
-                        <Label fx:id="effectiveDurationTime" text="effectiveDurationTime" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="4" />
+                        <Label fx:id="effectiveDuration" text="effectiveDuration" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="4" />
                         <!-- -->
                         <Label text="%report.startOfReport" GridPane.rowIndex="6">
                             <font>

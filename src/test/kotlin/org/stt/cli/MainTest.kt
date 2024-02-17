@@ -17,6 +17,7 @@ import org.stt.persistence.stt.STTItemReader
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.reporting.WorkingtimeItemProvider
 import org.stt.text.WorktimeCategorizer
+import org.stt.time.DurationRounder
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
@@ -64,7 +65,8 @@ class MainTest {
         val queries = TimeTrackingItemQueries(readerProvider, Optional.empty())
         val worktimeItemProvider = WorkingtimeItemProvider(configRoot.worktime, "")
         val categorizer = WorktimeCategorizer(configRoot.worktime)
-        val reportPrinter = ReportPrinter(queries, configRoot.cli, worktimeItemProvider, categorizer)
+        val rounder = DurationRounder()
+        val reportPrinter = ReportPrinter(queries, configRoot.cli, worktimeItemProvider, categorizer, rounder)
         val persister = STTItemPersister(sttReader, sttWriter)
         val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
         val dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)

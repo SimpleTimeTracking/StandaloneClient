@@ -14,6 +14,7 @@ import org.stt.reporting.WorkingtimeItemProvider
 import org.stt.text.ItemCategorizer
 import org.stt.text.ItemCategorizer.ItemCategory
 import org.stt.time.DateTimes
+import org.stt.time.DurationRounder
 import org.stt.time.until
 import java.io.PrintStream
 import java.time.Duration
@@ -28,7 +29,8 @@ class ReportPrinter @Inject
 constructor(private val queries: TimeTrackingItemQueries,
             private val configuration: CliConfig,
             private val workingtimeItemProvider: WorkingtimeItemProvider,
-            private val categorizer: ItemCategorizer) {
+            private val categorizer: ItemCategorizer,
+            private val rounder: DurationRounder) {
 
     fun report(args: MutableCollection<String>, printTo: PrintStream) {
         var searchString: String? = null
@@ -133,7 +135,7 @@ constructor(private val queries: TimeTrackingItemQueries,
         criteria.withStartBetween(reportStart!! until reportEnd)
 
         queries.queryItems(criteria).use { itemsToConsider ->
-            val reporter = SummingReportGenerator(itemsToConsider, categorizer )
+            val reporter = SummingReportGenerator(itemsToConsider, categorizer, rounder )
             val report = reporter.createReport()
 
             if (DateTimes.isToday(reportStart)) {
@@ -153,7 +155,7 @@ constructor(private val queries: TimeTrackingItemQueries,
 
             var worktimeDuration = Duration.ZERO
             var breakTimeDuration = Duration.ZERO
-            for ((duration, comment) in reportingItems) {
+            for ((duration, _, comment) in reportingItems) {
                 var prefix = " "
                 if (ItemCategory.BREAK == categorizer.getCategory(comment)) {
                     prefix = "*"

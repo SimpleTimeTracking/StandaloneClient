@@ -16,6 +16,7 @@ import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.text.ItemCategorizer
+import org.stt.time.DurationRounder
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
@@ -30,6 +31,7 @@ class ReportBindingTest {
     private var sut: ReportBinding? = null
     private val reportStart = SimpleObjectProperty<LocalDate>()
     private val reportEnd = SimpleObjectProperty<LocalDate>()
+    private val rounder = DurationRounder()
 
     private var readerProvider: Provider<ItemReader>? = null
     private val itemReader = mock(ItemReader::class.java)
@@ -38,7 +40,7 @@ class ReportBindingTest {
     @Before
     fun setup() {
         readerProvider = Provider { itemReader }
-        sut = ReportBinding(reportStart, reportEnd, itemCategorizer,
+        sut = ReportBinding(reportStart, reportEnd, itemCategorizer, rounder,
                 TimeTrackingItemQueries(readerProvider!!, Optional.empty()))
     }
 

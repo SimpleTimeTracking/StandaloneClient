@@ -82,7 +82,8 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
     testImplementation("commons-io:commons-io:2.8.0")
-    testImplementation("org.mockito:mockito-core:3.12.4")
+    testImplementation("org.mockito:mockito-core:4.5.1")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("junit:junit-dep:4.11")
 }

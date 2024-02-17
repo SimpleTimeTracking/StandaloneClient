@@ -8,11 +8,12 @@ import org.stt.config.ConfigServiceFacade
 import org.stt.persistence.BackupCreator
 import org.stt.persistence.stt.STTPersistenceModule
 import org.stt.text.TextModule
+import org.stt.time.TimeUtilModule
 
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [STTPersistenceModule::class, ConfigModule::class, BaseModule::class, TextModule::class, CommandModule::class])
+@Component(modules = [STTPersistenceModule::class, ConfigModule::class, BaseModule::class, TextModule::class, CommandModule::class, TimeUtilModule::class])
 interface CLIApplication {
     fun backupCreator(): BackupCreator
 

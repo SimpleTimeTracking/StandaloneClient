@@ -3,6 +3,7 @@ package org.stt.reporting
 import org.stt.model.ReportingItem
 import org.stt.model.TimeTrackingItem
 import org.stt.text.ItemCategorizer
+import org.stt.time.DurationRounder
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
@@ -22,16 +23,16 @@ import java.util.stream.Stream
  */
 class SummingReportGenerator(
     private val itemsToRead: Stream<TimeTrackingItem>,
-    private val itemCategorizer: ItemCategorizer
+    private val itemCategorizer: ItemCategorizer,
+    private val rounder: DurationRounder
 ) {
 
     fun createReport(): Report {
         var startOfReport: LocalDateTime? = null
         var endOfReport: LocalDateTime? = null
-        val reportList = LinkedList<ReportingItem>()
 
 
-        val collectingMap = HashMap<String, Duration>()
+        val reportItems = HashMap<String, ReportingItem>()
         var uncoveredDuration = Duration.ZERO
         var lastItem: TimeTrackingItem? = null
         itemsToRead.use { items ->
@@ -64,26 +65,35 @@ class SummingReportGenerator(
                 if (duration.isNegative) {
                     duration = Duration.ZERO
                 }
+                // assemble
                 val comment = item.activity
-                if (collectingMap.containsKey(comment)) {
-                    val oldDuration = collectingMap[comment]
-                    collectingMap[comment] = oldDuration!!.plus(duration)
-                } else {
-                    collectingMap[comment] = duration
+
+
+                val currentItem = reportItems.getOrPut(comment) {
+                    ReportingItem(
+                        Duration.ZERO,
+                        Duration.ZERO,
+                        comment,
+                        ItemCategorizer.ItemCategory.BREAK == itemCategorizer.getCategory(comment)
+                    )
                 }
+                // overwrite currentItem in the collection and update values
+                val newDuration = currentItem.duration.plus(duration)
+                reportItems.put(
+                    comment, currentItem.copy(
+                        duration = newDuration,
+                        roundedDuration = rounder.roundDuration(newDuration)
+                    )
+                )
             }
 
         }
 
-        for ((comment, duration) in collectingMap) {
-            val isBreak = ItemCategorizer.ItemCategory.BREAK == itemCategorizer.getCategory(comment)
-            reportList.add(ReportingItem(duration, comment, isBreak))
-        }
-
-        reportList.sortWith(comparing<ReportingItem, String> { it.comment })
+        val reportList = LinkedList(reportItems.values.toList())
+        reportList.sortWith(comparing { it.comment })
         return Report(
             reportList, startOfReport, endOfReport,
-            uncoveredDuration
+            uncoveredDuration, rounder.roundDuration(uncoveredDuration)
         )
     }
 
@@ -92,6 +102,7 @@ class SummingReportGenerator(
         val reportingItems: List<ReportingItem>,
         val start: LocalDateTime?,
         val end: LocalDateTime?,
-        val uncoveredDuration: Duration
+        val uncoveredDuration: Duration,
+        val roundedUncoveredDuration: Duration
     )
 }
