@@ -207,6 +207,34 @@ internal constructor(private val localization: ResourceBundle,
         left.children.add(0, popupContent)
     }
 
+    // Select the most recent tracked day before the current datePicker value
+    internal fun selectPreviousTrackedDay() {
+        if (!::datePicker.isInitialized) return
+        if (trackedDays.isEmpty()) return
+        val current = datePicker.value ?: LocalDate.now()
+        val prev = ReportNavigation.computePreviousTrackedDay(current, trackedDays)
+        if (prev != null) {
+            Platform.runLater { datePicker.value = prev }
+            LOG.info("Selected previous tracked day: $prev")
+        } else {
+            LOG.info("No previous tracked day found from $current")
+        }
+    }
+
+    // Select the next tracked day after the current datePicker value
+    internal fun selectNextTrackedDay() {
+        if (!::datePicker.isInitialized) return
+        if (trackedDays.isEmpty()) return
+        val current = datePicker.value ?: LocalDate.now()
+        val next = ReportNavigation.computeNextTrackedDay(current, trackedDays)
+        if (next != null) {
+            Platform.runLater { datePicker.value = next }
+            LOG.info("Selected next tracked day: $next")
+        } else {
+            LOG.info("No next tracked day found from $current")
+        }
+    }
+
     private fun createReportModel(): ObjectBinding<Report> {
         val nextDay = Bindings.createObjectBinding<LocalDate>(
                 Callable {
@@ -436,5 +464,9 @@ internal constructor(private val localization: ResourceBundle,
         fun onItemChanged(changeEvent: ItemModified) {
             binding.invalidate()
         }
+    }
+
+    companion object {
+        private val LOG = java.util.logging.Logger.getLogger(ReportController::class.java.name)
     }
 }

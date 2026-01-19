@@ -8,6 +8,7 @@ import javafx.scene.Scene
 import javafx.scene.control.Tab
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.stage.Stage
 import net.engio.mbassy.bus.MBassador
 import net.engio.mbassy.listener.Handler
@@ -37,6 +38,8 @@ internal constructor(private val localization: ResourceBundle,
     private lateinit var activitiesTab: Tab
     @FXML
     private lateinit var reportTab: Tab
+    @FXML
+    private lateinit var mainTabPane: javafx.scene.control.TabPane
     @FXML
     private lateinit var settingsTab: Tab
     @FXML
@@ -91,10 +94,53 @@ internal constructor(private val localization: ResourceBundle,
         val scene = Scene(rootNode)
 
         stage.setOnCloseRequest { Platform.runLater { this.shutdown() } }
-        scene.setOnKeyPressed { event ->
-            if (KeyCode.ESCAPE == event.code) {
-                event.consume()
-                shutdown()
+        // use an event filter on the scene so we catch key presses before focused controls consume them
+        scene.addEventFilter(KeyEvent.KEY_PRESSED) { event ->
+            when (event.code) {
+                KeyCode.ESCAPE -> {
+                    event.consume()
+                    shutdown()
+                }
+                // Alt+R (or Meta+R on macOS) to switch to report tab
+                KeyCode.R -> {
+                    if (event.isAltDown || event.isMetaDown) {
+                        event.consume()
+                        try {
+                            mainTabPane.selectionModel.select(reportTab)
+                        } catch (e: Exception) {
+                            LOG.log(Level.WARNING, "Error selecting report tab via hotkey", e)
+                        }
+                    }
+                }
+                KeyCode.UP -> {
+                    if (reportTab.isSelected) {
+                        event.consume()
+                        try {
+                            reportController.selectPreviousTrackedDay()
+                        } catch (e: Exception) {
+                            LOG.log(Level.WARNING, "Error selecting previous tracked day", e)
+                        }
+                    } else {
+                        // explicitly consume UP when not on report tab to disable its behavior elsewhere
+                        event.consume()
+                    }
+                }
+                KeyCode.DOWN -> {
+                    if (reportTab.isSelected) {
+                        event.consume()
+                        try {
+                            reportController.selectNextTrackedDay()
+                        } catch (e: Exception) {
+                            LOG.log(Level.WARNING, "Error selecting next tracked day", e)
+                        }
+                    } else {
+                        // explicitly consume DOWN when not on report tab to disable its behavior elsewhere
+                        event.consume()
+                    }
+                }
+                else -> {
+                    // leave other keys (including LEFT/RIGHT) to default handlers
+                }
             }
         }
 
