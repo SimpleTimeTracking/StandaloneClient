@@ -12,3 +12,4 @@ build
 /gen-src
 # mac stuff
 **/.DS_Store
+.env
