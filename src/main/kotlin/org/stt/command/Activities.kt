@@ -11,6 +11,7 @@ import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemPersister
 import org.stt.query.Criteria
 import org.stt.query.TimeTrackingItemQueries
+import org.stt.submit.SubmitStatusTracker
 import org.stt.time.DateTimes
 import java.util.*
 import javax.inject.Inject
@@ -23,7 +24,8 @@ import javax.inject.Singleton
 class Activities @Inject
 constructor(private val persister: ItemPersister,
             private val queries: TimeTrackingItemQueries,
-            publisher: Optional<MBassador<Any>>) : CommandHandler {
+            publisher: Optional<MBassador<Any>>,
+            private val submitStatusTracker: SubmitStatusTracker) : CommandHandler {
 
     private val publisher: PubSubSupport<Any> = publisher.map { it as PubSubSupport<Any> }.orElseGet { DoNotPublish() }
 
@@ -32,6 +34,7 @@ constructor(private val persister: ItemPersister,
         val potentialItemToReplace = ongoingItemThatWouldEnd(newItem) ?: itemWithEditedActivity(newItem)
 
         if (potentialItemToReplace != null) {
+            submitStatusTracker.requireNotSubmitted(potentialItemToReplace)
             persister.replace(potentialItemToReplace, command.newItem)
             publisher.publish(ItemReplaced(potentialItemToReplace, command.newItem))
         } else {
@@ -55,6 +58,7 @@ constructor(private val persister: ItemPersister,
 
     override fun endCurrentActivity(command: EndCurrentItem) {
         queries.ongoingItem?.let {
+            submitStatusTracker.requireNotSubmitted(it)
             val derivedItem = it.withEnd(command.endAt)
             persister.replace(it, derivedItem)
             publisher.publish(ItemReplaced(it, derivedItem))
@@ -62,14 +66,23 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun removeActivity(command: RemoveActivity) {
+        submitStatusTracker.requireNotSubmitted(command.itemToDelete)
         persister.delete(command.itemToDelete)
         publisher.publish(ItemDeleted(command.itemToDelete))
     }
 
     override fun removeActivityAndCloseGap(command: RemoveActivity) {
+        submitStatusTracker.requireNotSubmitted(command.itemToDelete)
         val adjacentItems = queries.getAdjacentItems(command.itemToDelete)
         val previous = adjacentItems.previousItem
         val next = adjacentItems.nextItem
+
+        if (previous != null) {
+            submitStatusTracker.requireNotSubmitted(previous)
+        }
+        if (next != null) {
+            submitStatusTracker.requireNotSubmitted(next)
+        }
 
         if (previous != null) {
             if (next != null && previousAndNextActivitiesMatch(previous, next)) {
@@ -110,6 +123,7 @@ constructor(private val persister: ItemPersister,
     }
 
     override fun bulkChangeActivity(itemsToChange: Collection<TimeTrackingItem>, activity: String) {
+        itemsToChange.forEach { submitStatusTracker.requireNotSubmitted(it) }
         val updatedItems = persister.updateActivitities(itemsToChange, activity)
         updatedItems.map { updatedItem -> ItemReplaced(updatedItem.original, updatedItem.updated) }
                 .forEach { publisher.publish(it) }

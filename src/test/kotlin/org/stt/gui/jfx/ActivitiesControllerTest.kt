@@ -1,5 +1,6 @@
 package org.stt.gui.jfx
 
+import javafx.scene.control.ListView
 import javafx.scene.text.Font
 import net.engio.mbassy.bus.MBassador
 import net.engio.mbassy.listener.Handler
@@ -12,6 +13,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.BDDMockito.given
 import org.mockito.BDDMockito.willAnswer
 import org.mockito.Mock
+import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 import org.stt.Matchers.any
@@ -21,13 +23,18 @@ import org.stt.command.CommandHandler
 import org.stt.command.DoNothing
 import org.stt.command.NewActivity
 import org.stt.config.ActivitiesConfig
+import org.stt.event.ItemsSubmitted
 import org.stt.event.ShuttingDown
 import org.stt.gui.jfx.text.CommandHighlighter
 import org.stt.model.TimeTrackingItem
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.query.WorkTimeQueries
+import org.stt.submit.SubmitConnector
+import org.stt.submit.SubmitSelectionManager
+import org.stt.submit.SubmitStatusTracker
 import org.stt.text.ExpansionProvider
 import org.stt.validation.ItemAndDateValidator
+import java.lang.reflect.Modifier
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -73,7 +80,10 @@ class ActivitiesControllerTest {
         sut = ActivitiesController(STTOptionDialogs(resourceBundle, fontAwesome, labelToNodeMapper), eventBus, commandFormatter,
                 setOf(expansionProvider), resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, executorService, commandHandler, fontAwesome,
-                worktimePane, labelToNodeMapper, CommandHighlighter.Factory({ emptyList() }))
+                worktimePane, labelToNodeMapper, CommandHighlighter.Factory({ emptyList() }),
+                Mockito.mock(SubmitStatusTracker::class.java),
+                Mockito.mock(SubmitSelectionManager::class.java),
+                emptySet<SubmitConnector>())
         sut.commandText = StyleClassedTextArea()
     }
 
@@ -186,6 +196,22 @@ class ActivitiesControllerTest {
 
         // THEN
         assertThat(shutdownCalled).isFalse()
+    }
+
+    @Test
+    fun shouldRefreshActivityListOnItemsSubmitted() {
+        // GIVEN
+        val activityList = Mockito.spy(ListView<TimeTrackingItem>())
+        sut.javaClass.getDeclaredField("activityList").apply {
+            isAccessible = true
+            set(sut, activityList)
+        }
+
+        // WHEN
+        sut.onItemsSubmitted(ItemsSubmitted())
+
+        // THEN
+        verify(activityList).refresh()
     }
 
     @Handler

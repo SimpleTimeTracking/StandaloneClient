@@ -27,6 +27,7 @@ import org.stt.Streams
 import org.stt.Strings.commonPrefix
 import org.stt.command.*
 import org.stt.config.ActivitiesConfig
+import org.stt.event.ItemsSubmitted
 import org.stt.event.ShuttingDown
 import org.stt.gui.jfx.STTOptionDialogs.Result
 import org.stt.gui.jfx.TimeTrackingItemCellWithActions.ActionsHandler
@@ -38,6 +39,9 @@ import org.stt.model.ItemReplaced
 import org.stt.model.TimeTrackingItem
 import org.stt.query.Criteria
 import org.stt.query.TimeTrackingItemQueries
+import org.stt.submit.SubmitConnector
+import org.stt.submit.SubmitSelectionManager
+import org.stt.submit.SubmitStatusTracker
 import org.stt.text.ExpansionProvider
 import org.stt.validation.ItemAndDateValidator
 import java.awt.Desktop
@@ -74,7 +78,10 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
                      @param:Named("glyph") private val fontAwesome: Font,
                      private val worktimePane: WorktimePane,
                      @param:Named("activityToText") private val labelToNodeMapper: @JvmSuppressWildcards ActivityTextDisplayProcessor,
-                     private val commandHighlighterFactory: CommandHighlighter.Factory) : ActionsHandler {
+                     private val commandHighlighterFactory: CommandHighlighter.Factory,
+                     private val submitStatusTracker: SubmitStatusTracker,
+                     private val submitSelectionManager: SubmitSelectionManager,
+                     private val submitConnectors: Set<@JvmSuppressWildcards SubmitConnector>) : ActionsHandler {
     internal val allItems = FXCollections
             .observableArrayList<TimeTrackingItem>()
     private val filterDuplicatesWhenSearching = activitiesConfig.isFilterDuplicatesWhenSearching
@@ -88,6 +95,10 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
     private lateinit var commandPane: BorderPane
     @FXML
     private lateinit var activityListToolbar: ToolBar
+
+    private val activeConnectors = FXCollections.observableArrayList<SubmitConnector>()
+    private lateinit var activeConnectorCombo: ComboBox<SubmitConnector>
+    private var activeConnector: SubmitConnector? = null
 
     private val suggestedContinuations: List<String>
         get() {
@@ -108,6 +119,11 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
     @Handler
     fun onItemChange(event: ItemModified) {
         updateItems()
+    }
+
+    @Handler
+    fun onItemsSubmitted(event: ItemsSubmitted) {
+        activityList.refresh()
     }
 
     private fun setCommandText(textToSet: String, selectionStart: Int = textToSet.length, selectionEnd: Int = textToSet.length) {
@@ -154,6 +170,12 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
 
     override fun continueItem(item: TimeTrackingItem) {
         LOG.fine { "Continuing item: $item" }
+        try {
+            submitStatusTracker.requireNotSubmitted(item)
+        } catch (e: IllegalStateException) {
+            sttOptionDialogs.showWarning(localization.getString("activities.submit.itemLocked"))
+            return
+        }
         activities.resumeActivity(ResumeActivity(item, LocalDateTime.now()))
         clearCommand()
 
@@ -168,11 +190,23 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
 
     override fun edit(item: TimeTrackingItem) {
         LOG.fine { "Editing item: $item" }
+        try {
+            submitStatusTracker.requireNotSubmitted(item)
+        } catch (e: IllegalStateException) {
+            sttOptionDialogs.showWarning(localization.getString("activities.submit.itemLocked"))
+            return
+        }
         setCommandText(commandFormatter.asNewItemCommandText(item), 0, item.activity.length)
     }
 
     override fun delete(item: TimeTrackingItem) {
         LOG.fine { "Deleting item: $item" }
+        try {
+            submitStatusTracker.requireNotSubmitted(item)
+        } catch (e: IllegalStateException) {
+            sttOptionDialogs.showWarning(localization.getString("activities.submit.itemLocked"))
+            return
+        }
         if (!activitiesConfig.isAskBeforeDeleting || sttOptionDialogs.showDeleteOrKeepDialog(item) == Result.PERFORM_ACTION) {
             val command = RemoveActivity(item)
             if (activitiesConfig.isDeleteClosesGaps) {
@@ -185,11 +219,39 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
 
     override fun stop(item: TimeTrackingItem) {
         LOG.fine { "Stopping item: $item" }
+        try {
+            submitStatusTracker.requireNotSubmitted(item)
+        } catch (e: IllegalStateException) {
+            sttOptionDialogs.showWarning(localization.getString("activities.submit.itemLocked"))
+            return
+        }
         States.requireThat(item.end == null, "Item to finish is already finished")
         activities.endCurrentActivity(EndCurrentItem(LocalDateTime.now()))
 
         if (activitiesConfig.isCloseOnStop) {
             shutdown()
+        }
+    }
+
+    private fun submitSelectedItems() {
+        val connector = activeConnector ?: return
+        val connectorId = connector.javaClass.simpleName.lowercase()
+        val selectedKeys = submitSelectionManager.getSelectedItems(connectorId)
+        val selectedItems = allItems.filter { item ->
+            val raw = "${item.activity}|${item.start}|${item.end}"
+            val key = Base64.getEncoder().encodeToString(raw.toByteArray())
+            selectedKeys.contains(key)
+        }
+        if (selectedItems.isEmpty()) return
+        try {
+            connector.submitItems(selectedItems)
+            selectedItems.forEach { submitStatusTracker.markSubmitted(it, connectorId) }
+            submitSelectionManager.clearSelection(connectorId)
+            activityList.refresh()
+            eventBus.publish(ItemsSubmitted())
+        } catch (e: Exception) {
+            LOG.log(Level.SEVERE, "Failed to submit items", e)
+            sttOptionDialogs.showWarning(localization.getString("activities.submit.failed"))
         }
     }
 
@@ -200,6 +262,7 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
         addCommandText()
         addInsertButton()
         addNavigationButtonsForActivitiesList()
+        addSubmitToolbar()
 
         val filteredList = TimeTrackingListFilter(allItems, commandText.textProperty(),
                 filterDuplicatesWhenSearching)
@@ -219,6 +282,31 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
             // Post initial request to load all items
             updateItems()
         }
+    }
+
+    private fun addSubmitToolbar() {
+        if (submitConnectors.isEmpty()) return
+
+        activeConnectors.addAll(submitConnectors)
+        activeConnectorCombo = ComboBox(activeConnectors)
+        activeConnectorCombo.converter = object : javafx.util.StringConverter<SubmitConnector>() {
+            override fun toString(obj: SubmitConnector?): String = obj?.id ?: ""
+            override fun fromString(string: String): SubmitConnector? = activeConnectors.find { it.id == string }
+        }
+        activeConnectorCombo.selectionModel.selectFirst()
+        activeConnector = activeConnectorCombo.value
+        activeConnectorCombo.valueProperty().addListener { _, _, newValue ->
+            activeConnector = newValue
+            activityList.refresh()
+        }
+
+        val submitButton = Button(localization.getString("activities.submit.button"))
+        submitButton.setOnAction { submitSelectedItems() }
+
+        val spacer = Region()
+        HBox.setHgrow(spacer, Priority.ALWAYS)
+
+        activityListToolbar.items.addAll(spacer, Label(localization.getString("activities.submit.connector")), activeConnectorCombo, submitButton)
     }
 
     private fun addNavigationButtonsForActivitiesList() {
@@ -341,7 +429,7 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
     private fun setupCellFactory(lastItemOfDay: Predicate<TimeTrackingItem>) {
         activityList.cellFactory = object : Callback, javafx.util.Callback<ListView<TimeTrackingItem>, ListCell<TimeTrackingItem>> {
             override fun call(p0: ListView<TimeTrackingItem>?): ListCell<TimeTrackingItem> {
-                return TimeTrackingItemCellWithActions(fontAwesome, localization, lastItemOfDay, this@ActivitiesController, labelToNodeMapper)
+                return TimeTrackingItemCellWithActions(fontAwesome, localization, lastItemOfDay, this@ActivitiesController, labelToNodeMapper, submitStatusTracker, submitSelectionManager, { activeConnector?.id })
             }
         }
     }

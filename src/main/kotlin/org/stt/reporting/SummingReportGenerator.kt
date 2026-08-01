@@ -31,8 +31,8 @@ class SummingReportGenerator(
         var startOfReport: LocalDateTime? = null
         var endOfReport: LocalDateTime? = null
 
-
         val reportItems = HashMap<String, ReportingItem>()
+        val backingItems = HashMap<String, MutableList<TimeTrackingItem>>()
         var uncoveredDuration = Duration.ZERO
         var lastItem: TimeTrackingItem? = null
         itemsToRead.use { items ->
@@ -65,9 +65,9 @@ class SummingReportGenerator(
                 if (duration.isNegative) {
                     duration = Duration.ZERO
                 }
-                // assemble
                 val comment = item.activity
 
+                backingItems.computeIfAbsent(comment) { mutableListOf() }.add(item)
 
                 val currentItem = reportItems.getOrPut(comment) {
                     ReportingItem(
@@ -77,12 +77,12 @@ class SummingReportGenerator(
                         ItemCategorizer.ItemCategory.BREAK == itemCategorizer.getCategory(comment)
                     )
                 }
-                // overwrite currentItem in the collection and update values
                 val newDuration = currentItem.duration.plus(duration)
                 reportItems.put(
                     comment, currentItem.copy(
                         duration = newDuration,
-                        roundedDuration = rounder.roundDuration(newDuration)
+                        roundedDuration = rounder.roundDuration(newDuration),
+                        backingItems = backingItems[comment]?.toList() ?: emptyList()
                     )
                 )
             }
@@ -96,7 +96,6 @@ class SummingReportGenerator(
             uncoveredDuration, rounder.roundDuration(uncoveredDuration)
         )
     }
-
 
     class Report(
         val reportingItems: List<ReportingItem>,

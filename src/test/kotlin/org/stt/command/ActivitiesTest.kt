@@ -4,6 +4,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.BDDMockito.given
 import org.mockito.Mock
+import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.MockitoAnnotations
@@ -11,6 +12,7 @@ import org.stt.Matchers.any
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemPersister
 import org.stt.query.TimeTrackingItemQueries
+import org.stt.submit.SubmitStatusTracker
 import java.time.LocalDateTime
 import java.util.*
 import java.util.stream.Stream
@@ -25,7 +27,7 @@ class ActivitiesTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        sut = Activities(persister, queries, Optional.empty())
+        sut = Activities(persister, queries, Optional.empty(), Mockito.mock(SubmitStatusTracker::class.java))
     }
 
     @Test

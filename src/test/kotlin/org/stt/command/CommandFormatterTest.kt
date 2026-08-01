@@ -11,12 +11,14 @@ import org.junit.experimental.theories.Theory
 import org.junit.experimental.theories.suppliers.TestedOn
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.stt.model.TimeTrackingItem
 import org.stt.persistence.ItemReader
 import org.stt.persistence.stt.STTItemPersister
 import org.stt.persistence.stt.STTItemReader
 import org.stt.query.TimeTrackingItemQueries
+import org.stt.submit.SubmitStatusTracker
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStreamReader
@@ -53,7 +55,7 @@ class CommandFormatterTest {
         itemWriter = STTItemPersister(Provider { readerSupplier.get() },
                 Provider { OutputStreamWriter(FileOutputStream(tempFile), StandardCharsets.UTF_8) })
         timeTrackingItemQueries = TimeTrackingItemQueries(itemReaderProvider, Optional.empty())
-        activities = Activities(itemWriter, timeTrackingItemQueries, Optional.empty())
+        activities = Activities(itemWriter, timeTrackingItemQueries, Optional.empty(), Mockito.mock(SubmitStatusTracker::class.java))
         sut = CommandFormatter(CommandTextParser(listOf(TIME_FORMATTER,
                 DATE_TIME_FORMATTER)), DATE_TIME_FORMATTER, TIME_FORMATTER)
     }

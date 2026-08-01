@@ -1,5 +1,7 @@
 package org.stt.config
 
+import org.stt.submit.SubmitConfig
+
 class ConfigRoot : ConfigurationContainer {
     var activities = ActivitiesConfig()
     var prefixGrouper = CommonPrefixGrouperConfig()
@@ -9,4 +11,5 @@ class ConfigRoot : ConfigurationContainer {
     var sttFile = PathSetting("\$HOME$/.stt/activities")
     var cli = CliConfig()
     var jira = JiraConfig()
+    var submit = SubmitConfig()
 }

@@ -5,6 +5,7 @@ import dagger.Provides
 import net.engio.mbassy.bus.MBassador
 import org.stt.persistence.ItemPersister
 import org.stt.query.TimeTrackingItemQueries
+import org.stt.submit.SubmitStatusTracker
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.FormatStyle
@@ -15,8 +16,8 @@ import javax.inject.Named
 class CommandModule {
 
     @Provides
-    fun provideCommandHandler(persister: ItemPersister, queries: TimeTrackingItemQueries, eventBus: Optional<MBassador<Any>>): CommandHandler {
-        return Activities(persister, queries, eventBus)
+    fun provideCommandHandler(persister: ItemPersister, queries: TimeTrackingItemQueries, eventBus: Optional<MBassador<Any>>, submitStatusTracker: SubmitStatusTracker): CommandHandler {
+        return Activities(persister, queries, eventBus, submitStatusTracker)
     }
 
     @Provides

@@ -69,13 +69,138 @@ org.stt/
 
 - **Language**: Kotlin (prefer immutable data classes, `val`, extension functions)
 - **Naming**: `camelCase` for methods/variables, `PascalCase` for classes, no underscores
-- **Test naming**: `should[Expectation]` — e.g., `shouldCreateItemWithoutEnd`
-- **Test structure**: GIVEN / WHEN / THEN comment annotations, `sut` (system under test) variable
 - **Imports**: explicit single imports (no wildcard `.*` except for standard lib / assertions)
 - **Nullability**: explicit nullable types with `?`, prefer `?:` elvis operator
 - **DI**: constructor injection via `@Inject`, module-provided bindings for platform/third-party types
 - **Logging**: `java.util.logging.Logger` (`Logger.getLogger(...)`)
 - **File format**: one time-tracking record per line, human-readable text
+
+## Testing
+
+### Framework & Dependencies
+
+| Tool | Dependency | Purpose |
+|------|-----------|---------|
+| **JUnit 4** | `junit:junit-dep:4.11` | Runner (`@Test`, `@Before`, `@Theory`, `@RunWith(Theories::class)`, `@DataPoints`, `@TestedOn`, `@Rule`) |
+| **AssertJ** | `assertj-core:3.26.3` | Fluent assertions (`assertThat(...)`) |
+| **Mockito** | `mockito-core:5.12.0` | Mocking (`@Mock`, `MockitoAnnotations.initMocks()`, `given()`/`verify()`) |
+| **Mockito Kotlin** | `mockito-kotlin:5.4.0` | Kotlin-friendly matchers (`any()`, `anyOrNull()`) |
+| **TestFX** | via monocle | Headless JavaFX testing |
+| **Commons IO** | `commons-io:2.8.0` | Temp file I/O in tests (`TemporaryFolder`) |
+
+> Mockito inline mock maker is enabled via `src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker` (`mock-maker-inline`) for mocking final classes.
+
+### Test Location & Layout
+
+Tests mirror `src/main/kotlin/org/stt/` one-to-one under `src/test/kotlin/org/stt/`:
+
+```
+src/test/kotlin/org/stt/
+├── cli/                      # MainTest, ReportPrinterTest
+├── command/                  # ActivitiesTest, CommandFormatterTest
+├── config/                   # PasswordSettingTest
+├── connector/jira/           # JiraClientTest
+├── csv/importer/             # CsvImporterTest
+├── gui/jfx/                  # ActivitiesControllerTest, TimeTrackingItemCellTest
+│   └── binding/              # ReportBindingTest
+├── importer/                 # STTItemReaderTest, STTItemWriterTest, TiImporterTest
+├── model/                    # TimeTrackingItemTest
+├── persistence/              # BackupCreatorTest, IOUtilTest
+│   └── stt/                  # STTItemConverterTest
+├── query/                    # TimeTrackingItemQueriesTest
+├── reporting/                # SummingReportGeneratorTest, OvertimeReportGeneratorTest, WorkingtimeItemProviderTest
+├── text/                     # CommonPrefixGrouperTest, JiraExpansionProviderTest
+├── time/                     # DateTimesTest, DurationRounderTest, IntervalTest
+├── update/                   # VersionComparatorTest
+├── validation/               # ItemAndDateValidatorTest
+├── IntRangeTest.kt           # (root-level utility)
+├── StatesTest.kt             # (root-level utility)
+├── StringsTest.kt            # (root-level utility)
+├── Tests.kt                  # Mockito matcher helpers (Matchers.argThat, Matchers.any)
+└── ItemReaderTestHelper.kt   # Stubbing helper (givenReaderReturns)
+```
+
+### Naming Convention
+
+```
+should[Expectation]  →  e.g., shouldReturnTrueForSameDate, shouldCreateItemWithoutEnd
+```
+
+### Test Structure Pattern
+
+Every test follows **GIVEN / WHEN / THEN** comments. The System Under Test is always named `sut`:
+
+```kotlin
+@Test
+fun shouldDoSomething() {
+    // GIVEN
+    ...
+    // WHEN
+    val result = sut.method()
+    // THEN
+    assertThat(result).isEqualTo(...)
+}
+```
+
+### Mock Setup Pattern
+
+```kotlin
+@Mock private lateinit var dependency: SomeClass
+private lateinit var sut: ClassUnderTest
+
+@Before
+fun setup() {
+    MockitoAnnotations.initMocks(this)
+    sut = ClassUnderTest(dependency)
+}
+```
+
+### Assertion Style
+
+Pure AssertJ chaining — no JUnit `assertEquals`/`assertTrue`:
+
+```kotlin
+assertThat(result).isEqualTo(expected)
+assertThat(result).isTrue()
+assertThat(list).hasSize(3).containsExactly(a, b, c)
+```
+
+### Parameterized Tests
+
+Use JUnit 4 `Theories` with `@DataPoints` or `@TestedOn` for data-driven tests (see `CommandFormatterTest`, `TimeTrackingItemQueriesTest`, `STTItemWriterTest`):
+
+```kotlin
+@RunWith(Theories::class)
+class SomeTheoryTest {
+    @Theory
+    fun shouldHandleCase(@TestedOn(ints = [0, 1, 42]) input: Int) { ... }
+}
+```
+
+### Coverage Landscape (as of July 2026)
+
+| Area | Coverage | Details |
+|------|----------|---------|
+| `model/` | Full | TimeTrackingItem (22 tests), ReportingItem tested via reporting |
+| `query/` | Full | TimeTrackingItemQueries (20+ tests with theories) |
+| `command/` | Full | Activities (8 tests), CommandFormatter (theory-based) |
+| `reporting/` | Full | Summing, Overtime, WorkingtimeItemProvider all covered |
+| `time/` | Good | DurationRounder (5 tests), DateTimes (18 tests), Interval (8 tests) |
+| `text/` | Partial | CommonPrefixGrouper, JiraExpansionProvider tested; ItemCategorizer via reporting |
+| `persistence/` | Partial | BackupCreator, STTItemConverter, STTItemReader/Writer tested; ItemPersister untested |
+| `cli/` | Partial | Main, ReportPrinter tested; CLIApplication, FormatConverter untested |
+| `config/` | Minimal | Only PasswordSetting tested (2 tests); YamlConfigService etc. untested |
+| `gui/jfx/` | Minimal | ActivitiesController, TimeTrackingItemCell, ReportBinding tested; most controllers untested |
+| `event/` | None | ItemLogService untested |
+| `submit/` | None | Entire submit package untested |
+| `root/` | Added | Strings, States, IntRange tested; StopWatch, Streams, Service untested |
+
+### Test Helpers
+
+- **`Tests.kt`** (`org.stt.Matchers`) — `argThat(lambda)` and `any<T>()` wrappers for Mockito-Kotlin compatibility
+- **`ItemReaderTestHelper.kt`** — `givenReaderReturns(reader, item1, item2, ...)` chains stubs to return items then `null`
+- **`IOUtil.kt`** (`org.stt.importer`) — `readAll(reader)` collects all items from an `ItemReader`
+- **`TestFX.kt`** (`org.stt.gui.jfx`) — `installTK()` mocks JavaFX `Toolkit` for headless UI testing
 
 ## Build & Test
 
