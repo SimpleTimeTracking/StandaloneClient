@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import java.io.File
 import javax.inject.Named
+import org.stt.submit.SubmitConfig
 
 @Module
 class ConfigModule {
@@ -47,6 +48,11 @@ class ConfigModule {
     @Provides
     fun provideJiraConfig(configRoot: ConfigRoot): JiraConfig {
         return configRoot.jira
+    }
+
+    @Provides
+    fun provideSubmitConfig(configRoot: ConfigRoot): SubmitConfig {
+        return configRoot.submit
     }
 
     @Provides

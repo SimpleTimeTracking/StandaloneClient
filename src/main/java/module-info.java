@@ -27,5 +27,6 @@ module org.stt {
     // export is needed so mbassy works (using reflection)
     opens org.stt.event;
     opens org.stt.query;
+    opens org.stt.submit to jsoniter;
     opens org.stt.gui.jfx;
 }

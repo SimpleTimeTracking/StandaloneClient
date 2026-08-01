@@ -4,11 +4,14 @@ import javafx.scene.control.skin.DatePickerSkin
 import javafx.animation.PauseTransition
 import javafx.application.Platform
 import javafx.beans.binding.*
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ObservableValue
+import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.control.TableColumn.CellDataFeatures
@@ -17,9 +20,7 @@ import javafx.scene.control.cell.PropertyValueFactory
 import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.MouseEvent
-import javafx.scene.layout.Pane
-import javafx.scene.layout.Region
-import javafx.scene.layout.VBox
+import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.scene.text.Text
@@ -33,9 +34,14 @@ import org.stt.config.ActivitiesConfig
 import org.stt.gui.jfx.binding.MappedListBinding
 import org.stt.gui.jfx.binding.ReportBinding
 import org.stt.gui.jfx.binding.STTBindings
+import org.stt.event.ItemsSubmitted
 import org.stt.model.ItemModified
+import org.stt.model.TimeTrackingItem
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.reporting.SummingReportGenerator.Report
+import org.stt.submit.SubmitConnector
+import org.stt.submit.SubmitSelectionManager
+import org.stt.submit.SubmitStatusTracker
 import org.stt.text.ItemCategorizer
 import org.stt.text.ItemGrouper
 import org.stt.time.DateTimes
@@ -49,6 +55,8 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Consumer
+import java.util.logging.Level
+import java.util.logging.Logger
 import java.util.stream.Collectors
 import javax.inject.Inject
 import javax.inject.Named
@@ -61,7 +69,10 @@ internal constructor(private val localization: ResourceBundle,
                      private val itemCategorizer: ItemCategorizer,
                      private val activitiesConfig: ActivitiesConfig,
                      @param:Named("glyph") private val fontaweSome: Font,
-                     private val eventBus: MBassador<Any>) {
+                     private val eventBus: MBassador<Any>,
+                     private val submitStatusTracker: SubmitStatusTracker,
+                     private val submitSelectionManager: SubmitSelectionManager,
+                     private val submitConnectors: Set<@JvmSuppressWildcards SubmitConnector>) {
     @FXML
     private lateinit var columnForRoundedDuration: TableColumn<ReportListItem, String>
     @FXML
@@ -86,14 +97,23 @@ internal constructor(private val localization: ResourceBundle,
     private lateinit var totalDuration: Label
     @FXML
     private lateinit var effectiveDuration: Label
+    @FXML
+    private lateinit var borderPane: BorderPane
 
     private lateinit var datePicker: DatePicker
+    private var columnForCheckbox: TableColumn<ReportListItem, Boolean>? = null
 
     internal val panel: NotificationPane by lazy {
         loadAndInjectFXML()
     }
     private val notificationPause = PauseTransition(javafx.util.Duration.seconds(2.0))
     private lateinit var trackedDays: Set<LocalDate>
+
+    private val activeConnectors = FXCollections.observableArrayList<SubmitConnector>()
+    private lateinit var activeConnectorCombo: ComboBox<SubmitConnector>
+    private var activeConnector: SubmitConnector? = null
+
+    private var latestReport: Report? = null
 
     private fun loadAndInjectFXML(): NotificationPane {
         val loader = FXMLLoader(javaClass.getResource(
@@ -112,6 +132,7 @@ internal constructor(private val localization: ResourceBundle,
 
     @FXML
     fun initialize() {
+        eventBus.subscribe(this)
         setupNavigation()
 
         tableForReport.selectionModel.selectedIndexProperty().addListener { _ -> Platform.runLater { tableForReport.selectionModel.clearSelection() } }
@@ -180,6 +201,11 @@ internal constructor(private val localization: ResourceBundle,
         applyClipboardTooltip(Consumer { columnForRoundedDuration.setGraphic(it) }, "report.tooltips.copyRow")
         applyClipboardTooltip(Consumer { startOfReport.graphic = it }, "report.tooltips.copy")
         applyClipboardTooltip(Consumer { endOfReport.graphic = it }, "report.tooltips.copy")
+
+        addSubmitCheckboxColumn()
+        addSubmitToolbar()
+
+        reportModel.addListener { _, _, newReport -> latestReport = newReport }
     }
 
     private fun applyClipboardTooltip(on: Consumer<Node>, tooltipKey: String) {
@@ -229,7 +255,8 @@ internal constructor(private val localization: ResourceBundle,
                                 reportingItem.comment,
                                 reportingItem.isBreak,
                                 reportingItem.duration,
-                                rounder.roundDuration(reportingItem.duration))
+                                rounder.roundDuration(reportingItem.duration),
+                                reportingItem.backingItems)
                     }
         }, report)
     }
@@ -427,7 +454,127 @@ internal constructor(private val localization: ResourceBundle,
     }
 
     class ReportListItem internal constructor(val comment: String, val isBreak: Boolean, val duration: Duration,
-                                              internal val roundedDuration: Duration)
+                                              internal val roundedDuration: Duration,
+                                              internal val backingItems: List<TimeTrackingItem> = emptyList())
+
+    private fun addSubmitCheckboxColumn() {
+        if (submitConnectors.isEmpty()) return
+        columnForCheckbox = TableColumn<ReportListItem, Boolean>()
+        columnForCheckbox!!.prefWidth = 40.0
+        columnForCheckbox!!.maxWidth = 40.0
+        columnForCheckbox!!.isResizable = false
+        columnForCheckbox!!.setCellValueFactory { cellData ->
+            val item = cellData.value
+            val connectorId = activeConnector?.id
+            if (connectorId == null) {
+                SimpleObjectProperty(false)
+            } else if (item.backingItems.isEmpty()) {
+                SimpleObjectProperty(false)
+            } else {
+                val allSubmitted = item.backingItems.all { submitStatusTracker.isSubmitted(it, connectorId) }
+                val someSubmitted = item.backingItems.any { submitStatusTracker.isSubmitted(it, connectorId) }
+                val selected = submitSelectionManager.isSelected(connectorId, item.backingItems.first())
+                SimpleObjectProperty(allSubmitted || someSubmitted || selected)
+            }
+        }
+        columnForCheckbox!!.setCellFactory {
+            object : TableCell<ReportListItem, Boolean>() {
+                private val checkBox = CheckBox()
+
+                init {
+                    graphic = checkBox
+                    checkBox.setOnAction {
+                        val rowItem = tableRow.item ?: return@setOnAction
+                        val connectorId = activeConnector?.id ?: return@setOnAction
+                        if (checkBox.isSelected) {
+                            rowItem.backingItems.forEach { submitSelectionManager.setSelected(connectorId, it, true) }
+                        } else {
+                            rowItem.backingItems.forEach { submitSelectionManager.setSelected(connectorId, it, false) }
+                        }
+                    }
+                }
+
+                override fun updateItem(item: Boolean?, empty: Boolean) {
+                    super.updateItem(item, empty)
+                    if (empty || item == null) {
+                        graphic = null
+                    } else {
+                        val rowItem = tableRow.item ?: return
+                        val connectorId = activeConnector?.id ?: return
+                        val allSubmitted = rowItem.backingItems.isNotEmpty() && rowItem.backingItems.all { submitStatusTracker.isSubmitted(it, connectorId) }
+                        val someSubmitted = rowItem.backingItems.any { submitStatusTracker.isSubmitted(it, connectorId) }
+                        checkBox.isSelected = allSubmitted || someSubmitted || rowItem.backingItems.any { submitSelectionManager.isSelected(connectorId, it) }
+                        checkBox.isDisable = allSubmitted
+                        checkBox.isIndeterminate = someSubmitted && !allSubmitted
+                        graphic = checkBox
+                    }
+                }
+            }
+        }
+        tableForReport.columns.add(columnForCheckbox!!)
+    }
+
+    private fun addSubmitToolbar() {
+        if (submitConnectors.isEmpty()) return
+
+        activeConnectors.addAll(submitConnectors)
+        activeConnectorCombo = ComboBox(activeConnectors)
+        activeConnectorCombo.converter = object : javafx.util.StringConverter<SubmitConnector>() {
+            override fun toString(obj: SubmitConnector?): String = obj?.id ?: ""
+            override fun fromString(string: String): SubmitConnector? = activeConnectors.find { it.id == string }
+        }
+        activeConnectorCombo.selectionModel.selectFirst()
+        activeConnector = activeConnectorCombo.value
+        activeConnectorCombo.valueProperty().addListener { _, _, newValue ->
+            activeConnector = newValue
+            tableForReport.refresh()
+        }
+
+        val submitButton = Button(localization.getString("report.submit.button"))
+        submitButton.setOnAction { submitSelectedRows() }
+
+        val toolbar = ToolBar(
+            Label(localization.getString("report.submit.connector")),
+            activeConnectorCombo,
+            Region().apply { HBox.setHgrow(this, Priority.ALWAYS) },
+            submitButton
+        )
+
+        borderPane.bottom = toolbar
+    }
+
+    private fun submitSelectedRows() {
+        val connector = activeConnector ?: return
+        val connectorId = connector.id
+        val report = latestReport ?: return
+
+        val selectedBackingItems = tableForReport.items.flatMap { item ->
+            item.backingItems.filter { submitSelectionManager.isSelected(connectorId, it) }
+        }.distinct().filter { !submitStatusTracker.isSubmitted(it, connectorId) }
+
+        if (selectedBackingItems.isEmpty()) return
+
+        val selectedReportItems = tableForReport.items.filter { item ->
+            item.backingItems.any { submitSelectionManager.isSelected(connectorId, it) }
+        }.toList()
+
+        try {
+            connector.submitSummary(report, selectedReportItems)
+            selectedBackingItems.forEach { submitStatusTracker.markSubmitted(it, connectorId) }
+            selectedReportItems.forEach { item ->
+                item.backingItems.forEach { submitSelectionManager.setSelected(connectorId, it, false) }
+            }
+            tableForReport.refresh()
+            eventBus.publish(ItemsSubmitted())
+        } catch (e: Exception) {
+            LOG.log(Level.SEVERE, "Failed to submit items", e)
+        }
+    }
+
+    @Handler
+    fun onItemsSubmitted(event: ItemsSubmitted) {
+        tableForReport.refresh()
+    }
 
     @Listener(references = References.Strong)
     private class OnItemChangeListener internal constructor(private val binding: ObjectBinding<*>) {
@@ -436,5 +583,9 @@ internal constructor(private val localization: ResourceBundle,
         fun onItemChanged(changeEvent: ItemModified) {
             binding.invalidate()
         }
+    }
+
+    companion object {
+        private val LOG = Logger.getLogger(ReportController::class.java.name)
     }
 }

@@ -40,6 +40,7 @@ class UIMain : Application() {
         startService(uiApplication.configService())
         startService(uiApplication.backupCreator())
         startService(uiApplication.itemLogService())
+        startService(uiApplication.submitStatusTracker())
 
         LOG.info("init() done")
         mainWindowController = uiApplication.mainWindow()

@@ -95,9 +95,11 @@ class SummingReportGeneratorTest {
         // THEN
         assertThat(items).contains(
             ReportingItem(
-                Duration.ofMillis((60 * 1000 + 2 * 1000).toLong()), Duration.ofDays(1), "first comment", false
+                Duration.ofMillis((60 * 1000 + 2 * 1000).toLong()), Duration.ofDays(1), "first comment", false,
+                listOf(expectedItem, expectedItem2)
             ),
-            ReportingItem(Duration.ofMillis((3 * 1000).toLong()), Duration.ofDays(1), "first comment?", false)
+            ReportingItem(Duration.ofMillis((3 * 1000).toLong()), Duration.ofDays(1), "first comment?", false,
+                listOf(expectedItem3))
         )
     }
 
@@ -131,7 +133,8 @@ class SummingReportGeneratorTest {
             ReportingItem(
                 Duration.ofMillis(
                     (60 * 1000 + 2 * 1000).toLong()
-                ), Duration.ofDays(1), "", false
+                ), Duration.ofDays(1), "", false,
+                listOf(expectedItem, expectedItem2)
             )
         )
     }
