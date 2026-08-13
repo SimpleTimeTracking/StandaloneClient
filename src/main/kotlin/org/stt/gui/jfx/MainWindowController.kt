@@ -25,7 +25,7 @@ import javax.inject.Inject
 
 class MainWindowController @Inject
 internal constructor(private val localization: ResourceBundle,
-                     private val activitiesController: ActivitiesController,
+                     internal val activitiesController: ActivitiesController,
                      private val reportController: ReportController,
                      private val eventBus: MBassador<Any>,
                      private val settingsController: SettingsController,

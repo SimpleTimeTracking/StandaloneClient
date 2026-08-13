@@ -17,11 +17,14 @@ plugins {
     id("org.sonarqube") version "5.1.0.4882"
     id("com.github.ben-manes.versions") version "0.36.0"
 
+    // JavaFX distribution and packaging
     id("org.openjfx.javafxplugin") version "0.1.0"
 
+    // Java module support (required for jlink/jpackage)
     id("org.javamodularity.moduleplugin") version "1.8.12"
     id("org.beryx.jlink") version "3.0.1"
 
+    // Auto-versioning from git tags
     id("com.palantir.git-version") version "2.0.0"
 }
 
@@ -33,7 +36,7 @@ repositories {
 }
 
 // -SNAPSHOT is added if the release task is not set
-// jpackge for windows needs an 2 digit version, at least
+// jpackage for windows needs a 2-digit version, at least
 val upcomingVersion = "4.0"
 val archivesBaseName = "STT"
 
@@ -42,7 +45,7 @@ version = upcomingVersion
 application {
     mainModule.set("org.stt")
     mainClass.set("org.stt.StartWithJFX")
-    // add-opens, so we can access the file decoration-warning.png within this module
+    // Required so ControlsFX validation decoration can access its own internal PNG
     applicationDefaultJvmArgs =
         listOf("--add-opens=org.controlsfx.controls/impl.org.controlsfx.control.validation=org.stt")
 }
@@ -64,7 +67,7 @@ configurations {
 val spek_version = "2.0.4"
 
 dependencies {
-    val daggerVersion = "2.50" // with dagger 2.52 they introduced an incomplete usage ofjakarta.inject
+    val daggerVersion = "2.50" // with dagger 2.52 they introduced an incomplete usage of jakarta.inject
     antlr(group = "org.antlr", name = "antlr4", version = "4.9.1")
     implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.9.1")
 
@@ -80,11 +83,18 @@ dependencies {
     implementation("com.jsoniter:jsoniter:0.9.23")
     implementation(kotlin("stdlib-jdk8"))
 
+    // ── Test dependencies ──
     testImplementation("commons-io:commons-io:2.8.0")
     testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testImplementation("org.assertj:assertj-core:3.26.3")
     testImplementation("junit:junit-dep:4.11")
+    // TestFX for JavaFX UI end-to-end tests
+    testImplementation("org.testfx:testfx-core:4.0.18")
+    // Monocle headless platform, pinned to JDK 21.0.x to match the javafx plugin version
+    testRuntimeOnly("org.testfx:openjfx-monocle:21.0.2") {
+        exclude(group = "org.openjfx")
+    }
 }
 
 javafx {
@@ -106,7 +116,7 @@ distributions.getByName("main") {
 }
 
 tasks.compileJava {
-    // workaround, to make kapt created classes available to java module source set
+    // Make kapt-generated sources available to the Java module source set
     sourceSets {
         main {
             java {
@@ -118,8 +128,29 @@ tasks.compileJava {
 
 tasks.test {
     extensions.configure(TestModuleOptions::class) {
-        // disable java-module path for tests
+        // Tests run on the classpath (not the module path) to avoid JPMS issues
+        // with test frameworks and mocking libraries
         runOnClasspath = true
+    }
+    // E2E tests are excluded from the default `test` task — run them separately
+    // via the `testE2e` task below.
+    exclude("**/*E2ETest*")
+}
+
+/*
+ * Custom task for running TestFX end-to-end tests.
+ * These tests require Monocle (headless JavaFX) and are excluded from
+ * the regular `test` task because they are slow and need a display-less
+ * environment.
+ *
+ * Usage: ./gradlew testE2e
+ */
+tasks.register<Test>("testE2e") {
+    include("**/*E2ETest*")
+    useJUnit()
+    testLogging {
+        events("passed", "failed", "skipped")
+        showExceptions = true
     }
 }
 
@@ -190,7 +221,7 @@ jlink {
         jvmArgs =
             application.applicationDefaultJvmArgs.plus(
                 listOf(
-                    // some classes in the merged-modules (see jlink plugin( need access to javafx modules
+                    // some classes in the merged-modules (see jlink plugin) need access to javafx modules
                     "--add-reads=simpleTimeTracking.merged.module=javafx.graphics",
                     "--add-reads=simpleTimeTracking.merged.module=javafx.base",
                     "--add-reads=simpleTimeTracking.merged.module=javafx.controls"
@@ -224,4 +255,3 @@ jlink {
         }
     }
 }
-

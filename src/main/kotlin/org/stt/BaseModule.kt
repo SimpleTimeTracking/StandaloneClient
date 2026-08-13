@@ -16,7 +16,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
-class BaseModule {
+class BaseModule(private val sttFileOverride: File? = null) {
     private val log = Logger.getLogger(BaseModule::class.java.name)
 
     @Provides
@@ -28,7 +28,7 @@ class BaseModule {
     @STTFile
     fun provideDatabaseFile(configuration: ConfigRoot,
                             @Named("homePath") homePath: String): File {
-        val sttFile = configuration.sttFile.file(homePath)
+        val sttFile = sttFileOverride ?: configuration.sttFile.file(homePath)
         migrateSTT1FileIfExisting(sttFile.parentFile, sttFile)
 
         if (!sttFile.exists()) {

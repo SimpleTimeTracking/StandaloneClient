@@ -19,6 +19,11 @@ jobs:
           java-version: 21
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+      - name: Run unit tests
+        run: ./gradlew test --scan
+      - name: Run E2E tests (Linux)
+        if: ${{ inputs.runs-on == 'ubuntu-latest' }}
+        run: ./gradlew testE2e --scan
       - name: Execute Gradle build
         run: ./gradlew ${{ inputs.gradle-tasks }} --scan
       - name: Upload dists
