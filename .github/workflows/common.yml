@@ -22,7 +22,7 @@ jobs:
       - name: Execute Gradle build
         run: ./gradlew ${{ inputs.gradle-tasks }} --scan
       - name: Upload dists
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: dist-${{ inputs.runs-on }}
           path: build/dist/**/*
