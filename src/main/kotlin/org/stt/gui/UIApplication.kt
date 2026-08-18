@@ -32,4 +32,10 @@ interface UIApplication {
     fun mainWindow(): MainWindowController
 
     fun executorService(): ExecutorService
+
+    @Component.Builder
+    interface Builder {
+        fun baseModule(module: BaseModule): Builder
+        fun build(): UIApplication
+    }
 }
