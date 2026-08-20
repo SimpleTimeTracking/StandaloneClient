@@ -30,4 +30,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: dist-${{ inputs.runs-on }}
-          path: build/dist/**/*
+          path: |
+            build/dist/installer/mac*/*.dmg
+            build/dist/installer/win/*.exe
+            build/dist/installer/linux/*.deb
+            build/dist/installer/linux/*.rpm
