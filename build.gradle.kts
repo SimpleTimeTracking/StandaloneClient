@@ -1,4 +1,5 @@
 import org.apache.tools.ant.filters.ReplaceTokens
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.internal.KaptTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.javamodularity.moduleplugin.extensions.TestModuleOptions
@@ -151,6 +152,7 @@ tasks.register<Test>("testE2e") {
     testLogging {
         events("passed", "failed", "skipped")
         showExceptions = true
+        exceptionFormat = TestExceptionFormat.FULL
     }
 }
 
