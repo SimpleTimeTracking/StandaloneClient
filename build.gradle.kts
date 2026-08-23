@@ -26,7 +26,9 @@ plugins {
     id("org.beryx.jlink") version "3.0.1"
 
     // Auto-versioning from git tags
-    id("com.palantir.git-version") version "2.0.0"
+    //id("com.palantir.git-version") version "2.0.0"
+    id("com.github.jmongard.git-semver-plugin") version "0.19.5"
+    id("org.ajoberstar.grgit") version "5.3.0"
 }
 
 repositories {
@@ -36,12 +38,15 @@ repositories {
     maven("https://maven.atlassian.com/content/repositories/atlassian-public/")
 }
 
-// -SNAPSHOT is added if the release task is not set
-// jpackage for windows needs a 2-digit version, at least
-val upcomingVersion = "4.0"
+
 val archivesBaseName = "STT"
 
-version = upcomingVersion
+semver {
+    createReleaseCommit = false
+}
+
+//Remember to retrieve the version after plugin has been configured
+version = semver.version
 
 application {
     mainModule.set("org.stt")
@@ -50,6 +55,8 @@ application {
     applicationDefaultJvmArgs =
         listOf("--add-opens=org.controlsfx.controls/impl.org.controlsfx.control.validation=org.stt")
 }
+
+
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -159,16 +166,13 @@ tasks.register<Test>("testE2e") {
 tasks.withType<org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask> {
     dependsOn(tasks.withType<AntlrTask>())
 }
-// provided by plugin: com.palantir.git-version
-val gitVersion: groovy.lang.Closure<String> by project.extra
-val versionDetails: groovy.lang.Closure<com.palantir.gradle.gitversion.VersionDetails> by extra
 
 tasks.withType<ProcessResources> {
     filesMatching("version.info") {
         filter<ReplaceTokens>(
             "tokens" to mapOf(
                 "app.version" to project.version,
-                "app.hash" to versionDetails().gitHash
+                "app.hash" to grgit.head().abbreviatedId
             )
         )
     }
@@ -186,12 +190,6 @@ task("release") {
     dependsOn += "dist"
     doLast {
         println("Built release for $project.version")
-    }
-}
-
-gradle.taskGraph.whenReady {
-    if (!hasTask("release")) {
-        version = (upcomingVersion as String) + "-SNAPSHOT"
     }
 }
 
@@ -233,10 +231,9 @@ jlink {
     jpackage {
         installerOutputDir = File( "$buildDir/dist/installer/${javafx.platform.classifier}")
         skipInstaller = false
-        appVersion = upcomingVersion
+        appVersion = project.version.toString().substringBefore('-')
 
         val os = OperatingSystem.current()
-        println("Building on ${os.toString()}.")
 
         if (os.isLinux || os.isUnix) {
             icon = "src/main/resources/Logo.png"
