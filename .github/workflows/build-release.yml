@@ -1,11 +1,75 @@
-name: Build STT Release (manually)
-on: workflow_dispatch # for manual triggered builds
+name: Build STT Release
+on: workflow_dispatch
 jobs:
+  tag-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Build and test (safety check before tagging)
+        run: ./gradlew test --scan
+      - name: Create release tag
+        run: ./gradlew releaseVersion --no-commit
+      - name: Push new tag
+        run: git push origin --tags
+      - name: Get version info
+        id: version
+        run: |
+          echo "version=$(./gradlew -q printVersion | tail -1)" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+
   build-with-common:
+    needs: tag-release
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-26-intel, windows-latest]
     uses: ./.github/workflows/common.yml
     with:
       runs-on: ${{ matrix.os }}
       gradle-tasks: release
+
+  create-release:
+    needs: [tag-release, build-with-common]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout for tagging
+        uses: actions/checkout@v7
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist-artifacts
+      - name: Rename DMGs to include architecture
+        run: |
+          for dmg in dist-artifacts/**/*.dmg; do
+            [ -f "$dmg" ] || continue
+            dir=$(dirname "$dmg")
+            arch=$(basename "$dir")
+            base=$(basename "$dmg")
+            mv "$dmg" "dist-artifacts/mac/${base%.dmg}-${arch}.dmg"
+          done
+          # Remove now-empty subdirectories
+          find dist-artifacts -type d -empty -delete 2>/dev/null || true
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ needs.tag-release.outputs.tag }} \
+          dist-artifacts/**/* \
+          --draft \
+          --generate-notes \
+          --title "Release ${{ needs.tag-release.outputs.version }}"

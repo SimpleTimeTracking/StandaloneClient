@@ -12,13 +12,15 @@ jobs:
   reusable-stt-build:
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v6
       - name: Run unit tests
         run: ./gradlew test --scan
       - name: Run E2E tests (Linux)
@@ -27,7 +29,11 @@ jobs:
       - name: Execute Gradle build
         run: ./gradlew ${{ inputs.gradle-tasks }} --scan
       - name: Upload dists
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ inputs.runs-on }}
-          path: build/dist/**/*
+          path: |
+            build/dist/installer/mac*/*.dmg
+            build/dist/installer/win/*.exe
+            build/dist/installer/linux/*.deb
+            build/dist/installer/linux/*.rpm

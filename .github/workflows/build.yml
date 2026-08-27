@@ -4,7 +4,7 @@ jobs:
   build-with-common:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-26-intel, windows-latest]
     uses: ./.github/workflows/common.yml
     with:
       runs-on: ${{ matrix.os }}

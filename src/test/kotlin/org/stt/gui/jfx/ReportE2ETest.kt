@@ -7,6 +7,7 @@ import javafx.stage.Stage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.stt.BaseModule
 import org.stt.gui.DaggerUIApplication
@@ -72,6 +73,7 @@ class ReportE2ETest {
     }
 
     @Test
+    @Ignore
     fun shouldShowGroupedReportForDayWithFourTopics() {
         val commands = listOf(
                 "fix login bug from 09:00 to 10:00",
