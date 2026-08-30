@@ -228,3 +228,58 @@ chore: bump Dagger to 2.50
 ```
 
 Scopes (optional): `cli`, `gui`, `persistence`, `query`, `reporting`, `config`, `time`, `deps`
+
+## OpenSpec Workflow
+
+All new features and significant changes **must** start with OpenSpec — a spec-driven planning workflow that produces design artifacts before any code is written.
+
+### Workflow Phases
+
+```
+Explore ──→ Propose ──→ Apply ──→ Archive
+  │            │            │          │
+  │            v            │          v
+  └─── think    design       code      sync specs
+  (optional)   + spec       tasks     + archive
+```
+
+### Available Skills
+
+| Skill | Command | When to Use |
+|-------|---------|-------------|
+| `openspec-explore` | `/opsx-explore` | Thinking through an idea, investigating codebase, clarifying requirements before committing to a change |
+| `openspec-propose` | `/opsx-propose` | Ready to formalize — creates `proposal.md`, `specs/`, `design.md`, `tasks.md` |
+| `openspec-apply-change` | `/opsx-apply` | Implement tasks from a change, one by one |
+| `openspec-update-change` | `/opsx-update` | Revise planning artifacts mid-change without editing code |
+| `openspec-sync-specs` | `/opsx-sync` | Merge delta specs from a change into main specs |
+| `openspec-archive-change` | `/opsx-archive` | Finalize a completed change and archive it |
+
+### Starting a New Feature
+
+1. **Explore** — Use `/opsx-explore` to investigate the codebase, clarify the problem, and explore options with the AI as a thinking partner.
+2. **Propose** — Use `/opsx-propose <change-name>` to generate planning artifacts: a proposal, capability specs (delta against main specs), design decisions, and implementation tasks.
+3. **Apply** — Use `/opsx-apply <change-name>` to implement tasks. Tasks are checked off in `tasks.md` as they're completed.
+4. **Archive** — Use `/opsx-archive <change-name>` when all tasks are done. Delta specs are synced into main specs and the change directory is moved to `archive/`.
+
+### Artifact Layout (spec-driven schema)
+
+```
+openspec/
+├── config.yaml              # Project context, rules, tool config
+├── specs/                   # Main specs (authoritative requirements)
+│   └── <capability>/spec.md
+└── changes/
+    └── <change-name>/
+        ├── .openspec.yaml   # Change metadata
+        ├── proposal.md      # What & why
+        ├── specs/           # Delta specs for this change
+        │   └── <capability>/spec.md
+        ├── design.md        # How
+        └── tasks.md         # Implementation checklist
+```
+
+### Rules
+
+- **Never skip OpenSpec** for features, enhancements, or fixes that touch externally observable behavior
+- Minor refactors, dependency bumps, and documentation-only changes may bypass the workflow (use conventional commit directly)
+- All OpenSpec artifacts live under `openspec/` in the repo root
