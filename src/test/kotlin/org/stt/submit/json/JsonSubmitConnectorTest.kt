@@ -151,7 +151,7 @@ class JsonSubmitConnectorTest {
     }
 
     @Test
-    fun shouldUseAbsolutePathWhenFileStartsWithSlash() {
+    fun shouldUseAbsolutePathWhenFileIsAbsolute() {
         // GIVEN
         val absolutePath = File(tempFolder.newFolder("custom"), "output.json").absolutePath
         val config = ConnectorConfig(type = "json", file = absolutePath)

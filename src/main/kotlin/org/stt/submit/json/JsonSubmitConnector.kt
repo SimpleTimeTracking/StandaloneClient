@@ -21,7 +21,7 @@ constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : Subm
 
     init {
         val filePath = config.file
-        outputFile = if (filePath.startsWith("/")) {
+        outputFile = if (File(filePath).isAbsolute) {
             File(filePath)
         } else {
             File(homePath, filePath)

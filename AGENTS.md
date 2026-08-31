@@ -202,6 +202,14 @@ class SomeTheoryTest {
 - **`IOUtil.kt`** (`org.stt.importer`) — `readAll(reader)` collects all items from an `ItemReader`
 - **`TestFX.kt`** (`org.stt.gui.jfx`) — `installTK()` mocks JavaFX `Toolkit` for headless UI testing
 
+### Cross-Platform Requirement
+
+Every test **must** run and pass on macOS, Linux, and Windows. Avoid:
+- Hard-coding path separators (`/` or `\`) — use `File.separator` or `File(path).isAbsolute`
+- Assuming a specific filesystem root (e.g. `/tmp` or `C:\`)
+- Platform-specific shell commands or process execution
+- Relying on Linux/macOS-only tools or paths
+
 ## Build & Test
 
 ```bash
