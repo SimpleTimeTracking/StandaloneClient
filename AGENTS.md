@@ -73,6 +73,7 @@ org.stt/
 - **Nullability**: explicit nullable types with `?`, prefer `?:` elvis operator
 - **DI**: constructor injection via `@Inject`, module-provided bindings for platform/third-party types
 - **Logging**: `java.util.logging.Logger` (`Logger.getLogger(...)`)
+- **Documentation**: every class must have a KDoc comment (`/** ... */`) describing its purpose and behavior; test classes additionally summarize the concerns and behaviors they verify (see `JsonSubmitConnectorTest` for the pattern)
 - **File format**: one time-tracking record per line, human-readable text
 
 ## Testing
