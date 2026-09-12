@@ -4,10 +4,13 @@ import javafx.scene.text.Font
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 import org.stt.gui.jfx.TimeTrackingItemCellWithActions.ActionsHandler
 import org.stt.model.TimeTrackingItem
+import org.stt.submit.SubmitSelectionManager
+import org.stt.submit.SubmitStatusTracker
 import java.time.LocalDateTime
 import java.util.*
 import java.util.function.Predicate
@@ -27,7 +30,10 @@ class TimeTrackingItemCellTest {
         val resourceBundle = ResourceBundle
                 .getBundle("org.stt.gui.Application")
 
-        sut = TimeTrackingItemCellWithActions(fontAwesome!!, resourceBundle, Predicate { false }, actionsHandler!!, { it })
+        sut = TimeTrackingItemCellWithActions(fontAwesome!!, resourceBundle, Predicate { false }, actionsHandler!!, { it },
+                Mockito.mock(SubmitStatusTracker::class.java),
+                Mockito.mock(SubmitSelectionManager::class.java),
+                { null })
     }
 
     @Test

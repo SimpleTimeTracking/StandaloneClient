@@ -87,6 +87,14 @@ constructor(private val localization: ResourceBundle,
                 .orElse(Result.ABORT)
     }
 
+    internal fun showWarning(message: String) {
+        val dialog = Dialog<Result>()
+        dialog.headerText = localization.getString("warning")
+        dialog.contentText = message
+        dialog.dialogPane.buttonTypes.addAll(ButtonType.OK)
+        dialog.showAndWait()
+    }
+
     enum class Result {
         PERFORM_ACTION, ABORT
     }

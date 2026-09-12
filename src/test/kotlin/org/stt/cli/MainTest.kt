@@ -6,6 +6,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.stt.command.Activities
 import org.stt.command.CommandFormatter
@@ -16,6 +17,7 @@ import org.stt.persistence.stt.STTItemPersister
 import org.stt.persistence.stt.STTItemReader
 import org.stt.query.TimeTrackingItemQueries
 import org.stt.reporting.WorkingtimeItemProvider
+import org.stt.submit.SubmitStatusTracker
 import org.stt.text.WorktimeCategorizer
 import org.stt.time.DurationRounder
 import java.io.*
@@ -71,7 +73,7 @@ class MainTest {
         val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
         val dateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
         val commandFormatter = CommandFormatter(CommandTextParser(listOf(timeFormatter, dateTimeFormatter)), dateTimeFormatter, timeFormatter)
-        val activities = Activities(persister, queries, Optional.empty())
+        val activities = Activities(persister, queries, Optional.empty(), Mockito.mock(SubmitStatusTracker::class.java))
         sut = Main(queries, reportPrinter, commandFormatter, activities)
     }
 

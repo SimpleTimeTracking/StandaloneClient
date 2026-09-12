@@ -13,13 +13,15 @@ import org.stt.gui.jfx.JFXModule
 import org.stt.gui.jfx.MainWindowController
 import org.stt.persistence.BackupCreator
 import org.stt.persistence.stt.STTPersistenceModule
+import org.stt.submit.SubmitModule
+import org.stt.submit.SubmitStatusTracker
 import org.stt.text.TextModule
 import org.stt.time.TimeUtilModule
 import java.util.concurrent.ExecutorService
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [(TimeUtilModule::class), (STTPersistenceModule::class), (I18NModule::class), (EventBusModule::class), (TextModule::class), (JFXModule::class), (BaseModule::class), (ConfigModule::class), (CommandModule::class)])
+@Component(modules = [(TimeUtilModule::class), (STTPersistenceModule::class), (I18NModule::class), (EventBusModule::class), (TextModule::class), (JFXModule::class), (BaseModule::class), (ConfigModule::class), (CommandModule::class), (SubmitModule::class)])
 interface UIApplication {
     fun eventBus(): MBassador<Any>
 
@@ -32,6 +34,8 @@ interface UIApplication {
     fun mainWindow(): MainWindowController
 
     fun executorService(): ExecutorService
+
+    fun submitStatusTracker(): SubmitStatusTracker
 
     @Component.Builder
     interface Builder {
