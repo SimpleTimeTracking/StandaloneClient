@@ -20,25 +20,46 @@ class JiraClient(private var username: String?, private var password: String?, p
     }
 
 
-    fun getIssue(issueKey: String): Issue? {
-        val jiraUrl = getJiraUrl()
-        val request = HttpRequest.newBuilder()
-                .uri(URI.create("$jiraUrl$restApiV3/issue/$issueKey?fields=summary"))
-                .GET()
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(("$username:$password").toByteArray()))
-                .build()
-        this.restClient?.send(request, HttpResponse.BodyHandlers.ofString())?.let {
-            if (it.statusCode() == 200) {
-            val deserializedAsMap = JsonIterator.deserialize(it.body(), Map::class.java)
-            val fields = deserializedAsMap["fields"] as Map<String, String>
-            return Issue(fields["summary"])
-          }
-          handleHttpError(it, issueKey)
-        }
-        return null
+  fun getIssue(issueKey: String): Issue? {
+    val jiraUrl = getJiraUrl()
+    val request = requestBuilder("$jiraUrl$restApiV3/issue/$issueKey?fields=summary")
+            .GET()
+            .build()
+    this.restClient?.send(request, HttpResponse.BodyHandlers.ofString())?.let {
+      if (it.statusCode() == 200) {
+        val deserializedAsMap = JsonIterator.deserialize(it.body(), Map::class.java)
+        @Suppress("UNCHECKED_CAST")
+        val fields = deserializedAsMap["fields"] as Map<String, String>
+        val id = (deserializedAsMap["id"] as String?)?.toLongOrNull()
+        return Issue(fields["summary"], id)
+      }
+      handleHttpError(it, issueKey)
     }
+    return null
+  }
+
+  fun getMyself(): Myself? {
+    val jiraUrl = getJiraUrl()
+    val request = requestBuilder("$jiraUrl$restApiV3/myself")
+            .GET()
+            .build()
+    this.restClient?.send(request, HttpResponse.BodyHandlers.ofString())?.let {
+      if (it.statusCode() == 200) {
+        val deserializedAsMap = JsonIterator.deserialize(it.body(), Map::class.java)
+        return Myself(deserializedAsMap["accountId"] as String?)
+      }
+      handleHttpError(it, "myself")
+    }
+    return null
+  }
+
+  private fun requestBuilder(url: String): HttpRequest.Builder {
+    return HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(("$username:$password").toByteArray()))
+  }
 
   private fun handleHttpError(response: HttpResponse<String>, issueKey: String) {
     val httpStatusCode = response.statusCode()
@@ -60,3 +81,8 @@ class JiraClient(private var username: String?, private var password: String?, p
     }
 
 }
+
+/**
+ * The authenticated Jira user, as returned by the `myself` endpoint.
+ */
+class Myself(val accountId: String?)

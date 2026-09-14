@@ -48,4 +48,16 @@ constructor(configuration: JiraConfig) : Service {
 
     }
 
+    fun getMyself(): Myself? {
+        if (client == null) {
+            return null
+        }
+
+        try {
+            return client.getMyself()
+        } catch (e: Exception) {
+            throw JiraConnectorException(String.format("Error while retrieving current user: %s", e.cause?.localizedMessage), e)
+        }
+    }
+
 }

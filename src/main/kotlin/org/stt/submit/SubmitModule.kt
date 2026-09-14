@@ -3,9 +3,18 @@ package org.stt.submit
 import dagger.Module
 import dagger.Provides
 import dagger.multibindings.IntoSet
+import net.engio.mbassy.bus.MBassador
+import org.stt.config.ConfigRoot
+import org.stt.config.TempoConfig
+import org.stt.connector.jira.JiraConnector
 import org.stt.submit.csv.CsvItemsSubmitConnector
 import org.stt.submit.csv.CsvSummarySubmitConnector
 import org.stt.submit.json.JsonSubmitConnector
+import org.stt.submit.tempo.TempoApiClient
+import org.stt.submit.tempo.TempoSubmitConnector
+import org.stt.time.DurationRounder
+import java.nio.charset.StandardCharsets
+import java.util.Optional
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -40,5 +49,21 @@ class SubmitModule {
         val connectorConfig = configRoot.submit.connectors.firstOrNull { it.type == "csv-summary" }
             ?: ConnectorConfig(type = "csv-summary", file = ".stt/submit-summary.csv")
         return CsvSummarySubmitConnector(connectorConfig, homePath)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTempoApiClient(tempoConfig: TempoConfig): TempoApiClient? {
+        return tempoConfig.tempoToken?.let {
+            TempoApiClient(TempoApiClient.TEMPO_CLOUD_BASE_URL, String(it.password, StandardCharsets.UTF_8))
+        }
+    }
+
+    @Provides
+    @IntoSet
+    fun provideTempoSubmitConnector(tempoConfig: TempoConfig, jiraConnector: JiraConnector,
+                                    durationRounder: DurationRounder, submitStatusTracker: SubmitStatusTracker,
+                                    eventBus: Optional<MBassador<Any>>, tempoApiClient: TempoApiClient?): SubmitConnector {
+        return TempoSubmitConnector(tempoConfig, jiraConnector, durationRounder, submitStatusTracker, eventBus, tempoApiClient)
     }
 }

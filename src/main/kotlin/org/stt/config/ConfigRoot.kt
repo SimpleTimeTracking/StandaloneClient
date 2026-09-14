@@ -11,5 +11,6 @@ class ConfigRoot : ConfigurationContainer {
     var sttFile = PathSetting("\$HOME$/.stt/activities")
     var cli = CliConfig()
     var jira = JiraConfig()
+    var tempo = TempoConfig()
     var submit = SubmitConfig()
 }

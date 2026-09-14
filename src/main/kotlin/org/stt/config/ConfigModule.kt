@@ -51,6 +51,11 @@ class ConfigModule {
     }
 
     @Provides
+    fun provideTempoConfig(configRoot: ConfigRoot): TempoConfig {
+        return configRoot.tempo
+    }
+
+    @Provides
     fun provideSubmitConfig(configRoot: ConfigRoot): SubmitConfig {
         return configRoot.submit
     }

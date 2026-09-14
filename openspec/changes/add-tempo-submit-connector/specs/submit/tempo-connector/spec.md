@@ -42,6 +42,22 @@ The system SHALL refuse to submit any item without an end time.
 - **WHEN** a submission run includes an item without an end time
 - **THEN** the item is skipped, a warning is reported, and the item remains unmarked
 
+### Requirement: Zero-Duration Entries Are Never Submitted
+
+The system SHALL refuse to submit items or groups whose duration rounds to zero under the configured rounding, in both individual and grouped submission.
+
+#### Scenario: Item whose duration rounds to zero is skipped with warning
+- **WHEN** a submission run includes an item whose duration rounds to zero
+- **THEN** the item is skipped, a warning is reported, and the item remains unmarked and submittable
+
+#### Scenario: Group whose duration rounds to zero is skipped with warning
+- **WHEN** a grouped submission includes a report group whose duration rounds to zero
+- **THEN** no worklog is created for the group, a warning is reported, and the group's items remain unmarked and submittable
+
+#### Scenario: Sub-threshold entries of the same group are summed before rounding
+- **WHEN** a grouped submission includes multiple items with the same comment whose durations individually round to zero but sum to a non-zero rounded duration
+- **THEN** the group is submitted with the rounded sum as duration
+
 ### Requirement: Rounding Uses the Report Rounding Configuration
 
 The system SHALL round start times, end times, and durations using the same rounding configuration as the report view (`report.roundDurationsTo`).

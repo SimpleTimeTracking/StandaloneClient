@@ -259,4 +259,20 @@ class SubmitStatusTrackerTest {
         assertThat(sut.isSubmitted(item)).isFalse()
         sut.stop()
     }
+
+    @Test
+    fun shouldPersistMarkImmediatelyWithoutStop() {
+        // GIVEN
+        sut.start()
+        val item = TimeTrackingItem("test", LocalDateTime.of(2020, 1, 1, 10, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+
+        // WHEN simulates a crash: mark is written, stop() is never called
+        sut.markSubmitted(item, "json")
+        val reloaded = SubmitStatusTracker(homePath)
+        reloaded.start()
+
+        // THEN
+        assertThat(reloaded.isSubmitted(item, "json")).isTrue()
+        reloaded.stop()
+    }
 }

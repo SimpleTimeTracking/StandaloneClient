@@ -28,5 +28,6 @@ module org.stt {
     opens org.stt.event;
     opens org.stt.query;
     opens org.stt.submit to jsoniter;
+    opens org.stt.submit.tempo to jsoniter;
     opens org.stt.gui.jfx;
 }

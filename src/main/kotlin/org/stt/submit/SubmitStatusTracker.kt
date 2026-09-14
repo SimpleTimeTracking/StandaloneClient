@@ -3,11 +3,13 @@ package org.stt.submit
 import org.stt.Service
 import org.stt.model.TimeTrackingItem
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
 import javax.inject.Named
@@ -41,12 +43,16 @@ constructor(@Named("homePath") homePath: String) : Service {
     }
 
     private fun save() {
-        val lines = submitted.flatMap { (itemKey, connectors) ->
-            connectors.map { (connectorId, timestamp) ->
-                "$itemKey|$connectorId|$timestamp"
+        try {
+            val lines = submitted.flatMap { (itemKey, connectors) ->
+                connectors.map { (connectorId, timestamp) ->
+                    "$itemKey|$connectorId|$timestamp"
+                }
             }
+            Files.write(statusFile.toPath(), lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        } catch (e: IOException) {
+            LOG.log(Level.SEVERE, "Could not persist submit status", e)
         }
-        Files.write(statusFile.toPath(), lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
     }
 
     fun isSubmitted(item: TimeTrackingItem): Boolean {
@@ -62,6 +68,7 @@ constructor(@Named("homePath") homePath: String) : Service {
     fun markSubmitted(item: TimeTrackingItem, connectorId: String) {
         val key = itemKey(item)
         submitted.computeIfAbsent(key) { ConcurrentHashMap() }[connectorId] = LocalDateTime.now().toString()
+        save()
     }
 
     fun getSubmitFraction(items: List<TimeTrackingItem>, connectorId: String): Float {
