@@ -23,10 +23,11 @@ import java.util.logging.Logger
 /**
  * Submits time tracking items as worklogs to Jira Tempo Cloud.
  *
- * Activities must start with a Jira issue key (`ABC-123: ...`); items without a resolvable issue
- * key or without an end time are skipped with a warning. Before submitting, the days of the
- * selection are checked against existing Tempo worklogs and occupied days are skipped entirely.
- * Each successfully created worklog marks the item as submitted.
+ * Activities must start with a Jira issue key (`ABC-123: ...`, case-insensitive); the text after the
+ * issue key is used as the worklog comment. Items without a resolvable issue key or without an end
+ * time are skipped with a warning. Before submitting, existing Tempo worklogs are checked and only
+ * items whose issue already has a worklog on that day are skipped. Each successfully created worklog
+ * marks the item as submitted.
  */
 class TempoSubmitConnector(
     private val tempoConfig: TempoConfig,
@@ -76,31 +77,36 @@ class TempoSubmitConnector(
             val itemsWithoutEnd = items.size - validItems.size
             if (itemsWithoutEnd > 0) {
                 LOG.warning { "Skipping $itemsWithoutEnd item(s) without end time: items without end are never submitted." }
+                notifyUser("Skipping $itemsWithoutEnd item(s) without end time: items without end are never submitted.")
                 skipped += itemsWithoutEnd
             }
             val sortedItems = validItems.sortedBy { it.start }
-            val occupiedDays = findOccupiedDays(sortedItems.map { it.start.toLocalDate() })
+            val occupiedIssueDays = findOccupiedIssueDays(sortedItems.map { it.start.toLocalDate() })
             for (item in sortedItems) {
-                submitSingleItem(item, occupiedDays)
+                submitSingleItem(item, occupiedIssueDays)
             }
         }
 
         fun submitGrouped(selectedItems: List<ReportListItem>) {
-            val groupsByDay = selectedItems
+            val (validRows, rowsWithOngoingItems) = selectedItems.partition { row ->
+                row.backingItems.all { it.end != null }
+            }
+            for (row in rowsWithOngoingItems) {
+                LOG.warning { "Skipping report group '${row.comment}': contains item(s) without end time: items without end are never submitted." }
+                notifyUser("Skipping '${row.comment}': group contains item(s) without end time and cannot be submitted.")
+                skipped += row.backingItems.size
+            }
+            val groupsByDay = validRows
                     .flatMap { row -> row.backingItems.map { it.start.toLocalDate() to row } }
                     .groupBy({ it.first }, { it.second })
-            val occupiedDays = findOccupiedDays(groupsByDay.keys)
+            val occupiedIssueDays = findOccupiedIssueDays(groupsByDay.keys)
             for ((day, rowsForDay) in groupsByDay) {
-                if (day in occupiedDays) {
-                    LOG.warning { "Skipping $day: day already has worklogs in Tempo." }
-                    skipped += rowsForDay.sumOf { it.backingItems.size }
-                    continue
-                }
-                submitGroupsOfDay(day, rowsForDay.distinct().sortedBy { row -> row.backingItems.minOf { it.start } })
+                submitGroupsOfDay(day, rowsForDay.distinct().sortedBy { row -> row.backingItems.minOf { it.start } }, occupiedIssueDays)
             }
         }
 
-        private fun submitGroupsOfDay(day: LocalDate, rows: List<ReportListItem>) {
+        private fun submitGroupsOfDay(day: LocalDate, rows: List<ReportListItem>,
+                                      occupiedIssueDays: Set<Pair<Long, LocalDate>>) {
             var cursor: Duration = tempoConfig.workdayStart
             for (row in rows) {
                 if (row.backingItems.isEmpty()) {
@@ -115,20 +121,26 @@ class TempoSubmitConnector(
                     skipped += row.backingItems.size
                     continue
                 }
+                val issueId = resolveIssueId(issueKey)
+                if (issueId == null) {
+                    skipped += row.backingItems.size
+                    continue
+                }
+                if (issueId to day in occupiedIssueDays) {
+                    LOG.warning { "Skipping report group '${row.comment}': issue $issueKey already has worklogs in Tempo on $day." }
+                    notifyUser("Skipping '${row.comment}': issue $issueKey already has worklogs in Tempo on $day.")
+                    skipped += row.backingItems.size
+                    continue
+                }
                 val duration = durationRounder.roundDuration(row.duration)
                 if (duration.isZero) {
                     LOG.warning { "Skipping report group '${row.comment}': duration rounds to zero." }
                     skipped += row.backingItems.size
                     continue
                 }
-                val issueId = resolveIssueId(issueKey)
-                if (issueId == null) {
-                    skipped += row.backingItems.size
-                    continue
-                }
                 cursor = durationRounder.roundDuration(cursor)
                 val worklog = TempoWorklogInput(accountId, issueId, day.toString(),
-                        formatTime(cursor), duration.seconds)
+                        formatTime(cursor), duration.seconds, extractWorklogComment(row.comment))
                 if (createWorklog(worklog, "'${row.comment}'")) {
                     submitted++
                     row.backingItems.forEach { submitStatusTracker.markSubmitted(it, id) }
@@ -139,22 +151,10 @@ class TempoSubmitConnector(
             }
         }
 
-        private fun submitSingleItem(item: TimeTrackingItem, occupiedDays: Set<LocalDate>) {
-            if (occupiedDays.contains(item.start.toLocalDate())) {
-                LOG.warning { "Skipping item '$item': day ${item.start.toLocalDate()} already has worklogs in Tempo." }
-                skipped++
-                return
-            }
+        private fun submitSingleItem(item: TimeTrackingItem,
+                                     occupiedIssueDays: Set<Pair<Long, LocalDate>>) {
             if (submitStatusTracker.isSubmitted(item, id)) {
                 LOG.fine { "Skipping item '$item': already submitted to Tempo." }
-                return
-            }
-            val end = item.end!!
-            val roundedDuration = durationRounder.roundDuration(Duration.between(item.start, end))
-            if (roundedDuration.isZero) {
-                LOG.warning { "Skipping item '$item': duration rounds to zero." }
-                notifyUser("Skipping '${item.activity}': duration rounds to zero.")
-                skipped++
                 return
             }
             val issueKey = extractIssueKey(item.activity)
@@ -169,10 +169,25 @@ class TempoSubmitConnector(
                 skipped++
                 return
             }
-            val dayStart = item.start.toLocalDate().atStartOfDay()
+            val day = item.start.toLocalDate()
+            if (issueId to day in occupiedIssueDays) {
+                LOG.warning { "Skipping item '$item': issue $issueKey already has worklogs in Tempo on $day." }
+                notifyUser("Skipping '${item.activity}': issue $issueKey already has worklogs in Tempo on $day.")
+                skipped++
+                return
+            }
+            val end = item.end!!
+            val roundedDuration = durationRounder.roundDuration(Duration.between(item.start, end))
+            if (roundedDuration.isZero) {
+                LOG.warning { "Skipping item '$item': duration rounds to zero." }
+                notifyUser("Skipping '${item.activity}': duration rounds to zero.")
+                skipped++
+                return
+            }
+            val dayStart = day.atStartOfDay()
             val roundedStartOffset = durationRounder.roundDuration(Duration.between(dayStart, item.start))
-            val worklog = TempoWorklogInput(accountId, issueId, item.start.toLocalDate().toString(),
-                    formatTime(roundedStartOffset), roundedDuration.seconds)
+            val worklog = TempoWorklogInput(accountId, issueId, day.toString(),
+                    formatTime(roundedStartOffset), roundedDuration.seconds, extractWorklogComment(item.activity))
             if (createWorklog(worklog, "'${item.activity}'")) {
                 submitted++
                 submitStatusTracker.markSubmitted(item, id)
@@ -181,7 +196,7 @@ class TempoSubmitConnector(
             }
         }
 
-        private fun findOccupiedDays(days: Collection<LocalDate>): Set<LocalDate> {
+        private fun findOccupiedIssueDays(days: Collection<LocalDate>): Set<Pair<Long, LocalDate>> {
             if (days.isEmpty()) {
                 return emptySet()
             }
@@ -189,7 +204,13 @@ class TempoSubmitConnector(
             val to = days.max()
             return try {
                 tempoApiClient!!.getWorklogsForUser(accountId, from, to)
-                        .mapNotNull { it.startDate?.let { date -> LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE) } }
+                        .mapNotNull { worklog ->
+                            val issueId = worklog.issueId ?: return@mapNotNull null
+                            val startDate = worklog.startDate
+                                    ?.let { date -> LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE) }
+                                    ?: return@mapNotNull null
+                            issueId to startDate
+                        }
                         .toSet()
             } catch (e: TempoClientException) {
                 LOG.severe { "Could not query existing Tempo worklogs: ${e.message}" }
@@ -247,10 +268,23 @@ class TempoSubmitConnector(
 
     companion object {
         private val LOG = Logger.getLogger(TempoSubmitConnector::class.java.name)
-        private val ISSUE_KEY_REGEX = Regex("^([A-Z]+-\\d+)")
+        private val ISSUE_KEY_REGEX = Regex("^([A-Za-z]+-\\d+)\\s*[:;-]?\\s*(.*)$")
 
+        /**
+         * Extracts the Jira issue key from the start of the activity text,
+         * case-insensitively, normalized to upper case.
+         */
         fun extractIssueKey(activity: String): String? {
-            return ISSUE_KEY_REGEX.find(activity.trim())?.groupValues?.get(1)
+            return ISSUE_KEY_REGEX.find(activity.trim())?.groupValues?.get(1)?.uppercase()
+        }
+
+        /**
+         * Extracts the text after the issue key as the worklog comment,
+         * or null when the activity consists only of the issue key.
+         */
+        fun extractWorklogComment(activity: String): String? {
+            val match = ISSUE_KEY_REGEX.find(activity.trim()) ?: return null
+            return match.groupValues[2].trim().ifEmpty { null }
         }
 
         private fun formatTime(offsetFromMidnight: Duration): String {

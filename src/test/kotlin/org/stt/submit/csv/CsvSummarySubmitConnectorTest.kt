@@ -1,6 +1,7 @@
 package org.stt.submit.csv
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -9,6 +10,7 @@ import org.stt.gui.jfx.ReportController
 import org.stt.model.TimeTrackingItem
 import org.stt.reporting.SummingReportGenerator
 import org.stt.submit.ConnectorConfig
+import org.stt.submit.SubmitStatusTracker
 import java.io.File
 import java.nio.file.Files
 import java.time.Duration
@@ -20,6 +22,8 @@ import java.time.LocalDateTime
  * Verifies grouped pivot-table CSV output: one row per comment, per-day duration aggregation
  * (after midnight splitting), HH:mm format, yyyy-MM-dd columns, file overwrite on each submit,
  * submitItems() grouping of raw items, and the connector id.
+ * Additionally verifies that submitted items are marked as submitted only after the CSV file
+ * was written successfully.
  *
  * Also simulates update behaviour: submitting summary rows, adding more items for the same
  * comment (or new comments, or new days), and submitting again — rows must be replaced, not
@@ -33,18 +37,62 @@ class CsvSummarySubmitConnectorTest {
     var tempFolder = TemporaryFolder()
 
     private lateinit var homePath: String
+    private lateinit var submitStatusTracker: SubmitStatusTracker
     private lateinit var sut: CsvSummarySubmitConnector
 
     @Before
     fun setup() {
         homePath = tempFolder.newFolder("home").absolutePath
         val config = ConnectorConfig(type = "csv-summary", file = ".stt/submit-summary.csv")
-        sut = CsvSummarySubmitConnector(config, homePath)
+        submitStatusTracker = SubmitStatusTracker(homePath)
+        submitStatusTracker.start()
+        sut = CsvSummarySubmitConnector(config, homePath, submitStatusTracker)
     }
 
     @Test
     fun shouldHaveCorrectId() {
         assertThat(sut.id).isEqualTo("csv-summary")
+    }
+
+    @Test
+    fun shouldMarkBackingItemsSubmittedAfterSuccessfulSubmitSummary() {
+        // GIVEN
+        val backingItem = TimeTrackingItem("work", LocalDateTime.of(2020, 1, 1, 9, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+        val report = SummingReportGenerator.Report(emptyList(), null, null, Duration.ZERO, Duration.ZERO)
+        val reportItem = ReportController.ReportListItem("work", false, Duration.ofHours(2), Duration.ofHours(2), listOf(backingItem))
+
+        // WHEN
+        sut.submitSummary(report, listOf(reportItem))
+
+        // THEN
+        assertThat(submitStatusTracker.isSubmitted(backingItem, "csv-summary")).isTrue()
+    }
+
+    @Test
+    fun shouldMarkItemsSubmittedAfterSuccessfulSubmitItems() {
+        // GIVEN
+        val item = TimeTrackingItem("work", LocalDateTime.of(2020, 1, 1, 9, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+
+        // WHEN
+        sut.submitItems(listOf(item))
+
+        // THEN
+        assertThat(submitStatusTracker.isSubmitted(item, "csv-summary")).isTrue()
+    }
+
+    @Test
+    fun shouldNotMarkItemsSubmittedWhenWriteFails() {
+        // GIVEN
+        val backingItem = TimeTrackingItem("work", LocalDateTime.of(2020, 1, 1, 9, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+        val report = SummingReportGenerator.Report(emptyList(), null, null, Duration.ZERO, Duration.ZERO)
+        val reportItem = ReportController.ReportListItem("work", false, Duration.ofHours(2), Duration.ofHours(2), listOf(backingItem))
+        val outputDir = tempFolder.newFolder("home", ".stt", "submit-summary.csv")
+        val blockingConfig = ConnectorConfig(type = "csv-summary", file = outputDir.absolutePath)
+        val blockingConnector = CsvSummarySubmitConnector(blockingConfig, homePath, submitStatusTracker)
+
+        // WHEN / THEN
+        assertThatThrownBy { blockingConnector.submitSummary(report, listOf(reportItem)) }.isInstanceOf(Exception::class.java)
+        assertThat(submitStatusTracker.isSubmitted(backingItem, "csv-summary")).isFalse()
     }
 
     @Test

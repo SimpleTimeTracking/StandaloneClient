@@ -17,3 +17,21 @@ The system SHALL persist submission status to `~/.stt/submit-status` as pipe-del
 #### Scenario: Mark is persisted immediately
 - **WHEN** an item is marked as submitted and the application crashes before shutdown
 - **THEN** the mark is present in the status file and the item is still marked as submitted on the next start
+
+## ADDED Requirements
+
+### Requirement: Connectors Own Submission Marking
+
+The system SHALL have each connector mark the items it successfully handled as submitted for its own connector ID, and views SHALL NOT mark items themselves. Items that a connector skipped or failed to submit SHALL remain unmarked and submittable.
+
+#### Scenario: Connector marks successfully handled items
+- **WHEN** a connector submission run completes
+- **THEN** only the items the connector successfully submitted are marked as submitted for that connector's ID
+
+#### Scenario: Failed or skipped items remain unmarked
+- **WHEN** a connector submission run contains items that could not be submitted or were deliberately skipped
+- **THEN** those items are not marked as submitted and remain submittable in a later run
+
+#### Scenario: Views do not mark items
+- **WHEN** a view triggers a submission through a connector
+- **THEN** the view does not mark any item as submitted itself; marking is done exclusively by the connector

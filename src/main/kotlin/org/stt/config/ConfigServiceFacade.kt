@@ -29,4 +29,16 @@ constructor(private val yamlConfigService: YamlConfigService, private val jsonCo
             yamlConfigService.stop()
         }
     }
+
+    /**
+     * Persists the current configuration to disk immediately, so changes
+     * made after startup (e.g. the last used submit connector) survive an
+     * abnormal termination.
+     */
+    fun save() {
+        jsonConfigService.save()
+        if (!skipYaml) {
+            yamlConfigService.save()
+        }
+    }
 }

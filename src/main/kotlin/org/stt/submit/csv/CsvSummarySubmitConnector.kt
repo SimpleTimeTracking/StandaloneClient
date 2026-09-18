@@ -5,6 +5,7 @@ import org.stt.model.TimeTrackingItem
 import org.stt.reporting.SummingReportGenerator.Report
 import org.stt.submit.ConnectorConfig
 import org.stt.submit.SubmitConnector
+import org.stt.submit.SubmitStatusTracker
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
@@ -20,10 +21,12 @@ import javax.inject.Named
  * tracked time, durations aggregated per comment per day (after splitting midnight spans).
  * [submitItems] groups the raw items by comment internally, so both entry points produce the
  * same grouped rows. The file is truncated and rewritten on every submit (snapshot model, same
- * as [org.stt.submit.json.JsonSubmitConnector]).
+ * as [org.stt.submit.json.JsonSubmitConnector]). Items are marked as submitted only after the
+ * CSV file was written successfully.
  */
 class CsvSummarySubmitConnector @Inject
-constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : SubmitConnector {
+constructor(config: ConnectorConfig, @Named("homePath") homePath: String,
+            private val submitStatusTracker: SubmitStatusTracker) : SubmitConnector {
 
     private val outputFile: File
 
@@ -43,12 +46,14 @@ constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : Subm
         val rows = items.groupBy { it.activity }
             .map { (comment, commentItems) -> comment to aggregatePerDay(commentItems) }
         writeCsv(rows)
+        items.forEach { submitStatusTracker.markSubmitted(it, id) }
         LOG.info("Submitted ${rows.size} summary rows to $outputFile")
     }
 
     override fun submitSummary(report: Report, selectedItems: List<ReportListItem>) {
         val rows = selectedItems.map { reportItem -> reportItem.comment to aggregatePerDay(reportItem.backingItems) }
         writeCsv(rows)
+        selectedItems.flatMap { it.backingItems }.forEach { submitStatusTracker.markSubmitted(it, id) }
         LOG.info("Submitted ${selectedItems.size} summary rows to $outputFile")
     }
 

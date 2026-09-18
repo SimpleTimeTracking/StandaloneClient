@@ -39,3 +39,11 @@
 
 - [ ] 7.1 Verify the connector appears in the Report/Activities connector combos and that a dry-run against a real Tempo instance (test project, one day) creates the expected worklogs; clean up created test worklogs afterwards
 - [x] 7.2 Run `./gradlew build` (compile + all tests) and confirm green on macOS, Linux, and Windows-compatible test paths
+
+## 8. Bugfixes found during integration verification
+
+- [x] 8.1 Tempo auth header was Base64-mangled (`Bearer <base64(token)>`), so Tempo returned 401 for every request ("You don't have permission to ..."); send the raw token (`Bearer <token>`), regression-tested in `TempoApiClientTest` via captured `Authorization` headers
+- [x] 8.2 `JsonConfigService` silently reset the whole config when `stt.json` contained an empty list setting (jsoniter calls `clear()` on Kotlin's immutable `emptyList()` defaults); default `CommonPrefixGrouperConfig.baseLine` and `SubmitConfig.connectors` to mutable lists, regression-tested in `TempoTokenRoundTripTest`
+- [x] 8.3 Views marked ALL selected items as submitted after calling a connector, so Tempo items that failed or were skipped (no issue key, zero duration, occupied day) got locked in `submit-status`; connectors now own submission marking (`CsvItemsSubmitConnector`, `CsvSummarySubmitConnector`, `JsonSubmitConnector` mark on successful write, Tempo marks per item), controllers no longer mark, delta spec updated (status-tracking: "Connectors Own Submission Marking"), regression-tested per connector (marks on success, no marks on failed write)
+- [x] 8.4 GROUPED summary mode violated "No-End Items Are Never Submitted": `submitGrouped` submitted report rows whose backing items had no end time (using the row duration); groups containing ongoing items are now refused entirely with a user notification and remain unmarked; the ITEMS mode no-end skip now also notifies the user; regression-tested in `TempoSubmitConnectorTest`
+- [x] 8.5 Report submit was a silent no-op: `latestReport` was only set by a change listener registered after the report binding's initial computation, so the `latestReport ?: return` guard always fired; the controller now reads the current value from the report binding at submit time. Report view now shows popups for "nothing selected" / "all already submitted" / failures; occupied-day skips notify the user

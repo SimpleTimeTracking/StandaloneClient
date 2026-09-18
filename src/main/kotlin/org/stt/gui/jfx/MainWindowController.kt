@@ -11,7 +11,6 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import net.engio.mbassy.bus.MBassador
 import net.engio.mbassy.listener.Handler
-import org.controlsfx.control.Notifications
 import org.stt.event.NotifyUser
 import org.stt.event.ShuttingDown
 import org.stt.gui.UIMain
@@ -32,6 +31,8 @@ internal constructor(private val localization: ResourceBundle,
                      private val infoController: InfoController) {
 
     private val rootNode: Parent
+    private var primaryStage: Stage? = null
+    private val userNotifier = UserNotifier { primaryStage?.takeIf { it.isShowing } }
 
     @FXML
     private lateinit var activitiesTab: Tab
@@ -60,7 +61,7 @@ internal constructor(private val localization: ResourceBundle,
 
     @Handler
     fun onUserNotifactionRequest(event: NotifyUser) {
-        Notifications.create().text(event.message).show()
+        userNotifier.show(event.message)
     }
 
     @FXML
@@ -88,6 +89,7 @@ internal constructor(private val localization: ResourceBundle,
     }
 
     fun show(stage: Stage) {
+        primaryStage = stage
         val scene = Scene(rootNode)
 
         stage.setOnCloseRequest { Platform.runLater { this.shutdown() } }

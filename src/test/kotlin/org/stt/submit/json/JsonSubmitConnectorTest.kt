@@ -1,6 +1,7 @@
 package org.stt.submit.json
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -9,6 +10,7 @@ import org.stt.gui.jfx.ReportController
 import org.stt.model.TimeTrackingItem
 import org.stt.reporting.SummingReportGenerator
 import org.stt.submit.ConnectorConfig
+import org.stt.submit.SubmitStatusTracker
 import java.io.File
 import java.nio.file.Files
 import java.time.Duration
@@ -22,7 +24,8 @@ import java.time.LocalDateTime
  * 2. [JsonSubmitConnector.submitSummary] — serializes report list items to a JSON file
  *
  * Verifies correct JSON structure, field values, null handling, absolute vs relative paths,
- * file overwrite behaviour, and the connector id property.
+ * file overwrite behaviour, and the connector id property. Additionally verifies that
+ * submitted items are marked as submitted only after the JSON file was written successfully.
  */
 
 class JsonSubmitConnectorTest {
@@ -32,13 +35,60 @@ class JsonSubmitConnectorTest {
     var tempFolder = TemporaryFolder()
 
     private lateinit var homePath: String
+    private lateinit var submitStatusTracker: SubmitStatusTracker
     private lateinit var sut: JsonSubmitConnector
 
     @Before
     fun setup() {
         homePath = tempFolder.newFolder("home").absolutePath
         val config = ConnectorConfig(type = "json", file = ".stt/submit.json")
-        sut = JsonSubmitConnector(config, homePath)
+        submitStatusTracker = SubmitStatusTracker(homePath)
+        submitStatusTracker.start()
+        sut = JsonSubmitConnector(config, homePath, submitStatusTracker)
+    }
+
+    @Test
+    fun shouldHaveCorrectId() {
+        assertThat(sut.id).isEqualTo("json")
+    }
+
+    @Test
+    fun shouldMarkItemsSubmittedAfterSuccessfulSubmitItems() {
+        // GIVEN
+        val item = TimeTrackingItem("test activity", LocalDateTime.of(2020, 1, 1, 10, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+
+        // WHEN
+        sut.submitItems(listOf(item))
+
+        // THEN
+        assertThat(submitStatusTracker.isSubmitted(item, "json")).isTrue()
+    }
+
+    @Test
+    fun shouldMarkBackingItemsSubmittedAfterSuccessfulSubmitSummary() {
+        // GIVEN
+        val backingItem = TimeTrackingItem("test activity", LocalDateTime.of(2020, 1, 1, 10, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+        val report = SummingReportGenerator.Report(emptyList(), null, null, Duration.ZERO, Duration.ZERO)
+        val reportItem = ReportController.ReportListItem("test activity", false, Duration.ofHours(1), Duration.ofHours(1), listOf(backingItem))
+
+        // WHEN
+        sut.submitSummary(report, listOf(reportItem))
+
+        // THEN
+        assertThat(submitStatusTracker.isSubmitted(backingItem, "json")).isTrue()
+    }
+
+    @Test
+    fun shouldNotMarkItemsSubmittedWhenWriteFails() {
+        // GIVEN
+        val item = TimeTrackingItem("test activity", LocalDateTime.of(2020, 1, 1, 10, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
+        val outputDir = tempFolder.newFolder("home", ".stt", "submit.json")
+        val blockingConfig = ConnectorConfig(type = "json", file = outputDir.absolutePath)
+        val blockingConnector = JsonSubmitConnector(blockingConfig, homePath, submitStatusTracker)
+
+        // WHEN / THEN
+        assertThatThrownBy { blockingConnector.submitItems(listOf(item)) }.isInstanceOf(Exception::class.java)
+        assertThat(submitStatusTracker.isSubmitted(item, "json")).isFalse()
     }
 
     @Test
@@ -155,7 +205,7 @@ class JsonSubmitConnectorTest {
         // GIVEN
         val absolutePath = File(tempFolder.newFolder("custom"), "output.json").absolutePath
         val config = ConnectorConfig(type = "json", file = absolutePath)
-        val connector = JsonSubmitConnector(config, homePath)
+        val connector = JsonSubmitConnector(config, homePath, submitStatusTracker)
         val item = TimeTrackingItem("test", LocalDateTime.of(2020, 1, 1, 10, 0), LocalDateTime.of(2020, 1, 1, 11, 0))
 
         // WHEN
@@ -185,8 +235,4 @@ class JsonSubmitConnectorTest {
         assertThat(content).doesNotContain("\"activity\": \"first\"")
     }
 
-    @Test
-    fun shouldHaveCorrectId() {
-        assertThat(sut.id).isEqualTo("json")
-    }
 }

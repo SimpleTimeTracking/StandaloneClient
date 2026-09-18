@@ -24,11 +24,19 @@ The system SHALL authenticate against the Tempo Cloud worklog API using a Tempo 
 
 ### Requirement: Activity-to-Issue Mapping
 
-The system SHALL extract a Jira issue key from the item's activity text using the convention `^([A-Z]+-\d+)` and SHALL NOT make the extraction rule configurable.
+The system SHALL extract a Jira issue key from the item's activity text using the convention `^([A-Za-z]+-\d+)` (case-insensitive; the key is normalized to upper case) and SHALL NOT make the extraction rule configurable. The text after the issue key SHALL be used as the Tempo worklog comment.
 
 #### Scenario: Activity starts with issue key
 - **WHEN** an item's activity is `ACT-42: fix login bug`
-- **THEN** the issue key `ACT-42` is used for the Tempo worklog
+- **THEN** the issue key `ACT-42` is used for the Tempo worklog and the worklog comment is `fix login bug`
+
+#### Scenario: Lower case issue keys are accepted
+- **WHEN** an item's activity starts with a lower case issue key such as `act-42: fix login bug`
+- **THEN** the issue is resolved with the normalized key `ACT-42`
+
+#### Scenario: Activity without comment text
+- **WHEN** an item's activity consists only of an issue key
+- **THEN** the worklog is created without a description
 
 #### Scenario: Activity without issue key is skipped with warning
 - **WHEN** an item's activity does not contain a resolvable issue key
@@ -94,17 +102,21 @@ The system SHALL support two configurable modes for `submitSummary`, selected by
 - **WHEN** `summaryMode` is `GROUPED` and the selection spans multiple days
 - **THEN** each day's synthesized times restart at `workdayStart`
 
-### Requirement: Day-Level Pre-Check Against Tempo
+### Requirement: Issue-Level Pre-Check Against Tempo
 
-The system SHALL query existing Tempo worklogs for the user and the selected days before submitting, and SHALL skip items on days that already have any Tempo worklog.
+The system SHALL query existing Tempo worklogs for the user and the selected days before submitting, and SHALL skip an item or report group only when the same Jira issue already has a Tempo worklog on that day. Worklogs of other issues on the same day do not block submission.
 
-#### Scenario: Day already has Tempo worklogs
-- **WHEN** at least one worklog exists in Tempo for a selected day
-- **THEN** all items of that day are skipped, a warning is reported, and the items remain unmarked and submittable
+#### Scenario: Same issue already logged on that day
+- **WHEN** at least one worklog exists in Tempo for the same issue on a selected day
+- **THEN** items and report groups for that issue on that day are skipped, a warning is reported, and they remain unmarked and submittable
 
-#### Scenario: Day without existing worklogs
-- **WHEN** no worklog exists in Tempo for a selected day
-- **THEN** items of that day are submitted normally
+#### Scenario: Different issue on a day with existing worklogs
+- **WHEN** a day already has worklogs in Tempo, but only for other issues
+- **THEN** items and report groups for a different issue on that day are submitted normally
+
+#### Scenario: GROUPED mode continues with the time cursor after a skipped group
+- **WHEN** a grouped submission skips a report group because its issue was already logged on that day
+- **THEN** the synthesized start time of the following group on that day is not advanced by the skipped group's duration
 
 ### Requirement: Submission Failure Reporting and Retry
 

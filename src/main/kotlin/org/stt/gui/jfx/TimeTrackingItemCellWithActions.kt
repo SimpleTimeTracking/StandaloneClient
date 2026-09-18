@@ -36,6 +36,7 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
     val deleteButton: Button
     val stopButton: Button
     private val submitCheckBox: CheckBox
+    private val submittedIcon: Label
     private val lastItemOnDayPane: BorderPane
 
     private val newDayNode: Node
@@ -49,6 +50,8 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
         deleteButton = FramelessButton(glyph(fontAwesome, Glyph.TRASH, GLYPH_SIZE_MEDIUM, Color.web("e26868")))
         stopButton = FramelessButton(glyph(fontAwesome, Glyph.STOP_CIRCLE, GLYPH_SIZE_MEDIUM, Color.GOLDENROD))
         submitCheckBox = CheckBox()
+        submittedIcon = Glyph.glyph(fontAwesome, Glyph.LOCK, 14.0)
+        submittedIcon.tooltip = Tooltip(localization.getString("submit.immutableTooltip"))
         setupTooltips(localization)
 
         continueButton.setOnAction { actionsHandler.continueItem(item) }
@@ -145,6 +148,12 @@ internal open class TimeTrackingItemCellWithActions(fontAwesome: Font,
             deleteButton.isDisable = isSubmitted
             continueButton.isDisable = isSubmitted
             stopButton.isDisable = isSubmitted
+
+            if (isSubmitted && submittedIcon !in cellPane.children) {
+                cellPane.children.add(cellPane.children.indexOf(submitCheckBox), submittedIcon)
+            } else if (!isSubmitted) {
+                cellPane.children.remove(submittedIcon)
+            }
 
             val connectorId = connectorIdProvider()
             val isSubmittedToActive = connectorId?.let { submitStatusTracker.isSubmitted(item, it) } ?: false

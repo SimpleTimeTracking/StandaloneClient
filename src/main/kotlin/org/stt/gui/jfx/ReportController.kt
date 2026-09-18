@@ -31,10 +31,13 @@ import net.engio.mbassy.listener.Listener
 import net.engio.mbassy.listener.References
 import org.controlsfx.control.NotificationPane
 import org.stt.config.ActivitiesConfig
+import org.stt.config.ConfigServiceFacade
 import org.stt.gui.jfx.binding.MappedListBinding
 import org.stt.gui.jfx.binding.ReportBinding
 import org.stt.gui.jfx.binding.STTBindings
+import org.stt.event.ConnectorSelected
 import org.stt.event.ItemsSubmitted
+import org.stt.event.NotifyUser
 import org.stt.model.ItemModified
 import org.stt.model.TimeTrackingItem
 import org.stt.query.TimeTrackingItemQueries
@@ -72,6 +75,7 @@ internal constructor(private val localization: ResourceBundle,
                      private val eventBus: MBassador<Any>,
                      private val submitStatusTracker: SubmitStatusTracker,
                      private val submitSelectionManager: SubmitSelectionManager,
+                     private val configService: ConfigServiceFacade,
                      private val submitConnectors: Set<@JvmSuppressWildcards SubmitConnector>) {
     @FXML
     private lateinit var columnForRoundedDuration: TableColumn<ReportListItem, String>
@@ -113,7 +117,7 @@ internal constructor(private val localization: ResourceBundle,
     private lateinit var activeConnectorCombo: ComboBox<SubmitConnector>
     private var activeConnector: SubmitConnector? = null
 
-    private var latestReport: Report? = null
+    private lateinit var reportModel: ObjectBinding<Report>
 
     private fun loadAndInjectFXML(): NotificationPane {
         val loader = FXMLLoader(javaClass.getResource(
@@ -138,6 +142,7 @@ internal constructor(private val localization: ResourceBundle,
         tableForReport.selectionModel.selectedIndexProperty().addListener { _ -> Platform.runLater { tableForReport.selectionModel.clearSelection() } }
 
         val reportModel = createReportModel()
+        this.reportModel = reportModel
         eventBus.subscribe(OnItemChangeListener(reportModel))
         val reportListModel = createReportingItemsListModel(reportModel)
 
@@ -204,8 +209,6 @@ internal constructor(private val localization: ResourceBundle,
 
         addSubmitCheckboxColumn()
         addSubmitToolbar()
-
-        reportModel.addListener { _, _, newReport -> latestReport = newReport }
     }
 
     private fun applyClipboardTooltip(on: Consumer<Node>, tooltipKey: String) {
@@ -327,6 +330,15 @@ internal constructor(private val localization: ResourceBundle,
         } else {
             addClickToCopy(columnForComment, BiConsumer { item, _ -> setClipboard(item.comment) })
         }
+    }
+
+    /**
+     * Icon indicating that a report row is fully submitted (immutable).
+     */
+    private fun submittedIcon(): Label {
+        val icon = Glyph.glyph(fontaweSome, Glyph.LOCK, 14.0)
+        Tooltips.install(icon, localization.getString("submit.immutableTooltip"))
+        return icon
     }
 
     private fun addClickToCopy(column: TableColumn<ReportListItem, String>, clickHandler: BiConsumer<ReportListItem, MouseEvent>) {
@@ -460,8 +472,8 @@ internal constructor(private val localization: ResourceBundle,
     private fun addSubmitCheckboxColumn() {
         if (submitConnectors.isEmpty()) return
         columnForCheckbox = TableColumn<ReportListItem, Boolean>()
-        columnForCheckbox!!.prefWidth = 40.0
-        columnForCheckbox!!.maxWidth = 40.0
+        columnForCheckbox!!.prefWidth = 70.0
+        columnForCheckbox!!.maxWidth = 70.0
         columnForCheckbox!!.isResizable = false
         columnForCheckbox!!.setCellValueFactory { cellData ->
             val item = cellData.value
@@ -480,9 +492,11 @@ internal constructor(private val localization: ResourceBundle,
         columnForCheckbox!!.setCellFactory {
             object : TableCell<ReportListItem, Boolean>() {
                 private val checkBox = CheckBox()
+                private val lockIcon = submittedIcon()
+                private val graphicPane = HBox(4.0, lockIcon, checkBox).apply { alignment = Pos.CENTER_LEFT }
 
                 init {
-                    graphic = checkBox
+                    lockIcon.isVisible = false
                     checkBox.setOnAction {
                         val rowItem = tableRow.item ?: return@setOnAction
                         val connectorId = activeConnector?.id ?: return@setOnAction
@@ -506,7 +520,8 @@ internal constructor(private val localization: ResourceBundle,
                         checkBox.isSelected = allSubmitted || someSubmitted || rowItem.backingItems.any { submitSelectionManager.isSelected(connectorId, it) }
                         checkBox.isDisable = allSubmitted
                         checkBox.isIndeterminate = someSubmitted && !allSubmitted
-                        graphic = checkBox
+                        lockIcon.isVisible = isFullySubmitted(rowItem.backingItems, submitStatusTracker)
+                        graphic = graphicPane
                     }
                 }
             }
@@ -524,9 +539,12 @@ internal constructor(private val localization: ResourceBundle,
             override fun fromString(string: String): SubmitConnector? = activeConnectors.find { it.id == string }
         }
         activeConnectorCombo.selectionModel.selectFirst()
+        selectLastUsedConnector(activeConnectorCombo, activeConnectors, configService.config)
         activeConnector = activeConnectorCombo.value
         activeConnectorCombo.valueProperty().addListener { _, _, newValue ->
             activeConnector = newValue
+            persistLastUsedConnector(configService, newValue)
+            newValue?.let { eventBus.publish(ConnectorSelected(it)) }
             tableForReport.refresh()
         }
 
@@ -546,13 +564,22 @@ internal constructor(private val localization: ResourceBundle,
     private fun submitSelectedRows() {
         val connector = activeConnector ?: return
         val connectorId = connector.id
-        val report = latestReport ?: return
+        val report = reportModel.value
 
         val selectedBackingItems = tableForReport.items.flatMap { item ->
             item.backingItems.filter { submitSelectionManager.isSelected(connectorId, it) }
         }.distinct().filter { !submitStatusTracker.isSubmitted(it, connectorId) }
 
-        if (selectedBackingItems.isEmpty()) return
+        if (selectedBackingItems.isEmpty()) {
+            val hasSelection = tableForReport.items.any { item ->
+                item.backingItems.any { submitSelectionManager.isSelected(connectorId, it) }
+            }
+            val messageKey = if (hasSelection) "report.submit.alreadySubmitted"
+            else "report.submit.nothingSelected"
+            LOG.warning { "Nothing to submit for connector $connectorId: $messageKey" }
+            eventBus.publish(NotifyUser(localization.getString(messageKey)))
+            return
+        }
 
         val selectedReportItems = tableForReport.items.filter { item ->
             item.backingItems.any { submitSelectionManager.isSelected(connectorId, it) }
@@ -560,7 +587,6 @@ internal constructor(private val localization: ResourceBundle,
 
         try {
             connector.submitSummary(report, selectedReportItems)
-            selectedBackingItems.forEach { submitStatusTracker.markSubmitted(it, connectorId) }
             selectedReportItems.forEach { item ->
                 item.backingItems.forEach { submitSelectionManager.setSelected(connectorId, it, false) }
             }
@@ -568,12 +594,26 @@ internal constructor(private val localization: ResourceBundle,
             eventBus.publish(ItemsSubmitted())
         } catch (e: Exception) {
             LOG.log(Level.SEVERE, "Failed to submit items", e)
+            eventBus.publish(NotifyUser(localization.getString("report.submit.failed")))
         }
     }
 
     @Handler
     fun onItemsSubmitted(event: ItemsSubmitted) {
         tableForReport.refresh()
+    }
+
+    /**
+     * Synchronizes this view's connector selection with a selection made in
+     * the other view. Matching is done by connector id because connector
+     * instances are not shared between views. Selecting an already selected
+     * connector fires no change event, so the propagation stops here.
+     */
+    @Handler
+    fun onConnectorSelected(event: ConnectorSelected) {
+        if (this::activeConnectorCombo.isInitialized && activeConnectorCombo.selectionModel.selectedItem?.id != event.connector.id) {
+            selectConnectorById(activeConnectorCombo, activeConnectors, event.connector.id)
+        }
     }
 
     @Listener(references = References.Strong)

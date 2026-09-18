@@ -28,27 +28,33 @@ class SubmitModule {
     }
 
     @Provides
+    @Singleton
     @IntoSet
-    fun provideJsonSubmitConnector(configRoot: org.stt.config.ConfigRoot, @Named("homePath") homePath: String): SubmitConnector {
+    fun provideJsonSubmitConnector(configRoot: org.stt.config.ConfigRoot, @Named("homePath") homePath: String,
+                                   submitStatusTracker: SubmitStatusTracker): SubmitConnector {
         val connectorConfig = configRoot.submit.connectors.firstOrNull { it.type == "json" }
             ?: ConnectorConfig(type = "json", file = ".stt/submit.json")
-        return JsonSubmitConnector(connectorConfig, homePath)
+        return JsonSubmitConnector(connectorConfig, homePath, submitStatusTracker)
     }
 
     @Provides
+    @Singleton
     @IntoSet
-    fun provideCsvItemsSubmitConnector(configRoot: org.stt.config.ConfigRoot, @Named("homePath") homePath: String): SubmitConnector {
+    fun provideCsvItemsSubmitConnector(configRoot: org.stt.config.ConfigRoot, @Named("homePath") homePath: String,
+                                       submitStatusTracker: SubmitStatusTracker): SubmitConnector {
         val connectorConfig = configRoot.submit.connectors.firstOrNull { it.type == "csv-items" }
             ?: ConnectorConfig(type = "csv-items", file = ".stt/submit-items.csv")
-        return CsvItemsSubmitConnector(connectorConfig, homePath)
+        return CsvItemsSubmitConnector(connectorConfig, homePath, submitStatusTracker)
     }
 
     @Provides
+    @Singleton
     @IntoSet
-    fun provideCsvSummarySubmitConnector(configRoot: org.stt.config.ConfigRoot, @Named("homePath") homePath: String): SubmitConnector {
+    fun provideCsvSummarySubmitConnector(configRoot: org.stt.config.ConfigRoot, @Named("homePath") homePath: String,
+                                         submitStatusTracker: SubmitStatusTracker): SubmitConnector {
         val connectorConfig = configRoot.submit.connectors.firstOrNull { it.type == "csv-summary" }
             ?: ConnectorConfig(type = "csv-summary", file = ".stt/submit-summary.csv")
-        return CsvSummarySubmitConnector(connectorConfig, homePath)
+        return CsvSummarySubmitConnector(connectorConfig, homePath, submitStatusTracker)
     }
 
     @Provides
@@ -60,6 +66,7 @@ class SubmitModule {
     }
 
     @Provides
+    @Singleton
     @IntoSet
     fun provideTempoSubmitConnector(tempoConfig: TempoConfig, jiraConnector: JiraConnector,
                                     durationRounder: DurationRounder, submitStatusTracker: SubmitStatusTracker,

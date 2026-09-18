@@ -48,6 +48,14 @@ constructor(@Named("homePath") homePath: String) : Service, ConfigService {
 
     }
 
+    /**
+     * Writes the current configuration to disk immediately, independent of
+     * the service lifecycle.
+     */
+    fun save() {
+        writeConfig()
+    }
+
     override fun start() {
         val mkdirs = sttYaml.parentFile.mkdirs()
         if (mkdirs) {

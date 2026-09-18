@@ -75,6 +75,14 @@ constructor(@Named("homePath") homePath: String) : ConfigService, Service {
     }
 
     override fun stop() {
+        save()
+    }
+
+    /**
+     * Writes the current configuration to disk immediately, independent of
+     * the service lifecycle.
+     */
+    fun save() {
         writeConfig()
     }
 

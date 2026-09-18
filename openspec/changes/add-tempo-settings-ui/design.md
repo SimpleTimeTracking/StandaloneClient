@@ -39,6 +39,10 @@ The editor factory dispatches on property type (`PasswordSetting::class.java.isA
 
 `workdayStart` (Duration) and `summaryMode` (enum) fall through to the ControlsFX default editor factory, same as comparable properties in other containers. If the default enum editor proves unusable in practice (headless test or manual check), a simple `ComboBox`-based editor for `TempoSummaryMode` is a contained follow-up that does not affect the spec.
 
+### D4: Fix pre-existing JSON config loading bug (discovered during apply)
+
+The token round-trip test revealed that `JsonConfigService` silently resets the whole config to defaults whenever `stt.json` contains an empty list-valued setting: jsoniter's reflection decoder calls `clear()` on the existing list instance, and Kotlin's immutable `emptyList()` default throws. Affected fields: `CommonPrefixGrouperConfig.baseLine`, `SubmitConfig.connectors`. Fix (user-approved scope addition): default both to `mutableListOf()` so jsoniter can populate them. Verified by the JSON round-trip test.
+
 ## Risks / Trade-offs
 
 - [Editors write directly into shared singletons; a change is live for the running app even if the app crashes before shutdown] → Same behavior as all existing settings; no change.

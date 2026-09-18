@@ -5,6 +5,7 @@ import org.stt.model.TimeTrackingItem
 import org.stt.reporting.SummingReportGenerator.Report
 import org.stt.submit.ConnectorConfig
 import org.stt.submit.SubmitConnector
+import org.stt.submit.SubmitStatusTracker
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
@@ -18,10 +19,12 @@ import javax.inject.Named
  * tracked time, durations in `HH:mm` format. Midnight-spanning items are split across their
  * day columns. [submitSummary] expands the given [ReportListItem]s back into their individual
  * items, so both entry points produce one row per item. The file is truncated and rewritten on
- * every submit (snapshot model, same as [org.stt.submit.json.JsonSubmitConnector]).
+ * every submit (snapshot model, same as [org.stt.submit.json.JsonSubmitConnector]). Items are
+ * marked as submitted only after the CSV file was written successfully.
  */
 class CsvItemsSubmitConnector @Inject
-constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : SubmitConnector {
+constructor(config: ConnectorConfig, @Named("homePath") homePath: String,
+            private val submitStatusTracker: SubmitStatusTracker) : SubmitConnector {
 
     private val outputFile: File
 
@@ -40,6 +43,7 @@ constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : Subm
     override fun submitItems(items: List<TimeTrackingItem>) {
         val rows = items.map { item -> item.activity to PerDayDurations.split(item) }
         writeCsv(CsvPivotWriter.buildCsv("activity", rows))
+        items.forEach { submitStatusTracker.markSubmitted(it, id) }
         LOG.info("Submitted ${items.size} items to $outputFile")
     }
 

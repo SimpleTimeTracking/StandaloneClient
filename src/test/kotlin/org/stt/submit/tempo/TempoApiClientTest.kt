@@ -24,6 +24,7 @@ class TempoApiClientTest {
     private var listResponse: Pair<Int, String> = 200 to "{}"
     private val receivedBodies = mutableListOf<String>()
     private val receivedPaths = mutableListOf<String>()
+    private val receivedAuthHeaders = mutableListOf<String>()
 
     @Before
     fun setup() {
@@ -31,6 +32,7 @@ class TempoApiClientTest {
         baseUrl = "http://localhost:${server.address.port}/4"
         server.createContext("/4/worklogs") { exchange ->
             receivedPaths.add(exchange.requestURI.toString())
+            exchange.requestHeaders.getFirst("Authorization")?.let { receivedAuthHeaders.add(it) }
             when (exchange.requestMethod) {
                 "POST" -> {
                     receivedBodies.add(exchange.requestBody.readBytes().toString(Charsets.UTF_8))
@@ -73,6 +75,7 @@ class TempoApiClientTest {
             .contains("\"startTime\": \"08:00:00\"")
             .contains("\"timeSpentSeconds\": 3600")
         assertThat(receivedPaths[0]).isEqualTo("/4/worklogs")
+        assertThat(receivedAuthHeaders).containsExactly("Bearer tempo-token")
         assertThat(worklog.tempoWorklogId).isEqualTo(4711L)
         assertThat(worklog.issueId).isEqualTo(10042L)
         assertThat(worklog.startDate).isEqualTo("2026-09-14")
@@ -91,6 +94,7 @@ class TempoApiClientTest {
 
         // THEN
         assertThat(receivedPaths[0]).isEqualTo("/4/worklogs/user/account-1?from=2026-09-14&to=2026-09-14&limit=1000")
+        assertThat(receivedAuthHeaders).containsExactly("Bearer tempo-token")
         assertThat(worklogs).hasSize(1)
         assertThat(worklogs[0].tempoWorklogId).isEqualTo(1L)
         assertThat(worklogs[0].issueId).isEqualTo(11L)

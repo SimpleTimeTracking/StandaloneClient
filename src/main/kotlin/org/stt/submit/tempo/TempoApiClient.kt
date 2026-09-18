@@ -6,7 +6,6 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.LocalDate
-import java.util.Base64
 import java.util.logging.Logger
 
 /**
@@ -21,14 +20,16 @@ class TempoWorklog(
 )
 
 /**
- * The payload for creating a Tempo worklog.
+ * The payload for creating a Tempo worklog. [description] is an optional
+ * comment shown with the worklog in Tempo.
  */
 class TempoWorklogInput(
     val authorAccountId: String,
     val issueId: Long,
     val startDate: String,
     val startTime: String,
-    val timeSpentSeconds: Long
+    val timeSpentSeconds: Long,
+    val description: String? = null
 )
 
 /**
@@ -100,15 +101,21 @@ class TempoApiClient(private val tempoApiBaseUrl: String, private val bearerToke
     }
 
     private fun buildWorklogJson(input: TempoWorklogInput): String {
-        return StringBuilder()
+        val builder = StringBuilder()
                 .append("{")
                 .append("\"authorAccountId\": \"").append(input.authorAccountId).append("\", ")
                 .append("\"issueId\": ").append(input.issueId).append(", ")
                 .append("\"startDate\": \"").append(input.startDate).append("\", ")
                 .append("\"startTime\": \"").append(input.startTime).append("\", ")
                 .append("\"timeSpentSeconds\": ").append(input.timeSpentSeconds)
-                .append("}")
-                .toString()
+        if (input.description != null) {
+            builder.append(", \"description\": \"").append(escapeJson(input.description)).append("\"")
+        }
+        return builder.append("}").toString()
+    }
+
+    private fun escapeJson(text: String): String {
+        return text.replace("\\", "\\\\").replace("\"", "\\\"")
     }
 
     private fun requestBuilder(url: String): HttpRequest.Builder {
@@ -116,7 +123,7 @@ class TempoApiClient(private val tempoApiBaseUrl: String, private val bearerToke
                 .uri(URI.create(url))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + Base64.getEncoder().encodeToString(bearerToken.toByteArray()))
+                .header("Authorization", "Bearer " + bearerToken)
     }
 
     private fun Map<*, *>.asStringMap(): Map<String, Any?> {

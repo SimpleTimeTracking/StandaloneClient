@@ -27,7 +27,10 @@ import org.stt.Streams
 import org.stt.Strings.commonPrefix
 import org.stt.command.*
 import org.stt.config.ActivitiesConfig
+import org.stt.config.ConfigServiceFacade
+import org.stt.event.ConnectorSelected
 import org.stt.event.ItemsSubmitted
+import org.stt.event.NotifyUser
 import org.stt.event.ShuttingDown
 import org.stt.gui.jfx.STTOptionDialogs.Result
 import org.stt.gui.jfx.TimeTrackingItemCellWithActions.ActionsHandler
@@ -81,6 +84,7 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
                      private val commandHighlighterFactory: CommandHighlighter.Factory,
                      private val submitStatusTracker: SubmitStatusTracker,
                      private val submitSelectionManager: SubmitSelectionManager,
+                     private val configService: ConfigServiceFacade,
                      private val submitConnectors: Set<@JvmSuppressWildcards SubmitConnector>) : ActionsHandler {
     internal val allItems = FXCollections
             .observableArrayList<TimeTrackingItem>()
@@ -124,6 +128,19 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
     @Handler
     fun onItemsSubmitted(event: ItemsSubmitted) {
         activityList.refresh()
+    }
+
+    /**
+     * Synchronizes this view's connector selection with a selection made in
+     * the other view. Matching is done by connector id because connector
+     * instances are not shared between views. Selecting an already selected
+     * connector fires no change event, so the propagation stops here.
+     */
+    @Handler
+    fun onConnectorSelected(event: ConnectorSelected) {
+        if (this::activeConnectorCombo.isInitialized && activeConnectorCombo.selectionModel.selectedItem?.id != event.connector.id) {
+            selectConnectorById(activeConnectorCombo, activeConnectors, event.connector.id)
+        }
     }
 
     private fun setCommandText(textToSet: String, selectionStart: Int = textToSet.length, selectionEnd: Int = textToSet.length) {
@@ -233,19 +250,21 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
         }
     }
 
-    private fun submitSelectedItems() {
+    internal fun submitSelectedItems() {
         val connector = activeConnector ?: return
-        val connectorId = connector.javaClass.simpleName.lowercase()
+        val connectorId = connector.id
         val selectedKeys = submitSelectionManager.getSelectedItems(connectorId)
         val selectedItems = allItems.filter { item ->
             val raw = "${item.activity}|${item.start}|${item.end}"
             val key = Base64.getEncoder().encodeToString(raw.toByteArray())
             selectedKeys.contains(key)
         }
-        if (selectedItems.isEmpty()) return
+        if (selectedItems.isEmpty()) {
+            eventBus.publish(NotifyUser(localization.getString("activities.submit.nothingSelected")))
+            return
+        }
         try {
             connector.submitItems(selectedItems)
-            selectedItems.forEach { submitStatusTracker.markSubmitted(it, connectorId) }
             submitSelectionManager.clearSelection(connectorId)
             activityList.refresh()
             eventBus.publish(ItemsSubmitted())
@@ -294,9 +313,12 @@ internal constructor(private val sttOptionDialogs: STTOptionDialogs, // NOSONAR
             override fun fromString(string: String): SubmitConnector? = activeConnectors.find { it.id == string }
         }
         activeConnectorCombo.selectionModel.selectFirst()
+        selectLastUsedConnector(activeConnectorCombo, activeConnectors, configService.config)
         activeConnector = activeConnectorCombo.value
         activeConnectorCombo.valueProperty().addListener { _, _, newValue ->
             activeConnector = newValue
+            persistLastUsedConnector(configService, newValue)
+            newValue?.let { eventBus.publish(ConnectorSelected(it)) }
             activityList.refresh()
         }
 

@@ -23,6 +23,7 @@ import org.stt.command.CommandHandler
 import org.stt.command.DoNothing
 import org.stt.command.NewActivity
 import org.stt.config.ActivitiesConfig
+import org.stt.config.ConfigServiceFacade
 import org.stt.event.ItemsSubmitted
 import org.stt.event.ShuttingDown
 import org.stt.gui.jfx.text.CommandHighlighter
@@ -59,12 +60,19 @@ class ActivitiesControllerTest {
     private var shutdownCalled: Boolean = false
     @Mock
     private lateinit var worktimeQueries: WorkTimeQueries
+    private lateinit var submitStatusTracker: SubmitStatusTracker
+    private lateinit var submitSelectionManager: SubmitSelectionManager
+    @Mock
+    private lateinit var submitConnector: SubmitConnector
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
         TestFX.installTK()
         fontAwesome = Font.getDefault()
+        submitStatusTracker = Mockito.mock(SubmitStatusTracker::class.java)
+        submitSelectionManager = Mockito.mock(SubmitSelectionManager::class.java)
+        given(submitConnector.id).willReturn("tempo")
 
         given(itemValidator.validateItemIsFirstItemAndLater(any()))
                 .willReturn(true)
@@ -81,9 +89,10 @@ class ActivitiesControllerTest {
                 setOf(expansionProvider), resourceBundle, activitiesConfig, itemValidator,
                 timeTrackingItemQueries, executorService, commandHandler, fontAwesome,
                 worktimePane, labelToNodeMapper, CommandHighlighter.Factory({ emptyList() }),
-                Mockito.mock(SubmitStatusTracker::class.java),
-                Mockito.mock(SubmitSelectionManager::class.java),
-                emptySet<SubmitConnector>())
+                submitStatusTracker,
+                submitSelectionManager,
+                Mockito.mock(ConfigServiceFacade::class.java),
+                setOf(submitConnector))
         sut.commandText = StyleClassedTextArea()
     }
 
@@ -202,16 +211,40 @@ class ActivitiesControllerTest {
     fun shouldRefreshActivityListOnItemsSubmitted() {
         // GIVEN
         val activityList = Mockito.spy(ListView<TimeTrackingItem>())
-        sut.javaClass.getDeclaredField("activityList").apply {
-            isAccessible = true
-            set(sut, activityList)
-        }
+        setField("activityList", activityList)
 
         // WHEN
         sut.onItemsSubmitted(ItemsSubmitted())
 
         // THEN
         verify(activityList).refresh()
+    }
+
+    @Test
+    fun shouldSubmitItemsSelectedForConnectorId() {
+        // GIVEN
+        val item = TimeTrackingItem("DEVTT-6", LocalDateTime.of(2026, 9, 17, 20, 38, 34), LocalDateTime.of(2026, 9, 17, 22, 0, 0))
+        sut.allItems.setAll(item)
+        val activityList = Mockito.spy(ListView<TimeTrackingItem>())
+        setField("activityList", activityList)
+        setField("activeConnector", submitConnector)
+        val itemKey = java.util.Base64.getEncoder().encodeToString("${item.activity}|${item.start}|${item.end}".toByteArray())
+        given(submitSelectionManager.getSelectedItems("tempo")).willReturn(setOf(itemKey))
+        given(submitStatusTracker.isSubmitted(item, "tempo")).willReturn(false)
+
+        // WHEN
+        sut.submitSelectedItems()
+
+        // THEN
+        verify(submitConnector).submitItems(listOf(item))
+        verify(submitSelectionManager).clearSelection("tempo")
+    }
+
+    private fun setField(fieldName: String, value: Any) {
+        sut.javaClass.getDeclaredField(fieldName).apply {
+            isAccessible = true
+            set(sut, value)
+        }
     }
 
     @Handler

@@ -23,7 +23,8 @@ enum class Glyph(private val code: Char) {
     PLUS_CIRCLE('\uf055'),
     TRASH('\uf1f8'),
     FAST_FORWARD('\uf050'),
-    FORWARD('\uf04e');
+    FORWARD('\uf04e'),
+    LOCK('\uf023');
 
     fun getCode(): String {
         return Character.toString(code)

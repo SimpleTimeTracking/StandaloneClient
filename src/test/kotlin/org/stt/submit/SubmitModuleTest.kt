@@ -18,6 +18,7 @@ import java.nio.file.Files
 class SubmitModuleTest {
 
     private val homePath = Files.createTempDirectory("stt-home").toFile().absolutePath
+    private val submitStatusTracker = SubmitStatusTracker(homePath)
     private val sut = SubmitModule()
 
     @Test
@@ -26,7 +27,7 @@ class SubmitModuleTest {
         val configRoot = ConfigRoot()
 
         // WHEN
-        val connector = sut.provideJsonSubmitConnector(configRoot, homePath)
+        val connector = sut.provideJsonSubmitConnector(configRoot, homePath, submitStatusTracker)
 
         // THEN
         assertThat(connector.id).isEqualTo("json")
@@ -39,7 +40,7 @@ class SubmitModuleTest {
         val configRoot = ConfigRoot()
 
         // WHEN
-        val connector = sut.provideCsvItemsSubmitConnector(configRoot, homePath)
+        val connector = sut.provideCsvItemsSubmitConnector(configRoot, homePath, submitStatusTracker)
 
         // THEN
         assertThat(connector.id).isEqualTo("csv-items")
@@ -54,7 +55,7 @@ class SubmitModuleTest {
         val configRoot = ConfigRoot()
 
         // WHEN
-        val connector = sut.provideCsvSummarySubmitConnector(configRoot, homePath)
+        val connector = sut.provideCsvSummarySubmitConnector(configRoot, homePath, submitStatusTracker)
 
         // THEN
         assertThat(connector.id).isEqualTo("csv-summary")
@@ -71,7 +72,7 @@ class SubmitModuleTest {
             ConnectorConfig(type = "csv-items", file = "custom/items.csv")))
 
         // WHEN
-        val connector = sut.provideCsvItemsSubmitConnector(configRoot, homePath) as CsvItemsSubmitConnector
+        val connector = sut.provideCsvItemsSubmitConnector(configRoot, homePath, submitStatusTracker) as CsvItemsSubmitConnector
 
         // THEN
         connector.submitItems(emptyList())

@@ -4,6 +4,7 @@ import org.stt.model.TimeTrackingItem
 import org.stt.reporting.SummingReportGenerator.Report
 import org.stt.submit.ConnectorConfig
 import org.stt.submit.SubmitConnector
+import org.stt.submit.SubmitStatusTracker
 import org.stt.gui.jfx.ReportController.ReportListItem
 import java.io.File
 import java.nio.file.Files
@@ -14,8 +15,14 @@ import java.util.logging.Logger
 import javax.inject.Inject
 import javax.inject.Named
 
+/**
+ * [SubmitConnector] (id `json`) writing the submitted items or summary rows as a JSON array to
+ * the configured output file. The file is truncated and rewritten on every submit (snapshot
+ * model). Items are marked as submitted only after the JSON file was written successfully.
+ */
 class JsonSubmitConnector @Inject
-constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : SubmitConnector {
+constructor(config: ConnectorConfig, @Named("homePath") homePath: String,
+            private val submitStatusTracker: SubmitStatusTracker) : SubmitConnector {
 
     private val outputFile: File
 
@@ -34,6 +41,7 @@ constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : Subm
     override fun submitItems(items: List<TimeTrackingItem>) {
         val json = buildJsonArray(items.map { itemToMap(it) })
         writeJson(json)
+        items.forEach { submitStatusTracker.markSubmitted(it, id) }
         LOG.info("Submitted ${items.size} items to $outputFile")
     }
 
@@ -49,6 +57,7 @@ constructor(config: ConnectorConfig, @Named("homePath") homePath: String) : Subm
         }
         val json = buildJsonArray(items)
         writeJson(json)
+        selectedItems.flatMap { it.backingItems }.forEach { submitStatusTracker.markSubmitted(it, id) }
         LOG.info("Submitted ${selectedItems.size} summary items to $outputFile")
     }
 

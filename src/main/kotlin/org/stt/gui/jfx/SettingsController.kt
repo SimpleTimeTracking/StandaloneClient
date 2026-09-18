@@ -27,7 +27,8 @@ constructor(private val configRoot: ConfigRoot, // NOSONAR
             private val commonPrefixGrouperConfig: CommonPrefixGrouperConfig,
             private val reportConfig: ReportConfig,
             private val worktimeConfig: WorktimeConfig,
-            private val jiraConfig: JiraConfig) {
+            private val jiraConfig: JiraConfig,
+            private val tempoConfig: TempoConfig) {
     private var pane: Pane? = null
 
     val panel: Node?
@@ -102,7 +103,7 @@ constructor(private val configRoot: ConfigRoot, // NOSONAR
             defaultEditorFactory.call(item)
         }
         Stream.of(configRoot, activitiesConfig, backupConfig, cliConfig, commonPrefixGrouperConfig,
-                reportConfig, worktimeConfig, jiraConfig)
+                reportConfig, worktimeConfig, jiraConfig, tempoConfig)
                 .forEach { o ->
                     propertySheet.items.addAll(BeanPropertyUtils.getProperties(o
                     ) { propertyDescriptor ->
